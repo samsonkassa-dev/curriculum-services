@@ -1,13 +1,89 @@
+'use client'
+
 import { Input } from "@/components/ui/input";
-import Image from "next/image";
+import { useState } from 'react';
+import { signInWithEmail, googleSignIn } from '@/lib/auth-client';
+
+// Add types for Google OAuth
+interface TokenResponse {
+  access_token: string;
+  token_type: string;
+  expires_in: number;
+  scope: string;
+}
+
+interface TokenClient {
+  requestAccessToken(): void;
+}
+
+declare global {
+  interface Window {
+    google: {
+      accounts: {
+        oauth2: {
+          initTokenClient(config: {
+            client_id: string;
+            scope: string;
+            callback: (response: TokenResponse) => void;
+          }): TokenClient;
+        };
+      };
+    };
+  }
+}
 
 export default function Login() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    try {
+      if (!email || !password) {
+        setError('Please fill in all fields');
+        return;
+      }
+      
+      await signInWithEmail(email, password);
+      setSuccess('Successfully logged in!');
+      setError(''); // Clear any previous errors
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Login failed');
+      setSuccess(''); // Clear any previous success message
+    }
+  }
+
+  const handleGoogleSignIn = async () => {
+    try {
+      const auth2 = await window.google.accounts.oauth2.initTokenClient({
+        client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!,
+        scope: 'email profile openid',
+        callback: async (response: TokenResponse) => {
+          if (response.access_token) {
+            try {
+              await googleSignIn(response.access_token);
+            } catch (err) {
+              setError(err instanceof Error ? err.message : 'Google sign in failed');
+            }
+          }
+        },
+      });
+
+      auth2.requestAccessToken();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Google sign in failed');
+    }
+  };
+
   return (
     <div className="flex min-h-screen">
       <div className="flex w-full items-center justify-center bg-background p-4 lg:w-1/2">
         <div className="w-full max-w-[368px] space-y-6">
           <div className="space-y-2 text-center">
-            <Image
+            <img
               src="/placeholder-logo.svg"
               alt="Logo"
               width={40}
@@ -20,6 +96,8 @@ export default function Login() {
           </div>
 
           <div className="space-y-4">
+ 
+
             <div className="space-y-2">
               <label htmlFor="email" className="text-sm font-semibold">
                 Email
@@ -28,6 +106,8 @@ export default function Login() {
                 id="email"
                 type="email"
                 placeholder="youremail@gmail.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
               />
             </div>
 
@@ -35,21 +115,45 @@ export default function Login() {
               <label htmlFor="password" className="text-sm font-semibold">
                 Password
               </label>
-              <Input id="password" type="password" placeholder="********" showPasswordToggle/>
+              <Input 
+                id="password" 
+                type="password" 
+                placeholder="********" 
+                showPasswordToggle
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
             </div>
+
+            {error && (
+              <div className="text-red-500 text-sm text-center">
+                {error}
+              </div>
+            )}
+
+            {success && (
+              <div className="text-green-500 text-sm text-center">
+                {success}
+              </div>
+            )}
 
             <div className="text-right">
               <a
                 href="#"
-                className="text-sm font-normal text-[#0B75FF] hover:underline"
+                className="text-sm font-normal text-brand hover:underline"
               >
                 Forgot password?
               </a>
             </div>
 
-            <button className="w-full rounded-md bg-[#0B75FF] px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-              Log in
-            </button>
+            <form onSubmit={handleLogin}>
+              <button 
+                type="submit" 
+                className="w-full rounded-md bg-brand px-4 py-4 text-sm font-medium text-white hover:bg-blue-700"
+              >
+                Log in
+              </button>
+            </form>
 
             <div className="relative">
               <div className="absolute inset-0 flex items-center">
@@ -62,8 +166,11 @@ export default function Login() {
               </div>
             </div>
 
-            <button className="flex w-full items-center justify-center gap-2 rounded-md border border-input bg-background px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2">
-              <Image
+            <button 
+              onClick={handleGoogleSignIn}
+              className="flex w-full items-center justify-center gap-2 rounded-md border border-input bg-background px-4 py-4 text-sm font-medium hover:bg-accent hover:text-accent-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+            >
+              <img
                 src="/google.svg"
                 alt="Google logo"
                 width={16}
@@ -75,7 +182,7 @@ export default function Login() {
         </div>
       </div>
 
-      <div className="hidden w-1/2 bg-[#0B75FF] lg:block" />
+      <div className="hidden w-1/2 bg-brand lg:block" />
     </div>
   );
 }
