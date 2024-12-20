@@ -1,4 +1,4 @@
-name: Deploy to Digital Ocean
+name: Deploy to DigitalOcean
 
 on:
   push:
@@ -13,7 +13,7 @@ jobs:
       - name: Install doctl
         uses: digitalocean/action-doctl@v2
         with:
-          token: ${{ secrets.DIGITALOCEAN_TOKEN }}
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
       
       - name: Log in to DO Container Registry
         run: doctl registry login --expiry-seconds 600
@@ -29,23 +29,10 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-buildx-
       
-      - name: Build and push
+      - name: Build container image
         env:
-          REGISTRY: registry.digitalocean.com/icog-training
-          IMAGE_NAME: training-portal
-          TAG: ${GITHUB_SHA::7}
-        run: |
-          docker build \
-            --cache-from type=local,src=/tmp/.buildx-cache \
-            --cache-to type=local,dest=/tmp/.buildx-cache-new \
-            -t ${REGISTRY}/${IMAGE_NAME}:${TAG} \
-            --build-arg NEXT_PUBLIC_API=${{ secrets.NEXT_PUBLIC_API }} \
-            .
-          docker push ${REGISTRY}/${IMAGE_NAME}:${TAG}
-          
-          # Update latest tag
-          docker tag ${REGISTRY}/${IMAGE_NAME}:${TAG} ${REGISTRY}/${IMAGE_NAME}:latest
-          docker push ${REGISTRY}/${IMAGE_NAME}:latest
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+        run: docker build -t registry.digitalocean.com/your-registry/your-app:$(echo $GITHUB_SHA | head -c7) .
       
       - name: Deploy to Digital Ocean
         uses: appleboy/ssh-action@master
