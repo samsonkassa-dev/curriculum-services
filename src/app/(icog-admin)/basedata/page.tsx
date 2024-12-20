@@ -5,7 +5,7 @@ import { columns } from "./columns"
 import { DataTable } from "./data-table"
 import { AddDataDialog } from "./add-data-dialog"
 import { SidebarTabs } from "./components/sidebar-tabs"
-import { useBaseData } from "@/lib/hooks/use-base-data"
+import { useBaseData } from "@/lib/hooks/useBaseData"
 import { BaseDataType } from "@/types/base-data"
 
 export default function BaseData() {

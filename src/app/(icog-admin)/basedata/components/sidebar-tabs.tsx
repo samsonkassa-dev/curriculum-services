@@ -10,7 +10,7 @@ interface Tab {
 const tabs: Tab[] = [
   { id: "education-level", name: "Level" },
   { id: "academic-level", name: "Academic Level" },
-  { id: "learning-style", name: "Learning Style" },
+  { id: "learner-style-preference", name: "Learning Style" },
   { id: "language", name: "Language" },
   { id: "training-programs", name: "Training Programs" },
   { id: "differentiation-strategies", name: "Differentiation Strategies" },

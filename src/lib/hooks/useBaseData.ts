@@ -11,7 +11,7 @@ const getResponseKey = (type: BaseDataType) => {
       return 'educationLevels';
     case 'academic-level':
       return 'academicLevels';
-    case 'learning-style':
+    case 'learner-style-preference':
       return 'learningStyles';
     // Add other cases following the same pattern
     default:
@@ -28,16 +28,25 @@ export function useBaseData(type: BaseDataType) {
   const query = useQuery({
     queryKey,
     queryFn: async () => {
-      const response = await baseDataApi.getBaseData(type);
-      return response[responseKey] || []; // Extract the correct array from response
+      const token = localStorage.getItem('auth_token');
+      const response = await baseDataApi.getBaseData(type, { 
+        Authorization: `Bearer ${token}` 
+      });
+      return response[responseKey] || [];
     },
     staleTime: 1000 * 60 * 5,
   });
 
   // Mutation for adding new base data
   const addMutation = useMutation({
-    mutationFn: (data: Omit<BaseDataItem, 'id'>) => 
-      baseDataApi.addBaseData(type, data),
+    mutationFn: async (data: Omit<BaseDataItem, 'id'>) => {
+      const token = localStorage.getItem('auth_token');
+      return baseDataApi.addBaseData(
+        type,
+        { Authorization: `Bearer ${token}` },
+        data
+      );
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey });
       toast.success('Data added successfully');
@@ -51,8 +60,13 @@ export function useBaseData(type: BaseDataType) {
   // Mutation for updating base data
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<BaseDataItem> }) => {
-      const response = await baseDataApi.updateBaseData(type, id, data);
-      return response;
+      const token = localStorage.getItem('auth_token');
+      return baseDataApi.updateBaseData(
+        type,
+        id,
+        { Authorization: `Bearer ${token}` },
+        data
+      );
     },
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey });
@@ -66,8 +80,12 @@ export function useBaseData(type: BaseDataType) {
   // Mutation for deleting base data
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const response = await baseDataApi.deleteBaseData(type, id);
-      return response;
+      const token = localStorage.getItem('auth_token');
+      return baseDataApi.deleteBaseData(
+        type,
+        id,
+        { Authorization: `Bearer ${token}` }
+      );
     },
     onSuccess: (response) => {
       queryClient.invalidateQueries({ queryKey });

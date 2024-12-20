@@ -55,25 +55,49 @@ export const individualColumns: ColumnDef<IndividualUser>[] = [
 
 export const companyColumns: ColumnDef<CompanyUser>[] = [
   {
-    accessorKey: "companyName",
+    accessorKey: "name",
     header: "Company Name",
+    cell: ({ row }) => {
+      const name = row.original.name
+      const firstLetter = name.charAt(0).toUpperCase()
+      
+      return (
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-sm font-medium">
+            {firstLetter}
+          </div>
+          <span className="font-medium">{name}</span>
+        </div>
+      )
+    }
   },
   {
     accessorKey: "businessType",
     header: "Business Type",
+    cell: ({ row }) => row.original.businessType.name
   },
   {
-    accessorKey: "email",
-    header: "E-mail",
+    accessorKey: "countryOfIncorporation",
+    header: "Country",
   },
   {
-    accessorKey: "status",
+    accessorKey: "phone",
+    header: "Phone",
+  },
+  {
+    accessorKey: "verificationStatus",
     header: "Status",
     cell: ({ row }) => {
-      const status = row.getValue<string>("status").toLowerCase()
+      const status = row.original.verificationStatus.toLowerCase()
+      const variant = {
+        accepted: 'accepted',
+        pending: 'pending',
+        rejected: 'rejected'
+      }[status] as 'accepted' | 'pending' | 'rejected'
+
       return (
-        <Badge variant={status as "approved" | "declined" | "pending"}>
-          {row.getValue<string>("status")}
+        <Badge variant={variant}>
+          {row.original.verificationStatus}
         </Badge>
       )
     }
@@ -81,6 +105,14 @@ export const companyColumns: ColumnDef<CompanyUser>[] = [
   {
     accessorKey: "createdAt",
     header: "Created at",
+    cell: ({ row }) => {
+      const date = new Date(row.original.createdAt)
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      })
+    }
   },
   {
     id: "actions",

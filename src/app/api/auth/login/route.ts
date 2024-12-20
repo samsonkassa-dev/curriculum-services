@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    
-    const response = await fetch('http://143.198.54.56:3000/authentication/sign-in', {
+    const apiResponse = await fetch(`${process.env.NEXT_PUBLIC_API}/auth/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -12,16 +12,31 @@ export async function POST(request: Request) {
       body: JSON.stringify(body),
     });
 
-    const data = await response.json();
+    const data = await apiResponse.json();
 
-    if (!response.ok) {
+    if (!apiResponse.ok) {
       return NextResponse.json(
         { error: data.message || 'Authentication failed' },
-        { status: response.status }
+        { status: apiResponse.status }
       );
     }
 
-    return NextResponse.json(data);
+    const res = NextResponse.json({
+      ...data,
+      message: data.message || 'Successfully logged in'
+    });
+
+    // Set cookie in the response headers
+    res.cookies.set({
+      name: 'token',
+      value: data.token,
+      path: '/',
+      secure: true,
+      sameSite: 'lax',
+      httpOnly: true
+    });
+
+    return res;
   } catch (error) {
     return NextResponse.json(
       { error: 'Internal server error' },

@@ -14,11 +14,25 @@ export interface NavItem {
 
 interface SidebarProps {
   navItems: NavItem[]
+  onClick?: (e: React.MouseEvent) => void
 }
 
-export default function Sidebar({ navItems }: SidebarProps) {
+export default function Sidebar({ navItems, onClick }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(true)
   const pathname = usePathname()
+
+  // Helper function to check if the current path matches the nav item
+  const isCurrentPath = (href: string) => {
+    // For company admin routes: /[companyId]/path
+    if (pathname.split('/').length === 3) {
+      const routePattern = href.split('/').slice(2).join('/')
+      const currentRoute = pathname.split('/').slice(2).join('/')
+      return routePattern === currentRoute
+    }
+    
+    // For icog admin routes: /path
+    return pathname === href || pathname.startsWith(`${href}/`)
+  }
 
   return (
     <div 
@@ -36,10 +50,11 @@ export default function Sidebar({ navItems }: SidebarProps) {
               className={cn(
                 "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-md",
                 "hover:bg-gray-300",
-                pathname === item.href ? "text-brand bg-brand-opacity" : "text-gray-700",
+                isCurrentPath(item.href) ? "text-brand bg-brand-opacity" : "text-gray-700",
                 isCollapsed && "justify-center"
               )}
               title={isCollapsed ? item.label : undefined}
+              onClick={onClick}
             >
               {item.icon}
               {!isCollapsed && <span>{item.label}</span>}

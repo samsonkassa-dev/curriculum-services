@@ -21,7 +21,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${inter.className} antialiased`}>
         <QueryProvider>
-          <Toaster position="top-center" />
+          <Toaster richColors position="top-center" />
           <Script
             src="https://accounts.google.com/gsi/client"
             strategy="beforeInteractive"

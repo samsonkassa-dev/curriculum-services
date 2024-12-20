@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { DeleteDialog } from "./delete-dialog"
 import { AddDataDialog } from "../add-data-dialog"
 import { BaseData } from "../columns"
-import { useBaseData } from "@/lib/hooks/use-base-data"
+import { useBaseData } from "@/lib/hooks/useBaseData"
 import { BaseDataType } from "@/types/base-data"
 
 export function ActionCell({ row, activeTab }: { row: any; activeTab: string }) {

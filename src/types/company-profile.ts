@@ -1,34 +1,60 @@
 import { z } from "zod"
-import type { BasicInformation, BusinessDetails, AdditionalInformation } from "./company"
 
-export const basicInformationSchema = z.object({
-  companyName: z.string().min(2, "Company name is required"),
-  companyWebsite: z.string().optional(),
-  companyAddress: z.string().min(5, "Company address is required"),
-  contactPhone: z.string()
-    .min(9, "Phone number must be at least 9 digits")
-    .max(12, "Phone number must not exceed 12 digits")
-    .regex(/^\d+$/, "Phone number must contain only digits"),
+// Define schemas for BusinessType and IndustryType
+const businessTypeSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  description: z.string()
+})
+
+const industryTypeSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  description: z.string()
+})
+
+// Company File schema
+const companyFileSchema = z.object({
+  fileTypeId: z.string(),
+  file: z.instanceof(File)
+})
+
+// Company Information step
+export const companyInformationSchema = z.object({
+  name: z.string().min(2, "Company name is required"),
+  websiteUrl: z.string().optional(),
+  address: z.string().min(5, "Company address is required"),
+  phone: z.string()
+    .regex(/^[97]\d{6}$/, "Phone number must start with 9 or 7 and be followed by 6 digits")
+    .transform(val => `+251${val}`),
   countryOfIncorporation: z.string().min(2, "Country is required"),
-  taxIdentificationNumber: z.string().min(5, "Tax ID is required"),
-}) satisfies z.ZodType<BasicInformation>
+  taxIdentificationNumber: z.string().min(10, "Tax ID is required & must be 10 digits"),
+})
 
+// Business Details step
 export const businessDetailsSchema = z.object({
-  industryType: z.string().min(2, "Industry type is required"),
-  businessType: z.string().min(2, "Business type is required"),
-  numberOfEmployees: z.string().min(1, "Number of employees is required"),
-  registrationNumber: z.string().optional(),
-  yearEstablished: z.string().min(4, "Year established is required"),
-}) satisfies z.ZodType<BusinessDetails>
+  industryType: industryTypeSchema.refine(data => !!data, {
+    message: "Industry type is required"
+  }),
+  businessType: businessTypeSchema.refine(data => !!data, {
+    message: "Business type is required"
+  }),
+  numberOfEmployees: z.enum(["SMALL", "MEDIUM", "LARGE"], {
+    required_error: "Please select number of employees"
+  })
+})
 
+// Additional Information step
 export const additionalInformationSchema = z.object({
-  companyDescription: z.string().optional(),
-  companyLogo: z.any().optional(),
-  businessLicense: z.any().optional(),
-  otherDocuments: z.array(z.any()).optional(),
-}) satisfies z.ZodType<AdditionalInformation>
+  fileType: z.string().optional(),
+  companyFiles: z.array(companyFileSchema).optional(),
+  otherDescription: z.string().optional(),
+})
 
-// Combined schema
-export const companyProfileSchema = basicInformationSchema
+// Combined schema for the entire form
+export const companyProfileSchema = companyInformationSchema
   .merge(businessDetailsSchema)
-  .merge(additionalInformationSchema) 
+  .merge(additionalInformationSchema)
+
+// Type inference
+export type CompanyProfileFormSchema = z.infer<typeof companyProfileSchema> 

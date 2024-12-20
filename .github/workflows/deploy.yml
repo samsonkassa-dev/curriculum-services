@@ -1,0 +1,62 @@
+name: Deploy to Digital Ocean
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_TOKEN }}
+      
+      - name: Log in to DO Container Registry
+        run: doctl registry login --expiry-seconds 600
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      
+      - name: Cache Docker layers
+        uses: actions/cache@v3
+        with:
+          path: /tmp/.buildx-cache
+          key: ${{ runner.os }}-buildx-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-buildx-
+      
+      - name: Build and push
+        env:
+          REGISTRY: registry.digitalocean.com/icog-training
+          IMAGE_NAME: training-portal
+          TAG: ${GITHUB_SHA::7}
+        run: |
+          docker build \
+            --cache-from type=local,src=/tmp/.buildx-cache \
+            --cache-to type=local,dest=/tmp/.buildx-cache-new \
+            -t ${REGISTRY}/${IMAGE_NAME}:${TAG} \
+            --build-arg NEXT_PUBLIC_API=${{ secrets.NEXT_PUBLIC_API }} \
+            .
+          docker push ${REGISTRY}/${IMAGE_NAME}:${TAG}
+          
+          # Update latest tag
+          docker tag ${REGISTRY}/${IMAGE_NAME}:${TAG} ${REGISTRY}/${IMAGE_NAME}:latest
+          docker push ${REGISTRY}/${IMAGE_NAME}:latest
+      
+      - name: Deploy to Digital Ocean
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.DO_HOST }}
+          username: ${{ secrets.DO_USERNAME }}
+          key: ${{ secrets.DO_SSH_KEY }}
+          script: |
+            cd /opt/training-portal
+            echo "NEXT_PUBLIC_API=${{ secrets.NEXT_PUBLIC_API }}" > .env
+            echo "TAG=${GITHUB_SHA::7}" >> .env
+            docker compose pull
+            docker compose up -d --force-recreate
+            docker system prune -f

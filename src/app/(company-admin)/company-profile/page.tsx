@@ -1,12 +1,17 @@
 "use client"
 
 import { useState } from "react"
-import { CompanyProfileForm } from "../components/company-profile-form"
+import dynamic from 'next/dynamic'
+import { CompanyProfileForm as StaticCompanyProfileForm } from "../components/company-profile-form"
+
+// Dynamically import the CompanyProfileForm with no SSR
+const CompanyProfileForm = dynamic(
+  () => import('../components/company-profile-form').then(mod => ({ default: mod.CompanyProfileForm })),
+  { ssr: false }
+)
 
 export default function CompanyProfile() {
-  const [step, setStep] = useState<"basic" | "business" | "additional">(
-    "basic"
-  );
+  const [step, setStep] = useState<"companyInfo" | "businessDetail" | "additionalInfo">("companyInfo");
 
   return (
     <div className="w-full px-4 md:px-6 py-12 md:py-24">
@@ -33,7 +38,7 @@ export default function CompanyProfile() {
                   <div
                     className={`absolute  top-[17px] left-[calc(16.67%+16px)] h-[2px] -translate-y-1/2 transition-all duration-300
                 ${
-                  step === "basic" ? "w-0 " : "bg-green-500 w-[calc(33.33%-16px)]"
+                  step === "companyInfo" ? "w-0 " : "bg-green-500 w-[calc(33.33%-16px)]"
                 }`}
                   />
 
@@ -41,9 +46,9 @@ export default function CompanyProfile() {
                   <div
                     className={`absolute top-[17px] left-[50%] h-[2px] -translate-y-1/2 transition-all duration-300
                 ${
-                  step === "business"
+                  step === "businessDetail"
                     ? "w-0"
-                    : step === "additional"
+                    : step === "additionalInfo"
                     ? "bg-green-500 w-[calc(33.33%-16px)]"
                     : "w-0"
                 }`}
@@ -54,14 +59,14 @@ export default function CompanyProfile() {
                     <div
                       className={`w-8 h-8 rounded-full flex items-center justify-center z-10 border-2 transition-colors
                   ${
-                    step === "basic"
+                    step === "companyInfo"
                       ? "bg-white border-blue-500"
-                      : step === "business" || step === "additional"
+                      : step === "businessDetail" || step === "additionalInfo"
                       ? "bg-green-500 border-green-500"
                       : "bg-white border-gray-300"
                   }`}
                     >
-                      {(step === "business" || step === "additional") && (
+                      {(step === "businessDetail" || step === "additionalInfo") && (
                         <svg
                           className="w-4 h-4 text-white"
                           fill="none"
@@ -86,14 +91,14 @@ export default function CompanyProfile() {
                     <div
                       className={`w-8 h-8 rounded-full flex items-center justify-center z-10 border-2 transition-colors
                   ${
-                    step === "business"
+                    step === "businessDetail"
                       ? "bg-white border-blue-500"
-                      : step === "additional"
+                      : step === "additionalInfo"
                       ? "bg-green-500 border-green-500"
                       : "bg-white border-gray-300"
                   }`}
                     >
-                      {step === "additional" && (
+                      {step === "additionalInfo" && (
                         <svg
                           className="w-4 h-4 text-white"
                           fill="none"
@@ -116,7 +121,7 @@ export default function CompanyProfile() {
                     <div
                       className={`w-8 h-8 rounded-full flex items-center justify-center z-10 border-2 transition-colors
                   ${
-                    step === "additional"
+                    step === "additionalInfo"
                       ? "bg-white border-blue-500"
                       : "bg-white border-gray-300"
                   }`}

@@ -1,11 +1,12 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
+import { DecodedToken } from "@/types/auth";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-export function decodeJWT(token: string) {
+export function decodeJWT(token: string): DecodedToken | null {
   try {
     const base64Url = token.split('.')[1];
     const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
@@ -17,7 +18,7 @@ export function decodeJWT(token: string) {
     );
     return JSON.parse(jsonPayload);
   } catch (error) {
-    console.error('Error decoding JWT:', error);
+    console.error('Failed to decode JWT:', error);
     return null;
   }
 }

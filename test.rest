@@ -9,6 +9,7 @@ Content-Type: application/json
 
 ### Test Company Profile Creation
 POST http://143.198.54.56:8081/api/company-profile
+Authorization: Bearer {{$localStorage.token}}
 Content-Type: multipart/form-data; boundary=boundary
 
 --boundary

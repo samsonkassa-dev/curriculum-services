@@ -7,8 +7,9 @@ import { individualColumns, companyColumns } from "./components/columns"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Search, SlidersHorizontal } from "lucide-react"
-import { IndividualUser, CompanyUser } from "@/types/users"
-
+import { useCompanyProfiles } from "@/lib/hooks/useFetchCompanyProfiles"
+import { useDebounce } from "@/lib/hooks/useDebounce"
+import { IndividualUser } from "@/types/users"
 
 // Temporary mock data
 const mockIndividuals: IndividualUser[] = [
@@ -21,44 +22,35 @@ const mockIndividuals: IndividualUser[] = [
   }
 ]
 
-const mockCompanies: CompanyUser[] = [
-  {
-    id: "1",
-    companyName: "Name of the Company",
-    businessType: "Private" as const,
-    email: "jessica.hanson@example.com",
-    status: "Approved" as const,
-    createdAt: "5/27/15"
-  },
-  {
-    id: "2",
-    companyName: "Name of the Company",
-    businessType: "Public" as const,
-    email: "jessica.hanson@example.com",
-    status: "Declined" as const,
-    createdAt: "5/27/15"
-  },
-  {
-    id: "3",
-    companyName: "Name of the Company",
-    businessType: "Private" as const,
-    email: "jessica.hanson@example.com",
-    status: "Pending" as const,
-    createdAt: "5/27/15"
-  },
-  {
-    id: "4",
-    companyName: "Name of the Company",
-    businessType: "Private" as const,
-    email: "jessica.hanson@example.com",
-    status: "Pending" as const,
-    createdAt: "5/27/15"
-  }
-]
-
 export default function Users() {
   const [activeTab, setActiveTab] = useState<'individual' | 'company'>('company')
-  const [isLoading] = useState(false)
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(7)
+  const [searchQuery, setSearchQuery] = useState("")
+  const debouncedSearch = useDebounce(searchQuery, 500)
+
+  const { 
+    data: companyData, 
+    isLoading 
+  } = useCompanyProfiles({ 
+    page,
+    pageSize,
+    searchQuery: debouncedSearch 
+  })
+
+  console.log('Loading:', isLoading)
+  console.log('API Response:', companyData)
+  console.log('Company Profiles:', companyData?.companyProfiles)
+
+  // Calculate showing range
+  const startRecord = ((page - 1) * pageSize) + 1
+  const endRecord = Math.min(page * pageSize, companyData?.totalElements ?? 0)
+  const totalRecords = companyData?.totalElements ?? 0
+
+  const handlePageSizeChange = (newPageSize: number) => {
+    setPageSize(newPageSize)
+    setPage(1) // Reset to first page when changing page size
+  }
 
   return (
     <div className="flex min-h-screen w-[calc(100%-85px)] pl-[85px] mx-auto">
@@ -75,6 +67,8 @@ export default function Users() {
             <Input
               placeholder="Search"
               className="pl-10 h-10 bg-white border-gray-200 rounded-lg"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
           <Button 
@@ -96,8 +90,16 @@ export default function Users() {
         ) : (
           <CompanyDataTable
             columns={companyColumns}
-            data={mockCompanies}
+            data={companyData?.companyProfiles ?? []}
             isLoading={isLoading}
+            pagination={{
+              pageCount: companyData?.totalPages ?? 0,
+              page,
+              setPage,
+              pageSize,
+              setPageSize: handlePageSizeChange,
+              showingText: `Showing ${startRecord} to ${endRecord} out of ${totalRecords} records`
+            }}
           />
         )}
       </div>

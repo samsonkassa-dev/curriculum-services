@@ -1,81 +1,55 @@
 'use client'
 
-import { Input } from "@/components/ui/input";
 import { useState } from 'react';
-import { signInWithEmail, googleSignIn } from '@/lib/auth-client';
+import { Input } from "@/components/ui/input";
+import { useAuth } from '@/lib/hooks/useAuth';
+import { LoginCredentials, LoginResponse, Session } from '@/types/auth';
+import { toast } from 'sonner';
+import { ApiError } from '@/types/auth';
+import { useRouter } from 'next/navigation';
 
-// Add types for Google OAuth
-interface TokenResponse {
+interface GoogleTokenResponse {
   access_token: string;
-  token_type: string;
-  expires_in: number;
-  scope: string;
-}
-
-interface TokenClient {
-  requestAccessToken(): void;
-}
-
-declare global {
-  interface Window {
-    google: {
-      accounts: {
-        oauth2: {
-          initTokenClient(config: {
-            client_id: string;
-            scope: string;
-            callback: (response: TokenResponse) => void;
-          }): TokenClient;
-        };
-      };
-    };
-  }
 }
 
 export default function Login() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
-  
+  const router = useRouter();
+  const { login, googleLogin } = useAuth();
+  const [credentials, setCredentials] = useState<LoginCredentials>({
+    email: '',
+    password: '',
+  });
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     try {
-      if (!email || !password) {
-        setError('Please fill in all fields');
-        return;
-      }
-      
-      await signInWithEmail(email, password);
-      setSuccess('Successfully logged in!');
-      setError(''); // Clear any previous errors
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed');
-      setSuccess(''); // Clear any previous success message
+      const response = await login.mutateAsync(credentials) as Session;
+      toast.success('Successfully logged in');
+      router.refresh();
+    } catch (error: unknown) {
+      const errorMessage = error as ApiError;
+      toast.error(errorMessage.response?.data?.error || 'Login failed');
     }
-  }
+  };
 
   const handleGoogleSignIn = async () => {
-    try {
-      const auth2 = await window.google.accounts.oauth2.initTokenClient({
-        client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!,
-        scope: 'email profile openid',
-        callback: async (response: TokenResponse) => {
-          if (response.access_token) {
-            try {
-              await googleSignIn(response.access_token);
-            } catch (err) {
-              setError(err instanceof Error ? err.message : 'Google sign in failed');
-            }
+    const auth2 = window.google.accounts.oauth2.initTokenClient({
+      client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!,
+      scope: 'email profile openid',
+      callback: async (response: GoogleTokenResponse) => {
+        if (response.access_token) {
+          try {
+            const result = await googleLogin.mutateAsync(response.access_token) as Session;
+            toast.success('Successfully logged in with Google');
+          } catch (error: unknown) {
+            const errorMessage = error as ApiError;
+            toast.error(errorMessage.response?.data?.error || 'Login failed');
           }
-        },
-      });
+        }
+      },
+    });
 
-      auth2.requestAccessToken();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Google sign in failed');
-    }
+    auth2.requestAccessToken();
   };
 
   return (
@@ -93,11 +67,12 @@ export default function Login() {
             <h1 className="text-2xl font-semibold tracking-tight">
               Welcome back
             </h1>
+            <p className="text-sm text-muted-foreground">
+              Enter your email to sign in to your account
+            </p>
           </div>
 
           <div className="space-y-4">
- 
-
             <div className="space-y-2">
               <label htmlFor="email" className="text-sm font-semibold">
                 Email
@@ -106,8 +81,11 @@ export default function Login() {
                 id="email"
                 type="email"
                 placeholder="youremail@gmail.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={credentials.email}
+                onChange={(e) => setCredentials(prev => ({
+                  ...prev,
+                  email: e.target.value
+                }))}
               />
             </div>
 
@@ -120,20 +98,17 @@ export default function Login() {
                 type="password" 
                 placeholder="********" 
                 showPasswordToggle
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                value={credentials.password}
+                onChange={(e) => setCredentials(prev => ({
+                  ...prev,
+                  password: e.target.value
+                }))}
               />
             </div>
 
-            {error && (
+            {login.error && (
               <div className="text-red-500 text-sm text-center">
-                {error}
-              </div>
-            )}
-
-            {success && (
-              <div className="text-green-500 text-sm text-center">
-                {success}
+                {login.error.message}
               </div>
             )}
 
@@ -149,9 +124,10 @@ export default function Login() {
             <form onSubmit={handleLogin}>
               <button 
                 type="submit" 
-                className="w-full rounded-md bg-brand px-4 py-4 text-sm font-medium text-white hover:bg-blue-700"
+                disabled={login.isPending}
+                className="w-full rounded-md bg-brand px-4 py-4 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
               >
-                Log in
+                {login.isPending ? 'Logging in...' : 'Log in'}
               </button>
             </form>
 
@@ -168,6 +144,7 @@ export default function Login() {
 
             <button 
               onClick={handleGoogleSignIn}
+              disabled={googleLogin.isPending}
               className="flex w-full items-center justify-center gap-2 rounded-md border border-input bg-background px-4 py-4 text-sm font-medium hover:bg-accent hover:text-accent-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
             >
               <img

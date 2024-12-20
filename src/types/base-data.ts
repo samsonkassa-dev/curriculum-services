@@ -7,7 +7,7 @@ export interface BaseDataItem {
 export type BaseDataType = 
   | "education-level"
   | "academic-level"
-  | "learning-style"
+  | "learner-style-preference"
   | "language"
   | "training-programs"
   | "differentiation-strategies"

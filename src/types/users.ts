@@ -6,11 +6,39 @@ export interface IndividualUser {
   createdAt: string;
 }
 
+export interface BusinessType {
+  id: string;
+  name: string;
+  description: string;
+}
+
+export interface IndustryType {
+  id: string;
+  name: string;
+  description: string;
+}
+
 export interface CompanyUser {
   id: string;
-  companyName: string;
-  businessType: 'Private' | 'Public';
-  email: string;
-  status: 'Approved' | 'Declined' | 'Pending';
+  name: string;
+  taxIdentificationNumber: string;
+  businessType: {
+    id: string;
+    name: string;
+    description: string;
+  };
+  industryType: {
+    id: string;
+    name: string;
+    description: string;
+  };
+  countryOfIncorporation: string;
+  address: string;
+  phone: string;
+  websiteUrl: string;
+  numberOfEmployees: string;
+  otherDescription: string | null;
+  logoUrl: string | null;
+  verificationStatus: 'ACCEPTED' | 'PENDING' | 'REJECTED';
   createdAt: string;
 } 

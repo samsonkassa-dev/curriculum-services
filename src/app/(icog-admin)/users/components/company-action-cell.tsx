@@ -2,15 +2,16 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 
-
 import { Button } from "@/components/ui/button"
 import { CompanyUser } from "@/types/users"
+import { useRouter } from "next/navigation"
 
 export function CompanyActionCell({ row }: { row: any }) {
+  const router = useRouter()
   const item = row.original as CompanyUser
 
-  const handleView = async () => {
-    // Will implement view logic
+  const handleView = () => {
+    router.push(`/users/${item.id}`)
   }
 
   const handleDelete = async () => {
