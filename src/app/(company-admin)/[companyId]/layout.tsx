@@ -63,24 +63,44 @@ export default function CompanyAdminLayout({
   }))
 
   const handleNavigation = (e: React.MouseEvent) => {
-    if (verificationData?.verificationStatus !== 'ACCEPTED') {
+    if (!verificationData?.verificationStatus) return;
+
+    if (verificationData.verificationStatus === 'PENDING') {
       e.preventDefault()
       toast.error("Account not verified", {
         description: "Your account is pending verification"
+      })
+    } else if (verificationData.verificationStatus === 'REJECTED') {
+      e.preventDefault()
+      toast.error("Account not verified", {
+        description: verificationData.rejectionReason || "Your account was rejected"
+      })
+    }  else if (verificationData.verificationStatus === 'ACCEPTED') {
+      e.preventDefault()
+      toast.warning("UI is not avalilable for now", {
+        // description: verificationData.rejectionReason || "Your account was rejected"
       })
     }
   }
 
   if (isLoading) {
-    return <Loading />
+    return (
+      <div className="h-screen w-screen flex items-center justify-center">
+        <Loading />
+      </div>
+    )
   }
 
   return (
-    <div>
-      <Sidebar navItems={navItemsWithCompanyId} onClick={handleNavigation} />
+    <div className="opacity-100 transition-opacity duration-300">
+      <Sidebar 
+        navItems={navItemsWithCompanyId} 
+        onClick={handleNavigation}
+        disabled={verificationData?.verificationStatus !== 'ACCEPTED'}
+      />
       <Topbar />
       
-      {verificationData?.verificationStatus !== 'ACCEPTED' ? (
+      {!verificationData || verificationData.verificationStatus !== 'ACCEPTED' ? (
         <VerificationStatus 
           status={verificationData?.verificationStatus || 'PENDING'}
           rejectionReason={verificationData?.rejectionReason || ''}

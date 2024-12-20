@@ -15,9 +15,10 @@ export interface NavItem {
 interface SidebarProps {
   navItems: NavItem[]
   onClick?: (e: React.MouseEvent) => void
+  disabled?: boolean
 }
 
-export default function Sidebar({ navItems, onClick }: SidebarProps) {
+export default function Sidebar({ navItems, onClick, disabled }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(true)
   const pathname = usePathname()
 
@@ -51,7 +52,8 @@ export default function Sidebar({ navItems, onClick }: SidebarProps) {
                 "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-md",
                 "hover:bg-gray-300",
                 isCurrentPath(item.href) ? "text-brand bg-brand-opacity" : "text-gray-700",
-                isCollapsed && "justify-center"
+                isCollapsed && "justify-center",
+                disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100'
               )}
               title={isCollapsed ? item.label : undefined}
               onClick={onClick}

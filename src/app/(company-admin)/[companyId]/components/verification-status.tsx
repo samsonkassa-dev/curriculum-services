@@ -2,7 +2,7 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 
 interface VerificationStatusProps {
-  status: 'PENDING' | 'REJECTED';
+  status: 'PENDING' | 'REJECTED' | 'ACCEPTED';
   rejectionReason?: string;
 }
 

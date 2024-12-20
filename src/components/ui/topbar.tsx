@@ -71,7 +71,9 @@ export default function Topbar() {
       })
       return
     }
-    router.push('/training')
+    toast.warning("UI is not avalilable for now", {
+      // description: "Please wait for your account to be verified"
+    })
   }
 
   const handleLogout = () => {
