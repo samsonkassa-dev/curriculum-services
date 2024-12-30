@@ -58,11 +58,19 @@ export default function Topbar() {
 
   // Convert pathname to title
   const getPageTitle = (path: string) => {
-    const segment = path.split('/').pop() || ''
-    return segment.charAt(0).toUpperCase() + segment.slice(1)
+    if (isIcogAdmin()) {
+      // For ICOG admin, use first segment after /
+      const segment = path.split('/')[1] || ''
+      return segment.charAt(0).toUpperCase() + segment.slice(1)
+    } else {
+      // For other roles, use last segment
+      const segment = path.split('/').pop() || ''
+      return segment.charAt(0).toUpperCase() + segment.slice(1)
+    }
   }
 
   const handleCreateTraining = () => {
+    
     if (isCompanyAdminRole && verificationData?.verificationStatus !== 'ACCEPTED') {
       toast.error("Account not verified", {
         description: "Your account is pending verification"
