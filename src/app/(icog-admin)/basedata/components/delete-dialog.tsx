@@ -10,6 +10,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import Image from "next/image"
 
 interface DeleteDialogProps {
   open: boolean
@@ -22,17 +23,20 @@ export function DeleteDialog({ open, onOpenChange, onConfirm, loading }: DeleteD
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
+        <div className="relative w-full h-10">
+          <Image src="/dialogdelete.svg" alt="Delete" fill objectFit="contain" />
+        </div>
         <AlertDialogHeader>
-          <AlertDialogTitle>Are you sure you want to delete this?</AlertDialogTitle>
-          <AlertDialogDescription>
+          <AlertDialogTitle className="text-center">Are you sure you want to delete this?</AlertDialogTitle>
+          <AlertDialogDescription className="text-center">
             Please click the button below in order to proceed with deletion.
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter>
+        <AlertDialogFooter className="mx-auto gap-5">
           <AlertDialogCancel>Cancel</AlertDialogCancel>
           <AlertDialogAction 
             onClick={onConfirm}
-            className="bg-red-500 hover:bg-red-600"
+            className="bg-red-500 hover:bg-red-600 text-white"
             disabled={loading}
           >
             Delete

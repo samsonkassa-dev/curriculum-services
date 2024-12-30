@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label"
 import { Plus, Loader2 } from "lucide-react"
 import { useState } from "react"
 import { BaseDataItem } from "@/types/base-data"
+import { Textarea } from "@/components/ui/textarea"
 
 interface AddDataDialogProps {
   onAddData?: (data: { name: string; description: string }) => void;
@@ -53,19 +54,19 @@ export function AddDataDialog({
   return (
     <Dialog open={actualOpen} onOpenChange={actualOnOpenChange}>
       {mode === 'add' && (
-        <DialogTrigger asChild>
+        <DialogTrigger asChild className="">
           <Button variant="ghost" className="text-blue-500 hover:text-blue-600 hover:bg-blue-50">
             <Plus className="h-4 w-4 mr-2" />
             Add Data
           </Button>
         </DialogTrigger>
       )}
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
+      <DialogContent className="w-full max-w-2xl p-0">
+        <DialogHeader className="px-6 pt-6 border-b-[0.3px] border-[#CED4DA] pb-4">
           <DialogTitle>{mode === 'add' ? 'Add Row' : 'Edit Row'}</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="grid gap-4 py-4">
-          <div className="grid gap-2">
+        <form onSubmit={handleSubmit} className="grid gap-4 p-10">
+          <div className="grid gap-2 px-5">
             <Label htmlFor="name">Name</Label>
             <Input
               id="name"
@@ -75,21 +76,21 @@ export function AddDataDialog({
               className="h-9"
             />
           </div>
-          <div className="grid gap-2">
+          <div className="grid gap-2 px-5 pt-5">
             <Label htmlFor="description">Description</Label>
-            <Input
-              id="description"
+            <Textarea
+                id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Enter description"
-              className="h-9"
+              className="min-h-[80px] resize-none"
             />
           </div>
-          <div className="flex justify-end gap-2 mt-4">
+          <div className="flex justify-center gap-5 mt-8">
             <Button type="button" variant="outline" onClick={() => actualOnOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={isLoading}>
+            <Button type="submit" disabled={isLoading} className="bg-brand text-white hover:bg-brand/90">
               {isLoading ? (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               ) : null}

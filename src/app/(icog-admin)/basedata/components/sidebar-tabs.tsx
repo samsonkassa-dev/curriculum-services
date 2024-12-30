@@ -8,21 +8,26 @@ interface Tab {
 }
 
 const tabs: Tab[] = [
-  { id: "education-level", name: "Level" },
   { id: "academic-level", name: "Academic Level" },
-  { id: "learner-style-preference", name: "Learning Style" },
-  { id: "language", name: "Language" },
-  { id: "training-programs", name: "Training Programs" },
-  { id: "differentiation-strategies", name: "Differentiation Strategies" },
-  { id: "instructional-methods", name: "Instructional Methods" },
-  { id: "technology-integration", name: "Technology Integration" },
-  { id: "mode-of-delivery", name: "Mode of Delivery" },
+  { id: "academic-qualification", name: "Academic Qualification" },
+  { id: "age-group", name: "Age Group" },
   { id: "assessment-type", name: "Assessment Type" },
-  { id: "assessment-subtype", name: "Assessment SubType" },
-  { id: "technological-requirement", name: "Technological Requirement" },
-  { id: "actor-type", name: "Actor Type" },
-  { id: "industry-type", name: "Industry Type" },
   { id: "business-type", name: "Business Type" },
+  { id: "city", name: "City" },
+  { id: "country", name: "Country" },
+  { id: "company-file-type", name: "Company File Type" },
+  { id: "delivery-tool", name: "Delivery Tool" },
+  { id: "economic-background", name: "Economic Background" },
+  { id: "education-level", name: "Education Level" },
+  { id: "industry-type", name: "Industry Type" },
+  { id: "instructional-method", name: "Instructional Method" },
+  { id: "language", name: "Language" },
+  { id: "learner-level", name: "Learner Level" },
+  { id: "learner-style-preference", name: "Learning Style Preference" },
+  { id: "learning-resource-type", name: "Learning Resource Type" },
+  { id: "technological-requirement", name: "Technological Requirement" },
+  { id: "technology-integration", name: "Technology Integration" },
+  { id: "training-purpose", name: "Training Purpose" },
 ]
 
 interface SidebarTabsProps {

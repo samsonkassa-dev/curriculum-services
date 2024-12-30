@@ -38,9 +38,9 @@ export default function Users() {
     searchQuery: debouncedSearch 
   })
 
-  console.log('Loading:', isLoading)
-  console.log('API Response:', companyData)
-  console.log('Company Profiles:', companyData?.companyProfiles)
+  // console.log('Loading:', isLoading)
+  // console.log('API Response:', companyData)
+  // console.log('Company Profiles:', companyData?.companyProfiles)
 
   // Calculate showing range
   const startRecord = ((page - 1) * pageSize) + 1
@@ -86,6 +86,14 @@ export default function Users() {
             columns={individualColumns}
             data={mockIndividuals}
             isLoading={isLoading}
+            pagination={{
+              pageCount: 2,
+              page,
+              setPage,
+              pageSize,
+              setPageSize: handlePageSizeChange,
+              showingText: `Showing ${startRecord} to ${endRecord} out of ${totalRecords} records`
+            }}
           />
         ) : (
           <CompanyDataTable

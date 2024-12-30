@@ -3,7 +3,6 @@
 import { usePathname } from 'next/navigation'
 import Image from 'next/image'
 import { Button } from "./button"
-import { useRouter } from "next/navigation"
 import { decodeJWT } from "@/lib/utils"
 import { useVerificationStatus } from "@/lib/hooks/useVerificationStatus"
 import { toast } from "sonner"
@@ -18,7 +17,6 @@ import { useEffect, useState } from 'react'
 
 export default function Topbar() {
   const pathname = usePathname()
-  const router = useRouter()
   const [mounted, setMounted] = useState(false)
   
   // Check roles from token first
@@ -72,7 +70,6 @@ export default function Topbar() {
       return
     }
     toast.warning("UI is not avalilable for now", {
-      // description: "Please wait for your account to be verified"
     })
   }
 

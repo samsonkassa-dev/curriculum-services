@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
-import { Loader2 } from "lucide-react"
+import { ChevronLeftIcon, ChevronRightIcon, Loader2 } from "lucide-react"
 import { IndividualUser, CompanyUser } from "@/types/users"
 
 interface DataTableProps<TData> {
@@ -42,6 +42,7 @@ export function IndividualDataTable({
   columns,
   data,
   isLoading,
+  pagination
 }: DataTableProps<IndividualUser>) {
   const [sorting, setSorting] = useState<SortingState>([])
 
@@ -124,39 +125,68 @@ export function IndividualDataTable({
         </Table>
       </div>
       <div className="flex items-center justify-between py-4">
-        <div className="text-sm text-gray-500">
-          Showing {table.getState().pagination.pageSize} out of {data.length} records
-        </div>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            Previous
-          </Button>
-          <div className="flex gap-1">
-            {Array.from({ length: table.getPageCount() }, (_, i) => (
-              <Button
-                key={i}
-                variant={table.getState().pagination.pageIndex === i ? "secondary" : "outline"}
-                size="sm"
-                onClick={() => table.setPageIndex(i)}
+        {pagination && (
+          <div className="flex items-center justify-between w-full">
+            {/* Left side - Page Size Selector */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-500">Showing</span>
+              <select
+                value={pagination.pageSize}
+                onChange={(e) => pagination.setPageSize(Number(e.target.value))}
+                className="border rounded-md text-sm px-2 py-1 bg-white"
+                title="Page Size"
               >
-                {i + 1}
+                <option value={7}>10</option>
+                <option value={10}>15</option>
+                <option value={20}>20</option>
+                <option value={50}>25</option>
+              </select>
+            </div>
+
+            {/* Center - Showing Text */}
+            <div className="text-sm text-gray-500">
+              {pagination.showingText}
+            </div>
+
+            {/* Right side - Pagination Controls */}
+            <div className="flex gap-1">
+              <Button
+                variant="pagination"
+                size="sm"
+                onClick={() =>
+                  pagination.setPage(Math.max(1, pagination.page - 1))
+                }
+                disabled={pagination.page <= 1}
+              >
+                <ChevronLeftIcon className="w-4 h-4" />
               </Button>
-            ))}
+              {Array.from(
+                { length: Math.max(1, pagination.pageCount) },
+                (_, i) => i + 1
+              ).map((pageNumber) => (
+                <Button
+                  key={pageNumber}
+                  variant={
+                    pagination.page === pageNumber ? "outline" : "outline"
+                  }
+                  className={pagination.page === pageNumber ? "border-brand text-brand" : ""}
+                  size="sm"
+                  onClick={() => pagination.setPage(pageNumber)}
+                >
+                  {pageNumber}
+                </Button>
+              ))}
+              <Button
+                variant="pagination"
+                size="sm"
+                onClick={() => pagination.setPage(pagination.page + 1)}
+                disabled={pagination.page >= pagination.pageCount}
+              >
+                <ChevronRightIcon className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            Next
-          </Button>
-        </div>
+        )}
       </div>
     </div>
   )
@@ -197,8 +227,8 @@ export function CompanyDataTable({
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id} className="bg-gray-50">
                 {headerGroup.headers.map((header) => (
-                  <TableHead 
-                    key={header.id} 
+                  <TableHead
+                    key={header.id}
                     className="py-4 px-5 text-sm font-medium text-gray-500 bg-gray-50"
                   >
                     {header.isPlaceholder
@@ -227,14 +257,20 @@ export function CompanyDataTable({
                 <TableRow key={row.id} className="border-gray-100">
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id} className="py-4 px-5 text-sm">
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
                     </TableCell>
                   ))}
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center"
+                >
                   No results found.
                 </TableCell>
               </TableRow>
@@ -248,10 +284,10 @@ export function CompanyDataTable({
             {/* Left side - Page Size Selector */}
             <div className="flex items-center gap-2">
               <span className="text-sm text-gray-500">Showing</span>
-              <select 
+              <select
                 value={pagination.pageSize}
                 onChange={(e) => pagination.setPageSize(Number(e.target.value))}
-                className="border rounded-md text-sm px-2 py-1 bg-white"
+                className="border rounded-md text-sm px-2 py-1 bg-white text-gray-500"
                 title="Page Size"
               >
                 <option value={7}>10</option>
@@ -269,36 +305,43 @@ export function CompanyDataTable({
             {/* Right side - Pagination Controls */}
             <div className="flex gap-1">
               <Button
-                variant="outline"
+                variant="pagination"
                 size="sm"
-                onClick={() => pagination.setPage(Math.max(1, pagination.page - 1))}
+                onClick={() =>
+                  pagination.setPage(Math.max(1, pagination.page - 1))
+                }
                 disabled={pagination.page <= 1}
               >
-                Previous
+                <ChevronLeftIcon className="w-4 h-4" />
               </Button>
-              {Array.from({ length: Math.max(1, pagination.pageCount) }, (_, i) => i + 1)
-                .map((pageNumber) => (
-                  <Button
-                    key={pageNumber}
-                    variant={pagination.page === pageNumber ? "outline" : "outline"}
-                    size="sm"
-                    onClick={() => pagination.setPage(pageNumber)}
-                  >
-                    {pageNumber}
-                  </Button>
-                ))}
+              {Array.from(
+                { length: Math.max(1, pagination.pageCount) },
+                (_, i) => i + 1
+              ).map((pageNumber) => (
+                <Button
+                  key={pageNumber}
+                  variant={
+                    pagination.page === pageNumber ? "outline" : "outline"
+                  }
+                  className={pagination.page === pageNumber ? "border-brand text-brand" : ""}
+                  size="sm"
+                  onClick={() => pagination.setPage(pageNumber)}
+                >
+                  {pageNumber}
+                </Button>
+              ))}
               <Button
-                variant="outline"
+                variant="pagination"
                 size="sm"
                 onClick={() => pagination.setPage(pagination.page + 1)}
                 disabled={pagination.page >= pagination.pageCount}
               >
-                Next
+                <ChevronRightIcon className="w-4 h-4" />
               </Button>
             </div>
           </div>
         )}
       </div>
     </div>
-  )
+  );
 } 
