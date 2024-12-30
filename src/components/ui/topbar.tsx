@@ -78,7 +78,6 @@ export default function Topbar() {
 
   const handleLogout = () => {
     clearAuthData()
-    router.push('/')
   }
 
   return (

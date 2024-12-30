@@ -27,7 +27,7 @@ class AuthService {
         isProfileFilled: decoded.isProfileFilled
       };
     } catch (error) {
-      console.error('Failed to decode JWT:', error);
+      console.log('Failed to decode JWT:', error);
       return null;
     }
   }
@@ -122,7 +122,7 @@ class AuthService {
         document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
       }
     } catch (error) {
-      console.error('Logout error:', error);
+      console.log('Logout error:', error);
     } finally {
       this.clearTokens();
     }

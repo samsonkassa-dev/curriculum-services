@@ -1,17 +1,25 @@
 export const clearAuthData = async () => {
-  // Clear localStorage
-  localStorage.clear();
-  
-  // Call logout endpoint to clear the cookie
   try {
-    await fetch('/api/auth/logout', {
+    // Clear localStorage first
+    localStorage.clear();
+    
+    // Call logout endpoint and wait for it to complete
+    const response = await fetch('/api/auth/logout', {
       method: 'POST',
-      credentials: 'include', // Important for cookie handling
+      credentials: 'include',
     });
-  } catch (error) {
-    console.error('Error during logout:', error);
-  }
 
-  // Redirect and clear navigation history
-  window.location.replace('/');
+    if (!response.ok) {
+      throw new Error('Logout failed');
+    }
+
+    // Return success status
+    return { success: true };
+  } catch (error) {
+    // Return error status
+    return { success: false };
+  } finally {
+    // Always redirect, regardless of the outcome
+    window.location.replace('/');
+  }
 };

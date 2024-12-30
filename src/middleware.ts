@@ -6,6 +6,11 @@ export function middleware(req: NextRequest) {
   const token = req.cookies.get('token')?.value;
   const { pathname } = req.nextUrl;
 
+  // Allow access to unauthorized page
+  if (pathname === '/unauthorized') {
+    return NextResponse.next();
+  }
+
   // If no token, redirect to root for login
   if (!token) {
     return pathname === '/' 
@@ -20,45 +25,47 @@ export function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL('/', req.url));
   }
 
-  // Check for ICOG_ADMIN first
+  // ICOG_ADMIN route restrictions
   if (decoded.role === 'ROLE_ICOG_ADMIN') {
     if (pathname === '/') {
       return NextResponse.redirect(new URL('/dashboard', req.url));
     }
-    // Prevent access to company-admin routes
-    if (pathname.startsWith('/(company-admin)')) {
-      return NextResponse.redirect(new URL('/dashboard', req.url));
+    // Prevent access to company-specific routes (routes with IDs)
+    if (pathname.match(/\/[a-zA-Z0-9-]+\/[a-zA-Z-]+$/)) {
+      return NextResponse.redirect(new URL('/unauthorized', req.url));
     }
     return NextResponse.next();
   }
 
-  // If at root with valid token, redirect based on user status
-  if (pathname === '/') {
-    if (decoded.role === 'ROLE_COMPANY_ADMIN') {
+  // COMPANY_ADMIN route restrictions
+  if (decoded.role === 'ROLE_COMPANY_ADMIN') {
+    // If at root with valid token
+    if (pathname === '/') {
       if (!decoded.isProfileFilled) {
         return NextResponse.redirect(new URL('/company-profile', req.url));
       }
       return NextResponse.redirect(new URL(`/${decoded.companyProfileId}/dashboard`, req.url));
     }
-  }
 
-  // Company admin specific redirects
-  if (decoded.role === 'ROLE_COMPANY_ADMIN') {
+    // Allow access to company profile page if profile not filled
     if (!decoded.isProfileFilled && pathname !== '/company-profile') {
       return NextResponse.redirect(new URL('/company-profile', req.url));
     }
-    if (decoded.isProfileFilled && pathname === '/company-profile') {
-      return NextResponse.redirect(new URL(`/${decoded.companyProfileId}/dashboard`, req.url));
+
+    // Prevent access to non-company routes
+    const isCompanyRoute = pathname.startsWith(`/${decoded.companyProfileId}/`);
+    const isCompanyProfileRoute = pathname === '/company-profile';
+    
+    if (!isCompanyRoute && !isCompanyProfileRoute) {
+      return NextResponse.redirect(new URL('/unauthorized', req.url));
     }
   }
 
   return NextResponse.next();
 }
 
-
-
 export const config = {
   matcher: [
-    '/((?!api|_next/static|_next/image|favicon.ico|.*\\..*|_next/.*|public/).*)'
+    '/((?!api|_next/static|_next/image|favicon.ico|.*\\..*|_next/.*|public/|unauthorized).*)'
   ],
 };

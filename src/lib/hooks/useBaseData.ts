@@ -53,7 +53,7 @@ export function useBaseData(type: BaseDataType) {
     },
     onError: (error) => {
       toast.error('Failed to add data');
-      console.error('Add error:', error);
+      console.log('Add error:', error);
     },
   });
 
