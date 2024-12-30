@@ -1,49 +1,77 @@
-name: Deploy to DigitalOcean
+name: Next.js CI/CD Workflow
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
+      - dev
+  workflow_dispatch:
 
 jobs:
-  deploy:
+  build_and_deploy:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v3
-      
-      - name: Install doctl
-        uses: digitalocean/action-doctl@v2
-        with:
-          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
-      
-      - name: Log in to DO Container Registry
-        run: doctl registry login --expiry-seconds 600
-      
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-      
-      - name: Cache Docker layers
-        uses: actions/cache@v3
-        with:
-          path: /tmp/.buildx-cache
-          key: ${{ runner.os }}-buildx-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-buildx-
-      
-      - name: Build container image
-        env:
-          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
-        run: docker build -t registry.digitalocean.com/your-registry/your-app:$(echo $GITHUB_SHA | head -c7) .
-      
-      - name: Deploy to Digital Ocean
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.DO_HOST }}
-          username: ${{ secrets.DO_USERNAME }}
-          key: ${{ secrets.DO_SSH_KEY }}
-          script: |
-            cd /opt/training-portal
-            echo "NEXT_PUBLIC_API=${{ secrets.NEXT_PUBLIC_API }}" > .env
-            echo "TAG=${GITHUB_SHA::7}" >> .env
-            docker compose pull
-            docker compose up -d --force-recreate
-            docker system prune -f
+    # Step 1: Checkout the repository
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+
+    # Step 2: Set up Node.js
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: 18.19.1
+
+    # Step 3: Cache Node Modules
+    - name: Cache Node Modules
+      uses: actions/cache@v2
+      with:
+        path: ~/.pnpm-store # Use pnpm's global store
+        key: ${{ runner.os }}-node-${{ hashFiles('pnpm-lock.yaml') }}
+        restore-keys: |
+          ${{ runner.os }}-node-
+
+    # Step 4: Install dependencies using pnpm
+    - name: Install Dependencies
+      run: |
+        npm install -g pnpm
+        pnpm install --frozen-lockfile
+
+    # Step 5: Build Next.js application
+    - name: Build Next.js Application
+      run: pnpm build
+
+    # Step 6: SSH Agent Setup for Deployment
+    - name: SSH Agent Setup
+      uses: webfactory/ssh-agent@v0.5.3
+      with:
+        ssh-private-key: ${{ secrets.SSH_KEY }}
+
+    # Step 7: Deploy to Server
+    - name: Deploy to Dev Environment
+      run: |
+        ssh -v -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} <<'ENDSSH'
+        # Clone the repository if it doesn't already exist
+        if [ ! -d "curriculum-services" ]; then
+          git clone git@github.com:training-solution-frontend/curriculum-services.git
+        fi
+
+        # Navigate to the project directory
+        cd curriculum-services
+
+        # Pull the latest changes from the repository
+        git pull
+
+        # Install dependencies
+        pnpm install --frozen-lockfile
+
+        # Build the Next.js application
+        pnpm build
+
+        # Ensure Docker is running and deploy the app using Docker Compose
+        docker compose down --volumes
+        docker compose up --build -d
+
+        # List running Docker containers
+        docker ps
+        ENDSSH
