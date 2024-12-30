@@ -1,52 +1,29 @@
-# Base image
-FROM node:18-alpine AS base
-WORKDIR /app
+# Use the official Node.js image as a base
+FROM node:18-alpine
 
-# Dependencies
-FROM base AS deps
-COPY package.json pnpm-lock.yaml ./
-RUN npm install -g pnpm && \
-    pnpm install --frozen-lockfile
-
-# Builder
-FROM node:18-alpine AS builder
-WORKDIR /app
-
-# Install pnpm
+# Install pnpm globally
 RUN npm install -g pnpm
 
-# Copy package files
-COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
-
-# Copy source files
-COPY . .
-
-# Build the application
-RUN pnpm build
-
-# Runner
-FROM node:18-alpine AS runner
+# Set the working directory inside the container
 WORKDIR /app
 
-ENV NODE_ENV production
+# Copy the package.json, pnpm-lock.yaml, and .npmrc into the container
+COPY package.json pnpm-lock.yaml .npmrc ./
 
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+# Install dependencies using pnpm
+RUN pnpm install --frozen-lockfile
 
-# Copy necessary files
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/.next/standalone ./
-COPY --from=builder /app/.next/static ./.next/static
+# Copy the entire project into the working directory inside the container
+COPY . .
 
-USER nextjs
-
+# Expose the port on which Next.js will run (default is 3000)
 EXPOSE 3000
 
-ENV PORT 3000
-ENV HOSTNAME "0.0.0.0"
+# Set the environment variable for production
+ENV NODE_ENV=production
 
-CMD ["node", "server.js"] 
+# Build the Next.js app
+RUN pnpm build
 
-ARG NEXT_PUBLIC_API_URL
-ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+# Start the Next.js app
+CMD ["pnpm", "start"]
