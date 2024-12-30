@@ -35,7 +35,7 @@ const adminNavItems = [
     icon: (
       <img src="/settings.svg" alt="icon" width={19} height={19} />
     ),
-    href: "/settings",
+    href: "/dashboard",
     label: "Settings"
   },
 ]

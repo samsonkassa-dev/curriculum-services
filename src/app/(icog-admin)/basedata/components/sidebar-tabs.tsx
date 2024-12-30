@@ -37,7 +37,7 @@ interface SidebarTabsProps {
 
 export function SidebarTabs({ activeTab, onTabChange }: SidebarTabsProps) {
   return (
-    <div className="w-[280px] bg-white">
+    <div className="w-[280px] bg-white h-[85%] overflow-y-auto rounded-lg">
       {tabs.map((tab) => (
         <button
           key={tab.id}
