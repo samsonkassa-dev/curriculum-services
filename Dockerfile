@@ -14,7 +14,7 @@ COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
 
 #Env
-ENV NEXT_PUBLIC_API_URL: "http://164.90.209.220:8081/api"
+ENV NEXT_PUBLIC_API_URL="http://164.90.209.220:8081/api"
 
 
 # Copy the entire project into the working directory inside the container
