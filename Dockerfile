@@ -7,8 +7,8 @@ RUN npm install -g pnpm
 # Set the working directory inside the container
 WORKDIR /app
 
-# Copy the package.json, pnpm-lock.yaml, and .npmrc into the container
-COPY package.json pnpm-lock.yaml 
+# Copy package.json and pnpm-lock.yaml into the container
+COPY package.json pnpm-lock.yaml ./
 
 # Install dependencies using pnpm
 RUN pnpm install --frozen-lockfile
