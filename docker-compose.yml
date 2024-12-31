@@ -1,6 +1,6 @@
 version: "3.9"
 services:
-  app:
+  frontend:
     container_name: nextjs-app
     build:
       context: .

@@ -51,6 +51,7 @@ jobs:
     - name: Deploy to Dev Environment
       run: |
         ssh -v -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} <<'ENDSSH'
+        cd frontend
         # Clone the repository if it doesn't already exist
         if [ ! -d "curriculum-services" ]; then
           git clone git@github.com:training-solution-frontend/curriculum-services.git

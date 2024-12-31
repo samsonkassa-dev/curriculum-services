@@ -7,11 +7,19 @@ RUN npm install -g pnpm
 # Set the working directory inside the container
 WORKDIR /app
 
-# Copy the package.json, pnpm-lock.yaml, and .npmrc into the container
-COPY package.json pnpm-lock.yaml .npmrc ./
+# Copy package.json and pnpm-lock.yaml into the container
+COPY package.json pnpm-lock.yaml ./
 
 # Install dependencies using pnpm
 RUN pnpm install --frozen-lockfile
+
+#Env
+ENV NEXT_PUBLIC_API=http://164.90.209.220:8081/api
+ENV NEXT_PUBLIC_GOOGLE_CLIENT_ID=928309690452-9lj0uhjmfg9057crpqrt1o1dhq3o0bke.apps.googleusercontent.com 
+ENV GOOGLE_CLIENT_SECRET=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
+
+# Frontend URLs (for Google Console)
+ENV NEXT_PUBLIC_FRONTEND_URL=http://localhost:3000
 
 # Copy the entire project into the working directory inside the container
 COPY . .
