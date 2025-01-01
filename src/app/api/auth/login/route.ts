@@ -30,10 +30,10 @@ export async function POST(request: Request) {
       name: 'token',
       value: data.token,
       path: '/',
-      secure: false, // Since we're using HTTP
+      secure: true,
       sameSite: 'lax',
       httpOnly: true,
-      domain: '164.90.209.220:3000'
+      domain: 'http://164.90.209.220:3000/'
     });
 
     return res;
@@ -41,6 +41,8 @@ export async function POST(request: Request) {
     console.log(error);
     return NextResponse.json(
       { error: error },
+
+
     );
   }
 } 
