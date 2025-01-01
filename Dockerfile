@@ -18,8 +18,8 @@ ENV NEXT_PUBLIC_API=http://164.90.209.220:8081/api
 ENV NEXT_PUBLIC_GOOGLE_CLIENT_ID=928309690452-9lj0uhjmfg9057crpqrt1o1dhq3o0bke.apps.googleusercontent.com 
 ENV GOOGLE_CLIENT_SECRET=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
 
-# Frontend URLs (for Google Console)
-ENV NEXT_PUBLIC_FRONTEND_URL=http://localhost:3000
+# Frontend URLs
+ENV NEXT_PUBLIC_FRONTEND_URL=http://164.90.209.220:3000
 
 # Copy the entire project into the working directory inside the container
 COPY . .
