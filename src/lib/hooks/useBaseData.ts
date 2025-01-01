@@ -1,4 +1,3 @@
-
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { BaseDataItem, BaseDataType } from '@/types/base-data';
@@ -6,7 +5,7 @@ import { toast } from 'sonner';
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API,
+  baseURL: process.env.NEXT_PUBLIC_API || 'http://164.90.209.220:8081/api',
   headers: {
     'Content-Type': 'application/json',
   },

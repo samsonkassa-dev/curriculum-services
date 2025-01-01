@@ -35,10 +35,10 @@ export function useCompanyProfiles({ page, pageSize, searchQuery }: UseCompanyPr
           ...(searchQuery && { 'search-query': searchQuery })
         })
 
-        // console.log('Fetching with params:', params.toString())
-
+        const baseUrl = process.env.NEXT_PUBLIC_API || 'http://164.90.209.220:8081/api';
+        
         const response = await axios.get<CompanyProfilesResponse>(
-          `${process.env.NEXT_PUBLIC_API}/company-profile?${params.toString()}`,
+          `${baseUrl}/company-profile?${params.toString()}`,
           {
             headers: { 
               Authorization: `Bearer ${token}`
@@ -46,7 +46,6 @@ export function useCompanyProfiles({ page, pageSize, searchQuery }: UseCompanyPr
           }
         )
 
-        // console.log('API Response:', response.data)
         return response.data
       } catch (error) {
         if (axios.isAxiosError(error)) {
