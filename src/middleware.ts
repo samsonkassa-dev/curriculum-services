@@ -21,7 +21,6 @@ export function middleware(req: NextRequest) {
   const decoded = decodeJWT(token);
   
   if (!decoded) {
-    // Invalid token, redirect to root
     return NextResponse.redirect(new URL('/', req.url));
   }
 
@@ -39,24 +38,27 @@ export function middleware(req: NextRequest) {
 
   // COMPANY_ADMIN route restrictions
   if (decoded.role === 'ROLE_COMPANY_ADMIN') {
+    // Get company info from cookies instead of headers
+    const companyInfo = req.cookies.get('company_info')?.value;
+    const companyData = companyInfo ? JSON.parse(companyInfo) : null;
+
     // If at root with valid token
     if (pathname === '/') {
-      if (!decoded.isProfileFilled) {
-        return NextResponse.redirect(new URL('/company-profile', req.url));
+      if (companyData?.id) {
+        return NextResponse.redirect(new URL(`/${companyData.id}/dashboard`, req.url));
       }
-      return NextResponse.redirect(new URL(`/${decoded.companyProfileId}/dashboard`, req.url));
-    }
-
-    // Allow access to company profile page if profile not filled
-    if (!decoded.isProfileFilled && pathname !== '/company-profile') {
       return NextResponse.redirect(new URL('/company-profile', req.url));
     }
 
-    // Prevent access to non-company routes
-    const isCompanyRoute = pathname.startsWith(`/${decoded.companyProfileId}/`);
-    const isCompanyProfileRoute = pathname === '/company-profile';
+    // Allow access to company profile page
+    if (pathname === '/company-profile') {
+      return NextResponse.next();
+    }
+
+    // Check if trying to access company routes
+    const isCompanyRoute = companyData?.id && pathname.startsWith(`/${companyData.id}/`);
     
-    if (!isCompanyRoute && !isCompanyProfileRoute) {
+    if (!isCompanyRoute) {
       return NextResponse.redirect(new URL('/unauthorized', req.url));
     }
   }

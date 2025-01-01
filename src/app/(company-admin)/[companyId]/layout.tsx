@@ -47,6 +47,20 @@ const adminNavItems = [
   },
 ]
 
+// Add middleware to fetch requests to include company info
+const addCompanyInfoToRequest = () => {
+  const companyInfo = localStorage.getItem('company_info');
+  if (companyInfo) {
+    const requestInit = {
+      headers: {
+        'x-company-info': companyInfo
+      }
+    };
+    return requestInit;
+  }
+  return {};
+};
+
 export default function CompanyAdminLayout({
   children,
   params: paramsPromise

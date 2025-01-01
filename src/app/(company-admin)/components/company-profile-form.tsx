@@ -104,14 +104,16 @@ export function CompanyProfileForm({
         onSuccess: (response) => {
           const { id, verificationStatus } = response.data.companyProfile;
 
+          // Save as cookie instead of localStorage
+          document.cookie = `company_info=${JSON.stringify({ 
+            id, 
+            verificationStatus 
+          })}; path=/`;
+
           toast.success("Company profile created successfully", {
             description: "You will be redirected to the dashboard",
           });
 
-          localStorage.setItem(
-            "company_info",
-            JSON.stringify({ id, verificationStatus })
-          );
           setTimeout(() => router.push(`/${id}/dashboard`), 1000);
         },
         onError: (error: unknown) => {
