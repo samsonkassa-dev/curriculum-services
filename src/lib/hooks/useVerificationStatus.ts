@@ -20,7 +20,7 @@ export function useVerificationStatus({ enabled = false } = {}) {
       try {
         const token = localStorage.getItem('auth_token')
         const response = await axios.get<ApiResponse>(
-          `${process.env.NEXT_PUBLIC_API}/company-profile/me`,
+          `${process.env.NEXT_PUBLIC_API || 'http://164.90.209.220:8081/api'}/company-profile/me`,
           {
             headers: { Authorization: `Bearer ${token}` }
           }

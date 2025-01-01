@@ -2,7 +2,7 @@ import { BusinessTypesResponse, IndustryTypesResponse } from "@/types/company"
 import { useQuery } from "@tanstack/react-query"
 import axios from "axios"
 
-const API_URL = process.env.NEXT_PUBLIC_API
+const API_URL = process.env.NEXT_PUBLIC_API || 'http://164.90.209.220:8081/api'
 
 export const useBusinessTypes = () => {
   const { data: businessTypes, isLoading: isLoadingBusinessTypes } = useQuery<BusinessTypesResponse>({
