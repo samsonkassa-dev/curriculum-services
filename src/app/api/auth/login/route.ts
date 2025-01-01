@@ -30,10 +30,9 @@ export async function POST(request: Request) {
       name: 'token',
       value: data.token,
       path: '/',
-      secure: true,
+      secure: false,
       sameSite: 'lax',
-      httpOnly: true,
-      domain: 'http://164.90.209.220:3000/'
+      httpOnly: true
     });
 
     return res;
