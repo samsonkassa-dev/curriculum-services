@@ -4,11 +4,7 @@ const nextConfig = {
   experimental: {
     // your experimental features if any
   },
-  serverRuntimeConfig: {
-    cookieDomain: process.env.NODE_ENV === 'production' 
-      ? '.your-domain.com'  // Update with your domain
-      : undefined
-  }
+  // any other Next.js config options you need
 }
 
 module.exports = nextConfig 

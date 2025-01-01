@@ -146,7 +146,7 @@ export function CompanyProfileForm({
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
       {step === "companyInfo" && (
-        <CompanyInfoStep register={register} errors={errors} />
+        <CompanyInfoStep register={register} errors={errors} setValue={setValue} watch={watch} />
       )}
 
       {step === "businessDetail" && (

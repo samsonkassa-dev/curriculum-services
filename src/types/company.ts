@@ -86,7 +86,7 @@ export function transformToApiFormat(data: CompanyProfileFormData) {
     industryTypeId: data.industryType.id,
     countryOfIncorporation: data.countryOfIncorporation,
     address: data.address,
-    phone: data.phone,
+    phone: data.phone.startsWith('+251') ? data.phone : `+251${data.phone}`,
     websiteUrl: data.websiteUrl,
     numberOfEmployees: data.numberOfEmployees,
     otherDescription: data.otherDescription

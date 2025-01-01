@@ -1,14 +1,37 @@
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { CompanyProfileFormData } from "@/types/company"
-import { UseFormRegister, FieldErrors } from "react-hook-form"
+import { UseFormRegister, FieldErrors, UseFormSetValue, UseFormWatch } from "react-hook-form"
 
 interface CompanyInfoStepProps {
   register: UseFormRegister<CompanyProfileFormData>
   errors: FieldErrors<CompanyProfileFormData>
+  setValue: UseFormSetValue<CompanyProfileFormData>
+  watch: UseFormWatch<CompanyProfileFormData>
 }
 
-export function CompanyInfoStep({ register, errors }: CompanyInfoStepProps) {
+export function CompanyInfoStep({ register, errors, setValue, watch }: CompanyInfoStepProps) {
+  // Handle phone number changes
+  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // Only allow numbers
+    const numbers = value.replace(/[^0-9]/g, '');
+    if (numbers.length <= 9) {
+      // Store without prefix - it will be added during submission
+      setValue('phone', numbers);
+    }
+  };
+
+  // Handle TIN changes
+  const handleTINChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    // Only allow numbers and limit to 10 digits
+    const numbers = value.replace(/[^0-9]/g, '');
+    if (numbers.length <= 10) {
+      setValue('taxIdentificationNumber', numbers);
+    }
+  };
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
       <div className="space-y-2">
@@ -56,12 +79,18 @@ export function CompanyInfoStep({ register, errors }: CompanyInfoStepProps) {
         <Label htmlFor="taxIdentificationNumber">Tax Identification Number</Label>
         <Input
           id="taxIdentificationNumber"
-          placeholder="Enter TIN"
-          {...register("taxIdentificationNumber")}
+          placeholder="Enter TIN (10 digits)"
+          value={watch('taxIdentificationNumber') || ''}
+          onChange={handleTINChange}
+          maxLength={10}
+          minLength={10}
           className="w-full"
         />
         {errors.taxIdentificationNumber && (
           <p className="text-sm text-red-500">{errors.taxIdentificationNumber.message}</p>
+        )}
+        {watch('taxIdentificationNumber') && watch('taxIdentificationNumber').length !== 10 && (
+          <p className="text-sm text-red-500">TIN must be exactly 10 digits</p>
         )}
       </div>
 
@@ -89,7 +118,8 @@ export function CompanyInfoStep({ register, errors }: CompanyInfoStepProps) {
           <Input
             id="contactPhone"
             placeholder="9XXXXXXXX or 7XXXXXXXX"
-            {...register("phone")}
+            value={watch('phone') || ''}
+            onChange={handlePhoneChange}
             className="flex-1"
             maxLength={9}
           />

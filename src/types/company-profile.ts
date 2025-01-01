@@ -25,8 +25,8 @@ export const companyInformationSchema = z.object({
   websiteUrl: z.string().optional(),
   address: z.string().min(5, "Company address is required"),
   phone: z.string()
-    .regex(/^[97]\d{6}$/, "Phone number must start with 9 or 7 and be followed by 6 digits")
-    .transform(val => `+251${val}`),
+    .regex(/^[97]\d{8}$/, "Phone number must start with 9 or 7 and be followed by 8 digits")
+    .transform((val) => val.startsWith('+251') ? val : `+251${val}`),
   countryOfIncorporation: z.string().min(2, "Country is required"),
   taxIdentificationNumber: z.string().min(10, "Tax ID is required & must be 10 digits"),
 })

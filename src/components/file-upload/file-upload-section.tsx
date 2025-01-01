@@ -80,7 +80,7 @@ export function FileUploadSection({ setValue, watch, fileTypes }: FileUploadSect
             }}
             className="text-gray-500 hover:text-red-500"
           >
-            <img src="/icons/close.svg" alt="Remove" width={16} height={16} />
+            <img src="/dialogdelete.svg" alt="Remove" width={24} height={24} />
           </Button>
         </div>
       ))}
