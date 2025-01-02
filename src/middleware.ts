@@ -38,25 +38,30 @@ export function middleware(req: NextRequest) {
 
   // COMPANY_ADMIN route restrictions
   if (decoded.role === 'ROLE_COMPANY_ADMIN') {
-    // Get company info from cookies instead of headers
+    // Get company info from cookies for newly created profiles
     const companyInfo = req.cookies.get('company_info')?.value;
     const companyData = companyInfo ? JSON.parse(companyInfo) : null;
 
     // If at root with valid token
     if (pathname === '/') {
-      if (companyData?.id) {
-        return NextResponse.redirect(new URL(`/${companyData.id}/dashboard`, req.url));
+      // Check both token and cookie for company profile info
+      const hasProfile = decoded.isProfileFilled || companyData?.id;
+      const profileId = decoded.companyProfileId || companyData?.id;
+
+      if (hasProfile && profileId) {
+        return NextResponse.redirect(new URL(`/${profileId}/dashboard`, req.url));
       }
       return NextResponse.redirect(new URL('/company-profile', req.url));
     }
 
-    // Allow access to company profile page
-    if (pathname === '/company-profile') {
+    // Allow access to company profile page only if profile isn't filled
+    if (pathname === '/company-profile' && !decoded.isProfileFilled && !companyData?.id) {
       return NextResponse.next();
     }
 
     // Check if trying to access company routes
-    const isCompanyRoute = companyData?.id && pathname.startsWith(`/${companyData.id}/`);
+    const profileId = decoded.companyProfileId || companyData?.id;
+    const isCompanyRoute = profileId && pathname.startsWith(`/${profileId}/`);
     
     if (!isCompanyRoute) {
       return NextResponse.redirect(new URL('/unauthorized', req.url));
