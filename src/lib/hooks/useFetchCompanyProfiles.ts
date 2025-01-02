@@ -64,8 +64,9 @@ export function useSingleCompanyProfile(id: string) {
     queryFn: async () => {
       try {
         const token = localStorage.getItem('auth_token')
+        const baseUrl = process.env.NEXT_PUBLIC_API || 'http://164.90.209.220:8081/api';
         const response = await axios.get<SingleCompanyResponse>(
-          `${process.env.NEXT_PUBLIC_API}/company-profile/${id}`,
+          `${baseUrl}/company-profile/${id}`,
           {
             headers: { 
               Authorization: `Bearer ${token}`
