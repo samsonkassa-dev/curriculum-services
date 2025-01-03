@@ -1,6 +1,6 @@
 'use client'
 
-import { usePathname } from 'next/navigation'
+import { useParams, usePathname, useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { Button } from "./button"
 import { decodeJWT } from "@/lib/utils"
@@ -17,6 +17,9 @@ import { useEffect, useState } from 'react'
 
 export default function Topbar() {
   const pathname = usePathname()
+  const params = useParams()
+  const router = useRouter()
+  
   const [mounted, setMounted] = useState(false)
   
   // Check roles from token first
@@ -70,15 +73,16 @@ export default function Topbar() {
   }
 
   const handleCreateTraining = () => {
-    
-    if (isCompanyAdminRole && verificationData?.verificationStatus !== 'ACCEPTED') {
-      toast.error("Account not verified", {
-        description: "Your account is pending verification"
-      })
-      return
+    if (isCompanyAdminRole) {
+      if (verificationData?.verificationStatus !== 'ACCEPTED') {
+        toast.error("Account not verified", {
+          description: "Your account is pending verification"
+        })
+        return
+      }
+      
+      router.push(`/${params.companyId}/training/create-training`)
     }
-    toast.warning("UI is not avalilable for now", {
-    })
   }
 
   const handleLogout = () => {

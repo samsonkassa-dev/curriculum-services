@@ -3,28 +3,17 @@
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Search, SlidersHorizontal } from "lucide-react"
-import { TrainingCard } from "./components/training-card"
-
-const mockTrainings = [
-  {
-    id: "1",
-    title: "Training Name",
-    location: "Addis Ababa",
-    duration: "2 Weeks",
-    ageGroup: "Age group",
-    description: "The training format encompasses the delivery mode and structure of the sessions. Choosing the right format is essential for maximizing. The training format encompasses the delivery mode and structure of the sessions. Choosing the right format is essential for maximizing."
-  },
-  {
-    id: "2",
-    title: "Training Name",
-    location: "Addis Ababa",
-    duration: "2 Weeks",
-    ageGroup: "Age group",
-    description: "The training format encompasses the delivery mode and structure of the sessions. Choosing the right format is essential for maximizing. The training format encompasses the delivery mode and structure of the sessions. Choosing the right format is essential for maximizing."
-  }
-]
+import { TrainingCard } from "@/components/ui/training-card"
+import { useTrainings } from "@/lib/hooks/useTrainings"
+import { Loading } from "@/components/ui/loading"
 
 export default function Trainings() {
+  const { data, isLoading } = useTrainings()
+
+  if (isLoading) {
+    return <Loading />
+  }
+
   return (
     <div className="flex min-h-screen w-[calc(100%-85px)] pl-[85px] mx-auto">
       <div className="flex-1 p-8">
@@ -46,18 +35,25 @@ export default function Trainings() {
           </Button>
         </div>
 
-        <div className="grid grid-cols-2 gap-24">
-          {mockTrainings.map((training) => (
+        <div className="grid lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-6">
+          {data?.trainings.map((training) => (
             <TrainingCard
               key={training.id}
               title={training.title}
-              location={training.location}
-              duration={training.duration}
-              ageGroup={training.ageGroup}
-              description={training.description}
+              location={training.cities[0]?.name || 'N/A'}
+              duration={`${training.duration} ${training.durationType.toLowerCase()}`}
+              ageGroup={training.ageGroups[0]?.name || 'N/A'}
+              description={training.trainingPurposes[0]?.description || 'No description available'}
             />
           ))}
         </div>
+
+        {/* Show message if no trainings */}
+        {!data?.trainings?.length && (
+          <div className="text-center text-gray-500 mt-8">
+            No trainings available
+          </div>
+        )}
       </div>
     </div>
   )

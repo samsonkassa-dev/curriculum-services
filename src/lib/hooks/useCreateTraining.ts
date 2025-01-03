@@ -29,7 +29,7 @@ export function useCreateTraining() {
     mutationFn: async (data: CreateTrainingData) => {
       const token = localStorage.getItem('auth_token');
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API}/training`,
+        `${process.env.NEXT_PUBLIC_API || 'http://164.90.209.220:8081/api'}/training`,
         data,
         {
           headers: { Authorization: `Bearer ${token}` }

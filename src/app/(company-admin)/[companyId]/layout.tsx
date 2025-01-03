@@ -7,7 +7,7 @@ import Topbar from "@/components/ui/topbar"
 import { VerificationStatus } from './components/verification-status'
 import { Loading } from "@/components/ui/loading"
 import { use } from 'react'
-import { usePathname } from 'next/navigation'
+import { usePathname, useParams } from 'next/navigation'
 
 const adminNavItems = [
   {
@@ -64,46 +64,38 @@ const addCompanyInfoToRequest = () => {
 
 export default function CompanyAdminLayout({
   children,
-  params: paramsPromise
 }: {
   children: React.ReactNode
-  params: Promise<{ companyId: string }>
 }) {
-  const { data: verificationData, isLoading } = useVerificationStatus()
-  const params = use(paramsPromise)
+  const params = useParams()
   const pathname = usePathname()
+  const { data: verificationData, isLoading } = useVerificationStatus()
+  const isCreateTraining = pathname.includes('/training/create-training')
 
-  // Don't show sidebar/topbar for create-training route
-  const isCreateTraining = pathname.includes('/create-training')
-
+  // Create nav items with the actual companyId
   const navItemsWithCompanyId = adminNavItems.map(item => ({
     ...item,
-    href: item.href.replace('[companyId]', params.companyId)
+    href: item.href.replace('[companyId]', params.companyId as string)
   }))
 
   const handleNavigation = (e: React.MouseEvent<HTMLElement>) => {
-    if (!verificationData?.verificationStatus) return;
-
     // Get the clicked link's href
     const target = e.currentTarget as HTMLAnchorElement;
     const href = target.getAttribute('href') || '';
 
-    // Allow access to training route
+    // Allow access to training routes
     if (href.includes('/training')) return;
 
-    if (verificationData.verificationStatus === 'PENDING') {
+    if (verificationData?.verificationStatus === 'PENDING') {
       e.preventDefault()
       toast.error("Account not verified", {
         description: "Your account is pending verification"
       })
-    } else if (verificationData.verificationStatus === 'REJECTED') {
+    } else if (verificationData?.verificationStatus === 'REJECTED') {
       e.preventDefault()
       toast.error("Account not verified", {
         description: verificationData.rejectionReason || "Your account was rejected"
       })
-    } else if (verificationData.verificationStatus === 'ACCEPTED') {
-      e.preventDefault()
-      toast.warning("UI is not available for now")
     }
   }
 
@@ -124,13 +116,18 @@ export default function CompanyAdminLayout({
         </>
       )}
       
-      {!verificationData || verificationData.verificationStatus !== 'ACCEPTED' ? (
-        <VerificationStatus 
-          status={verificationData?.verificationStatus || 'PENDING'}
-          rejectionReason={verificationData?.rejectionReason || ''}
-        />
-      ) : (
+      {/* Allow training routes regardless of verification status */}
+      {pathname.includes('/training') ? (
         children
+      ) : (
+        !verificationData || verificationData.verificationStatus !== 'ACCEPTED' ? (
+          <VerificationStatus 
+            status={verificationData?.verificationStatus || 'PENDING'}
+            rejectionReason={verificationData?.rejectionReason || ''}
+          />
+        ) : (
+          children
+        )
       )}
     </div>
   )
