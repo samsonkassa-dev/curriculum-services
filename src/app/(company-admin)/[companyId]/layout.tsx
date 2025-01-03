@@ -7,6 +7,7 @@ import Topbar from "@/components/ui/topbar"
 import { VerificationStatus } from './components/verification-status'
 import { Loading } from "@/components/ui/loading"
 import { use } from 'react'
+import { usePathname } from 'next/navigation'
 
 const adminNavItems = [
   {
@@ -70,14 +71,25 @@ export default function CompanyAdminLayout({
 }) {
   const { data: verificationData, isLoading } = useVerificationStatus()
   const params = use(paramsPromise)
+  const pathname = usePathname()
+
+  // Don't show sidebar/topbar for create-training route
+  const isCreateTraining = pathname.includes('/create-training')
 
   const navItemsWithCompanyId = adminNavItems.map(item => ({
     ...item,
     href: item.href.replace('[companyId]', params.companyId)
   }))
 
-  const handleNavigation = (e: React.MouseEvent) => {
+  const handleNavigation = (e: React.MouseEvent<HTMLElement>) => {
     if (!verificationData?.verificationStatus) return;
+
+    // Get the clicked link's href
+    const target = e.currentTarget as HTMLAnchorElement;
+    const href = target.getAttribute('href') || '';
+
+    // Allow access to training route
+    if (href.includes('/training')) return;
 
     if (verificationData.verificationStatus === 'PENDING') {
       e.preventDefault()
@@ -89,30 +101,28 @@ export default function CompanyAdminLayout({
       toast.error("Account not verified", {
         description: verificationData.rejectionReason || "Your account was rejected"
       })
-    }  else if (verificationData.verificationStatus === 'ACCEPTED') {
+    } else if (verificationData.verificationStatus === 'ACCEPTED') {
       e.preventDefault()
-      toast.warning("UI is not avalilable for now", {
-        // description: verificationData.rejectionReason || "Your account was rejected"
-      })
+      toast.warning("UI is not available for now")
     }
   }
 
   if (isLoading) {
-    return (
-      <div className="h-screen w-screen flex items-center justify-center">
-        <Loading />
-      </div>
-    )
+    return <Loading />
   }
 
   return (
     <div className="opacity-100 transition-opacity duration-300">
-      <Sidebar 
-        navItems={navItemsWithCompanyId} 
-        onClick={handleNavigation}
-        disabled={verificationData?.verificationStatus !== 'ACCEPTED'}
-      />
-      <Topbar />
+      {!isCreateTraining && (
+        <>
+          <Sidebar 
+            navItems={navItemsWithCompanyId} 
+            onClick={(e: React.MouseEvent<Element>) => handleNavigation(e as React.MouseEvent<HTMLElement>)}
+            disabled={verificationData?.verificationStatus !== 'ACCEPTED'}
+          />
+          <Topbar />
+        </>
+      )}
       
       {!verificationData || verificationData.verificationStatus !== 'ACCEPTED' ? (
         <VerificationStatus 

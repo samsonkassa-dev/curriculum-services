@@ -29,7 +29,6 @@ EXPOSE 3000
 ENV NODE_ENV=production
 
 # Build the Next.js app
-RUN NEXT_PUBLIC_API=http://164.90.209.220:8081/api pnpm build
-
+RUN pnpm build
 # Start the Next.js app
 CMD ["pnpm", "start"]
