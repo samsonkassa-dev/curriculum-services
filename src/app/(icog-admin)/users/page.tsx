@@ -8,19 +8,8 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Search, SlidersHorizontal } from "lucide-react"
 import { useCompanyProfiles } from "@/lib/hooks/useFetchCompanyProfiles"
+import { useCompanyAdmins } from "@/lib/hooks/useCompanyAdmins"
 import { useDebounce } from "@/lib/hooks/useDebounce"
-import { IndividualUser } from "@/types/users"
-
-// Temporary mock data
-const mockIndividuals: IndividualUser[] = [
-  {
-    id: "1",
-    fullName: "Jane Cooper",
-    email: "jessica.hanson@example.com",
-    status: "Active" as const,
-    createdAt: "5/27/15"
-  }
-]
 
 export default function Users() {
   const [activeTab, setActiveTab] = useState<'individual' | 'company'>('company')
@@ -31,16 +20,23 @@ export default function Users() {
 
   const { 
     data: companyData, 
-    isLoading 
+    isLoading: isCompanyLoading 
   } = useCompanyProfiles({ 
     page,
     pageSize,
     searchQuery: debouncedSearch 
   })
 
-  // console.log('Loading:', isLoading)
-  // console.log('API Response:', companyData)
-  // console.log('Company Profiles:', companyData?.companyProfiles)
+  const { data: adminData, isLoading: isAdminLoading } = useCompanyAdmins()
+
+  // Transform admin data to match table structure
+  const individualData = adminData?.companyAdmins.map(admin => ({
+    id: admin.id,
+    fullName: `${admin.firstName} ${admin.lastName}`,
+    email: admin.email,
+    status: admin.emailVerified ? "Active" as const : "Deactivated" as const,
+    createdAt: "N/A"
+  })) || []
 
   // Calculate showing range
   const startRecord = ((page - 1) * pageSize) + 1
@@ -49,7 +45,7 @@ export default function Users() {
 
   const handlePageSizeChange = (newPageSize: number) => {
     setPageSize(newPageSize)
-    setPage(1) // Reset to first page when changing page size
+    setPage(1)
   }
 
   return (
@@ -84,22 +80,22 @@ export default function Users() {
         {activeTab === 'individual' ? (
           <IndividualDataTable
             columns={individualColumns}
-            data={mockIndividuals}
-            isLoading={isLoading}
+            data={individualData}
+            isLoading={isAdminLoading}
             pagination={{
-              pageCount: 2,
+              pageCount: Math.ceil(individualData.length / pageSize),
               page,
               setPage,
               pageSize,
               setPageSize: handlePageSizeChange,
-              showingText: `Showing ${startRecord} to ${endRecord} out of ${totalRecords} records`
+              showingText: `Showing ${startRecord} to ${endRecord} out of ${individualData.length} records`
             }}
           />
         ) : (
           <CompanyDataTable
             columns={companyColumns}
             data={companyData?.companyProfiles ?? []}
-            isLoading={isLoading}
+            isLoading={isCompanyLoading}
             pagination={{
               pageCount: companyData?.totalPages ?? 0,
               page,

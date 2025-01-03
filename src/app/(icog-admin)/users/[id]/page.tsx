@@ -36,8 +36,8 @@ export default function CompanyProfilePage() {
           {company?.verificationStatus === "PENDING" && (
             <div className="flex gap-3">
               <Button 
-                variant="default" 
-                className="bg-green-500 hover:bg-green-600"
+                variant="outline" 
+                className="bg-[#eefaeb] text-green-500"
                 onClick={() => accept(id as string)}
                 disabled={isAccepting}
               >
