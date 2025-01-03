@@ -13,7 +13,11 @@ const api = axios.create({
 
 // Helper to get the response data key based on type
 const getResponseKey = (type: BaseDataType) => {
-  // Convert kebab-case to camelCase and add s at the end
+  // Special cases for city and country
+  if (type === 'city') return 'cities';
+  if (type === 'country') return 'countries';
+
+  // Default case for other types
   return type
     .split('-')
     .map((word, index) => 
