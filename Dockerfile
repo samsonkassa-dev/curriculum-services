@@ -13,20 +13,14 @@ COPY package.json pnpm-lock.yaml ./
 # Install dependencies using pnpm
 RUN pnpm install --frozen-lockfile
 
-#Env
-ENV NEXT_PUBLIC_API=http://164.90.209.220:8081/api
-ENV NEXT_PUBLIC_GOOGLE_CLIENT_ID=928309690452-9lj0uhjmfg9057crpqrt1o1dhq3o0bke.apps.googleusercontent.com 
-ENV GOOGLE_CLIENT_SECRET=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
-
-
 # Copy the entire project into the working directory inside the container
 COPY . .
 
+# Copy the .env file into the container
+COPY .env .env
+
 # Expose the port on which Next.js will run (default is 3000)
 EXPOSE 3000
-
-# Set the environment variable for production
-ENV NODE_ENV=production
 
 # Build the Next.js app
 RUN pnpm build
