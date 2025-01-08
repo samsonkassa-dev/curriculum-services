@@ -14,34 +14,57 @@ import { useDebounce } from "@/lib/hooks/useDebounce"
 export default function Users() {
   const [activeTab, setActiveTab] = useState<'individual' | 'company'>('company')
   const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(7)
+  const [pageSize, setPageSize] = useState(10)
   const [searchQuery, setSearchQuery] = useState("")
   const debouncedSearch = useDebounce(searchQuery, 500)
 
-  const { 
-    data: companyData, 
-    isLoading: isCompanyLoading 
-  } = useCompanyProfiles({ 
-    page,
-    pageSize,
+  const { data: companyData, isLoading: isCompanyLoading } = useCompanyProfiles({ 
+    page, 
+    pageSize, 
     searchQuery: debouncedSearch 
   })
-
   const { data: adminData, isLoading: isAdminLoading } = useCompanyAdmins()
 
-  // Transform admin data to match table structure
-  const individualData = adminData?.companyAdmins.map(admin => ({
-    id: admin.id,
-    fullName: `${admin.firstName} ${admin.lastName}`,
-    email: admin.email,
-    status: admin.emailVerified ? "Active" as const : "Deactivated" as const,
-    createdAt: "N/A"
-  })) || []
+  // Filter and paginate company data on client side
+  const filteredCompanyData = companyData?.companyProfiles?.filter(company => 
+    company.name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+    company.businessType.name.toLowerCase().includes(debouncedSearch.toLowerCase())
+  ) || []
 
-  // Calculate showing range
-  const startRecord = ((page - 1) * pageSize) + 1
-  const endRecord = Math.min(page * pageSize, companyData?.totalElements ?? 0)
-  const totalRecords = companyData?.totalElements ?? 0
+  // Calculate pagination for company data
+  const companyStartIndex = (page - 1) * pageSize
+  const companyEndIndex = companyStartIndex + pageSize
+  const paginatedCompanyData = filteredCompanyData.slice(companyStartIndex, companyEndIndex)
+
+  // Individual data pagination (unchanged)
+  const filteredIndividualData = adminData?.companyAdmins.filter(admin => 
+    admin.firstName.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+    admin.lastName.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+    admin.email.toLowerCase().includes(debouncedSearch.toLowerCase())
+  ) || []
+
+  const individualStartIndex = (page - 1) * pageSize
+  const individualEndIndex = individualStartIndex + pageSize
+  const paginatedIndividualData = filteredIndividualData
+    .slice(individualStartIndex, individualEndIndex)
+    .map(admin => ({
+      id: admin.id,
+      fullName: `${admin.firstName} ${admin.lastName}`,
+      email: admin.email,
+      status: admin.emailVerified ? "Active" as const : "Deactivated" as const,
+      createdAt: "N/A"
+    }))
+
+  // Calculate showing ranges
+  const individualStartRecord = filteredIndividualData.length ? individualStartIndex + 1 : 0
+  const individualEndRecord = Math.min(individualEndIndex, filteredIndividualData.length)
+  
+  const companyStartRecord = filteredCompanyData.length ? companyStartIndex + 1 : 0
+  const companyEndRecord = Math.min(companyEndIndex, filteredCompanyData.length)
+
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage)
+  }
 
   const handlePageSizeChange = (newPageSize: number) => {
     setPageSize(newPageSize)
@@ -49,16 +72,16 @@ export default function Users() {
   }
 
   return (
-    <div className="flex min-h-screen w-[calc(100%-85px)] pl-[85px] mx-auto">
-      <div className="flex-1 p-8">
+    <div className="flex min-h-screen md:w-[calc(100%-85px)] md:pl-[85px] md:mx-auto w-full">
+      <div className="flex-1 p-4 md:p-8 min-w-0">
         <h1 className="text-lg font-semibold mb-6">
           {activeTab === 'individual' ? 'Individual' : 'Company'}
         </h1>
         
         <UserTabs activeTab={activeTab} onTabChange={setActiveTab} />
         
-        <div className="flex items-center justify-end gap-3 mb-6">
-          <div className="relative w-[300px]">
+        <div className="flex items-center lg:justify-end gap-3 mb-6">
+          <div className="relative md:w-[300px]">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
               placeholder="Search"
@@ -80,29 +103,29 @@ export default function Users() {
         {activeTab === 'individual' ? (
           <IndividualDataTable
             columns={individualColumns}
-            data={individualData}
+            data={paginatedIndividualData}
             isLoading={isAdminLoading}
             pagination={{
-              pageCount: Math.ceil(individualData.length / pageSize),
+              pageCount: Math.ceil(filteredIndividualData.length / pageSize),
               page,
-              setPage,
+              setPage: handlePageChange,
               pageSize,
               setPageSize: handlePageSizeChange,
-              showingText: `Showing ${startRecord} to ${endRecord} out of ${individualData.length} records`
+              showingText: `Showing ${individualStartRecord} to ${individualEndRecord} out of ${filteredIndividualData.length} records`
             }}
           />
         ) : (
           <CompanyDataTable
             columns={companyColumns}
-            data={companyData?.companyProfiles ?? []}
+            data={paginatedCompanyData}
             isLoading={isCompanyLoading}
             pagination={{
-              pageCount: companyData?.totalPages ?? 0,
+              pageCount: Math.ceil(filteredCompanyData.length / pageSize),
               page,
-              setPage,
+              setPage: handlePageChange,
               pageSize,
               setPageSize: handlePageSizeChange,
-              showingText: `Showing ${startRecord} to ${endRecord} out of ${totalRecords} records`
+              showingText: `Showing ${companyStartRecord} to ${companyEndRecord} out of ${filteredCompanyData.length} records`
             }}
           />
         )}

@@ -20,7 +20,7 @@ COPY . .
 COPY .env .env
 
 # Expose the port on which Next.js will run (default is 3000)
-EXPOSE 3000
+EXPOSE 3000 
 
 # Build the Next.js app
 RUN pnpm build

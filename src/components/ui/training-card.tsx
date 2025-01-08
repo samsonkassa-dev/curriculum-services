@@ -19,7 +19,7 @@ export function TrainingCard({
   description 
 }: TrainingCardProps) {
   return (
-    <div className="bg-white rounded-lg shadow-custom border-[0.5px] border-[#E4E4E4] p-10 relative">
+    <div className="bg-white rounded-lg shadow-custom border-[0.5px] border-[#E4E4E4] p-8 relative">
       <Button 
         variant="ghost" 
         size="icon" 
@@ -28,9 +28,9 @@ export function TrainingCard({
         <MoreVertical className="h-4 w-4 text-brand" />
       </Button>
 
-      <h3 className="text-2xl font-semibold text-brand mb-4">{title}</h3>
+      <h3 className="text-xl md:text-2xl font-semibold text-brand mb-4">{title}</h3>
       
-      <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
+      <div className="flex items-center gap-4 md:text-sm text-[11px] text-gray-500 mb-4">
         <div className="flex items-center gap-1">
           <img src="/location.svg" alt="" className="w-4 h-4" />
           {location}
@@ -52,7 +52,7 @@ export function TrainingCard({
       <div className="flex items-end justify-end py-3">
         <Button 
         variant="link" 
-        className="text-brand hover:text-brand-primary p-0 h-auto font-medium"
+        className="text-brand hover:text-brand-primary p-0 h-auto font-medium text-sm md:text-md"
       >
         View training
           <img src="/rightArrow.svg" alt="" className="w-4 h-4 ml-1" />

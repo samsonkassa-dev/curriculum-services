@@ -15,20 +15,20 @@ export default function Trainings() {
   }
 
   return (
-    <div className="flex min-h-screen w-[calc(100%-85px)] pl-[85px] mx-auto">
+    <div className="flex min-h-screen md:w-[calc(100%-85px)] md:pl-[85px] mx-auto">
       <div className="flex-1 p-8">
         <div className="flex items-center justify-end gap-4 mb-6">
-          <div className="relative w-[300px]">
+          <div className="relative md:w-[300px]">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
               placeholder="Search Training"
-              className="pl-10 h-10 bg-white border-gray-200 rounded-lg"
+              className="pl-10 h-10 bg-white border-gray-200 rounded-lg text-sm md:text-md"
             />
           </div>
           <Button 
             variant="outline" 
             size="default"
-            className="h-10 px-4 border-gray-200 rounded-lg font-medium"
+            className="h-10 px-4 border-gray-200 rounded-lg font-medium text-xs md:text-md" 
           >
             <SlidersHorizontal className="h-4 w-4 mr-2" />
             Filter

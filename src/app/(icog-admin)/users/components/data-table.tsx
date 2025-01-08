@@ -56,11 +56,6 @@ export function IndividualDataTable({
     state: {
       sorting,
     },
-    initialState: {
-      pagination: {
-        pageSize: 7,
-      },
-    },
   })
 
   return (
@@ -129,22 +124,22 @@ export function IndividualDataTable({
           <div className="flex items-center justify-between w-full">
             {/* Left side - Page Size Selector */}
             <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-500">Showing</span>
+              <span className="md:text-sm text-xs text-gray-500">Showing</span>
               <select
                 value={pagination.pageSize}
                 onChange={(e) => pagination.setPageSize(Number(e.target.value))}
-                className="border rounded-md text-sm px-2 py-1 bg-white"
+                className="border rounded-md md:text-sm text-xs px-2 py-1 bg-white"
                 title="Page Size"
               >
-                <option value={7}>10</option>
-                <option value={10}>15</option>
+                <option value={10}>10</option>
                 <option value={20}>20</option>
-                <option value={50}>25</option>
+                <option value={30}>30</option>
+                <option value={50}>50</option>
               </select>
             </div>
 
             {/* Center - Showing Text */}
-            <div className="text-sm text-gray-500">
+            <div className="md:text-sm text-xs pl-2 text-gray-500">
               {pagination.showingText}
             </div>
 
@@ -182,7 +177,7 @@ export function IndividualDataTable({
                 onClick={() => pagination.setPage(pagination.page + 1)}
                 disabled={pagination.page >= pagination.pageCount}
               >
-                <ChevronRightIcon className="w-4 h-4" />
+                <ChevronRightIcon className="md:w-4 md:h-4 w-2 h-2" />
               </Button>
             </div>
           </div>
@@ -210,11 +205,6 @@ export function CompanyDataTable({
     getSortedRowModel: getSortedRowModel(),
     state: {
       sorting,
-    },
-    initialState: {
-      pagination: {
-        pageSize: 7,
-      },
     },
   })
 
@@ -283,22 +273,22 @@ export function CompanyDataTable({
           <div className="flex items-center justify-between w-full">
             {/* Left side - Page Size Selector */}
             <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-500">Showing</span>
+              <span className="md:text-sm text-xs text-gray-500">Showing</span>
               <select
                 value={pagination.pageSize}
                 onChange={(e) => pagination.setPageSize(Number(e.target.value))}
-                className="border rounded-md text-sm px-2 py-1 bg-white text-gray-500"
+                className="border rounded-md md:text-sm text-xs md:px-2 px-2 py-1 bg-white"
                 title="Page Size"
               >
-                <option value={7}>10</option>
-                <option value={10}>15</option>
+                <option value={10}>10</option>
                 <option value={20}>20</option>
-                <option value={50}>25</option>
+                <option value={30}>30</option>
+                <option value={50}>50</option>
               </select>
             </div>
 
             {/* Center - Showing Text */}
-            <div className="text-sm text-gray-500">
+            <div className="text-xs md:text-sm pl-2 text-gray-500">
               {pagination.showingText}
             </div>
 
@@ -336,7 +326,7 @@ export function CompanyDataTable({
                 onClick={() => pagination.setPage(pagination.page + 1)}
                 disabled={pagination.page >= pagination.pageCount}
               >
-                <ChevronRightIcon className="w-4 h-4" />
+                <ChevronRightIcon className="md:w-4 md:h-4 w-2 h-2" />
               </Button>
             </div>
           </div>

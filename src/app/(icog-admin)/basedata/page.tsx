@@ -40,11 +40,11 @@ export default function BaseData() {
   }
 
   return (
-    <div className="flex h-screen max-w-[1200px] mx-auto overflow-hidden">
-      <div className="p-4 h-full">
+    <div className="flex md:flex-row flex-col min-h-screen md:w-[calc(100%-85px)] lg:pl-[85px] md:pl-[50px] md:mx-auto w-full overflow-hidden">
+      <div className="md:w-[30%] w-full mx-auto p-5">
         <SidebarTabs activeTab={activeTab} onTabChange={(tab) => setActiveTab(tab as BaseDataType)} />
       </div>
-      <div className="flex-1 p-8 overflow-y-auto">
+      <div className="flex-1 p-10 overflow-y-auto">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-xl font-semibold capitalize">{activeTab.replace('-', ' ')}</h1>
           <AddDataDialog 

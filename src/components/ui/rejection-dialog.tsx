@@ -22,7 +22,10 @@ export function RejectionDialog({ onReject, isRejecting }: RejectionDialogProps)
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="destructive">
+        <Button
+          variant="outline"
+          className="bg-[#fce7e1] text-[#FE2929] border-[#FE2929] px-6"
+        >
           Reject
         </Button>
       </DialogTrigger>
@@ -38,15 +41,13 @@ export function RejectionDialog({ onReject, isRejecting }: RejectionDialogProps)
             className="min-h-[100px]"
           />
           <div className="flex justify-end gap-3">
-            <Button 
-              variant="outline" 
-              onClick={() => setOpen(false)}
-            >
+            <Button variant="outline" onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button 
+            <Button
               onClick={handleSubmit}
               disabled={!reason.trim() || isRejecting}
+              className="text-white"
             >
               {isRejecting ? (
                 <>
@@ -54,12 +55,12 @@ export function RejectionDialog({ onReject, isRejecting }: RejectionDialogProps)
                   Sending...
                 </>
               ) : (
-                'Send Feedback'
+                "Send Feedback"
               )}
             </Button>
           </div>
         </div>
       </DialogContent>
     </Dialog>
-  )
+  );
 } 

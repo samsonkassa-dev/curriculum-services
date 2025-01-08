@@ -17,13 +17,13 @@ interface SimpleBreadcrumbProps {
 function SimpleBreadcrumb({ items }: SimpleBreadcrumbProps) {
   return (
     <nav>
-      <ol className="flex items-center space-x-2">
+      <ol className="flex items-center">
         {items.map((item, index) => (
           <li key={index} className="flex items-center">
-            {index > 0 && <span className="mx-2 text-gray-400">/</span>}
+            {index > 0 && <span className="px-1 text-[#c7c7cc]">/</span>}
             <Link 
               href={item.href}
-              className="text-sm text-gray-600 hover:text-gray-900"
+              className="md:text-sm text-xs text-[#c7c7cc] hover:text-gray-900"
             >
               {item.label}
             </Link>

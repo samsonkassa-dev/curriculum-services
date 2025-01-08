@@ -29,15 +29,15 @@ export default function CompanyProfilePage() {
   }
 
   return (
-    <div className="flex min-h-screen w-[calc(100%-85px)] pl-[85px] mx-auto">
-      <div className="flex-1 p-8">
-        <div className="flex items-center justify-between mb-6">
+    <div className="flex min-h-screen md:w-[calc(100%-85px)] md:pl-[85px] mx-auto">
+      <div className="flex-1 p-4 md:p-8">
+        <div className="flex flex-col md:flex-row gap-4 items-start md:justify-between p-4 md:p-0 mb-6">
           <Breadcrumb items={breadcrumbItems} />
           {company?.verificationStatus === "PENDING" && (
             <div className="flex gap-3">
               <Button 
                 variant="outline" 
-                className="bg-[#eefaeb] text-green-500"
+                className="bg-[#eefaeb] text-green-500 border-green-500 px-6"
                 onClick={() => accept(id as string)}
                 disabled={isAccepting}
               >
@@ -58,14 +58,14 @@ export default function CompanyProfilePage() {
           )}
         </div>
 
-        <div className="bg-white rounded-lg p-6 shadow-sm">
+        <div className="bg-white rounded-lg p-4 md:p-6 ">
           <h1 className="text-xl font-semibold mb-6">Company Profile</h1>
           <p className="text-gray-500 text-sm mb-8">
             Enter a brief description here to give readers an overview of the content form below.
           </p>
 
           <div className="space-y-6">
-            <div className="grid grid-cols-2 gap-x-24 gap-y-6">
+            <div className="grid grid-cols-2 md:gap-x-24 gap-x-12 gap-y-6">
               <Field label="Company Name:" value={company?.name} />
               <Field label="Website Link:" value={company?.websiteUrl} />
               <Field label="Company Address:" value={company?.address} />

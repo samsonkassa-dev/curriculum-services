@@ -11,6 +11,7 @@ interface UserProfile {
   lastName: string;
   email: string;
   role: UserRole;
+  phone: string;
 }
 
 interface ApiResponse {
