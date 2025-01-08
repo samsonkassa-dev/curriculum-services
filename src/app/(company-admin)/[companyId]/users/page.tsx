@@ -37,12 +37,13 @@ export default function CompanyAdminUsers() {
   }
 
   return (
-    <div className="flex min-h-screen w-[calc(100%-85px)] pl-[85px] mx-auto">
-      <div className="flex-1 p-8">
+    <div className="flex min-h-screen md:w-[calc(100%-85px)] md:pl-[85px] md:mx-auto w-full">
+        <div className="flex-1 p-4 md:p-8 min-w-0">
         <h1 className="text-lg font-semibold mb-6">Users</h1>
         
-        <div className="flex items-center justify-end gap-3 mb-6">
-          <div className="relative w-[300px]">
+      
+        <div className="flex items-center lg:justify-end gap-3 mb-6">
+          <div className="relative md:w-[300px]">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
               placeholder="Search"

@@ -9,10 +9,10 @@ export function CreateTrainingStep1({ onNext }: StepProps) {
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-2xl font-semibold mb-2 text-center">
+        <h2 className="lg:text-2xl md:text-xl text-lg font-semibold mb-2 text-center">
           What is the title of the training
         </h2>
-        <p className="text-gray-500 text-sm text-center">
+        <p className="lg:text-sm md:text-xs text-xs text-gray-500 text-center">
           Enter brief description about this question here
         </p>
       </div>
@@ -22,7 +22,7 @@ export function CreateTrainingStep1({ onNext }: StepProps) {
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Enter training title"
-          className="max-w-xl"
+          className="max-w-xl text-sm md:text-md"
         />
 
         <Button 

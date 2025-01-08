@@ -32,10 +32,10 @@ export function CreateTrainingStep5({ onNext, onBack, isSubmitting }: Step5Props
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-2xl font-semibold mb-2 text-center">
+        <h2 className="lg:text-2xl md:text-xl text-lg font-semibold mb-2 text-center">
           What is the purpose for the training?
         </h2>
-        <p className="text-gray-500 text-sm text-center mb-8">
+        <p className="lg:text-sm md:text-xs text-xs text-gray-500 text-center mb-8">
           Enter brief description about this question here
         </p>
       </div>

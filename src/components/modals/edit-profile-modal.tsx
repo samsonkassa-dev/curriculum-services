@@ -26,9 +26,12 @@ interface EditProfileModalProps {
 
 export function EditProfileModal({ isOpen, onClose, defaultValues }: EditProfileModalProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const profilePicture = useProfilePicture()
-  const [previewUrl, setPreviewUrl] = useState<string | null>(profilePicture)
   const { uploadProfilePicture, editProfile } = useEditProfile()
+  const savedProfilePicture = typeof window !== 'undefined' ? localStorage.getItem('profile_picture_url') : null
+  
+  // Initialize with saved picture from localStorage, fallback to default
+  const [previewUrl, setPreviewUrl] = useState<string | null>(savedProfilePicture || '/camera.svg')
+  
   const [firstName, setFirstName] = useState(defaultValues?.firstName || '')
   const [lastName, setLastName] = useState(defaultValues?.lastName || '')
   const [email, setEmail] = useState(defaultValues?.email || '')
@@ -82,8 +85,8 @@ export function EditProfileModal({ isOpen, onClose, defaultValues }: EditProfile
           <div className="flex justify-center">
             <div className="relative cursor-pointer" onClick={handleImageClick}>
               <div className="w-20 h-20 rounded-full bg-gray-100 flex items-center justify-center overflow-hidden">
-                {previewUrl ? (
-                  <img src={previewUrl} alt="Profile" className="w-full h-full object-cover" />
+                {previewUrl && previewUrl !== '/camera.svg' ? (
+                  <img src={previewUrl} alt="p" className="w-full h-full object-cover" />
                 ) : (
                   <img src="/camera.svg" alt="Upload" className="w-8 h-8" />
                 )}

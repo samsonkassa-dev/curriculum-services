@@ -68,7 +68,7 @@ export default function Sidebar({ navItems, onClick, disabled }: SidebarProps) {
                 key={index}
                 href={item.href}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-sm md:text-md",
+                  "flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-xs md:text-md",
                   "hover:bg-gray-300",
                   isCurrentPath(item.href) ? "text-brand bg-brand-opacity" : "text-gray-700",
                   // Only center justify on desktop when collapsed

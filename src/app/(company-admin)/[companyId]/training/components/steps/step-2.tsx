@@ -50,10 +50,10 @@ export function CreateTrainingStep2({ onNext, onBack }: StepProps) {
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-2xl font-semibold mb-2 text-center">
+        <h2 className="lg:text-2xl md:text-xl text-lg font-semibold mb-2 text-center">
           Where will the training take place?
         </h2>
-        <p className="text-gray-500 text-sm text-center mb-8">
+        <p className="lg:text-sm md:text-xs text-xs text-gray-500 text-center mb-8">
           Enter brief description about this question here
         </p>
       </div>

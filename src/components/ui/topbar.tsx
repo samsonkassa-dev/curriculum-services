@@ -97,19 +97,19 @@ export default function Topbar() {
 
   return (
     <div className="border-b-[0.3px] border-[#CED4DA]">
-      <div className="md:ml-[65px] ml-[20px] flex items-center justify-between py-6 px-8 bg-white">
+      <div className="md:ml-[65px]  flex items-center justify-between py-6 px-4 bg-white">
         <div className="flex items-center justify-between w-full">
           {/* Page Title */}
-          <h1 className="lg:text-2xl md:text-xl text-lg lg:pl-[59px] font-semibold">
+          <h1 className="lg:text-2xl md:text-xl text-sm lg:pl-[59px] pl-8 font-semibold">
             {getPageTitle(pathname)}
           </h1>
 
-          <div className="flex items-center gap-6">
+          <div className="flex items-center md:gap-6 gap-3">
             {/* Create Training Button */}
             {isCompanyAdmin() && (
               <Button
                 onClick={handleCreateTraining}
-                className="bg-[#0B75FF] hover:bg-[#0052CC] text-white lg:px-6 lg:py-5 px-4 py-3 rounded-3xl text-sm md:text-base"
+                className="bg-[#0B75FF] hover:bg-[#0052CC] text-white lg:px-6 lg:py-5 px-3 py-1 rounded-3xl md:text-sm text-xs"
               >
                 Create Training
               </Button>

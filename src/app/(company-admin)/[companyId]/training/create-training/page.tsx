@@ -101,7 +101,7 @@ export default function CreateTraining() {
   return (
     <>
       <div className="min-h-screen bg-[#FBFBFB]">
-        <div className="w-full mx-auto py-8">
+        <div className="w-full mx-auto py-8 ">
           {/* Progress Header */}
           <div className="flex justify-between items-center mb-8 px-10">
             <div className="text-sm text-gray-500">Step {currentStep} of 5</div>
@@ -122,7 +122,7 @@ export default function CreateTraining() {
           </div>
 
           {/* Form Steps */}
-          <div className="w-full mx-auto">{renderStep()}</div>
+          <div className="w-full mx-auto px-5">{renderStep()}</div>
         </div>
       </div>
 
@@ -133,12 +133,15 @@ export default function CreateTraining() {
       />
 
       <InviteModal
-        isOpen={showInviteModal}
-        onClose={handleInviteModalClose}
-        onInvite={handleInvite}
-        inviteLink={inviteLink}
-        isLoading={isInviting}
-      />
+         isOpen={showInviteModal}
+          onClose={handleInviteModalClose}
+          onInvite={handleInvite}
+          inviteLink={inviteLink}
+          isLoading={isInviting}
+        />
+      
     </>
   );
 }
+
+  

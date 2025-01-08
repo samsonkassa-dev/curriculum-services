@@ -19,7 +19,7 @@ interface SuccessModalProps {
 export function SuccessModal({ isOpen, onClose, onAssignClick }: SuccessModalProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg max-w-[350px]">
         <DialogHeader className="text-center">
           <div className="mx-auto w-12 h-12 mb-4">
             <img src="/modalRight.svg" alt="" />

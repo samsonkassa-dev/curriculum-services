@@ -30,7 +30,7 @@ export function InviteModal({ isOpen, onClose, onInvite, inviteLink, isLoading }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg max-w-[350px]">
         <DialogHeader>
           <DialogTitle>Invite Curriculum Admin</DialogTitle>
         </DialogHeader>

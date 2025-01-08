@@ -6,6 +6,8 @@ import { useParams } from "next/navigation"
 import { useTrainings } from "@/lib/hooks/useTrainings"
 import { TrainingCard } from "@/components/ui/training-card"
 import { Loading } from "@/components/ui/loading"
+import { Input } from "@/components/ui/input"
+import { Search, SlidersHorizontal } from "lucide-react"
 
 export default function CompanyAdminTraining() {
   const router = useRouter()
@@ -50,10 +52,28 @@ export default function CompanyAdminTraining() {
   }
 
   return (
-    <div className="w-[calc(100%-85px)] pl-[65px] mx-auto">
-      <div className="rounded-lg p-12">
+    <div className="flex min-h-screen md:w-[calc(100%-85px)] md:pl-[85px] mx-auto">
+    <div className="flex-1 p-8">
+      <div className="flex items-center justify-end gap-4 mb-6">
+        <div className="relative md:w-[300px]">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <Input
+            placeholder="Search Training"
+            className="pl-10 h-10 bg-white border-gray-200 rounded-lg text-sm md:text-md"
+          />
+        </div>
+        <Button 
+          variant="outline" 
+          size="default"
+          className="h-10 px-4 border-gray-200 rounded-lg font-medium text-xs md:text-md" 
+        >
+          <SlidersHorizontal className="h-4 w-4 mr-2" />
+          Filter
+        </Button>
+      </div>
+     
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-6">
           {data.trainings.map((training) => (
             <TrainingCard
               key={training.id}
@@ -66,6 +86,7 @@ export default function CompanyAdminTraining() {
           ))}
         </div>
       </div>
-    </div>
+      </div>
+
   )
 }
