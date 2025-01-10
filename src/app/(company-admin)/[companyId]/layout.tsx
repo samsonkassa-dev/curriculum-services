@@ -70,7 +70,27 @@ export default function CompanyAdminLayout({
   const params = useParams()
   const pathname = usePathname()
   const { data: verificationData, isLoading } = useVerificationStatus()
-  const isCreateTraining = pathname.includes('/training/create-training')
+  
+  // More precise way to check specific routes
+  const isSpecialRoute = () => {
+    // First get the route pattern by removing companyId
+    let routePattern = pathname.replace(params.companyId as string, '[companyId]')
+    
+    // Then replace the trainingId if it exists (for training detail pages)
+    if (params.trainingId) {
+      routePattern = routePattern.replace(params.trainingId as string, '[trainingId]')
+    }
+    
+    // List of routes that should hide default layout
+    const specialRoutes = [
+      '/[companyId]/training/create-training',
+      '/[companyId]/training/[trainingId]'
+    ]
+    
+    return specialRoutes.some(route => routePattern === route)
+  }
+
+  const hideDefaultLayout = isSpecialRoute()
 
   // Create nav items with the actual companyId
   const navItemsWithCompanyId = adminNavItems.map(item => ({
@@ -105,7 +125,7 @@ export default function CompanyAdminLayout({
 
   return (
     <div className="opacity-100 transition-opacity duration-300">
-      {!isCreateTraining && (
+      {!hideDefaultLayout && (
         <>
           <Sidebar 
             navItems={navItemsWithCompanyId} 

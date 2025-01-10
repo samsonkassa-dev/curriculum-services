@@ -24,7 +24,7 @@ export default function CompanyAdminTraining() {
 
   if (!data?.trainings?.length) {
     return (
-      <div className="w-[calc(100%-85px)] pl-[65px] mx-auto">
+      <div className="md:w-[calc(100%-85px)] md:pl-[65px] px-[10px] mx-auto">
         <div className="rounded-lg p-12">
           <h1 className="text-2xl font-semibold mb-4">Create Training</h1>
           
@@ -77,6 +77,7 @@ export default function CompanyAdminTraining() {
           {data.trainings.map((training) => (
             <TrainingCard
               key={training.id}
+              id={training.id}
               title={training.title}
               location={training.cities[0]?.name || 'N/A'}
               duration={`${training.duration} ${training.durationType.toLowerCase()}`}

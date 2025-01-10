@@ -25,7 +25,7 @@ export default function CompanyAdminUsers() {
   const [pageSize, setPageSize] = useState(7)
   const [searchQuery, setSearchQuery] = useState("")
   const debouncedSearch = useDebounce(searchQuery, 500)
-
+ 
   // Calculate showing range
   const startRecord = ((page - 1) * pageSize) + 1
   const endRecord = Math.min(page * pageSize, mockIndividuals.length)

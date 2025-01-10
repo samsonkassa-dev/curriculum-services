@@ -1,86 +1,50 @@
-"use client";
+"use client"
 
-import { ChevronRight, ChevronDown } from "lucide-react";
-import { TrainingNotFound } from "./training-not-found";
+import { ChevronRight, ChevronDown } from "lucide-react"
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "@/components/ui/accordion";
-import { useState } from "react";
-import { OverviewEdit } from "./overview/overview-edit";
+} from "@/components/ui/accordion"
 
-interface Training {
-  title: string;
-  cities: {
-    name: string;
-  }[];
-  duration: number;
-  durationType: string;
-  ageGroups: {
-    name: string;
-    range: string;
-  }[];
-  targetAudienceGenders: string[];
-  economicBackgrounds: {
-    name: string;
-  }[];
-  academicQualifications: {
-    name: string;
-  }[];
-  trainingPurposes: {
-    name: string;
-  }[];
+interface TrainingProfile {
+  trainingId: string
+  keywords: string[]
+  scope: string
+  rationale: string
+  alignmentsWithStandard: string
+  executiveSummary: string | null
 }
 
-interface OverviewProps {
-  training?: Training | null;
+interface TrainingProfileViewProps {
+  trainingProfile: TrainingProfile
+  onEdit: () => void
 }
 
-export function Overview({ training }: OverviewProps) {
-  const [isEditing, setIsEditing] = useState(false);
-
-  if (!training) {
-    return <TrainingNotFound type="overview" />;
-  }
-
-  if (isEditing) {
-    return (
-      <OverviewEdit 
-        training={training}
-        onSave={(data) => {
-          // Handle save
-          setIsEditing(false)
-        }}
-        onCancel={() => setIsEditing(false)}
-      />
-    );
-  }
-
+export function TrainingProfileView({ trainingProfile, onEdit }: TrainingProfileViewProps) {
   return (
     <div className="px-[7%] py-10 mb-10">
-      <h1 className="text-md md:text-xl text-black mb-4 font-semibold">Overview</h1>
+      <h1 className="text-md md:text-xl text-black mb-4 font-semibold">Training Profile</h1>
 
       <h2 className="text-md md:text-lg text-gray-500 font-normal mb-4">
-        A concise summary of the course, outlining its purpose, scope, and key
-        features
+        The Training Profile section is designed to provide a comprehensive overview of a training program.
       </h2>
 
       <div className="space-y-4">
         <Accordion type="single" collapsible className="space-y-4">
-          {/* Title Section */}
-          <AccordionItem value="title" className="border-none">
+          {/* Keywords Section */}
+          <AccordionItem value="keywords" className="border-none">
             <AccordionTrigger className="bg-white data-[state=open]:bg-[#f7fbff] rounded-lg p-6 flex items-center justify-between hover:no-underline group">
               <div className="flex items-center gap-3">
-                <span className="font-semibold text-md md:text-xl">Title</span>
+                <span className="font-semibold text-md md:text-xl">Keywords</span>
               </div>
               <div className="text-gray-400 flex gap-2">
                 <img 
                   src="/edit.svg" 
                   alt="" 
                   className="w-5 h-5 cursor-pointer" 
-                  onClick={() => setIsEditing(true)}
+                  onClick={onEdit}
                 />
                 <ChevronRight className="h-5 w-5 transition-transform group-data-[state=open]:hidden text-black" />
                 <ChevronDown className="h-5 w-5 transition-transform hidden group-data-[state=open]:block text-black" />
@@ -88,25 +52,29 @@ export function Overview({ training }: OverviewProps) {
             </AccordionTrigger>
             <AccordionContent>
               <div className="bg-white p-6">
-                <div className="space-y-6">
-                  <p className="text-gray-600 md:text-lg text-sm">{training.title}</p>
+                <div className="flex flex-wrap gap-2">
+                  {trainingProfile.keywords.map((keyword, index) => (
+                    <span key={index} className="bg-gray-100 px-3 py-1 rounded-full text-sm">
+                      {keyword}
+                    </span>
+                  ))}
                 </div>
               </div>
             </AccordionContent>
           </AccordionItem>
 
-          {/* Location Section */}
-          <AccordionItem value="location" className="border-none">
+          {/* Scope Section */}
+          <AccordionItem value="scope" className="border-none">
             <AccordionTrigger className="bg-white data-[state=open]:bg-[#f7fbff] rounded-lg p-6 flex items-center justify-between hover:no-underline group">
               <div className="flex items-center gap-3">
-                <span className="font-semibold text-md md:text-xl">Location</span>
+                <span className="font-semibold text-md md:text-xl">Scope</span>
               </div>
               <div className="text-gray-400 flex gap-2">
                 <img 
                   src="/edit.svg" 
                   alt="" 
                   className="w-5 h-5 cursor-pointer" 
-                  onClick={() => setIsEditing(true)}
+                  onClick={onEdit}
                 />
                 <ChevronRight className="h-5 w-5 transition-transform group-data-[state=open]:hidden text-black" />
                 <ChevronDown className="h-5 w-5 transition-transform hidden group-data-[state=open]:block text-black" />
@@ -114,25 +82,23 @@ export function Overview({ training }: OverviewProps) {
             </AccordionTrigger>
             <AccordionContent>
               <div className="bg-white p-6">
-                <p className="text-gray-600 text-sm md:text-lg">
-                  {training.cities[0]?.name || "N/A"}
-                </p>
+                <p className="text-gray-600 text-sm md:text-lg">{trainingProfile.scope}</p>
               </div>
             </AccordionContent>
           </AccordionItem>
 
-          {/* Duration Section */}
-          <AccordionItem value="duration" className="border-none">
+          {/* Rationale Section */}
+          <AccordionItem value="rationale" className="border-none">
             <AccordionTrigger className="bg-white data-[state=open]:bg-[#f7fbff] rounded-lg p-6 flex items-center justify-between hover:no-underline group">
               <div className="flex items-center gap-3">
-                <span className="font-semibold text-md md:text-xl">Duration</span>
+                <span className="font-semibold text-md md:text-xl">Rationale</span>
               </div>
-              <div className="text-gray-400 flex gap-2  ">
+              <div className="text-gray-400 flex gap-2">
                 <img 
                   src="/edit.svg" 
                   alt="" 
                   className="w-5 h-5 cursor-pointer" 
-                  onClick={() => setIsEditing(true)}
+                  onClick={onEdit}
                 />
                 <ChevronRight className="h-5 w-5 transition-transform group-data-[state=open]:hidden text-black" />
                 <ChevronDown className="h-5 w-5 transition-transform hidden group-data-[state=open]:block text-black" />
@@ -140,25 +106,23 @@ export function Overview({ training }: OverviewProps) {
             </AccordionTrigger>
             <AccordionContent>
               <div className="bg-white p-6">
-                <p className="text-gray-600 text-sm md:text-lg">{`${
-                  training.duration
-                } ${training.durationType.toLowerCase()}`}</p>
+                <p className="text-gray-600 text-sm md:text-lg">{trainingProfile.rationale}</p>
               </div>
             </AccordionContent>
           </AccordionItem>
 
-          {/* Target Audience Section */}
-          <AccordionItem value="target" className="border-none">
+          {/* Alignment with Standard Section */}
+          <AccordionItem value="alignment" className="border-none">
             <AccordionTrigger className="bg-white data-[state=open]:bg-[#f7fbff] rounded-lg p-6 flex items-center justify-between hover:no-underline group">
               <div className="flex items-center gap-3">
-                <span className="font-semibold text-md md:text-xl">Target Audience</span>
+                <span className="font-semibold text-md md:text-xl">Alignment with Standard</span>
               </div>
-              <div className="text-gray-400 flex gap-2  ">
+              <div className="text-gray-400 flex gap-2">
                 <img 
                   src="/edit.svg" 
                   alt="" 
                   className="w-5 h-5 cursor-pointer" 
-                  onClick={() => setIsEditing(true)}
+                  onClick={onEdit}
                 />
                 <ChevronRight className="h-5 w-5 transition-transform group-data-[state=open]:hidden text-black" />
                 <ChevronDown className="h-5 w-5 transition-transform hidden group-data-[state=open]:block text-black" />
@@ -166,29 +130,23 @@ export function Overview({ training }: OverviewProps) {
             </AccordionTrigger>
             <AccordionContent>
               <div className="bg-white p-6">
-                <div className="space-y-4">
-                  <p className="text-gray-600 text-sm md:text-lg">
-                    Gender: {training.targetAudienceGenders.join(", ")}
-                  </p>
-                </div>
+                <p className="text-gray-600 text-sm md:text-lg">{trainingProfile.alignmentsWithStandard}</p>
               </div>
             </AccordionContent>
           </AccordionItem>
 
-          {/* Purpose Section */}
-          <AccordionItem value="purpose" className="border-none">
+          {/* Executive Summary Section */}
+          <AccordionItem value="summary" className="border-none">
             <AccordionTrigger className="bg-white data-[state=open]:bg-[#f7fbff] rounded-lg p-6 flex items-center justify-between hover:no-underline group">
               <div className="flex items-center gap-3">
-                <span className="font-semibold text-md md:text-xl">
-                  Purpose of the training
-                </span>
+                <span className="font-semibold text-md md:text-xl">Executive Summary</span>
               </div>
-              <div className="text-gray-400 flex gap-2 ">
+              <div className="text-gray-400 flex gap-2">
                 <img 
                   src="/edit.svg" 
                   alt="" 
                   className="w-5 h-5 cursor-pointer" 
-                  onClick={() => setIsEditing(true)}
+                  onClick={onEdit}
                 />
                 <ChevronRight className="h-5 w-5 transition-transform group-data-[state=open]:hidden text-black" />
                 <ChevronDown className="h-5 w-5 transition-transform hidden group-data-[state=open]:block text-black" />
@@ -196,14 +154,12 @@ export function Overview({ training }: OverviewProps) {
             </AccordionTrigger>
             <AccordionContent>
               <div className="bg-white p-6">
-                <p className="text-gray-600 text-sm md:text-lg">
-                  {training.trainingPurposes[0]?.name || "N/A"}
-                </p>
+                <p className="text-gray-600 text-sm md:text-lg">{trainingProfile.executiveSummary || 'No summary available'}</p>
               </div>
             </AccordionContent>
           </AccordionItem>
         </Accordion>
       </div>
     </div>
-  );
-}
+  )
+} 

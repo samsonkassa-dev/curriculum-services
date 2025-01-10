@@ -2,8 +2,10 @@
 
 import { Button } from "@/components/ui/button"
 import { MoreVertical } from "lucide-react"
+import { useRouter, useParams } from "next/navigation"
 
 interface TrainingCardProps {
+  id: string
   title: string
   location: string
   duration: string
@@ -12,12 +14,20 @@ interface TrainingCardProps {
 }
 
 export function TrainingCard({ 
+  id,
   title, 
   location, 
   duration, 
   ageGroup, 
   description 
 }: TrainingCardProps) {
+  const router = useRouter()
+  const params = useParams()
+
+  const handleViewTraining = () => {
+    router.push(`/${params.companyId}/training/${id}`)
+  }
+
   return (
     <div className="bg-white rounded-lg shadow-custom border-[0.5px] border-[#E4E4E4] p-8 relative">
       <Button 
@@ -51,10 +61,11 @@ export function TrainingCard({
 
       <div className="flex items-end justify-end py-3">
         <Button 
-        variant="link" 
-        className="text-brand hover:text-brand-primary p-0 h-auto font-medium text-sm md:text-md"
-      >
-        View training
+          variant="link" 
+          className="text-brand hover:text-brand-primary p-0 h-auto font-medium text-sm md:text-md"
+          onClick={handleViewTraining}
+        >
+          View training
           <img src="/rightArrow.svg" alt="" className="w-4 h-4 ml-1" />
         </Button>
       </div>

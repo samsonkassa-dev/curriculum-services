@@ -39,6 +39,7 @@ export default function Trainings() {
           {data?.trainings.map((training) => (
             <TrainingCard
               key={training.id}
+              id={training.id}
               title={training.title}
               location={training.cities[0]?.name || 'N/A'}
               duration={`${training.duration} ${training.durationType.toLowerCase()}`}

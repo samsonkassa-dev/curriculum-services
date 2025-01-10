@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 
 import { useQuery } from "@tanstack/react-query"
@@ -55,15 +56,20 @@ export function useTraining(trainingId: string) {
   return useQuery({
     queryKey: ['training', trainingId],
     queryFn: async () => {
-      const token = localStorage.getItem('auth_token')
-      const response = await axios.get<TrainingResponse>(
-        `${process.env.NEXT_PUBLIC_API || 'http://164.90.209.220:8081/api'}/training/${trainingId}`,
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      )
-      return response.data.training
+      try {
+        const token = localStorage.getItem('auth_token')
+        const response = await axios.get<TrainingResponse>(
+          `${process.env.NEXT_PUBLIC_API}/training/${trainingId}`,
+          {
+            headers: { Authorization: `Bearer ${token}` }
+          }
+        )
+        return response.data.training
+      } catch (error: any) {
+        throw new Error(error?.response?.data?.message || 'Failed to load training')
+      }
     },
-    enabled: !!trainingId
+    enabled: !!trainingId,
+    retry: 1 // Only retry once on failure
   })
 } 
