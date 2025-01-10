@@ -12,38 +12,40 @@ import { useState } from "react";
 import { OverviewEdit } from "./overview/overview-edit";
 
 interface Training {
-  title: string;
-  cities: {
-    name: string;
-  }[];
-  duration: number;
-  durationType: string;
-  ageGroups: {
-    name: string;
-    range: string;
-  }[];
-  targetAudienceGenders: string[];
-  economicBackgrounds: {
-    name: string;
-  }[];
-  academicQualifications: {
-    name: string;
-  }[];
-  trainingPurposes: {
-    name: string;
-  }[];
+  id: string
+  title: string
+  cities: Array<{
+    id: string
+    name: string
+    country: {
+      id: string
+      name: string
+    }
+  }>
+  duration: number
+  durationType: string
+  trainingPurposes: Array<{
+    id: string
+    name: string
+  }>
+  ageGroups: Array<{
+    id: string
+    name: string
+    range: string
+  }>
+  targetAudienceGenders: string[]
+  economicBackgrounds: Array<{
+    id: string
+    name: string
+  }>
+  academicQualifications: Array<{
+    id: string
+    name: string
+  }>
 }
 
-interface OverviewProps {
-  training?: Training | null;
-}
-
-export function Overview({ training }: OverviewProps) {
-  const [isEditing, setIsEditing] = useState(false);
-
-  if (!training) {
-    return <TrainingNotFound type="overview" />;
-  }
+export function Overview({ training }: { training: Training }) {
+  const [isEditing, setIsEditing] = useState(false)
 
   if (isEditing) {
     return (
@@ -55,7 +57,7 @@ export function Overview({ training }: OverviewProps) {
         }}
         onCancel={() => setIsEditing(false)}
       />
-    );
+    )
   }
 
   return (
