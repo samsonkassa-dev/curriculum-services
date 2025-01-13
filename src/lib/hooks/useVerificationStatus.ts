@@ -36,6 +36,7 @@ export function useVerificationStatus({ enabled = false } = {}) {
         throw error
       }
     },
-    enabled
+    enabled,
+    retry: 2
   })
 } 

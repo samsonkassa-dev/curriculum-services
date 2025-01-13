@@ -40,12 +40,12 @@ export function TrainingProfileView({ trainingProfile, onEdit }: TrainingProfile
                 <span className="font-semibold text-md md:text-xl">Keywords</span>
               </div>
               <div className="text-gray-400 flex gap-2">
-                <img 
+                {/* <img 
                   src="/edit.svg" 
                   alt="" 
                   className="w-5 h-5 cursor-pointer" 
                   onClick={onEdit}
-                />
+                /> */}
                 <ChevronRight className="h-5 w-5 transition-transform group-data-[state=open]:hidden text-black" />
                 <ChevronDown className="h-5 w-5 transition-transform hidden group-data-[state=open]:block text-black" />
               </div>
@@ -70,12 +70,12 @@ export function TrainingProfileView({ trainingProfile, onEdit }: TrainingProfile
                 <span className="font-semibold text-md md:text-xl">Scope</span>
               </div>
               <div className="text-gray-400 flex gap-2">
-                <img 
+                {/* <img 
                   src="/edit.svg" 
                   alt="" 
                   className="w-5 h-5 cursor-pointer" 
                   onClick={onEdit}
-                />
+                /> */}
                 <ChevronRight className="h-5 w-5 transition-transform group-data-[state=open]:hidden text-black" />
                 <ChevronDown className="h-5 w-5 transition-transform hidden group-data-[state=open]:block text-black" />
               </div>
@@ -94,12 +94,12 @@ export function TrainingProfileView({ trainingProfile, onEdit }: TrainingProfile
                 <span className="font-semibold text-md md:text-xl">Rationale</span>
               </div>
               <div className="text-gray-400 flex gap-2">
-                <img 
+                {/* <img 
                   src="/edit.svg" 
                   alt="" 
                   className="w-5 h-5 cursor-pointer" 
                   onClick={onEdit}
-                />
+                /> */}
                 <ChevronRight className="h-5 w-5 transition-transform group-data-[state=open]:hidden text-black" />
                 <ChevronDown className="h-5 w-5 transition-transform hidden group-data-[state=open]:block text-black" />
               </div>
@@ -118,12 +118,12 @@ export function TrainingProfileView({ trainingProfile, onEdit }: TrainingProfile
                 <span className="font-semibold text-md md:text-xl">Alignment with Standard</span>
               </div>
               <div className="text-gray-400 flex gap-2">
-                <img 
+                {/* <img 
                   src="/edit.svg" 
                   alt="" 
                   className="w-5 h-5 cursor-pointer" 
                   onClick={onEdit}
-                />
+                /> */}
                 <ChevronRight className="h-5 w-5 transition-transform group-data-[state=open]:hidden text-black" />
                 <ChevronDown className="h-5 w-5 transition-transform hidden group-data-[state=open]:block text-black" />
               </div>
@@ -142,12 +142,12 @@ export function TrainingProfileView({ trainingProfile, onEdit }: TrainingProfile
                 <span className="font-semibold text-md md:text-xl">Executive Summary</span>
               </div>
               <div className="text-gray-400 flex gap-2">
-                <img 
+                {/* <img 
                   src="/edit.svg" 
                   alt="" 
                   className="w-5 h-5 cursor-pointer" 
                   onClick={onEdit}
-                />
+                /> */}
                 <ChevronRight className="h-5 w-5 transition-transform group-data-[state=open]:hidden text-black" />
                 <ChevronDown className="h-5 w-5 transition-transform hidden group-data-[state=open]:block text-black" />
               </div>

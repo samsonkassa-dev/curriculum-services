@@ -63,7 +63,12 @@ export function AudienceProfileView({
   )
 
   return (
-    <div className="md:w-[calc(100%-85px)] md:pl-[65px] px-[10px] mx-auto">
+    <div className="px-[7%] py-10 mb-10">
+    <h1 className="text-md md:text-xl text-black mb-4 font-semibold">Audince Profile</h1>
+
+    <h2 className="text-md md:text-lg text-gray-500 font-normal mb-4">
+    A concise summary of the course, outlining its purpose, scope, and key features
+    </h2>
       <div className="space-y-4">
         <Accordion type="single" collapsible className="space-y-4">
           <AccordionItem value="learner" className="border-none">
@@ -104,7 +109,7 @@ export function AudienceProfileView({
                     <li key={index} className="text-gray-600 text-sm md:text-lg">
                       {knowledge}
                     </li>
-                  ))}
+                  )) || priorKnowledgeList.length === 0 ? "No Prior Knowledge Selected" : ""}
                 </ul>
               </div>
             </AccordionContent>
