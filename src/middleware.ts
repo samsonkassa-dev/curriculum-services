@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { decodeJWT } from "./lib/utils";
@@ -20,8 +22,12 @@ export function middleware(req: NextRequest) {
 
   const decoded = decodeJWT(token);
   
-  if (!decoded) {
-    return NextResponse.redirect(new URL('/', req.url));
+  // If token is invalid or expired, clear cookies and redirect to login
+  if (!decoded || isTokenExpired(decoded)) {
+    const response = NextResponse.redirect(new URL('/', req.url));
+    response.cookies.delete('token'); // Clear the token cookie
+    response.cookies.delete('company_info'); // Clear any other auth-related cookies
+    return response;
   }
 
   // ICOG_ADMIN route restrictions
@@ -69,6 +75,36 @@ export function middleware(req: NextRequest) {
   }
 
   return NextResponse.next();
+}
+
+// Helper function to check token expiration
+function isTokenExpired(decodedToken: any): boolean {
+  if (!decodedToken.exp) return true;
+  
+  // exp is in seconds, Date.now() is in milliseconds
+  const currentTime = Date.now() / 1000;
+  return decodedToken.exp < currentTime;
+}
+
+// Add global axios interceptor to handle 401s
+if (typeof window !== 'undefined') {
+  const axios = require('axios').default;
+  
+  axios.interceptors.response.use(
+    (response: any) => response,
+    (error: any) => {
+      if (error.response?.status === 401) {
+        // Clear auth data
+        localStorage.removeItem('auth_token');
+        document.cookie = 'token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+        document.cookie = 'company_info=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+        
+        // Redirect to login
+        window.location.href = '/';
+      }
+      return Promise.reject(error);
+    }
+  );
 }
 
 export const config = {

@@ -6,7 +6,6 @@ import Sidebar from "@/components/ui/sidebar"
 import Topbar from "@/components/ui/topbar"
 import { VerificationStatus } from './components/verification-status'
 import { Loading } from "@/components/ui/loading"
-import { use } from 'react'
 import { usePathname, useParams } from 'next/navigation'
 
 const adminNavItems = [

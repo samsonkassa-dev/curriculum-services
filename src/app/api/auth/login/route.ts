@@ -32,7 +32,8 @@ export async function POST(request: Request) {
       path: '/',
       secure: false,
       sameSite: 'lax',
-      httpOnly: true
+      httpOnly: true,
+      maxAge: 24 * 60 * 60 // 24 hours
     });
 
     return res;
@@ -40,7 +41,6 @@ export async function POST(request: Request) {
     console.log(error);
     return NextResponse.json(
       { error: error },
-
 
     );
   }

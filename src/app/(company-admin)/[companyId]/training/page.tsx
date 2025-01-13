@@ -82,7 +82,7 @@ export default function CompanyAdminTraining() {
               location={training.cities[0]?.name || 'N/A'}
               duration={`${training.duration} ${training.durationType.toLowerCase()}`}
               ageGroup={training.ageGroups[0]?.name || 'N/A'}
-              description={training.trainingPurposes[0]?.description || 'No description available'}
+              // description={training.trainingPurposes[0]?.description || 'No description available'}
             />
           ))}
         </div>
