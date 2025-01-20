@@ -29,7 +29,7 @@ export function DefaultCreate({ title, trainingId, onCreateClick }: DefaultCreat
           onClick={onCreateClick}
           className="bg-brand hover:bg-[#0052CC] text-white px-6 py-5"
         >
-          Create Training Profile
+         {title}
         </Button>
       </div>
     </div>

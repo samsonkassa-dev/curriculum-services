@@ -25,3 +25,5 @@ export type BaseDataType =
 | "technological-requirement"
 | "technology-integration"
 | "training-purpose"
+| "work-experience"
+| "trainer-requirement"

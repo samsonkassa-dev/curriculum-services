@@ -11,7 +11,8 @@ import { ChevronLeft } from "lucide-react"
 import { toast } from "sonner"
 import { TrainingNotFound } from "./components/training-not-found"
 import { TrainingProfile } from "./components/trainingProfile"
-import { AudienceProfile } from "./components/audienceprofile"
+import { AudienceProfile } from "./components/audienceProfile"
+import { Curriculum } from "./components/curriculum"
 
 export default function TrainingDetail() {
   const params = useParams()
@@ -69,7 +70,7 @@ export default function TrainingDetail() {
               {activeTab === 'overview' && <Overview training={training} />}
               {activeTab === 'profile' && <TrainingProfile trainingId={training.id} />}
               {activeTab === 'audience' && <AudienceProfile trainingId={training.id}  />}
-              {activeTab === 'curriculum' && <TrainingNotFound type="curriculum" />}
+              {activeTab === 'curriculum' && <Curriculum trainingId={training.id} />}
               {activeTab === 'module' && <TrainingNotFound type="module" />}
             </>
           )}

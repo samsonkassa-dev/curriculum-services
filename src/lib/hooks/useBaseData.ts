@@ -26,9 +26,13 @@ const getResponseKey = (type: BaseDataType) => {
     .join('') + 's';
 };
 
-export function useBaseData(type: BaseDataType) {
+interface BaseDataOptions {
+  type?: 'INSTRUCTOR' | 'LEARNER'
+}
+
+export function useBaseData(type: BaseDataType, options?: BaseDataOptions) {
   const queryClient = useQueryClient();
-  const queryKey = ['base-data', type];
+  const queryKey = ['base-data', type, options?.type];
   const responseKey = getResponseKey(type);
 
   // Query for fetching base data
@@ -36,7 +40,11 @@ export function useBaseData(type: BaseDataType) {
     queryKey,
     queryFn: async () => {
       const token = localStorage.getItem('auth_token');
-      const response = await api.get(`/${type}`, {
+      const url = options?.type 
+        ? `/${type}?type=${options.type}`
+        : `/${type}`;
+      
+      const response = await api.get(url, {
         headers: { Authorization: `Bearer ${token}` }
       });
       return response.data[responseKey] || [];

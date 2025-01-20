@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { OutlineSidebar } from "@/components/ui/outline-sidebar"
 import { EditFormContainer } from "@/components/ui/edit-form-container"
 import { Input } from "@/components/ui/input"
@@ -13,7 +13,7 @@ import { X, Menu } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 import { useCreateAudienceProfile, useUpdateAudienceProfile } from "@/lib/hooks/useAudienceProfileMutations"
-import { useBaseData } from "@/lib/hooks/useBaseData"
+
 
 interface BaseItem {
   id: string
@@ -59,6 +59,7 @@ export function AudienceProfileEdit({
   const [professionalBackground, setProfessionalBackground] = useState("")
   const [isMobile, setIsMobile] = useState(false)
   const [showSidebar, setShowSidebar] = useState(true)
+  const [completedSections, setCompletedSections] = useState<string[]>([])
 
   const createProfile = useCreateAudienceProfile()
   const updateProfile = useUpdateAudienceProfile()
@@ -82,22 +83,70 @@ export function AudienceProfileEdit({
     if (hasPriorKnowledge === "Yes" && priorKnowledge.length === 0) {
       setPriorKnowledge([""])
     }
-  }, [hasPriorKnowledge])
+  }, [hasPriorKnowledge, priorKnowledge.length])
 
-  const outlineItems = [
-    { 
-      label: "Learning Level", 
-      isCompleted: !!learnerLevelId && !!academicLevelId && selectedStyles.length > 0 
-    },
-    { 
-      label: "Prior Experience", 
-      isCompleted: hasPriorKnowledge === "No" || (hasPriorKnowledge === "Yes" && priorKnowledge.length > 0 && priorKnowledge.some(k => k.trim() !== ""))
-    },
-    { 
-      label: "Professional", 
-      isCompleted: !!professionalBackground 
+  // Track form completion separately from sidebar completion
+  const isCurrentSectionValid = useMemo(() => {
+    switch (activeSection) {
+      case "Learning Level":
+        return !!learnerLevelId && !!academicLevelId && selectedStyles.length > 0
+      case "Prior Experience":
+        return hasPriorKnowledge === "No" || 
+          (hasPriorKnowledge === "Yes" && priorKnowledge.some(k => k.trim() !== ""))
+      case "Professional":
+        return !!professionalBackground?.trim()
+      default:
+        return false
     }
-  ]
+  }, [
+    activeSection,
+    learnerLevelId,
+    academicLevelId,
+    selectedStyles,
+    hasPriorKnowledge,
+    priorKnowledge,
+    professionalBackground
+  ])
+
+  const outlineGroups = useMemo(() => [
+    {
+      title: "Learner Characteristics",
+      items: [
+        { 
+          label: "Learning Level", 
+          isCompleted: completedSections.includes("Learning Level")
+        },
+        { 
+          label: "Prior Experience", 
+          isCompleted: completedSections.includes("Prior Experience")
+        }
+      ]
+    },
+    {
+      title: "Learner Background",
+      items: [
+        { 
+          label: "Professional", 
+          isCompleted: completedSections.includes("Professional")
+        }
+      ]
+    }
+  ], [completedSections])
+
+  useEffect(() => {
+    const findFirstIncompleteSection = () => {
+      for (const group of outlineGroups) {
+        for (const item of group.items) {
+          if (!item.isCompleted) {
+            return item.label
+          }
+        }
+      }
+      return outlineGroups[0].items[0].label
+    }
+
+    setActiveSection(findFirstIncompleteSection())
+  }, [outlineGroups])
 
   const addPriorKnowledge = () => {
     setPriorKnowledge([...priorKnowledge, ""])
@@ -152,7 +201,6 @@ export function AudienceProfileEdit({
         return (
           <div className="space-y-6">
             <div className="space-y-4">
-              <label className="text-sm text-gray-600">Level</label>
               <Select value={learnerLevelId} onValueChange={setLearnerLevelId}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select level" />
@@ -168,7 +216,8 @@ export function AudienceProfileEdit({
             </div>
 
             <div className="space-y-4">
-              <label className="text-sm text-gray-600">Academic Level</label>
+              <label className="text-xl font-semibold ">Academic Level</label>
+              {/* <p className="text-gray-500 text-sm ">Enter a brief overview of this section&apos;s content to give users a clear understanding of what to enter.</p> */}
               <Select value={academicLevelId} onValueChange={setAcademicLevelId}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select academic level" />
@@ -184,7 +233,7 @@ export function AudienceProfileEdit({
             </div>
 
             <div className="space-y-4">
-              <label className="text-sm text-gray-600">Learning Style Preferences</label>
+              <label className="text-xl font-semibold ">Learning Style Preferences</label>
               <div className="grid grid-cols-2 gap-4">
                 {learnerStylePreferences.map((style) => (
                   <div key={style.id} className="flex items-center space-x-2">
@@ -199,7 +248,7 @@ export function AudienceProfileEdit({
                         }
                       }}
                     />
-                    <label htmlFor={style.id}>{style.name}</label>
+                    <label className="text-md font-normal" htmlFor={style.id}>{style.name}</label>
                   </div>
                 ))}
               </div>
@@ -293,11 +342,18 @@ export function AudienceProfileEdit({
   }
 
   const handleSaveAndContinue = async () => {
-    const currentIndex = outlineItems.findIndex(item => item.label === activeSection)
+    const allItems = outlineGroups.flatMap(group => group.items)
+    const currentIndex = allItems.findIndex(item => item.label === activeSection)
     
-    if (currentIndex < outlineItems.length - 1) {
-      setActiveSection(outlineItems[currentIndex + 1].label)
+    // Only mark as completed if the section is valid
+    if (isCurrentSectionValid) {
+      setCompletedSections(prev => [...prev, activeSection])
+    }
+    
+    if (currentIndex < allItems.length - 1) {
+      setActiveSection(allItems[currentIndex + 1].label)
     } else {
+      // Save everything when on last section
       const data = {
         trainingId,
         learnerLevelId,
@@ -315,8 +371,8 @@ export function AudienceProfileEdit({
         }
         toast.success(`Audience profile ${initialData ? 'updated' : 'created'} successfully`)
         onSave()
-      } catch (error) {
-        toast.error("Failed to save audience profile")
+      } catch (error: any) {
+        toast.error(error.message)
       }
     }
   }
@@ -330,12 +386,12 @@ export function AudienceProfileEdit({
       
       {(!isMobile || showSidebar) && (
         <div className={cn(
-          "bg-white",
-          isMobile ? "fixed inset-0 z-50 pt-16 px-4 pb-4" : "w-[300px]"
+          "",
+          isMobile ? "fixed bg-white inset-0 z-50 pt-16 px-4 pb-4" : "w-[300px]"
         )}>
           <OutlineSidebar 
             title="Audience Profile Outline"
-            items={outlineItems}
+            groups={outlineGroups}
             activeItem={activeSection}
             onItemClick={(section) => {
               setActiveSection(section)
@@ -355,8 +411,12 @@ export function AudienceProfileEdit({
           <Button variant="outline" onClick={onCancel}>
             Cancel
           </Button>
-          <Button onClick={handleSaveAndContinue} className="bg-brand text-white">
-            Save and Continue
+          <Button 
+            onClick={handleSaveAndContinue} 
+            className="bg-brand text-white"
+            disabled={!isCurrentSectionValid}
+          >
+            {activeSection === "Professional" ? "Save" : "Save and Continue"}
           </Button>
         </div>
       </EditFormContainer>

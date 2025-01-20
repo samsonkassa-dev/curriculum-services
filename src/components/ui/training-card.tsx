@@ -36,10 +36,12 @@ export function TrainingCard({
         {title}
       </h3>
 
-      <div className="flex items-center gap-4 md:text-sm text-[11px] text-gray-500 mb-4">
+      <div className="flex items-center gap-3 lg:text-[12px] text-[11px] text-[#9C9791] mb-4">
         <div className="flex items-center gap-1">
           <img src="/location.svg" alt="" className="w-4 h-4" />
-          {location}
+        
+        <p className="text-[#9C9791]"> {location}</p>
+        
         </div>
         <div className="flex items-center gap-1">
           <img src="/clock.svg" alt="" className="w-4 h-4" />
@@ -51,7 +53,7 @@ export function TrainingCard({
         </div>
       </div>
 
-      <p className="text-sm text-gray-600 mb-4 line-clamp-3">
+      <p className="text-sm font-light text-[#292827] mb-4 line-clamp-3">
         freestar Lorem ipsum dolor sit amet, consectetur adipiscing elit.
         Integer ultricies arcu vel urna rutrum, at dignissim leo ultricies.
         Nulla dignissim vel odio a scelerisque. Sed a tellus tincidunt, placerat

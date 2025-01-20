@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { OutlineSidebar } from "@/components/ui/outline-sidebar"
 import { EditFormContainer } from "@/components/ui/edit-form-container"
 import { Input } from "@/components/ui/input"
@@ -65,12 +66,33 @@ export function TrainingProfileEdit({ trainingId, initialData, onSave, onCancel 
     return () => window.removeEventListener('resize', checkMobile)
   }, [initialData, isCreating])
 
-  const outlineItems = [
-    { label: "Keywords", isCompleted: keywords.length > 0 },
-    { label: "Scope", isCompleted: scope.length > 0 },
-    { label: "Rationale", isCompleted: rationale.length > 0 },
-    { label: "Alignment With Standard", isCompleted: alignment.length > 0 },
-  ]
+  const outlineGroups = useMemo(() => [
+    {
+      title: "Course Definition",
+      items: [
+        { label: "Keywords", isCompleted: keywords.length > 0 },
+        { label: "Scope", isCompleted: scope.length > 0 },
+        { label: "Rationale", isCompleted: rationale.length > 0 },
+        { label: "Alignment With Standard", isCompleted: alignment.length > 0 }
+      ]
+    }
+  ], [keywords.length, scope, rationale, alignment])
+
+  // Find first incomplete section on initial load
+  useEffect(() => {
+    const findFirstIncompleteSection = () => {
+      for (const group of outlineGroups) {
+        for (const item of group.items) {
+          if (!item.isCompleted) {
+            return item.label
+          }
+        }
+      }
+      return outlineGroups[0].items[0].label // Default to first item if all complete
+    }
+
+    setActiveSection(findFirstIncompleteSection())
+  }, [])
 
   const addKeyword = () => {
     setKeywords([...keywords, ""])
@@ -197,16 +219,12 @@ export function TrainingProfileEdit({ trainingId, initialData, onSave, onCancel 
   }
 
   const handleSaveAndContinue = async () => {
-    const updatedItems = [...outlineItems]
-    const currentIndex = outlineItems.findIndex(item => item.label === activeSection)
+    // Find next section to navigate to
+    const allItems = outlineGroups.flatMap(group => group.items)
+    const currentIndex = allItems.findIndex(item => item.label === activeSection)
     
-    updatedItems[currentIndex] = {
-      ...updatedItems[currentIndex],
-      isCompleted: true
-    }
-
-    if (currentIndex < outlineItems.length - 1) {
-      setActiveSection(outlineItems[currentIndex + 1].label)
+    if (currentIndex < allItems.length - 1) {
+      setActiveSection(allItems[currentIndex + 1].label)
     } else {
       const data = {
         trainingId,
@@ -226,8 +244,8 @@ export function TrainingProfileEdit({ trainingId, initialData, onSave, onCancel 
           toast.success("Training profile created successfully")
         }
         onSave()
-      } catch (error) {
-        toast.error("Failed to save training profile")
+      } catch (error: any) {
+        toast.error(error.message)
       }
     }
   }
@@ -241,12 +259,12 @@ export function TrainingProfileEdit({ trainingId, initialData, onSave, onCancel 
       
       {(!isMobile || showSidebar) && (
         <div className={cn(
-          "bg-white",
-          isMobile ? "fixed inset-0 z-50 pt-16 px-4 pb-4" : "w-[300px]"
+          "",
+          isMobile ? "fixed bg-white inset-0 z-50 pt-16 px-4 pb-4" : "w-[300px]"
         )}>
           <OutlineSidebar 
             title="Training Profile Outline"
-            items={outlineItems}
+            groups={outlineGroups}
             activeItem={activeSection}
             onItemClick={(section) => {
               setActiveSection(section)

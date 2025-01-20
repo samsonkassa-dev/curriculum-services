@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { OutlineSidebar } from "@/components/ui/outline-sidebar"
 import { EditFormContainer } from "@/components/ui/edit-form-container"
 import { Input } from "@/components/ui/input"
@@ -78,13 +78,18 @@ export function OverviewEdit({ training, onSave, onCancel }: OverviewEditProps) 
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
-  const outlineItems = [
-    { label: "Title", isCompleted: !!title.trim() },
-    { label: "Location", isCompleted: !!location.trim() },
-    { label: "Duration", isCompleted: !!duration && !!durationType },
-    { label: "Target Audience", isCompleted: !!targetAudience.trim() },
-    { label: "Purpose of the training", isCompleted: !!purpose.trim() },
-  ]
+  const outlineGroups = useMemo(() => [
+    {
+      title: "Overview",
+      items: [
+        { label: "Title", isCompleted: !!title.trim() },
+        { label: "Location", isCompleted: !!location.trim() },
+        { label: "Duration", isCompleted: !!duration && !!durationType },
+        { label: "Target Audience", isCompleted: !!targetAudience.trim() },
+        { label: "Purpose of the training", isCompleted: !!purpose.trim() },
+      ]
+    }
+  ], [title, location, duration, durationType, targetAudience, purpose])
 
   const renderContent = () => {
     switch (activeSection) {
@@ -207,12 +212,12 @@ export function OverviewEdit({ training, onSave, onCancel }: OverviewEditProps) 
       
       {(!isMobile || showSidebar) && (
         <div className={cn(
-          "bg-white",
-          isMobile ? "fixed inset-0 z-50 pt-16 px-4 pb-4" : "w-[300px]"
+          "",
+          isMobile ? "fixed bg-white inset-0 z-50 pt-16 px-4 pb-4" : "w-[300px]"
         )}>
           <OutlineSidebar 
             title="Overview Outline"
-            items={outlineItems}
+            groups={outlineGroups}
             activeItem={activeSection}
             onItemClick={(section) => {
               setActiveSection(section)
