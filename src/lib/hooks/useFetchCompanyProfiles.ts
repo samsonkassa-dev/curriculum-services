@@ -1,87 +1,126 @@
-import { useQuery } from "@tanstack/react-query"
-import axios from "axios"
-import { toast } from "sonner"
-import { CompanyUser } from "@/types/users"
+import { useQuery } from "@tanstack/react-query";
+import axios from "axios";
+import { toast } from "sonner";
+import { CompanyUser } from "@/types/users";
 
 interface CompanyProfilesResponse {
-  code: string
-  companyProfiles: CompanyUser[]
-  totalPages: number
-  message: string
-  totalElements: number
+  code: string;
+  companyProfiles: CompanyUser[];
+  totalPages: number;
+  message: string;
+  totalElements: number;
 }
 
 interface SingleCompanyResponse {
-  code: string
-  companyProfile: CompanyUser
-  message: string
+  code: string;
+  companyProfile: CompanyUser;
+  message: string;
 }
 
 interface UseCompanyProfilesProps {
-  page: number
-  pageSize: number
-  searchQuery?: string
+  page: number;
+  pageSize: number;
+  searchQuery?: string;
 }
 
-export function useCompanyProfiles({ page, pageSize, searchQuery }: UseCompanyProfilesProps) {
+export function useCompanyProfiles({
+  page,
+  pageSize,
+  searchQuery,
+}: UseCompanyProfilesProps) {
   return useQuery<CompanyProfilesResponse>({
-    queryKey: ['company-profiles', page, pageSize, searchQuery],
+    queryKey: ["company-profiles", page, pageSize, searchQuery],
     queryFn: async () => {
       try {
-        const token = localStorage.getItem('auth_token')
+        const token = localStorage.getItem("auth_token");
         const params = new URLSearchParams({
           page: String(page),
-          'page-size': String(pageSize),
-          ...(searchQuery && { 'search-query': searchQuery })
-        })
+          "page-size": String(pageSize),
+          ...(searchQuery && { "search-query": searchQuery }),
+        });
 
-        const baseUrl = process.env.NEXT_PUBLIC_API || 'http://164.90.209.220:8081/api';
-        
+        const baseUrl =
+          process.env.NEXT_PUBLIC_API || "http://164.90.209.220:8081/api";
+
         const response = await axios.get<CompanyProfilesResponse>(
           `${baseUrl}/company-profile?${params.toString()}`,
           {
-            headers: { 
-              Authorization: `Bearer ${token}`
-            }
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
           }
-        )
+        );
 
-        return response.data
+        return response.data;
       } catch (error) {
         if (axios.isAxiosError(error)) {
-          const message = error.response?.data?.message || 'Failed to fetch company profiles'
-          toast.error("Error", { description: message })
+          const message =
+            error.response?.data?.message || "Failed to fetch company profiles";
+          toast.error("Error", { description: message });
         }
-        throw error
+        throw error;
       }
-    }
-  })
+    },
+  });
 }
 
 export function useSingleCompanyProfile(id: string) {
   return useQuery<SingleCompanyResponse>({
-    queryKey: ['company-profile', id],
+    queryKey: ["company-profile", id],
     queryFn: async () => {
       try {
-        const token = localStorage.getItem('auth_token')
-        const baseUrl = process.env.NEXT_PUBLIC_API || 'http://164.90.209.220:8081/api';
+        const token = localStorage.getItem("auth_token");
+        const baseUrl =
+          process.env.NEXT_PUBLIC_API || "http://164.90.209.220:8081/api";
         const response = await axios.get<SingleCompanyResponse>(
           `${baseUrl}/company-profile/${id}`,
           {
-            headers: { 
-              Authorization: `Bearer ${token}`
-            }
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
           }
-        )
-        return response.data
+        );
+        return response.data;
       } catch (error) {
         if (axios.isAxiosError(error)) {
-          const message = error.response?.data?.message || 'Failed to fetch company profile'
-          toast.error("Error", { description: message })
+          const message =
+            error.response?.data?.message || "Failed to fetch company profile";
+          toast.error("Error", { description: message });
         }
-        throw error
+        throw error;
       }
     },
-    enabled: !!id
-  })
-} 
+    enabled: !!id,
+  });
+}
+
+export function useMyCompanyProfile({ enabled = false } = {}) {
+  return useQuery({
+    queryKey: ["my-company-profile"],
+    queryFn: async () => {
+      try {
+        console.log("response");
+        const token = localStorage.getItem("auth_token");
+        const response = await axios.get<SingleCompanyResponse>(
+          `${
+            process.env.NEXT_PUBLIC_API || "http://164.90.209.220:8081/api"
+          }/company-profile/me`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        return response.data.companyProfile;
+      } catch (error) {
+        if (axios.isAxiosError(error)) {
+          const message =
+            error.response?.data?.message ||
+            "Failed to fetch your company profile";
+          toast.error("Error", { description: message });
+        }
+        throw error;
+      }
+    },
+    enabled,
+    retry: 2,
+  });
+}
