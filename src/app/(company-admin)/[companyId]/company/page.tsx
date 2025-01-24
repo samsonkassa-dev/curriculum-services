@@ -11,14 +11,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Textarea } from "@/components/ui/textarea";
 import { useCompanyProfile } from "@/lib/hooks/useCompanyProfile";
 import { useParams, useRouter } from "next/navigation";
-import { Breadcrumb } from "@/components/ui/breadcrumb";
-import {
-  useMyCompanyProfile,
-  useSingleCompanyProfile,
-} from "@/lib/hooks/useFetchCompanyProfiles";
+import { useMyCompanyProfile } from "@/lib/hooks/useFetchCompanyProfiles";
 import {
   Select,
   SelectContent,
@@ -27,8 +22,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useBusinessTypes } from "@/lib/hooks/useBusinessTypes";
-import { FileUploadSection } from "@/components/file-upload/file-upload-section";
-import { useCompanyFileTypes } from "@/lib/hooks/useCompanyFileTypes";
 import { toast } from "sonner";
 
 const Company = () => {
@@ -103,13 +96,7 @@ const Company = () => {
     router.push(`/`);
   };
 
-  const {
-    businessTypes,
-    industryTypes,
-    isLoading: isLoadingTypes,
-  } = useBusinessTypes();
-
-  const { fileTypes } = useCompanyFileTypes();
+  const { businessTypes, industryTypes } = useBusinessTypes();
 
   return (
     <div className="max-w-screen-2xl lg:mx-auto mx-8 mt-12 flex flex-col gap-4">
