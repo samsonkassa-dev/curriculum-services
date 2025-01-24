@@ -32,7 +32,7 @@ export interface CompanyProfile {
   address: string;
   phone: string;
   websiteUrl?: string;
-  numberOfEmployees: 'SMALL' | 'MEDIUM' | 'LARGE';
+  numberOfEmployees: "MICRO" | "SMALL" | "MEDIUM" | "LARGE";
   otherDescription?: string;
 }
 
@@ -61,7 +61,7 @@ export interface CompanyProfileFormData {
   address: string;
   phone: string;
   websiteUrl?: string;
-  numberOfEmployees: 'SMALL' | 'MEDIUM' | 'LARGE';
+  numberOfEmployees: "MICRO" | "SMALL" | "MEDIUM" | "LARGE";
   otherDescription?: string;
   companyFiles?: CompanyFileUpload[];
   fileType?: string;
@@ -76,7 +76,7 @@ export interface CompanyFileUpload {
 // Helper function to transform form data to API format
 export function transformToApiFormat(data: CompanyProfileFormData) {
   if (!data.businessType || !data.industryType) {
-    throw new Error("Business type and industry type are required")
+    throw new Error("Business type and industry type are required");
   }
 
   return {
@@ -86,18 +86,18 @@ export function transformToApiFormat(data: CompanyProfileFormData) {
     industryTypeId: data.industryType.id,
     countryOfIncorporation: data.countryOfIncorporation,
     address: data.address,
-    phone: data.phone.startsWith('+251') ? data.phone : `+251${data.phone}`,
+    phone: data.phone.startsWith("+251") ? data.phone : `+251${data.phone}`,
     websiteUrl: data.websiteUrl,
     numberOfEmployees: data.numberOfEmployees,
-    otherDescription: data.otherDescription
-  }
+    otherDescription: data.otherDescription,
+  };
 }
 
 export interface CompanyProfileResponse {
   code: string;
   companyProfile: {
     id: string;
-    verificationStatus: 'PENDING' | 'ACCEPTED' | 'REJECTED';
+    verificationStatus: "PENDING" | "ACCEPTED" | "REJECTED";
     // ... other fields
   };
   message: string;
@@ -106,5 +106,5 @@ export interface CompanyProfileResponse {
 // Add this to store company info in context/state
 export interface CompanyInfo {
   id: string;
-  verificationStatus: 'PENDING' | 'ACCEPTED' | 'REJECTED';
+  verificationStatus: "PENDING" | "ACCEPTED" | "REJECTED";
 }
