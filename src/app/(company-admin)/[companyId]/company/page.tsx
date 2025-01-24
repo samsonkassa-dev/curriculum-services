@@ -99,9 +99,9 @@ const Company = () => {
   const { businessTypes, industryTypes } = useBusinessTypes();
 
   return (
-    <div className="max-w-screen-2xl lg:mx-auto mx-8 mt-12 flex flex-col gap-4">
-      <div className=" bg-[#FBFBFB] rounded-xl p-5">
-        <div className="flex justify-center">
+    <div className="max-w-screen-2xl lg:mx-auto xl:mx-8 mx-2 lg:mt-12 mt-6 flex flex-col gap-4">
+      <div className=" bg-[#FBFBFB] rounded-xl xl:p-5 p-2">
+        <div className="">
           <form
             onSubmit={handleSubmit(onSubmit)}
             onKeyDown={(e) => {
@@ -259,7 +259,7 @@ const Company = () => {
               )}
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 w-full pt-1">
               <Label htmlFor="industryType">
                 <p className="text-[1rem] font-semibold pb-[2px]">
                   Industry Type
@@ -297,7 +297,7 @@ const Company = () => {
               )}
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 w-full pt-1">
               <Label htmlFor="businessType">
                 <p className="text-[1rem] font-semibold pb-[2px]">
                   Business Type
@@ -335,7 +335,7 @@ const Company = () => {
               )}
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 w-full pt-1">
               <Label htmlFor="employeeCount">
                 <p className="text-[1rem] font-semibold pb-[2px]">
                   Number of Employees
@@ -369,7 +369,7 @@ const Company = () => {
                 </p>
               )}
             </div>
-            <div className="space-y-2 col-span-2">
+            <div className="space-y-2 col-span-2 w-full pt-1">
               <Label htmlFor="employeeCount">
                 <p className="text-[1rem] font-semibold pb-[2px]">
                   Other Description
@@ -391,12 +391,12 @@ const Company = () => {
               )}
             </div>
 
-            <div className="space-x-10 mt-10 col-span-2 w-full flex justify-center">
+            <div className="space-x-10 lg:mt-10 mt-2 col-span-2 w-full flex justify-center">
               <Button
                 variant="secondary"
                 size="default"
                 className={cn(
-                  `w-40 h-10 px-4 py-3 rounded-sm font-medium border border-[#9C9791] mr-20`
+                  `w-40 h-10 px-4 py-3 rounded-sm font-medium border border-[#9C9791] lg:mr-20 md:mr-10`
                 )}
                 type="reset"
                 onClick={() => onBack()}
@@ -416,9 +416,7 @@ const Company = () => {
                   `w-40 h-10 px-4 py-3 rounded-sm font-medium text-white disabled:opacity-50`
                 )}
               >
-                {isUpdatingCompanyProfile
-                  ? "Editing Company Profile..."
-                  : "Edit Company Profile"}
+                {isUpdatingCompanyProfile ? "Saving..." : "Save"}
               </Button>
             </div>
           </form>
