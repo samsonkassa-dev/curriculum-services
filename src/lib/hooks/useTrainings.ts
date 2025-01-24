@@ -118,7 +118,7 @@ export function usePaginatedTrainings({
       try {
         const token = localStorage.getItem("auth_token");
         const params = new URLSearchParams({
-          page: String(Math.max(1, Math.max(1, page) - 1)),
+          page: String(page),
           "page-size": String(pageSize),
           ...(searchQuery && { "search-query": searchQuery }),
         });

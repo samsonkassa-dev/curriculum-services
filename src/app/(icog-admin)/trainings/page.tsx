@@ -40,15 +40,16 @@ export default function Trainings() {
     setPage(1);
   };
 
-  const trainingStartIndex = (page - 1) * pageSize;
-  const trainingEndIndex = trainingStartIndex + pageSize;
-  const trainingStartRecord = trainings.length ? trainingStartIndex + 1 : 0;
-  const trainingEndRecord = Math.min(trainingEndIndex, trainings?.length);
+  const totalElements = trainingsData?.totalElements || 0;
+
+  // Calculate showing ranges using API values
+  const trainingStartRecord = trainings.length ? (page - 1) * pageSize + 1 : 0;
+  const trainingEndRecord = Math.min(page * pageSize, totalElements);
 
   return (
     <div className="md:w-[calc(100%-85px)] md:pl-[85px] mx-auto lg:mt-12 mt-3 px-5">
-      <div className="flex justify-between items-center mb-6 px-3">
-        <div className="text-xl font-semibold max-lg:hidden">Trainings</div>
+      <div className="flex justify-between items-center mb-6 gap-6">
+        <div className="text-xl font-semibold lg:block hidden">Trainings</div>
         <div className="flex items-center self-center lg:justify-end gap-3">
           <div className="relative md:w-[300px]">
             <Input
@@ -67,13 +68,14 @@ export default function Trainings() {
         isLoading={isTrainingsLoading}
         pagination={{
           pageCount: trainingsData?.totalPages || 0,
-          page: trainingsData?.currentPage || 0,
+          page,
           setPage: handlePageChange,
           pageSize,
           setPageSize: handlePageSizeChange,
-          showingText: `Showing ${trainingStartRecord} to ${trainingEndRecord} out of ${
-            trainingsData?.trainings.length || 0
-          } records`,
+          showingText:
+            totalElements > 0
+              ? `Showing ${trainingStartRecord} to ${trainingEndRecord} out of ${totalElements} records`
+              : "No records to show",
         }}
       />
     </div>

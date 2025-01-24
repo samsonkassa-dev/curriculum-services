@@ -47,7 +47,7 @@ export function TrainingDataTable({
   const [sorting, setSorting] = useState<SortingState>([]);
 
   const table = useReactTable({
-    data,
+    data: Array.isArray(data) ? data : [],
     columns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -61,11 +61,6 @@ export function TrainingDataTable({
   return (
     <div>
       <div className="rounded-md border border-gray-200 bg-white overflow-hidden relative">
-        {isLoading && (
-          <div className="absolute inset-0 bg-white/50 flex items-center justify-center z-10">
-            <Loader2 className="w-6 h-6 animate-spin" />
-          </div>
-        )}
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -87,7 +82,16 @@ export function TrainingDataTable({
             ))}
           </TableHeader>
           <TableBody>
-            {table.getRowModel().rows?.length ? (
+            {isLoading ? (
+              <TableRow>
+                <TableCell colSpan={columns.length} className="h-24">
+                  <div className="flex items-center justify-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <span>Loading...</span>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ) : data && data.length > 0 ? (
               table.getRowModel().rows.map((row) => (
                 <TableRow key={row.id} className="border-gray-100">
                   {row.getVisibleCells().map((cell) => (
@@ -106,7 +110,7 @@ export function TrainingDataTable({
                   colSpan={columns.length}
                   className="h-24 text-center"
                 >
-                  {isLoading ? "" : "No results."}
+                  No results found.
                 </TableCell>
               </TableRow>
             )}
@@ -122,7 +126,7 @@ export function TrainingDataTable({
               <select
                 value={pagination.pageSize}
                 onChange={(e) => pagination.setPageSize(Number(e.target.value))}
-                className="border rounded-md md:text-sm text-xs px-2 py-1 bg-white"
+                className="border rounded-md md:text-sm text-xs md:px-2 px-2 py-1 bg-white"
                 title="Page Size"
               >
                 <option value={5}>5</option>
@@ -134,7 +138,7 @@ export function TrainingDataTable({
             </div>
 
             {/* Center - Showing Text */}
-            <div className="md:text-sm text-xs pl-2 text-gray-500">
+            <div className="text-xs md:text-sm pl-2 text-gray-500">
               {pagination.showingText}
             </div>
 
@@ -165,7 +169,7 @@ export function TrainingDataTable({
                       : ""
                   }
                   size="sm"
-                  onClick={() => pagination.setPage(pageNumber + 1)}
+                  onClick={() => pagination.setPage(pageNumber)}
                 >
                   {pageNumber}
                 </Button>
@@ -173,7 +177,7 @@ export function TrainingDataTable({
               <Button
                 variant="pagination"
                 size="sm"
-                onClick={() => pagination.setPage(pagination.page + 2)}
+                onClick={() => pagination.setPage(pagination.page + 1)}
                 disabled={pagination.page >= pagination.pageCount}
               >
                 <ChevronRightIcon className="md:w-4 md:h-4 w-2 h-2" />

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-"use client"
+"use client";
 
 import {
   ColumnDef,
@@ -9,7 +9,7 @@ import {
   getPaginationRowModel,
   SortingState,
   getSortedRowModel,
-} from "@tanstack/react-table"
+} from "@tanstack/react-table";
 
 import {
   Table,
@@ -18,33 +18,33 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
-import { Button } from "@/components/ui/button"
-import { useState } from "react"
-import { ChevronLeftIcon, ChevronRightIcon, Loader2 } from "lucide-react"
-import { IndividualUser, CompanyUser } from "@/types/users"
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { ChevronLeftIcon, ChevronRightIcon, Loader2 } from "lucide-react";
+import { IndividualUser, CompanyUser } from "@/types/users";
 
 interface DataTableProps<TData> {
-  columns: ColumnDef<TData, any>[]
-  data: TData[]
-  isLoading?: boolean
+  columns: ColumnDef<TData, any>[];
+  data: TData[];
+  isLoading?: boolean;
   pagination?: {
-    pageCount: number
-    page: number
-    setPage: (page: number) => void
-    pageSize: number
-    setPageSize: (pageSize: number) => void
-    showingText: string
-  }
+    pageCount: number;
+    page: number;
+    setPage: (page: number) => void;
+    pageSize: number;
+    setPageSize: (pageSize: number) => void;
+    showingText: string;
+  };
 }
 
 export function IndividualDataTable({
   columns,
   data,
   isLoading,
-  pagination
+  pagination,
 }: DataTableProps<IndividualUser>) {
-  const [sorting, setSorting] = useState<SortingState>([])
+  const [sorting, setSorting] = useState<SortingState>([]);
 
   const table = useReactTable({
     data,
@@ -56,7 +56,7 @@ export function IndividualDataTable({
     state: {
       sorting,
     },
-  })
+  });
 
   return (
     <div>
@@ -71,8 +71,8 @@ export function IndividualDataTable({
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id} className="bg-gray-50">
                 {headerGroup.headers.map((header) => (
-                  <TableHead 
-                    key={header.id} 
+                  <TableHead
+                    key={header.id}
                     className="py-4 px-5 text-sm font-medium text-gray-500 bg-gray-50"
                   >
                     {header.isPlaceholder
@@ -89,15 +89,9 @@ export function IndividualDataTable({
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  className="border-gray-100"
-                >
+                <TableRow key={row.id} className="border-gray-100">
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell 
-                      key={cell.id} 
-                      className="py-4 px-5 text-sm"
-                    >
+                    <TableCell key={cell.id} className="py-4 px-5 text-sm">
                       {flexRender(
                         cell.column.columnDef.cell,
                         cell.getContext()
@@ -164,7 +158,11 @@ export function IndividualDataTable({
                   variant={
                     pagination.page === pageNumber ? "outline" : "outline"
                   }
-                  className={pagination.page === pageNumber ? "border-brand text-brand" : ""}
+                  className={
+                    pagination.page === pageNumber
+                      ? "border-brand text-brand"
+                      : ""
+                  }
                   size="sm"
                   onClick={() => pagination.setPage(pageNumber)}
                 >
@@ -184,7 +182,7 @@ export function IndividualDataTable({
         )}
       </div>
     </div>
-  )
+  );
 }
 
 export function CompanyDataTable({
@@ -193,8 +191,7 @@ export function CompanyDataTable({
   isLoading,
   pagination,
 }: DataTableProps<CompanyUser>) {
-  const [sorting, setSorting] = useState<SortingState>([])
-
+  const [sorting, setSorting] = useState<SortingState>([]);
 
   const table = useReactTable({
     data: Array.isArray(data) ? data : [],
@@ -206,8 +203,7 @@ export function CompanyDataTable({
     state: {
       sorting,
     },
-  })
-
+  });
 
   return (
     <div>
@@ -280,6 +276,7 @@ export function CompanyDataTable({
                 className="border rounded-md md:text-sm text-xs md:px-2 px-2 py-1 bg-white"
                 title="Page Size"
               >
+                <option value={5}>5</option>
                 <option value={10}>10</option>
                 <option value={20}>20</option>
                 <option value={30}>30</option>
@@ -313,7 +310,11 @@ export function CompanyDataTable({
                   variant={
                     pagination.page === pageNumber ? "outline" : "outline"
                   }
-                  className={pagination.page === pageNumber ? "border-brand text-brand" : ""}
+                  className={
+                    pagination.page === pageNumber
+                      ? "border-brand text-brand"
+                      : ""
+                  }
                   size="sm"
                   onClick={() => pagination.setPage(pageNumber)}
                 >
@@ -334,4 +335,4 @@ export function CompanyDataTable({
       </div>
     </div>
   );
-} 
+}
