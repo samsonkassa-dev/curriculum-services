@@ -123,11 +123,13 @@ export default function CompanyAdminLayout({
     <div className="opacity-100 transition-opacity duration-300">
       {!hideDefaultLayout && (
         <>
-          {/* <Sidebar
+          <Sidebar
             navItems={navItemsWithCompanyId}
-            onClick={(e: React.MouseEvent<Element>) => handleNavigation(e as React.MouseEvent<HTMLElement>)}
-            disabled={verificationData?.verificationStatus !== 'ACCEPTED'}
-          /> */}
+            onClick={(e: React.MouseEvent<Element>) =>
+              handleNavigation(e as React.MouseEvent<HTMLElement>)
+            }
+            disabled={verificationData?.verificationStatus !== "ACCEPTED"}
+          />
           <Topbar />
         </>
       )}
