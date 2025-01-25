@@ -79,11 +79,17 @@ export default function CompanyAdminLayout({
     if (params.trainingId) {
       routePattern = routePattern.replace(params.trainingId as string, '[trainingId]')
     }
+
+    if (params.moduleId) {
+      routePattern = routePattern.replace(params.moduleId as string, '[moduleId]')
+    }
     
     // List of routes that should hide default layout
     const specialRoutes = [
       '/[companyId]/training/create-training',
-      '/[companyId]/training/[trainingId]'
+      '/[companyId]/training/[trainingId]',
+      '/[companyId]/training/[trainingId]/users',
+      '/[companyId]/training/[trainingId]/[moduleId]'
     ]
     
     return specialRoutes.some(route => routePattern === route)
