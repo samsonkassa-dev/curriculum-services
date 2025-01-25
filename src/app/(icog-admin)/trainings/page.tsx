@@ -1,61 +1,83 @@
-"use client"
+"use client";
 
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Search, SlidersHorizontal } from "lucide-react"
-import { TrainingCard } from "@/components/ui/training-card"
-import { useTrainings } from "@/lib/hooks/useTrainings"
-import { Loading } from "@/components/ui/loading"
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Search, SlidersHorizontal } from "lucide-react";
+import { TrainingCard } from "@/components/ui/training-card";
+import { usePaginatedTrainings } from "@/lib/hooks/useTrainings";
+import { Loading } from "@/components/ui/loading";
+import { useDebounce } from "@/lib/hooks/useDebounce";
+import { useEffect, useState } from "react";
+import { DataTable } from "../basedata/data-table";
+import { trainingColumns } from "./components/training-columns";
+import { TrainingDataTable } from "./components/training-table";
 
 export default function Trainings() {
-  const { data, isLoading } = useTrainings()
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearch = useDebounce(searchQuery, 500);
 
-  if (isLoading) {
-    return <Loading />
-  }
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch]);
+
+  const { data: trainingsData, isLoading: isTrainingsLoading } =
+    usePaginatedTrainings({
+      page,
+      pageSize,
+      searchQuery: debouncedSearch,
+    });
+
+  const trainings = trainingsData?.trainings || [];
+
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+  };
+
+  const handlePageSizeChange = (newPageSize: number) => {
+    setPageSize(newPageSize);
+    setPage(1);
+  };
+
+  const totalElements = trainingsData?.totalElements || 0;
+
+  // Calculate showing ranges using API values
+  const trainingStartRecord = trainings.length ? (page - 1) * pageSize + 1 : 0;
+  const trainingEndRecord = Math.min(page * pageSize, totalElements);
 
   return (
-    <div className="flex min-h-screen md:w-[calc(100%-85px)] md:pl-[85px] mx-auto">
-      <div className="flex-1 p-8">
-        <div className="flex items-center justify-end gap-4 mb-6">
+    <div className="md:w-[calc(100%-85px)] md:pl-[85px] mx-auto lg:mt-12 mt-3 px-5">
+      <div className="flex justify-between items-center mb-6 gap-6">
+        <div className="text-xl font-semibold lg:block hidden">Trainings</div>
+        <div className="flex items-center self-center lg:justify-end gap-3">
           <div className="relative md:w-[300px]">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
             <Input
-              placeholder="Search Training"
-              className="pl-10 h-10 bg-white border-gray-200 rounded-lg text-sm md:text-md"
+              placeholder="Search"
+              className="pl-10 h-10 bg-white border-gray-200 rounded-lg"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
             />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
           </div>
-          <Button 
-            variant="outline" 
-            size="default"
-            className="h-10 px-4 border-gray-200 rounded-lg font-medium text-xs md:text-md" 
-          >
-            <SlidersHorizontal className="h-4 w-4 mr-2" />
-            Filter
-          </Button>
         </div>
-
-        <div className="grid lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-6">
-          {data?.trainings.map((training) => (
-            <TrainingCard
-              key={training.id}
-              id={training.id}
-              title={training.title}
-              location={training.cities[0]?.name || 'N/A'}
-              duration={`${training.duration} ${training.durationType.toLowerCase()}`}
-              ageGroup={training.ageGroups[0]?.name || 'N/A'}
-              // description={training.trainingPurposes[0]?.description || 'No description available'}
-            />
-          ))}
-        </div>
-
-        {/* Show message if no trainings */}
-        {!data?.trainings?.length && (
-          <div className="text-center text-gray-500 mt-8">
-            No trainings available
-          </div>
-        )}
       </div>
+      <TrainingDataTable
+        columns={trainingColumns}
+        data={trainings}
+        isLoading={isTrainingsLoading}
+        pagination={{
+          pageCount: trainingsData?.totalPages || 0,
+          page,
+          setPage: handlePageChange,
+          pageSize,
+          setPageSize: handlePageSizeChange,
+          showingText:
+            totalElements > 0
+              ? `Showing ${trainingStartRecord} to ${trainingEndRecord} out of ${totalElements} records`
+              : "No records to show",
+        }}
+      />
     </div>
-  )
+  );
 }
