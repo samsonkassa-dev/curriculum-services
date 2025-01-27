@@ -5,13 +5,15 @@
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { Training } from "@/types/training";
+import { toast } from "sonner";
 
 export function TrainingActionCell({ row }: { row: any }) {
   const router = useRouter();
   const item = row.original as Training;
 
   const handleView = () => {
-    router.push(`/trainings/${item.id}`);
+    toast.info("Coming Soon");
+    // router.push(`/trainings/${item.id}`);
   };
 
   return (

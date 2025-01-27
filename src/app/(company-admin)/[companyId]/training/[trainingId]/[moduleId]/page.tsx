@@ -5,6 +5,7 @@ import { useParams } from "next/navigation"
 import { ModuleTabs } from "./components/module-tabs"
 import { ModuleInformation } from "./components/module-information"
 import { Section } from "./components/section"
+import { Content } from "./components/content"
 // import { Section } from "./components/section"
 // import { Content } from "./components/content"
 // import Link from "next/link"
@@ -31,7 +32,7 @@ export default function ModuleDetail() {
       <div>
         {activeTab === 'information' && <ModuleInformation moduleId={params.moduleId as string} />}
         {activeTab === 'section' && <Section moduleId={params.moduleId as string} />}
-        {/* {activeTab === 'content' && <Content moduleId={params.moduleId as string} />} */}
+        {activeTab === 'content' && <Content/>}
       </div>
     </div>
   )

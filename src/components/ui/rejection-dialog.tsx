@@ -7,9 +7,10 @@ import { Loader2 } from "lucide-react"
 interface RejectionDialogProps {
   onReject: (reason: string) => void
   isRejecting: boolean
+  onOpenChange?: () => void
 }
 
-export function RejectionDialog({ onReject, isRejecting }: RejectionDialogProps) {
+export function RejectionDialog({ onReject, isRejecting, onOpenChange }: RejectionDialogProps) {
   const [open, setOpen] = useState(false)
   const [reason, setReason] = useState("")
 
@@ -19,8 +20,15 @@ export function RejectionDialog({ onReject, isRejecting }: RejectionDialogProps)
     setReason("")
   }
 
+  const handleOpenChange = (newOpen: boolean) => {
+    setOpen(newOpen)
+    if (newOpen && onOpenChange) {
+      onOpenChange()
+    }
+  }
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         <Button
           variant="outline"

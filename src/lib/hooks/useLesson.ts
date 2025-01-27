@@ -1,4 +1,4 @@
-import axios from "axios"
+import axios, { AxiosError } from "axios"
 import { toast } from "sonner"
 import { useMutation, useQuery } from "@tanstack/react-query"
 
@@ -14,6 +14,13 @@ interface LessonPayload {
   description: string
   sectionId: string
 }
+
+interface ErrorResponse {
+  message: string;
+  code: string;
+}
+
+
 
 export function useCreateLesson() {
   return useMutation({
@@ -31,10 +38,10 @@ export function useCreateLesson() {
     onSuccess: () => {
       toast.success('Lesson created successfully')
     },
-    onError: (error) => {
-      if (axios.isAxiosError(error)) {
-        toast.error(error.response?.data?.message || 'Failed to create lesson')
-      }
+    onError: (error: AxiosError<ErrorResponse>) => {
+      toast.error("Error", { 
+        description: error.response?.data?.message || "Failed to create lesson" 
+      })
     }
   })
 }

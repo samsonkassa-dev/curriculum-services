@@ -1,0 +1,170 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import axios, { AxiosError } from "axios"
+import { toast } from "sonner"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+
+interface ContentDeveloperRole {
+  name: string
+  colorCode: string
+}
+
+interface ContentDeveloper {
+  id: string
+  firstName: string | null
+  lastName: string | null
+  phoneNumber: string | null
+  email: string
+  role: ContentDeveloperRole
+  profilePictureUrl: string | null
+  emailVerified: boolean
+  phoneVerified: boolean
+}
+
+export interface Content {
+  id: string
+  name: string
+  description: string
+  contentLevel: 'MODULE' | 'SECTION' | 'LESSON'
+  contentFileType: 'PDF' | 'VIDEO' | 'LINK'
+  link: string | null
+  referenceLink: string | null
+  rejectionReason: string | null
+  contentStatus: 'PENDING' | 'APPROVED' | 'REJECTED'
+  contentDeveloper: ContentDeveloper
+  moduleName: string
+  sectionName: string | null
+  lessonName: string | null
+}
+
+interface ContentResponse {
+  code: string
+  contents: Content[]
+  totalPages: number
+  pageSize: number
+  message: string
+  currentPage: number
+  totalElements: number
+}
+
+interface ContentPayload {
+  singleContentRequestDTO: {
+    name: string
+    description: string
+    contentFileType: 'PDF' | 'VIDEO' | 'LINK'
+  }[]
+  email: string
+  moduleId: string
+  lessonId?: string
+}
+
+interface GetContentsParams {
+  trainingId: string
+  page?: number
+  pageSize?: number
+  searchQuery?: string
+}
+
+interface ErrorResponse {
+  message: string;
+  code: string;
+}
+
+export function useGetContents({ trainingId, page = 1, pageSize = 10, searchQuery = "" }: GetContentsParams) {
+  return useQuery<ContentResponse>({
+    queryKey: ['contents', trainingId, page, pageSize, searchQuery],
+    queryFn: async () => {
+      const token = localStorage.getItem('auth_token')
+      const response = await axios.get(
+        `${process.env.NEXT_PUBLIC_API}/content/training/${trainingId}`,
+        {
+          params: {
+            page,
+            'page-size': pageSize,
+            'search-query': searchQuery
+          },
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      )
+      return response.data
+    }
+  })
+}
+
+export function useCreateContent() {
+  return useMutation({
+    mutationFn: async (data: ContentPayload) => {
+      const token = localStorage.getItem('auth_token')
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_API}/content`,
+        data,
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      )
+      return response.data
+    },
+    onSuccess: () => {
+      toast.success('Content created successfully')
+    },
+    onError: (error: AxiosError<ErrorResponse>) => {
+      toast.error("Error", { 
+        description: error.response?.data?.message || "Failed to create content" 
+      })
+    }
+  })
+}
+
+export function useAcceptContent() {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: async (contentId: string) => {
+      const token = localStorage.getItem('auth_token')
+      const response = await axios.patch(
+        `${process.env.NEXT_PUBLIC_API}/content/accept-content/${contentId}`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      )
+      return response.data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contents'] })
+      toast.success('Content accepted successfully')
+    },
+    onError: (error: AxiosError<ErrorResponse>) => {
+      toast.error("Error", { 
+        description: error.response?.data?.message || "Failed to accept content" 
+      })
+    }
+  })
+}
+
+export function useRejectContent() {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: async ({ contentId, reason }: { contentId: string, reason: string }) => {
+      const token = localStorage.getItem('auth_token')
+      const response = await axios.patch(
+        `${process.env.NEXT_PUBLIC_API}/content/reject-content/${contentId}`,
+        {},
+        {
+          params: { 'rejection-reason': reason },
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      )
+      return response.data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contents'] })
+      toast.success('Content rejected successfully')
+    },
+    onError: (error: AxiosError<ErrorResponse>) => {
+      toast.error("Error", { 
+        description: error.response?.data?.message || "Failed to reject content" 
+      })
+    }
+  })
+} 
