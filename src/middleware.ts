@@ -30,7 +30,9 @@ export function middleware(req: NextRequest) {
     return response;
   }
 
-  // ICOG_ADMIN route restrictions
+
+    // ICOG_ADMIN route restrictions
+
   if (decoded.role === 'ROLE_ICOG_ADMIN') {
     if (pathname === '/') {
       return NextResponse.redirect(new URL('/dashboard', req.url));
@@ -41,6 +43,19 @@ export function middleware(req: NextRequest) {
     }
     return NextResponse.next();
   }
+
+
+  // Add curriculum role checks after ICOG_ADMIN but before COMPANY_ADMIN checks
+  if (decoded.role && ['ROLE_SUB_CURRICULUM_ADMIN', 'ROLE_CURRICULUM_ADMIN', 'ROLE_CONTENT_DEVELOPER'].includes(decoded.role)) {
+    // Only allow access to training routes
+    if (!pathname.includes('/training')) {
+      const companyId = pathname.split('/')[1];
+      return NextResponse.redirect(new URL(`/${companyId}/training`, req.url));
+    }
+    return NextResponse.next();
+  }
+
+
 
   // COMPANY_ADMIN route restrictions
   if (decoded.role === 'ROLE_COMPANY_ADMIN') {

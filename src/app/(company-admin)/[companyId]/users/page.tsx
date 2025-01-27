@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Search, SlidersHorizontal } from "lucide-react"
+import { Search } from "lucide-react"
 import { IndividualDataTable } from "./components/data-table"
 import { individualColumns } from "./components/columns"
 import { useDebounce } from "@/lib/hooks/useDebounce"

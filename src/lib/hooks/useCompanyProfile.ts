@@ -15,10 +15,6 @@ interface ApiResponse {
 }
 
 export const useCompanyProfile = () => {
-<<<<<<< HEAD
-  
-=======
->>>>>>> 0c48ad69ecb028cd29666279c0ff2e6d919cf745
   const { mutate: createCompanyProfile, isPending: isCreating } = useMutation({
     mutationFn: async (data: CompanyProfileFormData) => {
       const token = localStorage.getItem("auth_token");

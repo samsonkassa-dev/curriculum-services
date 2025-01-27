@@ -26,7 +26,7 @@ export function OutlineSidebar({ title, groups, activeItem, onItemClick }: Outli
         {groups.map((group, index) => (
           <div key={index} className="space-y-4">
             {group.title && (
-              <h3 className="text-[#333333] text-[16px] font-medium px-3">
+              <h3 className="text-[#292827] text-[16px] font-medium px-3">
                 {group.title}
               </h3>
             )}

@@ -99,8 +99,8 @@ const Company = () => {
   const { businessTypes, industryTypes } = useBusinessTypes();
 
   return (
-    <div className="max-w-screen-2xl mx-auto max-2xl:mx-6 max-md:mx-2 lg:mt-12 mt-6 flex flex-col gap-4">
-      <div className=" bg-[#FBFBFB] rounded-xl xl:p-5 p-2">
+    <div className=" px-4 md:px-10 md:ml-[65px] lg:ml-[0px] lg:px-0 lg:mt-12 mt-6 flex flex-col gap-4">
+      <div className="rounded-xl">
         <div className="lg:flex lg:justify-center">
           <form
             onSubmit={handleSubmit(onSubmit)}

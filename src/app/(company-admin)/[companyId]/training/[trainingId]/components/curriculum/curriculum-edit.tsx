@@ -29,6 +29,7 @@ import { ExecutiveSummary } from "./steps/executiveSummary"
 import { useExecutiveSummary, useAddExecutiveSummary } from "@/lib/hooks/useExecutiveSummary"
 
 
+
 interface CurriculumEditProps {
   trainingId: string
   prerequisiteData: PrerequisiteResponse | null

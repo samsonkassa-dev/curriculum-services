@@ -27,3 +27,4 @@ export type BaseDataType =
 | "training-purpose"
 | "work-experience"
 | "trainer-requirement"
+| "assessment-type"

@@ -41,4 +41,27 @@ export interface CompanyUser {
   logoUrl: string | null;
   verificationStatus: 'ACCEPTED' | 'PENDING' | 'REJECTED';
   createdAt: string;
+}
+
+export interface Role {
+  name: string;
+  colorCode: string;
+}
+
+export interface TrainingUser {
+  id: string;
+  firstName: string | null;
+  lastName: string | null;
+  phoneNumber: string | null;
+  email: string;
+  role: Role;
+  profilePictureUrl: string | null;
+  phoneVerified: boolean;
+  emailVerified: boolean;
+}
+
+export interface TrainingUsersResponse {
+  code: string;
+  message: string;
+  users: TrainingUser[];
 } 

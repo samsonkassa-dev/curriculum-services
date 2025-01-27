@@ -36,11 +36,6 @@ export function Curriculum({ trainingId }: CurriculumProps) {
   const prerequisiteMutation = useCreatePrerequisite()
   const isEmptyCurriculum = !prerequisiteData
 
-  // if (isEmptyCurriculum) {
-  //   return <Loading />
-  // }
-
-  // Only check prerequisite for initial curriculum check
 
   const handleSave = async (data: PrerequisiteData) => {
     try {
@@ -107,6 +102,10 @@ export function Curriculum({ trainingId }: CurriculumProps) {
     )
   }
 
+  if (isLoadingPrerequisite || isLoadingObjective || isLoadingEducationLevels || isLanguage || isLoadingWorkExperience || isLoadingDeliveryTools ) {
+    return <Loading />
+  }
+
   if (isEmptyCurriculum) {
     return (
       <DefaultCreate 
@@ -116,6 +115,8 @@ export function Curriculum({ trainingId }: CurriculumProps) {
       />
     )
   }
+
+
 
   return (
     <CurriculumView 

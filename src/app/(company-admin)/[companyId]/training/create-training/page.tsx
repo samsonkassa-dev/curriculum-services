@@ -136,7 +136,7 @@ export default function CreateTraining() {
          isOpen={showInviteModal}
           onClose={handleInviteModalClose}
           onInvite={handleInvite}
-          inviteLink={inviteLink}
+          // inviteLink={inviteLink}
           isLoading={isInviting}
         />
       

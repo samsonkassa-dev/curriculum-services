@@ -23,7 +23,7 @@ export function useInviteTrainingUser() {
     mutationFn: async (data: InviteUserData) => {
         const token = localStorage.getItem('auth_token');
       const response = await axios.patch<InviteUserResponse>(
-        `${process.env.NEXT_PUBLIC_API || 'http://164.90.209.220:8081/api'}/training/invite-users`,
+        `${process.env.NEXT_PUBLIC_API || 'http://164.90.209.220:8081/api'}/training/invite-curriculum-admin`,
         data,
         {
           headers: { Authorization: `Bearer ${token}` }

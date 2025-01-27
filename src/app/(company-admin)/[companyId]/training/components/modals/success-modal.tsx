@@ -8,7 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { CheckCircle2 } from "lucide-react"
+
 
 interface SuccessModalProps {
   isOpen: boolean

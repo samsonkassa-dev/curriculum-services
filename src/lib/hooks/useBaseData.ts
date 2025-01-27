@@ -27,12 +27,13 @@ const getResponseKey = (type: BaseDataType) => {
 };
 
 interface BaseDataOptions {
-  type?: 'INSTRUCTOR' | 'LEARNER'
+  type?: 'INSTRUCTOR' | 'LEARNER';
+  subType?: 'GENERAL_FORMATIVE' | 'TECHNOLOGY_SPECIFIC_FORMATIVE' | 'ALTERNATIVE_FORMATIVE';
 }
 
 export function useBaseData(type: BaseDataType, options?: BaseDataOptions) {
   const queryClient = useQueryClient();
-  const queryKey = ['base-data', type, options?.type];
+  const queryKey = ['base-data', type, options?.type, options?.subType];
   const responseKey = getResponseKey(type);
 
   // Query for fetching base data
@@ -40,9 +41,18 @@ export function useBaseData(type: BaseDataType, options?: BaseDataOptions) {
     queryKey,
     queryFn: async () => {
       const token = localStorage.getItem('auth_token');
-      const url = options?.type 
-        ? `/${type}?type=${options.type}`
-        : `/${type}`;
+      let url = `/${type}`;
+      
+      // Add query parameters if they exist
+      const queryParams = [];
+      if (options?.type) queryParams.push(`type=${options.type}`);
+      if (type === 'assessment-type' && options?.subType) {
+        queryParams.push(`sub-type=${options.subType}`);
+      }
+      
+      if (queryParams.length > 0) {
+        url += `?${queryParams.join('&')}`;
+      }
       
       const response = await api.get(url, {
         headers: { Authorization: `Bearer ${token}` }
