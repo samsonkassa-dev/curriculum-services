@@ -14,6 +14,8 @@ export default function TrainingLayout({
   const router = useRouter()
   const pathname = usePathname()
   const { data: training } = useTraining(params.trainingId as string)
+  const userRole = localStorage.getItem("user_role")
+  const isCompanyAdmin = userRole === "ROLE_COMPANY_ADMIN"
 
   const handleSettingsClick = () => {
     router.push(`/${params.companyId}/training/${params.trainingId}/users`)
@@ -37,14 +39,16 @@ export default function TrainingLayout({
             {isUsersPage ? 'Users' : training?.title || 'Training'}
           </h1>
         </div>
-        <button 
-          onClick={handleSettingsClick}
-          className="p-2 hover:bg-gray-50 rounded-full"
-          title="Settings"
-          aria-label="Settings"
-        >
-          <img src="/settingsTop.svg" alt="Settings" className="w-5 h-5" />
-        </button>
+        {isCompanyAdmin && (
+          <button 
+            onClick={handleSettingsClick}
+            className="p-2 hover:bg-gray-50 rounded-full"
+            title="Settings"
+            aria-label="Settings"
+          >
+            <img src="/settingsTop.svg" alt="Settings" className="w-5 h-5" />
+          </button>
+        )}
       </div>
 
       {children}

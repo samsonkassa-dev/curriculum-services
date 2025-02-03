@@ -41,6 +41,7 @@ export function useCompanyAdmins() {
         }
       )
       return response.data
-    }
+    },
+    retry: 2
   })
 } 

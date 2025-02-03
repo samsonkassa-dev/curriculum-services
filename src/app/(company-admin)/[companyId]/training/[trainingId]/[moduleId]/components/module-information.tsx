@@ -114,11 +114,17 @@ function ModuleInformationContent({
       case "Inclusion Strategies":
         return Boolean(formData.inclusionStrategy?.trim())
       case "Estimated Duration":
-        return Boolean(formData.durationType !== undefined)
+        return Boolean(
+          formData.duration > 0 && 
+          formData.durationType !== undefined
+        )
+
       default:
         return false
     }
   }
+
+  // console.log(formData)
 
   const outlineGroups = [
     {

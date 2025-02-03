@@ -19,7 +19,7 @@ export const individualColumns: ColumnDef<IndividualUser>[] = [
       
       return (
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-sm font-medium">
+          <div className="w-8 h-5 md:w-9 md:h-9 rounded-full bg-[#6dacff] text-white flex items-center justify-center md:text-sm text-xs font-medium">
             {initials}
           </div>
           <span className="font-medium">{row.getValue("fullName")}</span>
@@ -44,9 +44,21 @@ export const individualColumns: ColumnDef<IndividualUser>[] = [
     }
   },
   {
-    accessorKey: "createdAt",
-    header: "Created at",
+    accessorKey: "role",
+    header: "Role",
+    cell: ({ row }) => {
+      const role = row.original.role?.name || 'N/A';
+      return (
+        <span className="capitalize">
+          {role.replace('ROLE_', '').replace(/_/g, ' ').toLowerCase()}
+        </span>
+      )
+    }
   },
+  // {
+  //   accessorKey: "createdAt",
+  //   header: "Created at",
+  // },
   {
     id: "actions",
     cell: IndividualActionCell
@@ -63,9 +75,9 @@ export const companyColumns: ColumnDef<CompanyUser>[] = [
       
       return (
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-sm font-medium">
+          {/* <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-sm font-medium">
             {firstLetter}
-          </div>
+          </div> */}
           <span className="font-medium">{name}</span>
         </div>
       )

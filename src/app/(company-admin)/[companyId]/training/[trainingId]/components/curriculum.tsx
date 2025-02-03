@@ -26,6 +26,9 @@ interface CurriculumProps {
 
 export function Curriculum({ trainingId }: CurriculumProps) {
   const [isEditing, setIsEditing] = useState(false)
+  // Add user role check
+  const userRole = localStorage.getItem("user_role")
+  const canEdit = userRole === "ROLE_COMPANY_ADMIN" || userRole === "ROLE_CURRICULUM_ADMIN"
   
   const { data: prerequisiteData, isLoading: isLoadingPrerequisite } = usePrerequisite(trainingId)
   const { data: objectiveData, isLoading: isLoadingObjective } = useObjective(trainingId)
@@ -86,7 +89,7 @@ export function Curriculum({ trainingId }: CurriculumProps) {
     }
   }, [isAllStepsComplete, isEmptyCurriculum])
 
-  if (isEditing) {
+  if (isEditing && canEdit) {
     return (
       <CurriculumEdit
         trainingId={trainingId}
@@ -106,7 +109,7 @@ export function Curriculum({ trainingId }: CurriculumProps) {
     return <Loading />
   }
 
-  if (isEmptyCurriculum) {
+  if (isEmptyCurriculum && canEdit) {
     return (
       <DefaultCreate 
         title="Create Curriculum"
@@ -116,7 +119,13 @@ export function Curriculum({ trainingId }: CurriculumProps) {
     )
   }
 
-
+  if (isEmptyCurriculum) {
+    return (
+      <div className="flex flex-col items-center justify-center p-8">
+        <p className="text-gray-500">No curriculum available yet.</p>
+      </div>
+    )
+  }
 
   return (
     <CurriculumView 
@@ -129,6 +138,7 @@ export function Curriculum({ trainingId }: CurriculumProps) {
       appendicesData={appendicesData || null}
       executiveSummaryData={executiveSummaryData || null}
       onEdit={() => setIsEditing(true)}
+      showEditButton={canEdit}
     />
   )
 }

@@ -12,9 +12,6 @@ interface BaseItem {
 }
 
 interface AudienceProfile {
-  learnerLevelId: any
-  academicLevelId: any
-  learningStylePreferenceIds: any
   id: string
   trainingId: string
   learnerLevel: BaseItem

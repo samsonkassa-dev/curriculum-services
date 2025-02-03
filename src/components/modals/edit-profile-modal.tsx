@@ -9,7 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { useEditProfile } from "@/lib/hooks/useEditProfile"
+import { useProfile } from "@/lib/hooks/useProfile"
 import { useProfilePicture } from "@/lib/hooks/useProfilePicture"
 
 interface EditProfileModalProps {
@@ -26,7 +26,7 @@ interface EditProfileModalProps {
 
 export function EditProfileModal({ isOpen, onClose, defaultValues }: EditProfileModalProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const { uploadProfilePicture, editProfile } = useEditProfile()
+  const { uploadProfilePicture, editProfile } = useProfile()
   const savedProfilePicture = typeof window !== 'undefined' ? localStorage.getItem('profile_picture_url') : null
   
   // Initialize with saved picture from localStorage, fallback to default

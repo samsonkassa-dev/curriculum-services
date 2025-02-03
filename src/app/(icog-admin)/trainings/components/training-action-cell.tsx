@@ -12,8 +12,8 @@ export function TrainingActionCell({ row }: { row: any }) {
   const item = row.original as Training;
 
   const handleView = () => {
-    toast.info("Coming Soon");
-    // router.push(`/trainings/${item.id}`);
+    // Use a default companyId or handle it in the destination page
+    router.push(`/icog-admin/training/${item.id}`);
   };
 
   return (

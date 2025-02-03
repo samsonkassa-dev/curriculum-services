@@ -16,7 +16,10 @@ const mockIndividuals: IndividualUser[] = [
     fullName: "Jane Cooper",
     email: "jessica.hanson@example.com",
     status: "Active" as const,
-    createdAt: "5/27/15"
+    role: {
+      name: "Curriculum Admin",
+      colorCode: "#4CAF50"  // or whatever color code you want to use
+    }
   }
 ]
 

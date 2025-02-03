@@ -41,8 +41,8 @@ export function useUpdateAudienceProfile() {
   return useMutation({
     mutationFn: async (data: AudienceProfileData) => {
       const token = localStorage.getItem('auth_token')
-      const response = await axios.patch(
-        `${process.env.NEXT_PUBLIC_API}/training/${data.trainingId}/audience-profile`,
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_API}/training/add-audience-profile`,
         data,
         {
           headers: { Authorization: `Bearer ${token}` }

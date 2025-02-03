@@ -12,6 +12,8 @@ const badgeVariants = cva(
         rejected: "bg-red-50 text-red-700 ring-red-600/20",
         active: "bg-green-50 text-green-700 ring-green-600/20",
         deactivated: "bg-red-50 text-red-700 ring-red-600/20",
+        deleted: "bg-red-50 text-red-700 ring-red-600/20",
+        approved: "bg-green-50 text-green-700 ring-green-600/20",
       }
     },
     defaultVariants: {

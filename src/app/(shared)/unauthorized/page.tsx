@@ -11,7 +11,7 @@ export default function Unauthorized() {
           className="object-contain"
         />
       </div>
-      <p className="text-xl text-center font-normal">You are not authorized to access this page. Piss off.</p>
+      <p className="text-xl text-center font-normal">You are not authorized to access this page.</p>
     </div>
   );
 }

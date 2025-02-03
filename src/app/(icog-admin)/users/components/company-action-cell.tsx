@@ -28,14 +28,14 @@ export function CompanyActionCell({ row }: { row: any }) {
         <span className="sr-only">View</span>
         <img src="/eye.svg" alt="View" className="w-5 h-5" />
       </Button>
-      <Button 
+      {/* <Button 
         variant="ghost" 
         className="h-8 w-8 p-0 text-red-500"
         onClick={handleDelete}
       >
         <span className="sr-only">Delete</span>
         <img src="/deactivate.svg" alt="Delete" className="w-5 h-5" />
-      </Button>
+      </Button> */}
     </div>
   )
 } 

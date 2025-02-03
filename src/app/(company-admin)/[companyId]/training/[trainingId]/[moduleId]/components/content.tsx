@@ -20,6 +20,9 @@ export function Content() {
   const [searchQuery, setSearchQuery] = useState("")
   
   const debouncedSearch = useDebounce(searchQuery, 500)
+  const userRole = localStorage.getItem("user_role")
+  const isContentDeveloper = userRole === "ROLE_CONTENT_DEVELOPER"
+
 
   const { data, isLoading } = useGetContents({
     trainingId: params.trainingId as string,
@@ -36,13 +39,15 @@ export function Content() {
     <div className="px-[7%] py-10">
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-xl font-semibold">Content</h1>
-        <Button 
-          className="bg-blue-500 hover:bg-blue-600 text-white flex items-center gap-2"
-          onClick={() => setShowRequestModal(true)}
-        >
-          <span>+</span>
-          <span>Request Content</span>
-        </Button>
+        {userRole !== "ROLE_CONTENT_DEVELOPER" && (
+          <Button 
+            className="bg-blue-500 hover:bg-blue-600 text-white flex items-center gap-2"
+            onClick={() => setShowRequestModal(true)}
+          >
+            <span>+</span>
+            <span>Request Content</span>
+          </Button>
+        )}
       </div>
 
       {!data?.contents.length && !searchQuery ? (
@@ -58,20 +63,20 @@ export function Content() {
             <div className="relative md:w-[300px]">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input
-                placeholder="Search"
+                placeholder="Search by Name"
                 className="pl-10 h-10 bg-white border-gray-200 rounded-lg"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            <Button 
+            {/* <Button 
               variant="outline" 
               size="default"
               className="h-10 px-4 border-gray-200 rounded-lg font-medium"
             >
               <SlidersHorizontal className="h-4 w-4 mr-2" />
               Filter
-            </Button>
+            </Button> */}
           </div>
 
           <DataTable

@@ -14,7 +14,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
     const [showPassword, setShowPassword] = React.useState(false);
 
     return (
-      <div className="relative">
+      <div className="relative bg-white">
         <input
           type={showPassword ? "text" : type}
           className={cn(

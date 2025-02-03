@@ -2,7 +2,6 @@
 
 import { useState } from "react"
 import dynamic from 'next/dynamic'
-import { CompanyProfileForm as StaticCompanyProfileForm } from "../components/company-profile-form"
 
 // Dynamically import the CompanyProfileForm with no SSR
 const CompanyProfileForm = dynamic(
@@ -30,11 +29,11 @@ export default function CompanyProfile() {
             <div className="flex items-center justify-between mb-12">
               {/* Stepper Container */}
               <div className="relative w-full">
-                {/* Background gray line - now starts after first circle and ends before last circle */}
+
                 <div className="absolute top-[17px] left-[calc(16.67%+16px)] right-[calc(16.67%+16px)] h-[2px] bg-gray-200" />
 
                 <div className="relative flex justify-between">
-                  {/* First progress line - adjusted to start after first circle */}
+                  {/* First progress line */}
                   <div
                     className={`absolute  top-[17px] left-[calc(16.67%+16px)] h-[2px] -translate-y-1/2 transition-all duration-300
                 ${
@@ -42,7 +41,7 @@ export default function CompanyProfile() {
                 }`}
                   />
 
-                  {/* Second progress line - adjusted to end before last circle */}
+                  {/* Second progress line */}
                   <div
                     className={`absolute top-[17px] left-[50%] h-[2px] -translate-y-1/2 transition-all duration-300
                 ${

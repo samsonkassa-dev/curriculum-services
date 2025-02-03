@@ -35,9 +35,12 @@ export default function Sidebar({ navItems, onClick, disabled }: SidebarProps) {
       const currentRoute = pathname.split('/').slice(2).join('/')
       return routePattern === currentRoute
     }
-    
-    // For icog admin routes: /path
-    return pathname === href || pathname.startsWith(`${href}/`)
+// icog admin routes
+    const baseHref = href.split('/')[1]  // 'users' from '/users'
+    const basePathname = pathname.split('/')[1]  
+
+    // handle normal and nested routes
+    return baseHref === basePathname
   }
 
   return (
@@ -45,7 +48,7 @@ export default function Sidebar({ navItems, onClick, disabled }: SidebarProps) {
       {/* Mobile Menu Button */}
       <button
         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        className="absolute py-[30px] px-4 z-20 md:hidden"
+        className="absolute py-[30px] px-4 z-30 md:hidden"
       >
         <img src="/navResponsive.svg" alt="Menu" width={24} height={24} />
       </button>
@@ -58,10 +61,10 @@ export default function Sidebar({ navItems, onClick, disabled }: SidebarProps) {
           "hidden md:flex",
           isCollapsed ? "md:w-[65px]" : "md:w-[200px]",
           // Mobile styles - only show when menu is open
-          isMobileMenuOpen ? "flex md:w-[200px] w-[150px]" : "hidden"
+          isMobileMenuOpen ? "flex md:w-[200px] w-[150px] z-20" : "hidden"
         )}
       >
-        <div className="flex-1 py-8">
+        <div className="flex-1 py-8 ">
           <nav className="space-y-3 py-24 px-2">
             {navItems.map((item, index) => (
               <Link

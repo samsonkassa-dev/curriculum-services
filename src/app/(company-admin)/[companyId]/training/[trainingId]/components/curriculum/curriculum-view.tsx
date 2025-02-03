@@ -21,6 +21,7 @@ interface CurriculumViewProps {
   appendicesData: any
   executiveSummaryData: any
   onEdit: () => void
+  showEditButton?: boolean
 }
 
 export function CurriculumView({ 
@@ -32,7 +33,8 @@ export function CurriculumView({
   referencesData,
   appendicesData,
   executiveSummaryData,
-  onEdit 
+  onEdit,
+  showEditButton = true
 }: CurriculumViewProps) {
   const renderHeader = (title: string) => (
     <AccordionTrigger className="bg-white data-[state=open]:bg-[#f7fbff] rounded-lg p-6 flex items-center justify-between hover:no-underline group">
@@ -40,6 +42,17 @@ export function CurriculumView({
         <span className="font-semibold text-md md:text-xl">{title}</span>
       </div>
       <div className="text-gray-400 flex gap-2">
+        {showEditButton && (
+          <img 
+            src="/edit.svg" 
+            alt="" 
+            className="w-5 h-5 cursor-pointer" 
+            onClick={(e) => {
+              e.stopPropagation()
+              onEdit()
+            }}
+          />
+        )}
         <ChevronRight className="h-5 w-5 transition-transform group-data-[state=open]:hidden text-black" />
         <ChevronDown className="h-5 w-5 transition-transform hidden group-data-[state=open]:block text-black" />
       </div>
@@ -211,17 +224,6 @@ export function CurriculumView({
           </AccordionItem>
         </Accordion>
       </div>
-
-      {/* <div className="flex justify-end mt-6">
-        <Button 
-          onClick={onEdit}
-          variant="outline"
-          className="text-brand border-brand hover:bg-brand/5"
-        >
-          <img src="/edit.svg" alt="edit" className="w-4 h-4 mr-2" />
-          Edit
-        </Button>
-      </div> */}
     </div>
   )
 }

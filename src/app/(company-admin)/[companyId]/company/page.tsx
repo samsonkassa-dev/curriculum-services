@@ -43,7 +43,7 @@ const Company = () => {
     data: company,
     isLoading: isFetchingCompanyProfile,
     isError: isFetchingError,
-  } = useMyCompanyProfile({ enabled: true });
+  } = useMyCompanyProfile();
 
   const { updateCompanyProfile, isLoading: isUpdatingCompanyProfile } =
     useCompanyProfile();
@@ -99,9 +99,9 @@ const Company = () => {
   const { businessTypes, industryTypes } = useBusinessTypes();
 
   return (
-    <div className=" px-4 md:px-10 md:ml-[65px] lg:ml-[0px] lg:px-0 lg:mt-12 mt-6 flex flex-col gap-4">
-      <div className="rounded-xl">
-        <div className="lg:flex lg:justify-center">
+    <div className="lg:px-24 md:px-14 px-4 lg:mt-12 mt-6 flex flex-col gap-4">
+      <div className="bg-[#fbfbfb] rounded-xl">
+        <div className="lg:flex rounded-xl  lg:justify-center">
           <form
             onSubmit={handleSubmit(onSubmit)}
             onKeyDown={(e) => {
@@ -109,20 +109,20 @@ const Company = () => {
                 e.preventDefault();
               }
             }}
-            className="flex flex-col lg:grid lg:grid-cols-2 xl:gap-x-20 lg:gap-y-8 gap-y-6 gap-x-4 lg:w-4/5 py-5 items-start"
+            className="flex flex-col lg:grid lg:grid-cols-2 xl:gap-x-16 lg:gap-y-8 gap-y-6 gap-x-4 lg:w-full py-10 lg:px-16 md:px-10 sm:px-8 px-3 items-start"
           >
             <div className="col-span-2 w-full">
-              <p className="font-semibold text-xl">Company Profile</p>
-              <p className="text-[#9C9791] text-sm">
+              <p className="font-semibold md:text-xl text-base">Company Profile</p>
+              <p className="text-[#9C9791] text-xs">
                 Please enter all relevant attributes of your company
               </p>
             </div>
             <div className="space-y-2 w-full pt-1">
               <Label htmlFor="companyName">
-                <p className="text-[1rem] font-semibold pb-[2px]">
+                <p className="md:text-[1rem] text-sm font-semibold pb-[2px]">
                   Company Name
                 </p>
-                <p className="text-[#9C9791] text-sm font-light">
+                <p className="text-[#9C9791] text-xs font-light">
                   Please enter the name of the company
                 </p>
               </Label>
@@ -130,7 +130,7 @@ const Company = () => {
                 id="companyName"
                 placeholder=""
                 {...register("name")}
-                className="w-full"
+                className="w-full text-sm md:text-base"
                 isError={!!errors.name}
               />
               {errors.name && (
@@ -139,10 +139,10 @@ const Company = () => {
             </div>
             <div className="space-y-2 w-full pt-1">
               <Label htmlFor="contactPhone">
-                <p className="text-[1rem] font-semibold pb-[2px]">
+                <p className="md:text-[1rem] text-sm font-semibold pb-[2px]">
                   Contact Phone
                 </p>
-                <p className="text-[#9C9791] text-sm font-light">
+                <p className="text-[#9C9791] text-xs font-light">
                   Please enter the phone number
                 </p>
               </Label>
@@ -153,7 +153,7 @@ const Company = () => {
                     id="contactPhone"
                     placeholder="9XXXXXXXX or 7XXXXXXXX"
                     {...register("phone")}
-                    className="flex-1"
+                    className="flex-1 text-sm md:text-base"
                     maxLength={9}
                     isError={!!errors.phone}
                   />
@@ -166,10 +166,10 @@ const Company = () => {
 
             <div className="space-y-2 w-full pt-1">
               <Label htmlFor="countryOfIncorporation">
-                <p className="text-[1rem] font-semibold pb-[2px]">
+                <p className="md:text-[1rem] text-sm font-semibold pb-[2px]">
                   Country of Incorporation
                 </p>
-                <p className="text-[#9C9791] text-sm font-light">
+                <p className="text-[#9C9791] text-xs font-light">
                   Please select the country where the company is incorporated
                 </p>
               </Label>
@@ -177,7 +177,7 @@ const Company = () => {
                 id="countryOfIncorporation"
                 placeholder=""
                 {...register("countryOfIncorporation")}
-                className="w-full"
+                className="w-full text-sm md:text-base"
                 isError={!!errors.countryOfIncorporation}
               />
               {errors.countryOfIncorporation && (
@@ -189,10 +189,10 @@ const Company = () => {
 
             <div className="space-y-2 w-full pt-1">
               <Label htmlFor="taxIdentificationNumber">
-                <p className="text-[1rem] font-semibold pb-[2px]">
+                <p className="md:text-[1rem] text-sm   font-semibold pb-[2px]">
                   Tax Identification Number
                 </p>
-                <p className="text-[#9C9791] text-sm font-light">
+                <p className="text-[#9C9791] text-xs font-light">
                   Please enter the TIN (10 digits)
                 </p>
               </Label>
@@ -200,7 +200,7 @@ const Company = () => {
                 id="taxIdentificationNumber"
                 placeholder=""
                 {...register("taxIdentificationNumber")}
-                className="w-full"
+                className="w-full text-sm md:text-base"
                 isError={!!errors.taxIdentificationNumber}
                 maxLength={10}
                 minLength={10}
@@ -214,10 +214,10 @@ const Company = () => {
 
             <div className="space-y-2 w-full pt-1">
               <Label htmlFor="companyAddress">
-                <p className="text-[1rem] font-semibold pb-[2px]">
+                <p className="md:text-[1rem] text-sm font-semibold pb-[2px]">
                   Company Address
                 </p>
-                <p className="text-[#9C9791] text-sm font-light">
+                <p className="text-[#9C9791] text-xs font-light">
                   Please enter the company&apos;s address
                 </p>
               </Label>
@@ -225,7 +225,7 @@ const Company = () => {
                 id="companyAddress"
                 placeholder=""
                 {...register("address")}
-                className="w-full"
+                className="w-full text-sm md:text-base"
                 isError={!!errors.address}
               />
               {errors.address && (
@@ -235,13 +235,13 @@ const Company = () => {
 
             <div className="space-y-2 w-full pt-1">
               <Label htmlFor="companyWebsite">
-                <p className="text-[1rem] font-semibold pb-[2px]">
+                <p className="md:text-[1rem] text-sm font-semibold pb-[2px]">
                   Company Website Link
                   <span className="text-brand text-sm font-light">
                     &nbsp;(optional)
                   </span>
                 </p>
-                <p className="text-[#9C9791] text-sm font-light">
+                <p className="text-[#9C9791] text-xs font-light">
                   Please enter the website URL
                 </p>
               </Label>
@@ -249,7 +249,7 @@ const Company = () => {
                 id="companyWebsite"
                 placeholder=""
                 {...register("websiteUrl")}
-                className="w-full"
+                className="w-full text-sm md:text-base"
                 isError={!!errors.websiteUrl}
               />
               {errors.websiteUrl && (
@@ -261,10 +261,10 @@ const Company = () => {
 
             <div className="space-y-2 w-full pt-1">
               <Label htmlFor="industryType">
-                <p className="text-[1rem] font-semibold pb-[2px]">
+                <p className="md:text-[1rem] text-sm font-semibold pb-[2px]">
                   Industry Type
                 </p>
-                <p className="text-[#9C9791] text-sm font-light">
+                <p className="text-[#9C9791] text-xs font-light">
                   Please select your industry type
                 </p>
               </Label>
@@ -280,7 +280,7 @@ const Company = () => {
                 value={watch("industryType")?.id}
               >
                 <SelectTrigger className="w-full h-12">
-                  <SelectValue placeholder="Select" />
+                  <SelectValue placeholder="Select" className="text-sm md:text-base" />
                 </SelectTrigger>
                 <SelectContent>
                   {industryTypes.map((type) => (
@@ -299,10 +299,10 @@ const Company = () => {
 
             <div className="space-y-2 w-full pt-1">
               <Label htmlFor="businessType">
-                <p className="text-[1rem] font-semibold pb-[2px]">
+                <p className="md:text-[1rem] text-sm font-semibold pb-[2px]">
                   Business Type
                 </p>
-                <p className="text-[#9C9791] text-sm font-light">
+                <p className="text-[#9C9791] text-xs font-light">
                   Please select your business type
                 </p>
               </Label>
@@ -318,7 +318,7 @@ const Company = () => {
                 value={watch("businessType")?.id}
               >
                 <SelectTrigger className="w-full h-12">
-                  <SelectValue placeholder="Select" />
+                  <SelectValue placeholder="Select" className="text-sm md:text-base" />
                 </SelectTrigger>
                 <SelectContent>
                   {businessTypes.map((type) => (
@@ -337,10 +337,10 @@ const Company = () => {
 
             <div className="space-y-2 w-full pt-1">
               <Label htmlFor="employeeCount">
-                <p className="text-[1rem] font-semibold pb-[2px]">
+                <p className="md:text-[1rem] text-sm font-semibold pb-[2px]">
                   Number of Employees
                 </p>
-                <p className="text-[#9C9791] text-sm font-light">
+                <p className="text-[#9C9791] text-xs font-light">
                   Select the number of employees in your company
                 </p>
               </Label>
@@ -354,7 +354,7 @@ const Company = () => {
                 value={watch("numberOfEmployees")}
               >
                 <SelectTrigger className="w-full h-12">
-                  <SelectValue placeholder="Select" />
+                  <SelectValue placeholder="Select" className="text-sm md:text-base" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="MICRO">Micro</SelectItem>
@@ -371,10 +371,10 @@ const Company = () => {
             </div>
             <div className="space-y-2 col-span-2 w-full pt-1">
               <Label htmlFor="employeeCount">
-                <p className="text-[1rem] font-semibold pb-[2px]">
+                <p className="md:text-[1rem] text-sm  font-semibold pb-[2px]">
                   Other Description
                 </p>
-                <p className="text-[#9C9791] text-sm font-light">
+                <p className="text-[#9C9791] text-xs font-light">
                   please enter any other description about your company
                 </p>
               </Label>
@@ -382,7 +382,7 @@ const Company = () => {
                 id="otherDescription"
                 placeholder="Enter description"
                 {...register("otherDescription")}
-                className="w-full min-h-[100px] p-2 border rounded-md"
+                className="w-full min-h-[100px] p-2 border rounded-md text-sm md:text-base"
               />
               {errors.otherDescription && (
                 <p className="text-sm text-red-500">

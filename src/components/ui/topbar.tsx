@@ -95,12 +95,30 @@ export default function Topbar() {
     clearAuthData()
   }
 
+  // Add this helper function to transform role names
+  const getDisplayRole = (role: string) => {
+    // First try to get from user object
+    if (role === 'ROLE_COMPANY_ADMIN') return 'Company Admin';
+    if (role === 'ROLE_SUB_CURRICULUM_ADMIN') return 'Sub Curriculum Admin';
+    if (role === 'ROLE_CURRICULUM_ADMIN') return 'Curriculum Admin';
+    if (role === 'ROLE_CONTENT_DEVELOPER') return 'Content Developer';
+    if (role === 'ROLE_ICOG_ADMIN') return 'iCog Admin';
+
+    // Fallback to formatting the role string
+    return role.toLowerCase()
+      .replace('role_', '')
+      .replace('_', ' ')
+      .split(' ')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ');
+  };
+
   return (
     <div className="border-b-[0.3px] border-[#CED4DA]">
-      <div className="md:ml-[65px]  flex items-center justify-between py-6 px-4 bg-white">
+      <div className="lg:px-16 md:px-14 px-4 flex items-center justify-between py-6  bg-white">
         <div className="flex items-center justify-between w-full">
           {/* Page Title */}
-          <h1 className="lg:text-2xl md:text-xl text-sm lg:pl-[59px] pl-8 font-semibold">
+          <h1 className=" md:text-lg text-sm pl-12 font-medium">
             {getPageTitle(pathname)}
           </h1>
 
@@ -119,7 +137,7 @@ export default function Topbar() {
             <div className="flex items-center gap-2">
               {/* Notification Bell */}
               <button
-                className="p-3 rounded-full bg-brand-opacity transition-colors"
+                className="p-3 rounded-full bg-[#cee3ff] transition-colors"
                 aria-label="Notifications"
                 title="Notifications"
               >
@@ -169,18 +187,20 @@ export default function Topbar() {
                           <h3 className="font-medium text-md text-[#292827]">
                             {isIcogAdmin()
                               ? "iCog Admin"
-                              : `${decoded?.firstName} ${decoded?.lastName}`}
+                              : isCompanyAdmin()
+                                ? `${decoded?.firstName} ${decoded?.lastName}`
+                                : decoded?.email}
                           </h3>
                           <p className="text-[#8C8C8C] font-normal text-sm">
                             {isIcogAdmin()
                               ? "iCog Admin"
-                              : user?.role.name.toLowerCase().replace("role_", "")}
+                              : getDisplayRole(decoded?.role || '')}
                           </p>
                         </div>
                       </div>
                     </div>
 
-                    <hr className="border-[#f2f2f2] border-[1px] " />
+                    <hr className="border-[#f2f2f2] border-[0.1px] " />
 
                     {/* Menu Items */}
                     <div className="space-y-1 px-6 pb-4">
@@ -194,10 +214,10 @@ export default function Topbar() {
                         Help and Support
                       </button> */}
 
-                      <hr className="border-[#f2f2f2] border-[1px] -mx-6" />
+                      <hr className="border-[#f2f2f2] border-[0.1px] -mx-6" />
                       <button
                         onClick={handleLogout}
-                        className="w-full text-left px-4 py-2 hover:bg-gray-50 rounded-md text-[#16151c] font-medium text-sm"
+                        className="w-full text-left px-4 py-2 hover:bg-gray-50 rounded-md text-[#16151c] font-normal text-sm"
                       >
                         Log Out
                       </button>

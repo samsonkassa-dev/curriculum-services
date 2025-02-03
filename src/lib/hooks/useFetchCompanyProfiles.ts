@@ -21,15 +21,17 @@ interface UseCompanyProfilesProps {
   page: number;
   pageSize: number;
   searchQuery?: string;
+  verificationStatus?: string;
 }
 
 export function useCompanyProfiles({
   page,
   pageSize,
   searchQuery,
+  verificationStatus,
 }: UseCompanyProfilesProps) {
   return useQuery<CompanyProfilesResponse>({
-    queryKey: ["company-profiles", page, pageSize, searchQuery],
+    queryKey: ["company-profiles", page, pageSize, searchQuery, verificationStatus],
     queryFn: async () => {
       try {
         const token = localStorage.getItem("auth_token");
@@ -37,6 +39,7 @@ export function useCompanyProfiles({
           page: String(page),
           "page-size": String(pageSize),
           ...(searchQuery && { "search-query": searchQuery }),
+          ...(verificationStatus && { "verification-status": verificationStatus }),
         });
 
         const baseUrl =
@@ -61,6 +64,7 @@ export function useCompanyProfiles({
         throw error;
       }
     },
+    retry: 2,
   });
 }
 
@@ -94,12 +98,11 @@ export function useSingleCompanyProfile(id: string) {
   });
 }
 
-export function useMyCompanyProfile({ enabled = false } = {}) {
+export function useMyCompanyProfile() {
   return useQuery({
     queryKey: ["my-company-profile"],
     queryFn: async () => {
       try {
-        console.log("response");
         const token = localStorage.getItem("auth_token");
         const response = await axios.get<SingleCompanyResponse>(
           `${
@@ -120,7 +123,6 @@ export function useMyCompanyProfile({ enabled = false } = {}) {
         throw error;
       }
     },
-    enabled,
     retry: 2,
   });
 }

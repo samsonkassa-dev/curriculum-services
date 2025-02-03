@@ -16,6 +16,10 @@ import { ModuleComponent } from "./components/module"
 export default function TrainingDetail() {
   const params = useParams()
   const [activeTab, setActiveTab] = useState<'overview' | 'profile' | 'audience' | 'curriculum' | 'module'>('overview')
+  
+  // Handle default companyId case
+  // const companyId = params.companyId === 'default-company-id' ? null : params.companyId;
+  
   const { data: training, isLoading, error } = useTraining(params.trainingId as string)
 
   useEffect(() => {

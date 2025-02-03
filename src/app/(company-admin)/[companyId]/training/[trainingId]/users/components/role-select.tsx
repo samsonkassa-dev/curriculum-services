@@ -6,6 +6,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { useChangeUserRole } from "@/lib/hooks/useInviteTrainingUser"
 
 interface RoleSelectProps {
   currentRole: Role
@@ -14,10 +15,21 @@ interface RoleSelectProps {
 }
 
 export function RoleSelect({ currentRole, userId, onRoleChange }: RoleSelectProps) {
+  const { mutate: changeRole, isPending } = useChangeUserRole()
+
+  const handleRoleChange = (newRole: string) => {
+    changeRole({ 
+      userId, 
+      newRole 
+    })
+    onRoleChange?.(newRole)
+  }
+
   return (
     <Select
       defaultValue={currentRole.name}
-      onValueChange={onRoleChange}
+      onValueChange={handleRoleChange}
+      disabled={isPending}
     >
       <SelectTrigger className="w-[180px] h-9 bg-[#e4e4e4] rounded-full border-0">
         <SelectValue>

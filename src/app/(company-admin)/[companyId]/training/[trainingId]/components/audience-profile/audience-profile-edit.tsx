@@ -22,12 +22,22 @@ interface BaseItem {
 }
 
 interface AudienceProfile {
+  id: string
+  trainingId: string
+  learnerLevel: BaseItem
+  academicLevel: BaseItem
+  learnerStylePreferences: BaseItem[]
+  priorKnowledgeList: string[]
+  professionalBackground: string
+}
+
+interface AudienceProfileData {
+  trainingId: string
   learnerLevelId: string
   academicLevelId: string
   learningStylePreferenceIds: string[]
   priorKnowledgeList: string[]
   professionalBackground: string
-  trainingId: string
 }
 
 interface AudienceProfileEditProps {
@@ -66,11 +76,36 @@ export function AudienceProfileEdit({
 
   useEffect(() => {
     if (initialData) {
-      setLearnerLevelId(initialData.learnerLevelId)
-      setAcademicLevelId(initialData.academicLevelId)
-      setSelectedStyles(initialData.learningStylePreferenceIds)
-      setPriorKnowledge(initialData.priorKnowledgeList)
-      setProfessionalBackground(initialData.professionalBackground)
+      setLearnerLevelId(initialData.learnerLevel?.id || "")
+      setAcademicLevelId(initialData.academicLevel?.id || "")
+      
+      const styleIds = initialData.learnerStylePreferences?.map(style => style.id) || []
+      setSelectedStyles(styleIds)
+      
+      setPriorKnowledge(initialData.priorKnowledgeList || [])
+      setProfessionalBackground(initialData.professionalBackground || "")
+      
+      // Set hasPriorKnowledge first
+      const hasKnowledge = initialData.priorKnowledgeList?.length > 0
+      setHasPriorKnowledge(hasKnowledge ? "Yes" : "No")
+
+      // Then set completed sections
+      const completed: string[] = []
+      
+      if (initialData.learnerLevel?.id && initialData.academicLevel?.id && initialData.learnerStylePreferences?.length > 0) {
+        completed.push("Learning Level")
+      }
+      
+      // Mark Prior Experience as completed if either there's knowledge or explicitly set to No
+      if (hasKnowledge || initialData.priorKnowledgeList?.length === 0) {
+        completed.push("Prior Experience")
+      }
+      
+      if (initialData.professionalBackground) {
+        completed.push("Professional")
+      }
+      
+      setCompletedSections(completed)
     }
 
     const checkMobile = () => setIsMobile(window.innerWidth < 768)
@@ -345,7 +380,6 @@ export function AudienceProfileEdit({
     const allItems = outlineGroups.flatMap(group => group.items)
     const currentIndex = allItems.findIndex(item => item.label === activeSection)
     
-    // Only mark as completed if the section is valid
     if (isCurrentSectionValid) {
       setCompletedSections(prev => [...prev, activeSection])
     }
@@ -364,12 +398,12 @@ export function AudienceProfileEdit({
       }
 
       try {
-        if (initialData) {
-          await updateProfile.mutateAsync(data)
+        if (initialData?.id) {
+          await updateProfile.mutateAsync(data as AudienceProfileData)
         } else {
-          await createProfile.mutateAsync(data)
+          await createProfile.mutateAsync(data as AudienceProfileData)
         }
-        toast.success(`Audience profile ${initialData ? 'updated' : 'created'} successfully`)
+        toast.success(initialData?.id ? "Audience profile updated successfully" : "Audience profile created successfully")
         onSave()
       } catch (error: any) {
         toast.error(error.message)

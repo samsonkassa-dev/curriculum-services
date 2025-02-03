@@ -20,7 +20,7 @@ function SimpleBreadcrumb({ items }: SimpleBreadcrumbProps) {
       <ol className="flex items-center">
         {items.map((item, index) => (
           <li key={index} className="flex items-center">
-            {index > 0 && <span className="px-1 text-[#c7c7cc]">/</span>}
+            {index > 0 && <span className="px-1 text-[#c7c7cc]"> {`>`} </span>}
             <Link 
               href={item.href}
               className="md:text-sm text-xs text-[#c7c7cc] hover:text-gray-900"

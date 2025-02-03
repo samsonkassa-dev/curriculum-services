@@ -3,7 +3,12 @@ export interface IndividualUser {
   fullName: string;
   email: string;
   status: 'Active' | 'Deactivated';
-  createdAt: string;
+  role: Role;
+}
+
+export interface Role {
+  name: string;
+  colorCode: string;
 }
 
 export interface BusinessType {
@@ -41,11 +46,14 @@ export interface CompanyUser {
   logoUrl: string | null;
   verificationStatus: 'ACCEPTED' | 'PENDING' | 'REJECTED';
   createdAt: string;
-}
-
-export interface Role {
-  name: string;
-  colorCode: string;
+  companyFiles?: {
+    fileUrl: string;
+    companyFileType: {
+      id: string;
+      name: string;
+      description: string;
+    };
+  }[];
 }
 
 export interface TrainingUser {

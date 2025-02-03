@@ -49,10 +49,10 @@ export function InviteModal({ isOpen, onClose, onInvite, inviteLink, isLoading, 
                   className="w-full"
                 />
               </div>
-              <div className="flex justify-center items-center mb-7">
+              <div className="flex justify-center items-center ">
                 <Button
                   onClick={() => onInvite(email)}
-                  className="bg-brand text-white"
+                  className="bg-brand text-white py-6 px-7"
                   disabled={isLoading}
                 >
                   {isLoading ? "Sending..." : "Invite"}

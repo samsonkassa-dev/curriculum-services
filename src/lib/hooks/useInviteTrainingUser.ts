@@ -1,9 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 
-import { useMutation } from "@tanstack/react-query"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 import axios from "axios"
 import { toast } from "sonner"
+import { AxiosError } from "axios"
 
 
 interface InviteUserData {
@@ -16,6 +17,10 @@ interface InviteUserResponse {
   code: string
   message: string
   inviteLink?: string
+}
+
+interface ErrorResponse {
+  message: string
 }
 
 export function useInviteTrainingUser() {
@@ -55,4 +60,32 @@ export function useInviteTrainingUser() {
     isLoading: mutation.isPending,
     error: mutation.error
   }
+}
+
+export function useChangeUserRole() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ userId, newRole }: { userId: string; newRole: string }) => {
+      const token = localStorage.getItem('auth_token')
+      const response = await axios.patch(
+        `${process.env.NEXT_PUBLIC_API}/user/change-role/${userId}`,
+        null, // no body needed since we're using query params
+        {
+          params: { 'new-role': newRole },
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      )
+      return response.data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['training-users'] })
+      toast.success('Role updated successfully')
+    },
+    onError: (error: AxiosError<ErrorResponse>) => {
+      toast.error("Error", { 
+        description: error.response?.data?.message || "Failed to update role" 
+      })
+    }
+  })
 } 

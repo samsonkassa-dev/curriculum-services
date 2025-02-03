@@ -30,9 +30,44 @@ export function middleware(req: NextRequest) {
     return response;
   }
 
+  // Define curriculum-related roles
+  const curriculumRoles = [
+    'ROLE_SUB_CURRICULUM_ADMIN',
+    'ROLE_CURRICULUM_ADMIN',
+    'ROLE_CONTENT_DEVELOPER'
+  ];
 
-    // ICOG_ADMIN route restrictions
+  // Handle curriculum-related roles
+  if (decoded.role && curriculumRoles.includes(decoded.role)) {
+    // If at root, redirect to appropriate dashboard
+    if (pathname === '/') {
+      const baseRoute = getRoleBaseRoute(decoded.role);
+      return NextResponse.redirect(new URL(`/${baseRoute}/dashboard`, req.url));
+    }
 
+    // Check if trying to access allowed routes
+    const baseRoute = getRoleBaseRoute(decoded.role);
+    const allowedPaths = [
+      `/${baseRoute}/training`,
+      `/${baseRoute}/dashboard`,
+      `/${baseRoute}/settings`
+    ];
+
+    // Allow access to training routes and their nested routes
+    if (pathname.startsWith(`/${baseRoute}/training`)) {
+      return NextResponse.next();
+    }
+
+    // Check if current path is in allowed paths
+    if (allowedPaths.includes(pathname)) {
+      return NextResponse.next();
+    }
+
+    // Redirect to unauthorized for any other routes
+    return NextResponse.redirect(new URL('/unauthorized', req.url));
+  }
+
+  // ICOG_ADMIN route restrictions
   if (decoded.role === 'ROLE_ICOG_ADMIN') {
     if (pathname === '/') {
       return NextResponse.redirect(new URL('/dashboard', req.url));
@@ -43,19 +78,6 @@ export function middleware(req: NextRequest) {
     }
     return NextResponse.next();
   }
-
-
-  // Add curriculum role checks after ICOG_ADMIN but before COMPANY_ADMIN checks
-  if (decoded.role && ['ROLE_SUB_CURRICULUM_ADMIN', 'ROLE_CURRICULUM_ADMIN', 'ROLE_CONTENT_DEVELOPER'].includes(decoded.role)) {
-    // Only allow access to training routes
-    if (!pathname.includes('/training')) {
-      const companyId = pathname.split('/')[1];
-      return NextResponse.redirect(new URL(`/${companyId}/training`, req.url));
-    }
-    return NextResponse.next();
-  }
-
-
 
   // COMPANY_ADMIN route restrictions
   if (decoded.role === 'ROLE_COMPANY_ADMIN') {
@@ -99,6 +121,20 @@ function isTokenExpired(decodedToken: any): boolean {
   // exp is in seconds, Date.now() is in milliseconds
   const currentTime = Date.now() / 1000;
   return decodedToken.exp < currentTime;
+}
+
+// Helper function to get base route based on role
+function getRoleBaseRoute(role: string): string {
+  switch (role) {
+    case 'ROLE_SUB_CURRICULUM_ADMIN':
+      return 'sub-curriculum-admin';
+    case 'ROLE_CURRICULUM_ADMIN':
+      return 'curriculum-admin';
+    case 'ROLE_CONTENT_DEVELOPER':
+      return 'content-developer';
+    default:
+      return 'unauthorized';
+  }
 }
 
 // Add global axios interceptor to handle 401s

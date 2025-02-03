@@ -80,8 +80,8 @@ export const trainingColumns: ColumnDef<TrainingUser>[] = [
         )
       }
     },
-    {
-      id: "actions",
-      cell: TrainingActionCell
-    }
+    // {
+    //   id: "actions",
+    //   cell: TrainingActionCell
+    // }
   ] 

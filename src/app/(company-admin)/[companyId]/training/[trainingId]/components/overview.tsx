@@ -46,6 +46,8 @@ interface Training {
 
 export function Overview({ training }: { training: Training }) {
   const [isEditing, setIsEditing] = useState(false)
+  const userRole = localStorage.getItem("user_role")
+  const isCompanyAdmin = userRole === "ROLE_COMPANY_ADMIN"
 
   if (isEditing) {
     return (
@@ -78,12 +80,14 @@ export function Overview({ training }: { training: Training }) {
                 <span className="font-semibold text-md md:text-xl">Title</span>
               </div>
               <div className="text-gray-400 flex gap-2">
-                {/* <img 
-                  src="/edit.svg" 
-                  alt="" 
-                  className="w-5 h-5 cursor-pointer" 
-                  onClick={() => setIsEditing(true)}
-                /> */}
+                {isCompanyAdmin && (
+                  <img 
+                    src="/edit.svg" 
+                    alt="" 
+                    className="w-5 h-5 cursor-pointer" 
+                    onClick={() => setIsEditing(true)}
+                  />
+                )}
                 <ChevronRight className="h-5 w-5 transition-transform group-data-[state=open]:hidden text-black" />
                 <ChevronDown className="h-5 w-5 transition-transform hidden group-data-[state=open]:block text-black" />
               </div>
@@ -104,12 +108,14 @@ export function Overview({ training }: { training: Training }) {
                 <span className="font-semibold text-md md:text-xl">Location</span>
               </div>
               <div className="text-gray-400 flex gap-2">
-                {/* <img 
-                  src="/edit.svg" 
-                  alt="" 
-                  className="w-5 h-5 cursor-pointer" 
-                  onClick={() => setIsEditing(true)}
-                /> */}
+                {isCompanyAdmin && (
+                  <img 
+                    src="/edit.svg" 
+                    alt="" 
+                    className="w-5 h-5 cursor-pointer" 
+                    onClick={() => setIsEditing(true)}
+                  />
+                )}
                 <ChevronRight className="h-5 w-5 transition-transform group-data-[state=open]:hidden text-black" />
                 <ChevronDown className="h-5 w-5 transition-transform hidden group-data-[state=open]:block text-black" />
               </div>
@@ -130,12 +136,14 @@ export function Overview({ training }: { training: Training }) {
                 <span className="font-semibold text-md md:text-xl">Duration</span>
               </div>
               <div className="text-gray-400 flex gap-2  ">
-                {/* <img 
-                  src="/edit.svg" 
-                  alt="" 
-                  className="w-5 h-5 cursor-pointer" 
-                  onClick={() => setIsEditing(true)}
-                /> */}
+                {isCompanyAdmin && (
+                  <img 
+                    src="/edit.svg" 
+                    alt="" 
+                    className="w-5 h-5 cursor-pointer" 
+                    onClick={() => setIsEditing(true)}
+                  />
+                )}
                 <ChevronRight className="h-5 w-5 transition-transform group-data-[state=open]:hidden text-black" />
                 <ChevronDown className="h-5 w-5 transition-transform hidden group-data-[state=open]:block text-black" />
               </div>
@@ -156,12 +164,14 @@ export function Overview({ training }: { training: Training }) {
                 <span className="font-semibold text-md md:text-xl">Target Audience</span>
               </div>
               <div className="text-gray-400 flex gap-2  ">
-                {/* <img 
-                  src="/edit.svg" 
-                  alt="" 
-                  className="w-5 h-5 cursor-pointer" 
-                  onClick={() => setIsEditing(true)}
-                /> */}
+                {isCompanyAdmin && (
+                  <img 
+                    src="/edit.svg" 
+                    alt="" 
+                    className="w-5 h-5 cursor-pointer" 
+                    onClick={() => setIsEditing(true)}
+                  />
+                )}
                 <ChevronRight className="h-5 w-5 transition-transform group-data-[state=open]:hidden text-black" />
                 <ChevronDown className="h-5 w-5 transition-transform hidden group-data-[state=open]:block text-black" />
               </div>
@@ -186,12 +196,14 @@ export function Overview({ training }: { training: Training }) {
                 </span>
               </div>
               <div className="text-gray-400 flex gap-2 ">
-                {/* <img 
-                  src="/edit.svg" 
-                  alt="" 
-                  className="w-5 h-5 cursor-pointer" 
-                  onClick={() => setIsEditing(true)}
-                /> */}
+                {isCompanyAdmin && (
+                  <img 
+                    src="/edit.svg" 
+                    alt="" 
+                    className="w-5 h-5 cursor-pointer" 
+                    onClick={() => setIsEditing(true)}
+                  />
+                )}
                 <ChevronRight className="h-5 w-5 transition-transform group-data-[state=open]:hidden text-black" />
                 <ChevronDown className="h-5 w-5 transition-transform hidden group-data-[state=open]:block text-black" />
               </div>

@@ -14,6 +14,8 @@ interface TrainingProfileProps {
 export function TrainingProfile({ trainingId }: TrainingProfileProps) {
   const [isEditing, setIsEditing] = useState(false);
   const { data: trainingProfile, isLoading } = useTrainingProfile(trainingId);
+  const userRole = localStorage.getItem("user_role");
+  const canEdit = userRole === "ROLE_COMPANY_ADMIN" || userRole === "ROLE_CURRICULUM_ADMIN";
 
   const isEmptyProfile = !trainingProfile || (
     trainingProfile.keywords.length === 0 &&
@@ -27,7 +29,7 @@ export function TrainingProfile({ trainingId }: TrainingProfileProps) {
     return <Loading />;
   }
 
-  if (isEditing) {
+  if (isEditing && canEdit) {
     return (
       <TrainingProfileEdit
         trainingId={trainingId}
@@ -38,13 +40,21 @@ export function TrainingProfile({ trainingId }: TrainingProfileProps) {
     );
   }
 
-  if (isEmptyProfile) {
+  if (isEmptyProfile && canEdit) {
     return (
       <DefaultCreate 
         title="Create Training Profile"
         trainingId={trainingId}
         onCreateClick={() => setIsEditing(true)}
       />
+    );
+  }
+
+  if (isEmptyProfile) {
+    return (
+      <div className="flex flex-col items-center justify-center p-8">
+        <p className="text-gray-500">No training profile available yet.</p>
+      </div>
     );
   }
 

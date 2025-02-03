@@ -1,14 +1,10 @@
 "use client";
 
 import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Search, SlidersHorizontal } from "lucide-react";
-import { TrainingCard } from "@/components/ui/training-card";
+import { Search } from "lucide-react";
 import { usePaginatedTrainings } from "@/lib/hooks/useTrainings";
-import { Loading } from "@/components/ui/loading";
 import { useDebounce } from "@/lib/hooks/useDebounce";
 import { useEffect, useState } from "react";
-import { DataTable } from "../basedata/data-table";
 import { trainingColumns } from "./components/training-columns";
 import { TrainingDataTable } from "./components/training-table";
 
@@ -47,37 +43,38 @@ export default function Trainings() {
   const trainingEndRecord = Math.min(page * pageSize, totalElements);
 
   return (
-    <div className="md:w-[calc(100%-85px)] md:pl-[85px] mx-auto lg:mt-12 mt-3 px-5">
-      <div className="flex justify-between items-center mb-6 gap-6">
-        <div className="text-xl font-semibold lg:block hidden">Trainings</div>
-        <div className="flex items-center self-center lg:justify-end gap-3">
+    <div className="w-full lg:px-16 md:px-14 px-4 mx-auto lg:mt-12 mt-10">
+      <div className="flex md:justify-end items-center md:pl-12">
+        <div className="lg:justify-end gap-3">
           <div className="relative md:w-[300px]">
             <Input
-              placeholder="Search"
+              placeholder="Search by title"
               className="pl-10 h-10 bg-white border-gray-200 rounded-lg"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
           </div>
         </div>
       </div>
-      <TrainingDataTable
-        columns={trainingColumns}
-        data={trainings}
-        isLoading={isTrainingsLoading}
-        pagination={{
-          pageCount: trainingsData?.totalPages || 0,
-          page,
-          setPage: handlePageChange,
-          pageSize,
-          setPageSize: handlePageSizeChange,
-          showingText:
-            totalElements > 0
-              ? `Showing ${trainingStartRecord} to ${trainingEndRecord} out of ${totalElements} records`
-              : "No records to show",
-        }}
-      />
+      <div className="flex-1 py-4 md:pl-12 min-w-0">
+        <TrainingDataTable
+          columns={trainingColumns}
+          data={trainings}
+          isLoading={isTrainingsLoading}
+          pagination={{
+            pageCount: trainingsData?.totalPages || 0,
+            page,
+            setPage: handlePageChange,
+            pageSize,
+            setPageSize: handlePageSizeChange,
+            showingText:
+              totalElements > 0
+                ? `Showing ${trainingStartRecord} to ${trainingEndRecord} out of ${totalElements} records`
+                : "No records to show",
+          }}
+        />
+      </div>
     </div>
   );
 }

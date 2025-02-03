@@ -8,6 +8,24 @@ import { VerificationStatus } from "./components/verification-status";
 import { Loading } from "@/components/ui/loading";
 import { usePathname, useParams } from "next/navigation";
 
+const curriculumNavItems = [
+  {
+    icon: <img src="/home.svg" alt="icon" width={19} height={19} />,
+    href: "/[role]/dashboard",
+    label: "Dashboard",
+  },
+  {
+    icon: <img src="/training.svg" alt="icon" width={19} height={19} />,
+    href: "/[role]/training",
+    label: "Training",
+  },
+  {
+    icon: <img src="/settings.svg" alt="icon" width={19} height={19} />,
+    href: "/[role]/settings",
+    label: "Settings",
+  },
+];
+
 const adminNavItems = [
   {
     icon: <img src="/home.svg" alt="icon" width={19} height={19} />,
@@ -38,18 +56,18 @@ const adminNavItems = [
 ];
 
 // Add middleware to fetch requests to include company info
-const addCompanyInfoToRequest = () => {
-  const companyInfo = localStorage.getItem("company_info");
-  if (companyInfo) {
-    const requestInit = {
-      headers: {
-        "x-company-info": companyInfo,
-      },
-    };
-    return requestInit;
-  }
-  return {};
-};
+// const addCompanyInfoToRequest = () => {
+//   const companyInfo = localStorage.getItem("company_info");
+//   if (companyInfo) {
+//     const requestInit = {
+//       headers: {
+//         "x-company-info": companyInfo,
+//       },
+//     };
+//     return requestInit;
+//   }
+//   return {};
+// };
 
 export default function CompanyAdminLayout({
   children,
@@ -59,69 +77,69 @@ export default function CompanyAdminLayout({
   const params = useParams();
   const pathname = usePathname();
   const { data: verificationData, isLoading } = useVerificationStatus();
+  
+  const userRole = localStorage.getItem("user_role");
+  
+  const isCurriculumRole = [
+    'ROLE_SUB_CURRICULUM_ADMIN',
+    'ROLE_CURRICULUM_ADMIN',
+    'ROLE_CONTENT_DEVELOPER'
+  ].includes(userRole || '');
 
-  // More precise way to check specific routes
+  // Special routes that hide the default layout
   const isSpecialRoute = () => {
-    // First get the route pattern by removing companyId
-    let routePattern = pathname.replace(
-      params.companyId as string,
-      "[companyId]"
-    );
-
-    // Then replace the trainingId if it exists (for training detail pages)
+    let routePattern = pathname.replace(params.companyId as string, "[companyId]");
+    
     if (params.trainingId) {
-      routePattern = routePattern.replace(
-        params.trainingId as string,
-        "[trainingId]"
-      );
-    }
-
-    if (params.moduleId) {
-      routePattern = routePattern.replace(params.moduleId as string, '[moduleId]')
+      routePattern = routePattern.replace(params.trainingId as string, "[trainingId]");
     }
     
-    // List of routes that should hide default layout
+    if (params.moduleId) {
+      routePattern = routePattern.replace(params.moduleId as string, '[moduleId]');
+    }
+    
     const specialRoutes = [
       '/[companyId]/training/create-training',
       '/[companyId]/training/[trainingId]',
       '/[companyId]/training/[trainingId]/users',
       '/[companyId]/training/[trainingId]/[moduleId]'
-    ]
+    ];
     
-    return specialRoutes.some(route => routePattern === route)
-  }
+    return specialRoutes.some(route => routePattern === route);
+  };
 
   const hideDefaultLayout = isSpecialRoute();
 
-  // Create nav items with the actual companyId
-  const navItemsWithCompanyId = adminNavItems.map((item) => ({
-    ...item,
-    href: item.href.replace("[companyId]", params.companyId as string),
-  }));
+  // Create nav items with the actual route
+  const navItems = isCurriculumRole 
+    ? curriculumNavItems.map(item => ({
+        ...item,
+        href: item.href.replace(
+          "[role]", 
+          (userRole || 'unauthorized')
+            .toLowerCase()
+            .replace('role_', '')
+            .replace('_', '-')
+        ),
+      }))
+    : adminNavItems.map(item => ({
+        ...item,
+        href: item.href.replace("[companyId]", params.companyId as string),
+      }));
 
   const handleNavigation = (e: React.MouseEvent<HTMLElement>) => {
-    // Get the clicked link's href
-    const target = e.currentTarget as HTMLAnchorElement;
-    const href = target.getAttribute("href") || "";
-
-    // Allow access to training routes
-    if (href.includes("/training")) return;
-
-    if (verificationData?.verificationStatus === "PENDING") {
+    // Only check verification for company admin role
+    if (!isCurriculumRole && verificationData?.verificationStatus !== "ACCEPTED") {
       e.preventDefault();
       toast.error("Account not verified", {
-        description: "Your account is pending verification",
-      });
-    } else if (verificationData?.verificationStatus === "REJECTED") {
-      e.preventDefault();
-      toast.error("Account not verified", {
-        description:
-          verificationData.rejectionReason || "Your account was rejected",
+        description: verificationData?.verificationStatus === "REJECTED"
+          ? verificationData.rejectionReason
+          : "Your account is pending verification",
       });
     }
   };
 
-  if (isLoading) {
+  if (isLoading && !isCurriculumRole) {
     return <Loading />;
   }
 
@@ -130,21 +148,19 @@ export default function CompanyAdminLayout({
       {!hideDefaultLayout && (
         <>
           <Sidebar
-            navItems={navItemsWithCompanyId}
+            navItems={navItems}
             onClick={(e: React.MouseEvent<Element>) =>
               handleNavigation(e as React.MouseEvent<HTMLElement>)
             }
-            disabled={verificationData?.verificationStatus !== "ACCEPTED"}
+            disabled={!isCurriculumRole && verificationData?.verificationStatus !== "ACCEPTED"}
           />
           <Topbar />
         </>
       )}
 
-      {/* Allow training routes regardless of verification status */}
-      {pathname.includes("/training") ? (
+      {isCurriculumRole ? (
         children
-      ) : !verificationData ||
-        verificationData.verificationStatus !== "ACCEPTED" ? (
+      ) : !verificationData || verificationData.verificationStatus !== "ACCEPTED" ? (
         <VerificationStatus
           status={verificationData?.verificationStatus || "PENDING"}
           rejectionReason={verificationData?.rejectionReason || ""}

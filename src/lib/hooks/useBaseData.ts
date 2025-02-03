@@ -59,7 +59,11 @@ export function useBaseData(type: BaseDataType, options?: BaseDataOptions) {
       });
       return response.data[responseKey] || [];
     },
-    staleTime: 1000 * 60 * 5,
+    staleTime: Infinity,
+    gcTime: Infinity,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    refetchOnReconnect: false
   });
 
   // Mutation for adding new base data

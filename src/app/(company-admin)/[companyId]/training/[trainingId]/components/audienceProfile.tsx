@@ -18,11 +18,13 @@ export function AudienceProfile({ trainingId }: AudienceProfileProps) {
   const { data: learnerLevels, isLoading: isLoadingLearnerLevels } = useBaseData('learner-level')
   const { data: academicLevels, isLoading: isLoadingAcademicLevels } = useBaseData('academic-level')
   const { data: learnerStylePreferences, isLoading: isLoadingLearningStyles } = useBaseData('learner-style-preference')
+  const userRole = localStorage.getItem("user_role")
+  const canEdit = userRole === "ROLE_COMPANY_ADMIN" || userRole === "ROLE_CURRICULUM_ADMIN"
 
   const isEmptyProfile = !audienceProfile || (
-    !audienceProfile.learnerLevelId &&
-    !audienceProfile.academicLevelId &&
-    (!audienceProfile.learningStylePreferenceIds || audienceProfile.learningStylePreferenceIds.length === 0) &&
+    !audienceProfile.learnerLevel?.id &&
+    !audienceProfile.academicLevel?.id &&
+    (!audienceProfile.learnerStylePreferences || audienceProfile.learnerStylePreferences.length === 0) &&
     (!audienceProfile.priorKnowledgeList || audienceProfile.priorKnowledgeList.length === 0) &&
     !audienceProfile.professionalBackground
   )
@@ -31,7 +33,7 @@ export function AudienceProfile({ trainingId }: AudienceProfileProps) {
     return <Loading />
   }
 
-  if (isEditing) {
+  if (isEditing && canEdit) {
     return (
       <AudienceProfileEdit
         trainingId={trainingId}
@@ -45,7 +47,7 @@ export function AudienceProfile({ trainingId }: AudienceProfileProps) {
     )
   }
 
-  if (isEmptyProfile) {
+  if (isEmptyProfile && canEdit) {
     return (
       <DefaultCreate 
         title="Create Audience Profile"
@@ -55,11 +57,19 @@ export function AudienceProfile({ trainingId }: AudienceProfileProps) {
     )
   }
 
+  if (isEmptyProfile) {
+    return (
+      <div className="flex flex-col items-center justify-center p-8">
+        <p className="text-gray-500">No audience profile available yet.</p>
+      </div>
+    )
+  }
+
   return (
     <AudienceProfileView 
       audienceProfile={audienceProfile}
-      onEdit={() => {}}
-      showEditButton={false}
+      onEdit={() => setIsEditing(true)}
+      showEditButton={canEdit}
     />
   )
 }

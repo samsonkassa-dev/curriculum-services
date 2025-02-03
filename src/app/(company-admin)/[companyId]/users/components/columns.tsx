@@ -44,10 +44,6 @@ export const individualColumns: ColumnDef<IndividualUser>[] = [
     }
   },
   {
-    accessorKey: "createdAt",
-    header: "Created at",
-  },
-  {
     id: "actions",
     cell: IndividualActionCell
   }

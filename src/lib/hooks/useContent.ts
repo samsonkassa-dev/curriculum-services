@@ -29,7 +29,7 @@ export interface Content {
   link: string | null
   referenceLink: string | null
   rejectionReason: string | null
-  contentStatus: 'PENDING' | 'APPROVED' | 'REJECTED'
+  contentStatus: 'PENDING' | 'ACCEPTED' | 'REJECTED'
   contentDeveloper: ContentDeveloper
   moduleName: string
   sectionName: string | null
@@ -164,6 +164,94 @@ export function useRejectContent() {
     onError: (error: AxiosError<ErrorResponse>) => {
       toast.error("Error", { 
         description: error.response?.data?.message || "Failed to reject content" 
+      })
+    }
+  })
+}
+
+export function useAddContentLink() {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: async ({ contentId, link, referenceLink }: { 
+      contentId: string;
+      link: string;
+      referenceLink: string;
+    }) => {
+      const token = localStorage.getItem('auth_token')
+      const response = await axios.patch(
+        `${process.env.NEXT_PUBLIC_API}/content/add-link/${contentId}`,
+        { link, referenceLink },
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      )
+      return response.data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contents'] })
+      toast.success('Content link added successfully')
+    },
+    onError: (error: AxiosError<ErrorResponse>) => {
+      toast.error("Error", { 
+        description: error.response?.data?.message || "Failed to add content link" 
+      })
+    }
+  })
+}
+
+export function useEditContentLink() {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: async ({ contentId, link, referenceLink }: { 
+      contentId: string;
+      link: string;
+      referenceLink: string;
+    }) => {
+      const token = localStorage.getItem('auth_token')
+      const response = await axios.patch(
+        `${process.env.NEXT_PUBLIC_API}/content/edit-link/${contentId}`,
+        { link, referenceLink },
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      )
+      return response.data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contents'] })
+      toast.success('Content link updated successfully')
+    },
+    onError: (error: AxiosError<ErrorResponse>) => {
+      toast.error("Error", { 
+        description: error.response?.data?.message || "Failed to update content link" 
+      })
+    }
+  })
+}
+
+export function useDeleteContentLink() {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: async (contentId: string) => {
+      const token = localStorage.getItem('auth_token')
+      const response = await axios.delete(
+        `${process.env.NEXT_PUBLIC_API}/content/delete-link/${contentId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      )
+      return response.data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['contents'] })
+      toast.success('Content link deleted successfully')
+    },
+    onError: (error: AxiosError<ErrorResponse>) => {
+      toast.error("Error", { 
+        description: error.response?.data?.message || "Failed to delete content link" 
       })
     }
   })
