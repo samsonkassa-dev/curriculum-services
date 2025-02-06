@@ -5,7 +5,7 @@
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { Training } from "@/types/training";
-import { toast } from "sonner";
+
 
 export function TrainingActionCell({ row }: { row: any }) {
   const router = useRouter();

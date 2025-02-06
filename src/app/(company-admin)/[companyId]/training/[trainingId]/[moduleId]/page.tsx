@@ -15,17 +15,8 @@ export default function ModuleDetail() {
   const [activeTab, setActiveTab] = useState<'information' | 'section' | 'content'>('information')
 
   return (
-    <div className="min-h-screen bg-[#fafafa]">
-      <div className="py-10">
-        {/* <Link 
-          href={`/${params.companyId}/training/${params.trainingId}`}
-          className="text-blue-500 hover:text-blue-600 flex items-center gap-2"
-        >
-          <img src="/back.svg" alt="back" className="w-4 h-4" />
-          <span>Back to Module</span>
-        </Link> */}
-        {/* <h1 className="text-xl font-semibold mt-4">Module 1</h1> */}
-      </div>
+    <div className="">
+
 
       <ModuleTabs activeTab={activeTab} onTabChange={setActiveTab} />
 

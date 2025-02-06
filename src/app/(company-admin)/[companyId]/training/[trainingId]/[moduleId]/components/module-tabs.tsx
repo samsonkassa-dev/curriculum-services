@@ -10,7 +10,7 @@ export function ModuleTabs({ activeTab, onTabChange }: ModuleTabsProps) {
     {
       id: "information",
       label: "Module Information",
-      src: "/module.svg",
+      src: "/moduleInfo.svg",
       srcActive: "/module-active.svg",
     },
     {
@@ -28,30 +28,26 @@ export function ModuleTabs({ activeTab, onTabChange }: ModuleTabsProps) {
   ];
 
   return (
-    <div className="border-b">
-      <div className="px-[7%]">
-        <div className="flex gap-4 md:gap-8 overflow-x-auto">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() =>
-                onTabChange(tab.id as "information" | "section" | "content")
-              }
-              className={`pb-4 flex items-center gap-2 whitespace-nowrap text-sm md:text-base ${
-                activeTab === tab.id
-                  ? "text-brand font-medium border-b-2 border-brand"
-                  : "text-gray-500"
-              }`}
-            >
-              <img
-                src={activeTab === tab.id ? tab.srcActive : tab.src}
-                alt=""
-                className="w-4 h-4"
-              />
-              {tab.label}
-            </button>
-          ))}
-        </div>
+    <div className="w-full overflow-x-auto scrollbar-hide">
+      <div className="flex my-14 min-w-max gap-8 border-b-[0.5px] border-[#CED4DA] mb-6 px-[7%]">
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => onTabChange(tab.id as "information" | "section" | "content")}
+            className={`pb-4 text-sm font-medium flex items-center gap-2 relative ${
+              activeTab === tab.id
+                ? "text-brand border-b-2 border-brand"
+                : "text-gray-500"
+            }`}
+          >
+            <img
+              src={activeTab === tab.id ? tab.srcActive : tab.src}
+              alt=""
+              className="w-4 h-4"
+            />
+            {tab.label}
+          </button>
+        ))}
       </div>
     </div>
   );

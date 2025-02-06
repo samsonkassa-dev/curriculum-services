@@ -55,6 +55,7 @@ export interface DecodedToken {
   isProfileFilled: boolean;
   companyProfileId?: string;
   exp: number;
+  profileStatus?: string;
 }
 
 export interface Session {

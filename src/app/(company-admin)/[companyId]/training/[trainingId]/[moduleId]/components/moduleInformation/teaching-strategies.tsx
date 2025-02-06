@@ -11,8 +11,8 @@ export function TeachingStrategies() {
     <EditFormContainer title="" description="">
       <div className="space-y-8 pr-0 md:pr-8">
         <div>
-          <h2 className="text-base md:text-lg font-semibold mb-2">Teaching Strategies</h2>
-          <p className="text-[12px] text-gray-500 mb-4">
+          <h2 className="text-base md:text-lg font-semibold">Teaching Strategies</h2>
+          <p className="text-sm text-[#99948E] mb-4">
             Enter a brief overview of this section
           </p>
           <Textarea

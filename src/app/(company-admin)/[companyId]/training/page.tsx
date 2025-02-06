@@ -6,8 +6,8 @@ import { useParams } from "next/navigation"
 import { useTrainings } from "@/lib/hooks/useTrainings"
 import { TrainingCard } from "@/components/ui/training-card"
 import { Loading } from "@/components/ui/loading"
-import { Input } from "@/components/ui/input"
-import { Search, SlidersHorizontal } from "lucide-react"
+
+
 
 export default function CompanyAdminTraining() {
   const router = useRouter()

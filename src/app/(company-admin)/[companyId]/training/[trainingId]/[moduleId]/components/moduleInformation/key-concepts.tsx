@@ -23,7 +23,7 @@ export function KeyConcepts() {
               (Mandatory)
             </span>
           </div>
-          <p className="text-[12px] text-[#99948E]">
+          <p className="text-sm text-[#99948E]">
             Enter a brief overview of this section&apos;s content to give users
             a clear understanding of what to enter.
           </p>

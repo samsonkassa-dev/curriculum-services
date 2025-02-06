@@ -98,7 +98,7 @@ export function middleware(req: NextRequest) {
     }
 
     // Allow access to company profile page only if profile isn't filled
-    if (pathname === '/company-profile' && !decoded.isProfileFilled && !companyData?.id) {
+    if (pathname === '/company-profile' && decoded.profileStatus==="REJECTED" || !decoded.isProfileFilled) {
       return NextResponse.next();
     }
 

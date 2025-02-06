@@ -71,7 +71,7 @@ export function AudienceProfileView({
     </h2>
       <div className="space-y-4">
         <Accordion type="single" collapsible className="space-y-4">
-          <AccordionItem value="learner" className="border-none">
+          <AccordionItem value="learner" className="border-[0.5px] border-[#CED4DA] rounded-md">
             {renderHeader("Learner Characteristics")}
             <AccordionContent>
               <div className="bg-white p-6 space-y-4">
@@ -100,7 +100,7 @@ export function AudienceProfileView({
             </AccordionContent>
           </AccordionItem>
 
-          <AccordionItem value="prior" className="border-none">
+          <AccordionItem value="prior" className="border-[0.5px] border-[#CED4DA] rounded-md">
             {renderHeader("Prior Knowledge")}
             <AccordionContent>
               <div className="bg-white p-6">
@@ -115,7 +115,7 @@ export function AudienceProfileView({
             </AccordionContent>
           </AccordionItem>
 
-          <AccordionItem value="professional" className="border-none">
+          <AccordionItem value="professional" className="border-[0.5px] border-[#CED4DA] rounded-md">
             {renderHeader("Professional Background")}
             <AccordionContent>
               <div className="bg-white p-6">

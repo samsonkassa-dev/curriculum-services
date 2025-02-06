@@ -23,6 +23,11 @@ export function ModuleComponent({ trainingId }: ModuleProps) {
   const { mutateAsync: createModule, isPending: isCreating } = useCreateModule()
   const { mutateAsync: updateModule, isPending: isUpdating } = useUpdateModule()
 
+  const userRole = localStorage.getItem("user_role")
+  const canEdit = userRole === "ROLE_COMPANY_ADMIN" || 
+                 userRole === "ROLE_CURRICULUM_ADMIN" || 
+                 userRole === "ROLE_SUB_CURRICULUM_ADMIN"
+
   const isEmptyModules = !data?.modules?.length
 
   const handleCloseModal = useCallback(() => {
@@ -66,36 +71,44 @@ export function ModuleComponent({ trainingId }: ModuleProps) {
   }
 
   if (isEmptyModules) {
-    return (
-      <>
-        <div className="w-full mx-auto">
-          <div className="mx-[7%] border-2 border-dashed rounded-lg p-4 bg-[#fbfbfb]">
-            <div className="flex w-full items-start">
-              <Button
-                variant="ghost"
-                className="text-blue-500 hover:text-blue-600 bg-[#fbfbfb] hover:bg-blue-50/50 flex items-start gap-2"
-                onClick={handleAddClick}
-              >
-                <Image
-                  src="/modulePlus.svg"
-                  alt="Add Module"
-                  width={16}
-                  height={20}
-                  className="mt-[2px]"
-                />
-                <span className="font-semibold">Module</span>     
-              </Button>
+    if (canEdit) {
+      return (
+        <>
+          <div className="w-full mx-auto">
+            <div className="mx-[7%] border-2 border-dashed rounded-lg p-4 bg-[#fbfbfb]">
+              <div className="flex w-full items-start">
+                <Button
+                  variant="ghost"
+                  className="text-blue-500 hover:text-blue-600 bg-[#fbfbfb] hover:bg-blue-50/50 flex items-start gap-2"
+                  onClick={handleAddClick}
+                >
+                  <Image
+                    src="/modulePlus.svg"
+                    alt="Add Module"
+                    width={16}
+                    height={20}
+                    className="mt-[2px]"
+                  />
+                  <span className="font-semibold">Module</span>     
+                </Button>
+              </div>
             </div>
           </div>
-        </div>
-        <ModuleAddModal
-          isOpen={showModal}
-          onClose={handleCloseModal}
-          onSubmit={handleCreateModule}
-          isLoading={isCreating || isUpdating}
-          editData={editingModule}
-        />
-      </>
+          <ModuleAddModal
+            isOpen={showModal}
+            onClose={handleCloseModal}
+            onSubmit={handleCreateModule}
+            isLoading={isCreating || isUpdating}
+            editData={editingModule}
+          />
+        </>
+      )
+    }
+
+    return (
+      <div className="flex flex-col items-center justify-center p-8">
+        <p className="text-gray-500">No modules available yet.</p>
+      </div>
     )
   }
 
@@ -105,6 +118,7 @@ export function ModuleComponent({ trainingId }: ModuleProps) {
         modules={data?.modules || []}
         onAddClick={handleAddClick}
         onEditClick={handleEditClick}
+        canEdit={canEdit}
       />
       <ModuleAddModal
         isOpen={showModal}

@@ -74,7 +74,7 @@ export function Overview({ training }: { training: Training }) {
       <div className="space-y-4">
         <Accordion type="single" collapsible className="space-y-4">
           {/* Title Section */}
-          <AccordionItem value="title" className="border-none">
+          <AccordionItem value="title" className="border-[0.5px] border-[#CED4DA] rounded-md">
             <AccordionTrigger className="bg-white data-[state=open]:bg-[#f7fbff] rounded-lg p-6 flex items-center justify-between hover:no-underline group">
               <div className="flex items-center gap-3">
                 <span className="font-semibold text-md md:text-xl">Title</span>
@@ -102,7 +102,7 @@ export function Overview({ training }: { training: Training }) {
           </AccordionItem>
 
           {/* Location Section */}
-          <AccordionItem value="location" className="border-none">
+          <AccordionItem value="location" className="border-[0.5px] border-[#CED4DA] rounded-md">
             <AccordionTrigger className="bg-white data-[state=open]:bg-[#f7fbff] rounded-lg p-6 flex items-center justify-between hover:no-underline group">
               <div className="flex items-center gap-3">
                 <span className="font-semibold text-md md:text-xl">Location</span>
@@ -130,7 +130,7 @@ export function Overview({ training }: { training: Training }) {
           </AccordionItem>
 
           {/* Duration Section */}
-          <AccordionItem value="duration" className="border-none">
+          <AccordionItem value="duration" className="border-[0.5px] border-[#CED4DA] rounded-md">
             <AccordionTrigger className="bg-white data-[state=open]:bg-[#f7fbff] rounded-lg p-6 flex items-center justify-between hover:no-underline group">
               <div className="flex items-center gap-3">
                 <span className="font-semibold text-md md:text-xl">Duration</span>
@@ -158,7 +158,7 @@ export function Overview({ training }: { training: Training }) {
           </AccordionItem>
 
           {/* Target Audience Section */}
-          <AccordionItem value="target" className="border-none">
+          <AccordionItem value="target" className="border-[0.5px] border-[#CED4DA] rounded-md">
             <AccordionTrigger className="bg-white data-[state=open]:bg-[#f7fbff] rounded-lg p-6 flex items-center justify-between hover:no-underline group">
               <div className="flex items-center gap-3">
                 <span className="font-semibold text-md md:text-xl">Target Audience</span>
@@ -188,7 +188,7 @@ export function Overview({ training }: { training: Training }) {
           </AccordionItem>
 
           {/* Purpose Section */}
-          <AccordionItem value="purpose" className="border-none">
+          <AccordionItem value="purpose" className="border-[0.5px] border-[#CED4DA] rounded-md">
             <AccordionTrigger className="bg-white data-[state=open]:bg-[#f7fbff] rounded-lg p-6 flex items-center justify-between hover:no-underline group">
               <div className="flex items-center gap-3">
                 <span className="font-semibold text-md md:text-xl">

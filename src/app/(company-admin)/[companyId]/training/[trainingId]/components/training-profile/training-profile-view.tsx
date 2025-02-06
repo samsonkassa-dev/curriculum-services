@@ -37,7 +37,7 @@ export function TrainingProfileView({ trainingProfile, onEdit }: TrainingProfile
       <div className="space-y-4">
         <Accordion type="single" collapsible className="space-y-4">
           {/* Keywords Section */}
-          <AccordionItem value="keywords" className="border-none">
+          <AccordionItem value="keywords" className="border-[0.5px] border-[#CED4DA] rounded-md">
             <AccordionTrigger className="bg-white data-[state=open]:bg-[#f7fbff] rounded-lg p-6 flex items-center justify-between hover:no-underline group">
               <div className="flex items-center gap-3">
                 <span className="font-semibold text-md md:text-xl">Keywords</span>
@@ -69,7 +69,7 @@ export function TrainingProfileView({ trainingProfile, onEdit }: TrainingProfile
           </AccordionItem>
 
           {/* Scope Section */}
-          <AccordionItem value="scope" className="border-none">
+          <AccordionItem value="scope" className="border-[0.5px] border-[#CED4DA] rounded-md">
             <AccordionTrigger className="bg-white data-[state=open]:bg-[#f7fbff] rounded-lg p-6 flex items-center justify-between hover:no-underline group">
               <div className="flex items-center gap-3">
                 <span className="font-semibold text-md md:text-xl">Scope</span>
@@ -95,7 +95,7 @@ export function TrainingProfileView({ trainingProfile, onEdit }: TrainingProfile
           </AccordionItem>
 
           {/* Rationale Section */}
-          <AccordionItem value="rationale" className="border-none">
+          <AccordionItem value="rationale" className="border-[0.5px] border-[#CED4DA] rounded-md">
             <AccordionTrigger className="bg-white data-[state=open]:bg-[#f7fbff] rounded-lg p-6 flex items-center justify-between hover:no-underline group">
               <div className="flex items-center gap-3">
                 <span className="font-semibold text-md md:text-xl">Rationale</span>
@@ -121,7 +121,7 @@ export function TrainingProfileView({ trainingProfile, onEdit }: TrainingProfile
           </AccordionItem>
 
           {/* Alignment with Standard Section */}
-          <AccordionItem value="alignment" className="border-none">
+          <AccordionItem value="alignment" className="border-[0.5px] border-[#CED4DA] rounded-md">
             <AccordionTrigger className="bg-white data-[state=open]:bg-[#f7fbff] rounded-lg p-6 flex items-center justify-between hover:no-underline group">
               <div className="flex items-center gap-3">
                 <span className="font-semibold text-md md:text-xl">Alignment with Standard</span>
@@ -147,7 +147,7 @@ export function TrainingProfileView({ trainingProfile, onEdit }: TrainingProfile
           </AccordionItem>
 
           {/* Executive Summary Section */}
-          <AccordionItem value="summary" className="border-none">
+          <AccordionItem value="summary" className="border-[0.5px] border-[#CED4DA] rounded-md">
             <AccordionTrigger className="bg-white data-[state=open]:bg-[#f7fbff] rounded-lg p-6 flex items-center justify-between hover:no-underline group">
               <div className="flex items-center gap-3">
                 <span className="font-semibold text-md md:text-xl">Executive Summary</span>

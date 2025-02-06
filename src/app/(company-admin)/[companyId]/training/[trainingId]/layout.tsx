@@ -24,7 +24,7 @@ export default function TrainingLayout({
   const isUsersPage = pathname.endsWith('/users')
 
   return (
-    <div className="min-h-screen bg-[#FBFBFB]">
+    <div className="min-h-screen ">
       {/* Topbar */}
       <div className="bg-white md:px-8 px-4 py-6 flex items-center justify-between border-b-[0.5px] border-[#CED4DA]">
         <div className="flex items-center gap-4">

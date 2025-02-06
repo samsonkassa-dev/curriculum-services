@@ -29,6 +29,12 @@ export function Section({ moduleId }: SectionProps) {
   const { data, isLoading } = useSectionsByModuleId(moduleId)
   const { mutateAsync: createSection } = useCreateSection()
 
+  // Add role check
+  const userRole = localStorage.getItem("user_role")
+  const canEdit = userRole === "ROLE_COMPANY_ADMIN" || 
+                 userRole === "ROLE_CURRICULUM_ADMIN" || 
+                 userRole === "ROLE_SUB_CURRICULUM_ADMIN"
+
   const handleAddClick = useCallback(() => {
     console.log("Add click")
     setShowModal(true)
@@ -81,20 +87,22 @@ export function Section({ moduleId }: SectionProps) {
         <div className="w-full mx-auto py-10">
           <div className="mx-[7%] border-2 border-dashed rounded-lg p-4 bg-[#fbfbfb]">
             <div className="flex w-full items-start">
-              <Button
-                variant="ghost"
-                className="text-blue-500 hover:text-blue-600 bg-[#fbfbfb] hover:bg-blue-50/50 flex items-start gap-2"
-                onClick={handleAddClick}
-              >
-                <Image
-                  src="/modulePlus.svg"
-                  alt="Add Section"
-                  width={16}
-                  height={20}
-                  className="mt-[2px]"
-                />
-                <span className="font-semibold">Section</span>     
-              </Button>
+              {canEdit && (
+                <Button
+                  variant="ghost"
+                  className="text-blue-500 hover:text-blue-600 bg-[#fbfbfb] hover:bg-blue-50/50 flex items-start gap-2"
+                  onClick={handleAddClick}
+                >
+                  <Image
+                    src="/modulePlus.svg"
+                    alt="Add Section"
+                    width={16}
+                    height={20}
+                    className="mt-[2px]"
+                  />
+                  <span className="font-semibold">Section</span>     
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -116,21 +124,24 @@ export function Section({ moduleId }: SectionProps) {
           onEditClick={() => {}}
           onLessonClick={handleLessonClick}
           onAssessmentClick={handleAssessmentClick}
+          canEdit={canEdit}
         />
 
-        <Button 
-          variant="ghost" 
-          className="w-full border-2 border-dashed rounded-lg py-8 text-blue-500 hover:text-blue-600 hover:bg-blue-50/50 mt-4 justify-start pl-6"
-          onClick={handleAddClick}
-        >
-          <Image
-            src="/modulePlus.svg"
-            alt="Add Section"
-            width={16}
-            height={20}
-          />
-          <span className="ml-2">Section</span>
-        </Button>
+        {canEdit && (
+          <Button 
+            variant="ghost" 
+            className="w-full border-2 border-dashed rounded-lg py-8 text-blue-500 hover:text-blue-600 hover:bg-blue-50/50 mt-4 justify-start pl-6"
+            onClick={handleAddClick}
+          >
+            <Image
+              src="/modulePlus.svg"
+              alt="Add Section"
+              width={16}
+              height={20}
+            />
+            <span className="ml-2">Section</span>
+          </Button>
+        )}
       </div>
       <SectionAddModal 
         isOpen={showModal}

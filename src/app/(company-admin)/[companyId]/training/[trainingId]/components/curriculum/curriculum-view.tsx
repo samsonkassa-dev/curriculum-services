@@ -68,7 +68,7 @@ export function CurriculumView({
 
       <div className="space-y-4">
         <Accordion type="single" collapsible className="space-y-4">
-          <AccordionItem value="prerequisites" className="border-none">
+          <AccordionItem value="prerequisites" className="border-[0.5px] border-[#CED4DA] rounded-md">
             {renderHeader("Prerequisites")}
             <AccordionContent>
               <div className="bg-white p-6 space-y-4">
@@ -88,7 +88,7 @@ export function CurriculumView({
             </AccordionContent>
           </AccordionItem>
 
-          <AccordionItem value="objectives" className="border-none">
+          <AccordionItem value="objectives" className="border-[0.5px] border-[#CED4DA] rounded-md">
             {renderHeader("Objective and Outcome")}
             <AccordionContent>
               <div className="bg-white p-6 space-y-4">
@@ -122,7 +122,7 @@ export function CurriculumView({
             </AccordionContent>
           </AccordionItem>
 
-          <AccordionItem value="implementation" className="border-none">
+          <AccordionItem value="implementation" className="border-[0.5px] border-[#CED4DA] rounded-md">
             {renderHeader("Implementation and Delivery")}
             <AccordionContent>
               <div className="bg-white p-6 space-y-8">
@@ -181,7 +181,7 @@ export function CurriculumView({
             </AccordionContent>
           </AccordionItem>
 
-          <AccordionItem value="references" className="border-none">
+          <AccordionItem value="references" className="border-[0.5px] border-[#CED4DA] rounded-md">
             {renderHeader("References and Appendices")}
             <AccordionContent>
               <div className="bg-white p-6 space-y-8">
@@ -212,7 +212,7 @@ export function CurriculumView({
             </AccordionContent>
           </AccordionItem>
 
-          <AccordionItem value="summary" className="border-none">
+          <AccordionItem value="summary" className="border-[0.5px] border-[#CED4DA] rounded-md">
             {renderHeader("Executive Summary")}
             <AccordionContent>
               <div className="bg-white p-6">

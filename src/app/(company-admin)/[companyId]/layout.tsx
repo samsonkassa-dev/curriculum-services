@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useVerificationStatus } from "@/lib/hooks/useVerificationStatus";
 import { toast } from "sonner";
 import Sidebar from "@/components/ui/sidebar";
@@ -76,15 +77,26 @@ export default function CompanyAdminLayout({
 }) {
   const params = useParams();
   const pathname = usePathname();
-  const { data: verificationData, isLoading } = useVerificationStatus();
+  const [isCurriculumRole, setIsCurriculumRole] = useState(false);
+  const [isClientReady, setIsClientReady] = useState(false);
   
-  const userRole = localStorage.getItem("user_role");
+  // Only fetch verification status for company admin
+  const userRole = localStorage?.getItem("user_role");
+  const isCompanyAdmin = userRole === "ROLE_COMPANY_ADMIN";
   
-  const isCurriculumRole = [
-    'ROLE_SUB_CURRICULUM_ADMIN',
-    'ROLE_CURRICULUM_ADMIN',
-    'ROLE_CONTENT_DEVELOPER'
-  ].includes(userRole || '');
+  const { data: verificationData, isLoading } = useVerificationStatus({
+    enabled: isCompanyAdmin // Only enable the query for company admin
+  });
+  
+  useEffect(() => {
+    const userRole = localStorage.getItem("user_role");
+    setIsCurriculumRole([
+      'ROLE_SUB_CURRICULUM_ADMIN',
+      'ROLE_CURRICULUM_ADMIN',
+      'ROLE_CONTENT_DEVELOPER'
+    ].includes(userRole || ''));
+    setIsClientReady(true);
+  }, []);
 
   // Special routes that hide the default layout
   const isSpecialRoute = () => {
@@ -116,10 +128,7 @@ export default function CompanyAdminLayout({
         ...item,
         href: item.href.replace(
           "[role]", 
-          (userRole || 'unauthorized')
-            .toLowerCase()
-            .replace('role_', '')
-            .replace('_', '-')
+          localStorage?.getItem("user_role")?.toLowerCase().replace('role_', '').replace('_', '-') || 'unauthorized'
         ),
       }))
     : adminNavItems.map(item => ({
@@ -128,8 +137,8 @@ export default function CompanyAdminLayout({
       }));
 
   const handleNavigation = (e: React.MouseEvent<HTMLElement>) => {
-    // Only check verification for company admin role
-    if (!isCurriculumRole && verificationData?.verificationStatus !== "ACCEPTED") {
+    // Only check verification for company admin
+    if (isCompanyAdmin && verificationData?.verificationStatus !== "ACCEPTED") {
       e.preventDefault();
       toast.error("Account not verified", {
         description: verificationData?.verificationStatus === "REJECTED"
@@ -139,7 +148,13 @@ export default function CompanyAdminLayout({
     }
   };
 
-  if (isLoading && !isCurriculumRole) {
+  // Don't render anything until we've checked the role on the client
+  if (!isClientReady) {
+    return <Loading />;
+  }
+
+  // Only show loading for company admin verification check
+  if (isCompanyAdmin && isLoading) {
     return <Loading />;
   }
 
@@ -152,15 +167,14 @@ export default function CompanyAdminLayout({
             onClick={(e: React.MouseEvent<Element>) =>
               handleNavigation(e as React.MouseEvent<HTMLElement>)
             }
-            disabled={!isCurriculumRole && verificationData?.verificationStatus !== "ACCEPTED"}
+            disabled={isCompanyAdmin && verificationData?.verificationStatus !== "ACCEPTED"}
           />
           <Topbar />
         </>
       )}
 
-      {isCurriculumRole ? (
-        children
-      ) : !verificationData || verificationData.verificationStatus !== "ACCEPTED" ? (
+      {/* Only show verification status for company admin */}
+      {isCompanyAdmin && verificationData?.verificationStatus !== "ACCEPTED" ? (
         <VerificationStatus
           status={verificationData?.verificationStatus || "PENDING"}
           rejectionReason={verificationData?.rejectionReason || ""}

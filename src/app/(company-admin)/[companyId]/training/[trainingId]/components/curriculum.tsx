@@ -26,7 +26,6 @@ interface CurriculumProps {
 
 export function Curriculum({ trainingId }: CurriculumProps) {
   const [isEditing, setIsEditing] = useState(false)
-  // Add user role check
   const userRole = localStorage.getItem("user_role")
   const canEdit = userRole === "ROLE_COMPANY_ADMIN" || userRole === "ROLE_CURRICULUM_ADMIN"
   
@@ -37,8 +36,36 @@ export function Curriculum({ trainingId }: CurriculumProps) {
   const { data: workExperiences, isLoading: isLoadingWorkExperience } = useBaseData('work-experience')
   const {data: deliveryTools, isLoading: isLoadingDeliveryTools} = useBaseData('delivery-tool')
   const prerequisiteMutation = useCreatePrerequisite()
-  const isEmptyCurriculum = !prerequisiteData
+  const { data: modeDeliveryData } = useModeDelivery(trainingId)
+  const { data: techRequirementsData } = useTechnologicalRequirements(trainingId)
+  const { data: trainerRequirementsData } = useTrainerRequirements(trainingId)
+  const { data: referencesData } = useReferences(trainingId)
+  const { data: appendicesData } = useAppendices(trainingId)
+  const { data: executiveSummaryData } = useExecutiveSummary(trainingId)
+  
+  // Check if all required data is present
+  const isAllDataComplete = useMemo(() => {
+    return !!(
+      prerequisiteData &&
+      objectiveData?.generalObjective &&
+      modeDeliveryData?.deliveryTools?.deliveryTools?.length &&
+      (techRequirementsData?.technologicalRequirements?.learnerTechnologicalRequirements?.length ||
+        techRequirementsData?.technologicalRequirements?.instructorTechnologicalRequirements?.length) &&
+      trainerRequirementsData?.trainerRequirements?.trainerRequirements?.length &&
+      (referencesData?.references?.length || appendicesData?.appendices?.length) &&
+      executiveSummaryData?.executiveSummary
+    )
+  }, [
+    prerequisiteData, objectiveData, modeDeliveryData, techRequirementsData,
+    trainerRequirementsData, referencesData, appendicesData, executiveSummaryData
+  ])
 
+  // Reset editing state when data completeness changes
+  useEffect(() => {
+    if (isAllDataComplete) {
+      setIsEditing(false)
+    }
+  }, [isAllDataComplete])
 
   const handleSave = async (data: PrerequisiteData) => {
     try {
@@ -58,38 +85,32 @@ export function Curriculum({ trainingId }: CurriculumProps) {
     }
   }
 
-  // Add new hooks
-  const { data: modeDeliveryData } = useModeDelivery(trainingId)
-  const { data: techRequirementsData } = useTechnologicalRequirements(trainingId)
-  const { data: trainerRequirementsData } = useTrainerRequirements(trainingId)
-  const { data: referencesData } = useReferences(trainingId)
-  const { data: appendicesData } = useAppendices(trainingId)
-  const { data: executiveSummaryData } = useExecutiveSummary(trainingId)
+  if (isLoadingPrerequisite || isLoadingObjective || isLoadingEducationLevels || isLanguage || isLoadingWorkExperience || isLoadingDeliveryTools ) {
+    return <Loading />
+  }
 
-  const isAllStepsComplete = useMemo(() => {
-    return !!(
-      prerequisiteData &&
-      objectiveData?.generalObjective &&
-      modeDeliveryData?.deliveryTools?.deliveryTools?.length &&
-      (techRequirementsData?.technologicalRequirements?.learnerTechnologicalRequirements?.length ||
-        techRequirementsData?.technologicalRequirements?.instructorTechnologicalRequirements?.length) &&
-      trainerRequirementsData?.trainerRequirements?.trainerRequirements?.length &&
-      (referencesData?.references?.length || appendicesData?.appendices?.length) &&
-      executiveSummaryData?.executiveSummary
+  // Show empty state for new curriculum
+  if (!prerequisiteData && canEdit) {
+    return (
+      <DefaultCreate 
+        title="Create Curriculum"
+        trainingId={trainingId}
+        onCreateClick={() => setIsEditing(true)}
+      />
     )
-  }, [
-    prerequisiteData, objectiveData, modeDeliveryData, techRequirementsData,
-    trainerRequirementsData, referencesData, appendicesData, executiveSummaryData
-  ])
+  }
 
-  // Force edit mode if any step is incomplete
-  useEffect(() => {
-    if (!isAllStepsComplete && !isEmptyCurriculum) {
-      setIsEditing(true)
-    }
-  }, [isAllStepsComplete, isEmptyCurriculum])
+  // Show empty state for non-editors
+  if (!prerequisiteData) {
+    return (
+      <div className="flex flex-col items-center justify-center p-8">
+        <p className="text-gray-500">No curriculum available yet.</p>
+      </div>
+    )
+  }
 
-  if (isEditing && canEdit) {
+  // Show edit mode if editing and not complete, or if editing and can edit
+  if ((isEditing && !isAllDataComplete) || (isEditing && canEdit)) {
     return (
       <CurriculumEdit
         trainingId={trainingId}
@@ -105,28 +126,7 @@ export function Curriculum({ trainingId }: CurriculumProps) {
     )
   }
 
-  if (isLoadingPrerequisite || isLoadingObjective || isLoadingEducationLevels || isLanguage || isLoadingWorkExperience || isLoadingDeliveryTools ) {
-    return <Loading />
-  }
-
-  if (isEmptyCurriculum && canEdit) {
-    return (
-      <DefaultCreate 
-        title="Create Curriculum"
-        trainingId={trainingId}
-        onCreateClick={() => setIsEditing(true)}
-      />
-    )
-  }
-
-  if (isEmptyCurriculum) {
-    return (
-      <div className="flex flex-col items-center justify-center p-8">
-        <p className="text-gray-500">No curriculum available yet.</p>
-      </div>
-    )
-  }
-
+  // Show view mode by default when data is complete
   return (
     <CurriculumView 
       prerequisiteData={prerequisiteData}

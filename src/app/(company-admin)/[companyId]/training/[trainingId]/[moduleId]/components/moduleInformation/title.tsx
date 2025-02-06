@@ -43,7 +43,7 @@ export function Title({ instructionalMethods, technologyIntegrations }: TitlePro
           <h2 className="text-sm md:text-base font-semibold">
             Instructional Methods
           </h2>
-          <p className="text-[12px] text-[#99948E]">
+          <p className="text-sm text-[#99948E]">
             The core teaching methods used to deliver content and facilitate
             learning.
           </p>
@@ -105,7 +105,7 @@ export function Title({ instructionalMethods, technologyIntegrations }: TitlePro
           <h2 className="text-sm md:text-base font-semibold">
             Differentiation Strategies
           </h2>
-          <p className="text-[12px] text-[#99948E] pb-4">
+          <p className="text-sm text-[#99948E] pb-4">
             How the developer will modify their teaching to meet the diverse
             needs of learners.
           </p>
@@ -122,8 +122,8 @@ export function Title({ instructionalMethods, technologyIntegrations }: TitlePro
           <h2 className="text-sm md:text-base font-semibold">
             Technology Integration
           </h2>
-          <p className="text-[12px] text-[#99948E]">
-            specific technology tools used to support teaching and learning.
+          <p className="text-sm text-[#99948E]">
+            Specific technology tools used to support teaching and learning.
           </p>
           <div className="space-y-4 pt-4">
             <Select

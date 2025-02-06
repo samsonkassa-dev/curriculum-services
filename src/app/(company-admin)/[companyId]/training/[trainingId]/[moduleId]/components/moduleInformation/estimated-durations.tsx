@@ -13,8 +13,8 @@ export function EstimatedDurations() {
       <div className="space-y-8 pr-0 md:pr-8">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div>
-            <h2 className="text-base md:text-lg font-semibold mb-2">Estimated Duration</h2>
-            <p className="text-[12px] text-gray-500 mb-4">
+            <h2 className="text-base md:text-lg font-semibold">Estimated Duration</h2>
+            <p className="text-sm text-[#99948E] mb-4">
               Enter a brief overview of this section
             </p>
             <Input
@@ -30,8 +30,8 @@ export function EstimatedDurations() {
           </div>
 
           <div>
-            <h2 className="text-base md:text-lg font-semibold mb-2">Duration Type</h2>
-            <p className="text-[12px] text-gray-500 mb-4">
+            <h2 className="text-base md:text-lg font-semibold">Duration Type</h2>
+            <p className="text-sm text-[#99948E] mb-4">
               Enter a brief overview of this section
             </p>
             <Select 

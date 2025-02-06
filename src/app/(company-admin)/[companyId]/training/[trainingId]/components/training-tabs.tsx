@@ -14,7 +14,7 @@ interface TrainingTabsProps {
 export function TrainingTabs({ activeTab, onTabChange }: TrainingTabsProps) {
   return (
     <div className="w-full overflow-x-auto scrollbar-hide">
-      <div className="flex my-20 min-w-max gap-8 border-b-[0.5px] border-[#CED4DA] mb-6 px-[7%]">
+      <div className="flex my-14 min-w-max gap-8 border-b-[0.5px] border-[#CED4DA] mb-6 px-[7%]">
         <button
           onClick={() => onTabChange("overview")}
           className={cn(

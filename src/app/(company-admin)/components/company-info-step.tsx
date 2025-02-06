@@ -1,7 +1,9 @@
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { useBaseData } from "@/lib/hooks/useBaseData"
 import { CompanyProfileFormData } from "@/types/company"
 import { UseFormRegister, FieldErrors, UseFormSetValue, UseFormWatch } from "react-hook-form"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface CompanyInfoStepProps {
   register: UseFormRegister<CompanyProfileFormData>
@@ -31,6 +33,13 @@ export function CompanyInfoStep({ register, errors, setValue, watch }: CompanyIn
       setValue('taxIdentificationNumber', numbers);
     }
   };
+
+  const { data: countries, isLoading: isLoadingCountries } = useBaseData('country')
+
+  // Add handler for country selection
+  const handleCountryChange = (value: string) => {
+    setValue('countryOfIncorporation', value)
+  }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -64,12 +73,24 @@ export function CompanyInfoStep({ register, errors, setValue, watch }: CompanyIn
 
       <div className="space-y-2">
         <Label htmlFor="countryOfIncorporation">Country of Incorporation</Label>
-        <Input
-          id="countryOfIncorporation"
-          placeholder="Select country"
-          {...register("countryOfIncorporation")}
-          className="w-full"
-        />
+        <Select 
+          onValueChange={handleCountryChange}
+          value={watch('countryOfIncorporation')}
+        >
+          <SelectTrigger className="w-full py-[24px]">
+            <SelectValue placeholder="Select country" />
+          </SelectTrigger>
+          <SelectContent>
+            {countries?.map((country: { id: string; name: string }) => (
+              <SelectItem 
+                key={country.id} 
+                value={country.name}
+              >
+                {country.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
         {errors.countryOfIncorporation && (
           <p className="text-sm text-red-500">{errors.countryOfIncorporation.message}</p>
         )}

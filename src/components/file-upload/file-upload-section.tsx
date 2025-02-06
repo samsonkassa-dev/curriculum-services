@@ -49,7 +49,7 @@ export function FileUploadSection({ setValue, watch, fileTypes }: FileUploadSect
     if (file.type.startsWith('image/')) {
       return URL.createObjectURL(file)
     }
-    return '/icons/file-document.svg'
+    return '/fileC.svg'
   }
 
   return (
@@ -89,9 +89,9 @@ export function FileUploadSection({ setValue, watch, fileTypes }: FileUploadSect
 
       {/* Display uploaded files */}
       {watch('companyFiles')?.map((file: CompanyFileUpload, index: number) => (
-        <div key={index} className="flex items-center gap-2 p-2 border rounded bg-gray-50">
+        <div key={index} className="flex items-center gap-2 p-2  rounded bg-gray-50">
           <div className="flex items-center gap-3 flex-1">
-            <div className="flex items-center justify-center w-10 h-10 bg-white border rounded">
+            <div className="flex items-center justify-center w-10 h-10 ">
               <img 
                 src={getFilePreview(file.file)} 
                 alt="File preview" 
