@@ -3,8 +3,8 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { StepProps } from '../types'
 
-export function CreateTrainingStep1({ onNext }: StepProps) {
-  const [title, setTitle] = useState('')
+export function CreateTrainingStep1({ onNext, initialData }: StepProps) {
+  const [title, setTitle] = useState(initialData?.title || '')
 
   return (
     <div className="space-y-8">

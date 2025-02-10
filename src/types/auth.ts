@@ -4,13 +4,11 @@ export interface LoginCredentials {
 }
 
 export interface LoginResponse {
-  message: string;
+  id: string;
+  email: string;
+  role: string;
   token: string;
-  user: {
-    id: string;
-    email: string;
-    role: string;
-  };
+  isFirstTimeLogin: boolean;
 }
 
 export interface ApiError {
@@ -37,6 +35,8 @@ export interface User {
   role: string;
   isProfileFilled: boolean;
   companyId?: string;
+  isFirstTimeLogin: boolean;
+  roleColorCode?: string;
 }
 
 export interface AuthResponse {
@@ -44,6 +44,7 @@ export interface AuthResponse {
   role: string;
   email: string;
   code: string;
+  isFirstTimeLogin: boolean;
 }
 
 export interface DecodedToken {

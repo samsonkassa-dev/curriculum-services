@@ -12,6 +12,12 @@ interface ExecutiveSummaryData {
   executiveSummary: string
 }
 
+interface AIRecommendationResponse {
+  code: string
+  response: string
+  message: string
+}
+
 export const useExecutiveSummary = (trainingId: string) => {
   return useQuery<ExecutiveSummaryResponse>({
     queryKey: ['executive-summary', trainingId],
@@ -49,5 +55,22 @@ export const useAddExecutiveSummary = () => {
         queryKey: ['executive-summary', variables.trainingId]
       })
     }
+  })
+}
+
+export const useAIRecommendation = (trainingId: string) => {
+  return useQuery<AIRecommendationResponse>({
+    queryKey: ['ai-recommendation', trainingId],
+    queryFn: async () => {
+      const token = localStorage.getItem('auth_token')
+      const { data } = await axios.get(
+        `${process.env.NEXT_PUBLIC_API}/ai/recommendation/${trainingId}?type=EXECUTIVE_SUMMARY`,
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      )
+      return data
+    },
+    enabled: !!trainingId
   })
 } 

@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
-import { Loader2 } from "lucide-react"
+import { Loader2, ChevronLeftIcon, ChevronRightIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface DataTableProps<TData, TValue> {
@@ -32,6 +32,66 @@ interface DataTableProps<TData, TValue> {
   isLoading?: boolean
   newItemId?: string
   activeTab: string
+}
+
+// Add PaginationControls component
+function PaginationControls({ table, data }: { table: any, data: any[] }) {
+  return (
+    <div className="flex items-center justify-between w-full">
+      {/* Left side - Page Size Selector */}
+      <div className="flex items-center gap-2">
+        <span className="md:text-sm text-xs text-gray-500">Showing</span>
+        <select
+          value={table.getState().pagination.pageSize}
+          onChange={(e) => table.setPageSize(Number(e.target.value))}
+          className="border rounded-md md:text-sm text-xs px-2 py-1 bg-white"
+          title="Page Size"
+        >
+          {[5, 10, 20, 30, 50].map(size => (
+            <option key={size} value={size}>{size}</option>
+          ))}
+        </select>
+      </div>
+
+      {/* Center - Showing Text */}
+      <div className="md:text-sm text-xs pl-2 text-gray-500">
+        Showing {table.getState().pagination.pageSize} out of {data.length} records
+      </div>
+
+      {/* Right side - Pagination Controls */}
+      <div className="flex gap-1">
+        <Button
+          variant="pagination"
+          size="sm"
+          onClick={() => table.previousPage()}
+          disabled={!table.getCanPreviousPage()}
+        >
+          <ChevronLeftIcon className="w-4 h-4" />
+        </Button>
+        <div className="flex gap-1">
+          {Array.from({ length: table.getPageCount() }, (_, i) => (
+            <Button
+              key={i}
+              variant={table.getState().pagination.pageIndex === i ? "outline" : "outline"}
+              className={table.getState().pagination.pageIndex === i ? "border-brand text-brand" : ""}
+              size="sm"
+              onClick={() => table.setPageIndex(i)}
+            >
+              {i + 1}
+            </Button>
+          ))}
+        </div>
+        <Button
+          variant="pagination"
+          size="sm"
+          onClick={() => table.nextPage()}
+          disabled={!table.getCanNextPage()}
+        >
+          <ChevronRightIcon className="md:w-4 md:h-4 w-2 h-2" />
+        </Button>
+      </div>
+    </div>
+  );
 }
 
 export function DataTable<TData, TValue>({
@@ -55,7 +115,7 @@ export function DataTable<TData, TValue>({
     },
     initialState: {
       pagination: {
-        pageSize: 7,
+        pageSize: 5,
       },
     },
   })
@@ -118,41 +178,9 @@ export function DataTable<TData, TValue>({
           </TableBody>
         </Table>
       </div>
-      {/* <div className="flex items-center justify-between py-4">
-        <div className="text-sm text-gray-500">
-          Showing {table.getState().pagination.pageSize} out of {data.length} records
-        </div>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-          >
-            Previous
-          </Button>
-          <div className="flex gap-1">
-            {Array.from({ length: table.getPageCount() }, (_, i) => (
-              <Button
-                key={i}
-                variant={table.getState().pagination.pageIndex === i ? "secondary" : "outline"}
-                size="sm"
-                onClick={() => table.setPageIndex(i)}
-              >
-                {i + 1}
-              </Button>
-            ))}
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-          >
-            Next
-          </Button>
-        </div>
-      </div> */}
+      <div className="flex items-center justify-between py-4">
+        <PaginationControls table={table} data={data} />
+      </div>
     </div>
   )
 } 

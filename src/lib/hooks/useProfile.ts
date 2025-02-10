@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 
-import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import axios from "axios"
 import { toast } from "sonner"
 import { setProfilePicture } from "@/lib/utils/profile"
@@ -9,7 +9,7 @@ import { setProfilePicture } from "@/lib/utils/profile"
 interface EditProfileData {
   firstName: string
   lastName: string
-  email: string
+  email?: string
   phoneNumber: string | null
 }
 
@@ -26,8 +26,57 @@ interface EditProfileResponse {
   message: string
 }
 
+interface UserRole {
+  name: string
+  colorCode: string
+}
+
+interface User {
+  id: string
+  firstName: string
+  lastName: string
+  phoneNumber: string | null
+  email: string
+  role: UserRole
+  profilePictureUrl: string
+  emailVerified: boolean
+  phoneVerified: boolean
+}
+
+interface ProfileResponse {
+  code: string
+  message: string
+  user: User
+}
+
+interface ChangePasswordData {
+  oldPassword: string;
+  newPassword: string;
+}
+
 export function useProfile() {
   const queryClient = useQueryClient();
+
+  const profile = useQuery({
+    queryKey: ['user-profile'],
+    queryFn: async (): Promise<User | null> => {
+      if (typeof window === 'undefined') return null;
+      const token = localStorage.getItem("auth_token");
+      if (!token) throw new Error('No auth token found');
+      
+      const response = await axios.get<ProfileResponse>(
+        `${process.env.NEXT_PUBLIC_API}/user/me`,
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      );
+      return response.data.user;
+    },
+    enabled: typeof window !== 'undefined' && !!localStorage.getItem("auth_token"),
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    gcTime: 30 * 60 * 1000,
+  });
 
   // Profile Picture Upload Mutation
   const uploadProfilePicture = useMutation({
@@ -87,6 +136,7 @@ export function useProfile() {
     },
   });
 
+  // Deactivate User Mutation
   const DeactivateUser = useMutation({
     mutationFn: async (userId: string) => {
       const token = localStorage.getItem("auth_token");
@@ -110,6 +160,7 @@ export function useProfile() {
     },
   });
   
+  // Activate User Mutation 
   const ActivateUser = useMutation({
     mutationFn: async (userId: string) => {
       const token = localStorage.getItem("auth_token");
@@ -133,10 +184,35 @@ export function useProfile() {
     },
   });
 
+  // Change Password Mutation
+  const changePassword = useMutation({
+    mutationFn: async (data: ChangePasswordData) => {
+      const token = localStorage.getItem("auth_token");
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_API}/user/change-password`,
+        data,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      return response.data;
+    },
+    onSuccess: () => {
+      toast.success("Password changed successfully");
+    },
+    onError: (error: any) => {
+      toast.error("Failed to change password", {
+        description: error?.response?.data?.message || "Please try again",
+      });
+    },
+  });
+
   return {
+    profile,
     uploadProfilePicture,
     editProfile,
     DeactivateUser,
-    ActivateUser
+    ActivateUser,
+    changePassword
   };
 } 

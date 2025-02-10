@@ -19,10 +19,19 @@ type Step = 1 | 2 | 3 | 4 | 5;
 
 export default function CreateTraining() {
   const [currentStep, setCurrentStep] = useState<Step>(1);
-  const [formData, setFormData] = useState<any>({});
+  const [formData, setFormData] = useState<any>({
+    title: '',
+    cityIds: [],
+    duration: '',
+    durationType: 'DAYS',
+    ageGroupIds: [],
+    economicBackgroundIds: [],
+    academicQualificationIds: [],
+    targetAudienceGenders: [],
+    trainingPurposeIds: []
+  });
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
-  const [inviteLink, setInviteLink] = useState<string>();
   const [trainingId, setTrainingId] = useState<string>();
   const router = useRouter();
   const params = useParams();
@@ -55,7 +64,7 @@ export default function CreateTraining() {
 
     inviteUser(trainingId, email, {
       onSuccess: () => {
-        handleInviteModalClose();
+        router.push(`/${params.companyId}/training`);
       },
     });
   };
@@ -75,22 +84,28 @@ export default function CreateTraining() {
     router.back();
   };
 
+  const handleSuccessModalClose = () => {
+    setShowSuccessModal(false);
+    router.push(`/${params.companyId}/training`);
+  };
+
   const renderStep = () => {
     switch (currentStep) {
       case 1:
-        return <CreateTrainingStep1 onNext={handleNext} />;
+        return <CreateTrainingStep1 onNext={handleNext} initialData={formData} />;
       case 2:
-        return <CreateTrainingStep2 onNext={handleNext} onBack={handleBack} />;
+        return <CreateTrainingStep2 onNext={handleNext} onBack={handleBack} initialData={formData} />;
       case 3:
-        return <CreateTrainingStep3 onNext={handleNext} onBack={handleBack} />;
+        return <CreateTrainingStep3 onNext={handleNext} onBack={handleBack} initialData={formData} />;
       case 4:
-        return <CreateTrainingStep4 onNext={handleNext} onBack={handleBack} />;
+        return <CreateTrainingStep4 onNext={handleNext} onBack={handleBack} initialData={formData} />;
       case 5:
         return (
           <CreateTrainingStep5
             onNext={handleNext}
             onBack={handleBack}
             isSubmitting={isLoading}
+            initialData={formData}
           />
         );
       default:
@@ -128,18 +143,16 @@ export default function CreateTraining() {
 
       <SuccessModal
         isOpen={showSuccessModal}
-        onClose={() => setShowSuccessModal(false)}
+        onClose={handleSuccessModalClose}
         onAssignClick={handleAssignClick}
       />
 
       <InviteModal
-         isOpen={showInviteModal}
-          onClose={handleInviteModalClose}
-          onInvite={handleInvite}
-          // inviteLink={inviteLink}
-          isLoading={isInviting}
-        />
-      
+        isOpen={showInviteModal}
+        onClose={handleInviteModalClose}
+        onInvite={handleInvite}
+        isLoading={isInviting}
+      />
     </>
   );
 }

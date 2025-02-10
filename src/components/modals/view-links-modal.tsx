@@ -16,9 +16,15 @@ interface ViewLinksModalProps {
   content: Content
   isOpen: boolean
   onClose: () => void
+  showActions?: boolean
 }
 
-export function ViewLinksModal({ content, isOpen, onClose }: ViewLinksModalProps) {
+export function ViewLinksModal({ 
+  content, 
+  isOpen, 
+  onClose,
+  showActions = true 
+}: ViewLinksModalProps) {
   const [showEditModal, setShowEditModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const { mutate: editLink, isPending: isEditing } = useEditContentLink()
@@ -76,20 +82,22 @@ export function ViewLinksModal({ content, isOpen, onClose }: ViewLinksModalProps
                     )}
                   </td>
                   <td className="py-3 px-4 text-sm">
-                    <div className="flex gap-4 justify-end">
-                      <button 
-                        className="text-blue-500"
-                        onClick={() => setShowEditModal(true)}
-                      >
-                        <img src="/edit.svg" alt="Edit" className="w-4 h-4" />
-                      </button>
-                      <button 
-                        className="text-red-500"
-                        onClick={() => setShowDeleteModal(true)}
-                      >
-                        <img src="/delete.svg" alt="Delete" className="w-4 h-4" />
-                      </button>
-                    </div>
+                    {showActions && (
+                      <div className="flex gap-4 justify-end">
+                        <button 
+                          className="text-blue-500"
+                          onClick={() => setShowEditModal(true)}
+                        >
+                          <img src="/edit.svg" alt="Edit" className="w-4 h-4" />
+                        </button>
+                        <button 
+                          className="text-red-500"
+                          onClick={() => setShowDeleteModal(true)}
+                        >
+                          <img src="/delete.svg" alt="Delete" className="w-4 h-4" />
+                        </button>
+                      </div>
+                    )}
                   </td>
                 </tr>
               </tbody>

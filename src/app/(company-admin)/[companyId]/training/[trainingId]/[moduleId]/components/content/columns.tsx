@@ -15,9 +15,11 @@ function ContentLinkCell({ content }: { content: Content }) {
   const [showViewModal, setShowViewModal] = useState(false)
   const [showApprovalModal, setShowApprovalModal] = useState(false)
   const { mutate: addLink, isPending } = useAddContentLink()
+  
   const userRole = localStorage.getItem("user_role")
   const isContentDeveloper = userRole === "ROLE_CONTENT_DEVELOPER"
-  const isApprover = ["ROLE_CURRICULUM_ADMIN", "ROLE_SUB_CURRICULUM_ADMIN"].includes(userRole || '')
+  const isIcogAdmin = userRole === "ROLE_ICOG_ADMIN"
+  const canOnlyView = isContentDeveloper || isIcogAdmin
 
   const handleAddLink = (data: { link: string; referenceLink: string }) => {
     addLink({ contentId: content.id, ...data })
@@ -29,18 +31,20 @@ function ContentLinkCell({ content }: { content: Content }) {
       <>
         <Button
           variant="ghost" 
-          className="flex items-center gap-2 text-blue-500 p-0 hover:bg-transparent"
-          onClick={() => isContentDeveloper ? setShowViewModal(true) : setShowApprovalModal(true)}
+          className="flex items-center gap-2 text-blue-500 p-0 hover:text-brand hover:bg-transparent"
+          onClick={() => canOnlyView ? setShowViewModal(true) : setShowApprovalModal(true)}
         >
-          <img src="/modulePlus.svg" alt="View" className="w-4 h-4" />
-          <span>View Links</span>
+          {/* <img src="/modulePlus.svg" alt="View" className="w-4 h-4" /> */}
+
+          <span>View Link</span>
         </Button>
 
-        {isContentDeveloper ? (
+        {canOnlyView ? (
           <ViewLinksModal
             content={content}
             isOpen={showViewModal}
             onClose={() => setShowViewModal(false)}
+            showActions={isContentDeveloper}
           />
         ) : (
           <ContentApprovalModal
@@ -58,7 +62,7 @@ function ContentLinkCell({ content }: { content: Content }) {
       <>
         <Button 
           variant="ghost"
-          className="flex items-center gap-2 text-blue-500 p-0 hover:bg-transparent"
+          className="flex items-center gap-2 text-blue-500 p-0 hover:text-brand hover:bg-transparent"
           onClick={() => setShowLinkModal(true)}
           disabled={isPending}
         >
@@ -82,6 +86,10 @@ export const columns: ColumnDef<Content>[] = [
   {
     accessorKey: "name",
     header: "Name",
+    cell: ({row}) =>{
+      const name = row.original
+      return name.name || "Name not given"
+    }
   },
   {
     accessorKey: "contentFor",

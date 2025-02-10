@@ -86,15 +86,15 @@ export default function BaseData() {
 
   return (
     <div className={cn(
-      "md:w-[calc(100%-85px)] lg:pl-[85px] md:pl-[50px] md:mx-auto w-full",
+      "w-full lg:px-16 md:px-14 px-4 mx-auto lg:mt-12 mt-10 sm:pl-12",
       isMobile ? "block" : "flex min-h-screen"
     )}>
       {renderMobileHeader()}
-      
+
       {(!isMobile || showSidebar) && (
         <div className={cn(
-          "bg-white",
-          isMobile ? "fixed inset-0 z-50 pt-16 mt-5 px-4 pb-4" : "md:w-[30%] w-full mx-auto p-5"
+          "bg-white sm:pl-12",
+          isMobile ? "fixed inset-0 z-50 pt-16 mt-5 px-4 pb-4 " : "md:w-[30%] w-full mx-auto p-5"
         )}>
           <SidebarTabs 
             activeTab={activeTab} 
@@ -106,12 +106,13 @@ export default function BaseData() {
         </div>
       )}
 
-      <div className="flex-1 md:p-10 p-5 overflow-y-auto">
+      <div className="flex-1 md:p-10 p-5 overflow-y-auto ">
         <div className="flex justify-between items-center md:mb-6 mb-4">
           <h1 className="text-xl font-semibold capitalize">{activeTab.replace('-', ' ')}</h1>
           <AddDataDialog 
             onAddData={handleAddData} 
             isLoading={isAddLoading}
+            type={activeTab}
           />
         </div>
         <DataTable 

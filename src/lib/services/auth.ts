@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { AuthResponse, LoginCredentials, Session, User, DecodedToken } from "@/types/auth";
+import { AuthResponse, LoginCredentials, Session, User, DecodedToken, LoginResponse } from "@/types/auth";
 
 class AuthService {
   private baseUrl = '/api/auth';
@@ -24,7 +24,8 @@ class AuthService {
         firstName: decoded.firstName,
         lastName: decoded.lastName,
         role: decoded.role,
-        isProfileFilled: decoded.isProfileFilled
+        isProfileFilled: decoded.isProfileFilled,
+        isFirstTimeLogin: false
       };
     } catch (error) {
       console.log('Failed to decode JWT:', error);
@@ -32,7 +33,7 @@ class AuthService {
     }
   }
 
-  async login(credentials: LoginCredentials): Promise<Session> {
+  async login(credentials: LoginCredentials): Promise<LoginResponse> {
     const response = await fetch(`${this.baseUrl}/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -44,21 +45,19 @@ class AuthService {
       throw new Error(error.error || 'Login failed');
     }
 
-    const { token, role }: AuthResponse = await response.json();
-    this.setTokens(token, role);
-
-    const decodedUser = this.decodeJWT(token);
-    if (!decodedUser) {
-      throw new Error('Invalid token received');
-    }
+    const data = await response.json();
+    this.setTokens(data.token, data.role);
 
     return {
-      user: decodedUser,
-      accessToken: token
+      id: data.id,
+      email: data.email,
+      role: data.role,
+      token: data.token,
+      isFirstTimeLogin: data.isFirstTimeLogin                           
     };
   }
 
-  async googleLogin(googleToken: string): Promise<Session> {
+  async googleLogin(googleToken: string): Promise<LoginResponse> {
     const response = await fetch(`${this.baseUrl}/google`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -70,20 +69,18 @@ class AuthService {
       throw new Error(error.error || 'Google login failed');
     }
 
-    const { token, role }: AuthResponse = await response.json();
-    this.setTokens(token, role);
+    const data = await response.json();
+    this.setTokens(data.token, data.role);
 
     // Set cookie with correct name that middleware checks
-    document.cookie = `token=${token}; path=/; secure; samesite=lax`;
-
-    const decodedUser = this.decodeJWT(token);
-    if (!decodedUser) {
-      throw new Error('Invalid token received');
-    }
+    document.cookie = `token=${data.token}; path=/; secure; samesite=lax`;
 
     return {
-      user: decodedUser,
-      accessToken: token
+      id: data.id,
+      email: data.email,
+      role: data.role,
+      token: data.token,
+      isFirstTimeLogin: false
     };
   }
 

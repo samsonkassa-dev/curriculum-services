@@ -13,9 +13,13 @@ interface Step3Data {
   durationType: DurationType
 }
 
-export function CreateTrainingStep3({ onNext, onBack }: StepProps) {
-  const [duration, setDuration] = useState<string>('')
-  const [durationType, setDurationType] = useState<DurationType>('DAYS')
+export function CreateTrainingStep3({ onNext, onBack, initialData }: StepProps) {
+  const [duration, setDuration] = useState<string>(
+    initialData?.duration?.toString() || ''
+  )
+  const [durationType, setDurationType] = useState<DurationType>(
+    initialData?.durationType || 'DAYS'
+  )
 
   const handleSubmit = () => {
     onNext({

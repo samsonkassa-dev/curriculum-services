@@ -15,11 +15,14 @@ interface Step5Props {
   onNext: (data: { trainingPurposeIds: string[] }) => void
   onBack: () => void
   isSubmitting?: boolean
+  initialData?: { trainingPurposeIds?: string[] }
 }
 
-export function CreateTrainingStep5({ onNext, onBack, isSubmitting }: Step5Props) {
+export function CreateTrainingStep5({ onNext, onBack, isSubmitting, initialData }: Step5Props) {
   const { data: trainingPurposes, isLoading } = useBaseData('training-purpose')
-  const [selectedPurposeId, setSelectedPurposeId] = useState<string>('')
+  const [selectedPurposeId, setSelectedPurposeId] = useState<string>(
+    initialData?.trainingPurposeIds?.[0] || ''
+  )
 
   const safePurposes = trainingPurposes || []
 

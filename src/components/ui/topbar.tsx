@@ -174,7 +174,7 @@ export default function Topbar() {
                     {/* Profile Header */}
                     <div className="px-6">
                       <div className="flex items-center gap-4 py-3">
-                        <div className="w-14 h-14 rounded-full overflow-hidden border border-gray-200 flex items-center justify-center">
+                        <div className="w-14 h-14 shrink-0 rounded-full overflow-hidden border border-gray-200 flex items-center justify-center">
                           <Image
                             src={profilePicture}
                             alt="Profile"
@@ -183,15 +183,15 @@ export default function Topbar() {
                             className="w-full h-full object-cover"
                           />
                         </div>
-                        <div>
-                          <h3 className="font-medium text-md text-[#292827]">
+                        <div className="min-w-0">
+                          <h3 className="font-medium text-md text-[#292827] break-words">
                             {isIcogAdmin()
                               ? "iCog Admin"
                               : isCompanyAdmin()
                                 ? `${decoded?.firstName} ${decoded?.lastName}`
                                 : decoded?.email}
                           </h3>
-                          <p className="text-[#8C8C8C] font-normal text-sm">
+                          <p className="text-[#8C8C8C] font-normal text-sm break-words">
                             {isIcogAdmin()
                               ? "iCog Admin"
                               : getDisplayRole(decoded?.role || '')}
@@ -233,13 +233,6 @@ export default function Topbar() {
       <EditProfileModal
         isOpen={isEditProfileOpen}
         onClose={() => setIsEditProfileOpen(false)}
-        defaultValues={{
-          firstName: decoded?.firstName ?? '',
-          lastName: decoded?.lastName ?? '',
-          email: decoded?.email ?? '',
-          phone: user?.phone ?? '',
-      
-        }}
       />
     </div>
   );

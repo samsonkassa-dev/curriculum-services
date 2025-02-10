@@ -22,7 +22,8 @@ export function Content() {
   const debouncedSearch = useDebounce(searchQuery, 500)
   const userRole = localStorage.getItem("user_role")
   const isContentDeveloper = userRole === "ROLE_CONTENT_DEVELOPER"
-
+  const isIcogAdmin = userRole === "ROLE_ICOG_ADMIN"
+  const canRequestContent = !isContentDeveloper && !isIcogAdmin
 
   const { data, isLoading } = useGetContents({
     trainingId: params.trainingId as string,
@@ -39,7 +40,7 @@ export function Content() {
     <div className="px-[7%] py-10">
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-xl font-semibold">Content</h1>
-        {userRole !== "ROLE_CONTENT_DEVELOPER" && (
+        {canRequestContent && (
           <Button 
             className="bg-blue-500 hover:bg-blue-600 text-white flex items-center gap-2"
             onClick={() => setShowRequestModal(true)}

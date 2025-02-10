@@ -20,11 +20,15 @@ interface City {
   description: string;
 }
 
-export function CreateTrainingStep2({ onNext, onBack }: StepProps) {
+export function CreateTrainingStep2({ onNext, onBack, initialData }: StepProps) {
   const { data: countries, isLoading: isLoadingCountries } = useBaseData('country')
   const { data: cities, isLoading: isLoadingCities } = useBaseData('city')
-  const [selectedCountryIds, setSelectedCountryIds] = useState<string[]>([])
-  const [selectedCityIds, setSelectedCityIds] = useState<string[]>([])
+  const [selectedCountryIds, setSelectedCountryIds] = useState<string[]>(
+    initialData?.countryIds || []
+  )
+  const [selectedCityIds, setSelectedCityIds] = useState<string[]>(
+    initialData?.cityIds || []
+  )
   const [open, setOpen] = useState(false)
   const [openCities, setOpenCities] = useState(false)
 

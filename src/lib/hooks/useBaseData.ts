@@ -29,6 +29,7 @@ const getResponseKey = (type: BaseDataType) => {
 interface BaseDataOptions {
   type?: 'INSTRUCTOR' | 'LEARNER';
   subType?: 'GENERAL_FORMATIVE' | 'TECHNOLOGY_SPECIFIC_FORMATIVE' | 'ALTERNATIVE_FORMATIVE';
+  enabled?: boolean;
 }
 
 export function useBaseData(type: BaseDataType, options?: BaseDataOptions) {

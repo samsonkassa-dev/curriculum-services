@@ -19,20 +19,10 @@ import Image from "next/image"
 import { useAssessmentForm } from "@/contexts/AssessmentFormContext"
 import { AssessmentFormProvider } from "@/contexts/AssessmentFormContext"
 import { LessonAddModal } from "./section/lessonAddModal"
-import { useCreateLesson, useGetLessons } from "@/lib/hooks/useLesson"
+import { useCreateLesson } from "@/lib/hooks/useLesson"
 
-interface AssessmentMethod {
-  id: string
-  name: string
-  description: string
-  assessmentSubType: 'GENERAL_FORMATIVE' | 'ALTERNATIVE_FORMATIVE' | 'TECHNOLOGY_SPECIFIC_FORMATIVE'
-}
 
-interface SectionAssessment {
-  sectionId: string
-  assessmentMethods: AssessmentMethod[]
-  subjectSpecificAssessmentMethod: string
-}
+
 
 interface Lesson {
   id: string
@@ -260,6 +250,7 @@ export function SectionView({
                 <DropdownMenu modal={false}>
                   <DropdownMenuTrigger asChild>
                     <div
+                      title="Edit Lesson"
                       role="button"
                       tabIndex={0}
                       className="hover:bg-gray-100 h-8 w-8 p-0 rounded-md flex items-center justify-center cursor-pointer"

@@ -18,17 +18,26 @@ interface BaseItem {
 
 type Gender = 'MALE' | 'FEMALE'
 
-export function CreateTrainingStep4({ onNext, onBack }: StepProps) {
+export function CreateTrainingStep4({ onNext, onBack, initialData }: StepProps) {
   const { data: ageGroups, isLoading: isLoadingAgeGroups } = useBaseData('age-group')
   const { data: economicBackgrounds, isLoading: isLoadingEconomicBackgrounds } = useBaseData('economic-background')
   const { data: academicQualifications, isLoading: isLoadingAcademicQualifications } = useBaseData('academic-qualification')
 
-  const [selectedAgeGroupId, setSelectedAgeGroupId] = useState<string>('')
-  const [selectedEconomicBackgroundId, setSelectedEconomicBackgroundId] = useState<string>('')
-  const [selectedAcademicQualificationIds, setSelectedAcademicQualificationIds] = useState<string[]>([])
-  const [selectedGender, setSelectedGender] = useState<Gender>()
+  const [selectedAgeGroupId, setSelectedAgeGroupId] = useState<string>(
+    initialData?.ageGroupIds?.[0] || ''
+  );
+  const [selectedEconomicBackgroundId, setSelectedEconomicBackgroundId] = useState<string>(
+    initialData?.economicBackgroundIds?.[0] || ''
+  );
+  const [selectedAcademicQualificationIds, setSelectedAcademicQualificationIds] = useState<string[]>(
+    initialData?.academicQualificationIds || []
+  );
+  const [selectedGenders, setSelectedGenders] = useState<Gender[]>(
+    (initialData?.targetAudienceGenders as Gender[]) || []
+  );
 
   const [openAcademicQualifications, setOpenAcademicQualifications] = useState(false)
+  const [openGenders, setOpenGenders] = useState(false)
 
   const safeAgeGroups = ageGroups || []
   const safeEconomicBackgrounds = economicBackgrounds || []
@@ -40,19 +49,27 @@ export function CreateTrainingStep4({ onNext, onBack }: StepProps) {
     )
   }
 
+  const handleSelectGender = (gender: Gender) => {
+    setSelectedGenders(prev => 
+      prev.includes(gender) 
+        ? prev.filter(g => g !== gender)
+        : [...prev, gender]
+    )
+  }
+
   const handleSubmit = () => {
     onNext({
       ageGroupIds: [selectedAgeGroupId],
       economicBackgroundIds: [selectedEconomicBackgroundId],
       academicQualificationIds: selectedAcademicQualificationIds,
-      targetAudienceGenders: selectedGender ? [selectedGender] : []
+      targetAudienceGenders: selectedGenders
     })
   }
 
   const isValid = selectedAgeGroupId && 
     selectedEconomicBackgroundId && 
     selectedAcademicQualificationIds.length > 0 &&
-    selectedGender
+    selectedGenders.length > 0
 
   return (
     <div className="space-y-8">
@@ -157,18 +174,49 @@ export function CreateTrainingStep4({ onNext, onBack }: StepProps) {
 
         <div className="space-y-2">
           <label className="text-sm font-medium">Gender</label>
-          <Select
-            value={selectedGender}
-            onValueChange={(value: Gender) => setSelectedGender(value)}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select gender" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="MALE">Male</SelectItem>
-              <SelectItem value="FEMALE">Female</SelectItem>
-            </SelectContent>
-          </Select>
+          <Popover open={openGenders} onOpenChange={setOpenGenders}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className="w-full justify-between"
+              >
+                <div className="flex flex-wrap gap-1">
+                  {selectedGenders.length > 0 ? (
+                    selectedGenders.map(gender => (
+                      <Badge key={gender} variant="pending">
+                        {gender}
+                      </Badge>
+                    ))
+                  ) : (
+                    "Select genders..."
+                  )}
+                </div>
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-full p-0">
+              <div className="max-h-[300px] overflow-auto">
+                {['MALE', 'FEMALE'].map((gender) => (
+                  <div
+                    key={gender}
+                    className={cn(
+                      "flex items-center px-4 py-2 cursor-pointer hover:bg-gray-100",
+                      selectedGenders.includes(gender as Gender) && "bg-gray-100"
+                    )}
+                    onClick={() => handleSelectGender(gender as Gender)}
+                  >
+                    <Check
+                      className={cn(
+                        "mr-2 h-4 w-4",
+                        selectedGenders.includes(gender as Gender) ? "opacity-100" : "opacity-0"
+                      )}
+                    />
+                    {gender}
+                  </div>
+                ))}
+              </div>
+            </PopoverContent>
+          </Popover>
         </div>
 
         <div className="flex justify-between pt-8">

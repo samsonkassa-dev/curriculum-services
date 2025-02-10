@@ -4,6 +4,12 @@ export interface BaseDataItem {
   description: string;
 }
 
+export interface BaseDataOptions {
+  type?: 'INSTRUCTOR' | 'LEARNER';
+  subType?: 'GENERAL_FORMATIVE' | 'TECHNOLOGY_SPECIFIC_FORMATIVE' | 'ALTERNATIVE_FORMATIVE';
+  enabled?: boolean;
+}
+
 export type BaseDataType = 
 | "academic-level"
 | "academic-qualification"

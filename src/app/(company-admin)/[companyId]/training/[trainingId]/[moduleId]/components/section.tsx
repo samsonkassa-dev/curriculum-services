@@ -29,11 +29,12 @@ export function Section({ moduleId }: SectionProps) {
   const { data, isLoading } = useSectionsByModuleId(moduleId)
   const { mutateAsync: createSection } = useCreateSection()
 
-  // Add role check
+  // Fix role names and checks
   const userRole = localStorage.getItem("user_role")
   const canEdit = userRole === "ROLE_COMPANY_ADMIN" || 
                  userRole === "ROLE_CURRICULUM_ADMIN" || 
                  userRole === "ROLE_SUB_CURRICULUM_ADMIN"
+  const isViewOnly = userRole === "ROLE_ICOG_ADMIN" || userRole === "ROLE_CONTENT_DEVELOPER"
 
   const handleAddClick = useCallback(() => {
     console.log("Add click")
@@ -82,12 +83,12 @@ export function Section({ moduleId }: SectionProps) {
   const isEmptySections = !data?.sections?.length
 
   if (isEmptySections) {
-    return (
-      <>
-        <div className="w-full mx-auto py-10">
-          <div className="mx-[7%] border-2 border-dashed rounded-lg p-4 bg-[#fbfbfb]">
-            <div className="flex w-full items-start">
-              {canEdit && (
+    if (canEdit) {
+      return (
+        <>
+          <div className="w-full mx-auto py-10">
+            <div className="mx-[7%] border-2 border-dashed rounded-lg p-4 bg-[#fbfbfb]">
+              <div className="flex w-full items-start">
                 <Button
                   variant="ghost"
                   className="text-blue-500 hover:text-blue-600 bg-[#fbfbfb] hover:bg-blue-50/50 flex items-start gap-2"
@@ -102,16 +103,23 @@ export function Section({ moduleId }: SectionProps) {
                   />
                   <span className="font-semibold">Section</span>     
                 </Button>
-              )}
+              </div>
             </div>
           </div>
-        </div>
-        <SectionAddModal 
-          isOpen={showModal}
-          onClose={handleCloseModal}
-          onSubmit={handleSubmit}
-        />
-      </>
+          <SectionAddModal 
+            isOpen={showModal}
+            onClose={handleCloseModal}
+            onSubmit={handleSubmit}
+          />
+        </>
+      )
+    }
+
+    // Show message for view-only roles
+    return (
+      <div className="flex flex-col items-center justify-center p-8">
+        <p className="text-gray-500">No sections added yet.</p>
+      </div>
     )
   }
 
