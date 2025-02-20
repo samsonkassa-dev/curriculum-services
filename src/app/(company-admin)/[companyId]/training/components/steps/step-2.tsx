@@ -1,10 +1,13 @@
-import { useState } from 'react'
+"use client"
+
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Check, ChevronsUpDown } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { cn } from '@/lib/utils'
 import { useBaseData } from '@/lib/hooks/useBaseData'
+import { useCities } from '@/lib/hooks/useCities'
 import { StepProps } from '../types'
 
 interface Country {
@@ -16,13 +19,12 @@ interface Country {
 interface City {
   id: string;
   name: string;
-  countryId: string;
   description: string;
+  country: Country;
 }
 
 export function CreateTrainingStep2({ onNext, onBack, initialData }: StepProps) {
   const { data: countries, isLoading: isLoadingCountries } = useBaseData('country')
-  const { data: cities, isLoading: isLoadingCities } = useBaseData('city')
   const [selectedCountryIds, setSelectedCountryIds] = useState<string[]>(
     initialData?.countryIds || []
   )
@@ -32,15 +34,28 @@ export function CreateTrainingStep2({ onNext, onBack, initialData }: StepProps) 
   const [open, setOpen] = useState(false)
   const [openCities, setOpenCities] = useState(false)
 
+  const { data: cities, isLoading: isLoadingCities } = useCities(selectedCountryIds)
+
   const safeCountries = countries || []
   const safeCities = cities || []
 
   const handleSelectCountry = (countryId: string) => {
-    setSelectedCountryIds(prev => 
-      prev.includes(countryId)
+    setSelectedCountryIds(prev => {
+      const newIds = prev.includes(countryId)
         ? prev.filter(id => id !== countryId)
         : [...prev, countryId]
-    )
+      
+      if (prev.includes(countryId)) {
+        setSelectedCityIds(prevCities => 
+          prevCities.filter(cityId => {
+            const city = safeCities.find(c => c.id === cityId)
+            return city && newIds.includes(city.country.id)
+          })
+        )
+      }
+      
+      return newIds
+    })
   }
 
   const handleSelectCity = (cityId: string) => {
@@ -69,7 +84,7 @@ export function CreateTrainingStep2({ onNext, onBack, initialData }: StepProps) 
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
-                className="w-full justify-between"
+                className="w-full justify-between py-6"
                 disabled={isLoadingCountries}
               >
                 <div className="flex flex-wrap gap-1">
@@ -120,16 +135,16 @@ export function CreateTrainingStep2({ onNext, onBack, initialData }: StepProps) 
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
-                className="w-full justify-between"
-                disabled={isLoadingCities}
+                className="w-full justify-between py-6"
+                disabled={isLoadingCities || !selectedCountryIds.length}
               >
                 <div className="flex flex-wrap gap-1">
                   {selectedCityIds.length > 0 ? (
                     selectedCityIds.map(cityId => {
-                      const cityName = safeCities.find((c: City) => c.id === cityId)?.name
+                      const city = safeCities.find(c => c.id === cityId)
                       return (
                         <Badge key={cityId} variant="pending">
-                          {cityName}
+                          {city?.name}
                         </Badge>
                       )
                     })
@@ -142,7 +157,7 @@ export function CreateTrainingStep2({ onNext, onBack, initialData }: StepProps) 
             </PopoverTrigger>
             <PopoverContent className="w-full p-0">
               <div className="max-h-[300px] overflow-auto">
-                {safeCities.map((city: City) => (
+                {safeCities.map((city) => (
                   <div
                     key={city.id}
                     className={cn(
@@ -157,7 +172,7 @@ export function CreateTrainingStep2({ onNext, onBack, initialData }: StepProps) 
                         selectedCityIds.includes(city.id) ? "opacity-100" : "opacity-0"
                       )}
                     />
-                    {city.name}
+                    {city.name} ({city.country.name})
                   </div>
                 ))}
               </div>
@@ -170,7 +185,10 @@ export function CreateTrainingStep2({ onNext, onBack, initialData }: StepProps) 
             Back
           </Button>
           <Button 
-            onClick={() => onNext({ cityIds: selectedCityIds })}
+            onClick={() => onNext({ 
+              countryIds: selectedCountryIds,
+              cityIds: selectedCityIds 
+            })}
             className="bg-blue-500 text-white px-8"
             disabled={!selectedCityIds.length}
           >

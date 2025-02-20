@@ -40,7 +40,7 @@ const adminNavItems = [
     label: "My Company",
   },
   {
-    icon: <img src="/training.svg" alt="icon" width={19} height={19} />,
+    icon: <img src="/users.svg" alt="icon" width={19} height={19} />,
     href: "/[companyId]/training",
     label: "Training",
   },

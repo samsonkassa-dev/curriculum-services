@@ -92,7 +92,7 @@ export function ExecutiveSummary({
           />
 
           <div className="flex items-center gap-2 mt-4">
-            <span className="text-sm text-blue-500">AI Suggestion</span>
+            <span className="text-sm text-brand font-semibold">AI Suggestion</span>
             <div className="flex items-center gap-1">
               <Button
                 variant="ghost"
@@ -100,13 +100,13 @@ export function ExecutiveSummary({
                 onClick={() => refetch()}
                 className="p-0 h-auto"
               >
-                <img src="/refresh.svg" alt="refresh" className="w-4 h-4" />
+                <img src="/refresh.svg" alt="refresh" className="w-5 h-5" />
               </Button>
               <Button
                 variant="link"
                 size="sm"
                 onClick={handleAddAISuggestion}
-                className="text-blue-500 p-0 h-auto"
+                className="text-brand p-0 h-auto hover:underline"
               >
                 Click to add
               </Button>
@@ -114,7 +114,7 @@ export function ExecutiveSummary({
           </div>
 
           {aiData?.response && (
-            <div className="bg-blue-50 p-4 rounded-lg">
+            <div className=" p-4 rounded-lg">
               <div className="text-sm text-gray-600 whitespace-pre-line">
                 {isLoadingAI 
                   ? "Loading suggestion..." 

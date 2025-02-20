@@ -99,327 +99,342 @@ const Company = () => {
   const { businessTypes, industryTypes } = useBusinessTypes();
 
   return (
-    <div className="lg:px-24 md:px-14 px-4 lg:mt-12 mt-6 flex flex-col gap-4">
-      <div className="bg-[#fbfbfb] rounded-xl">
-        <div className="lg:flex rounded-xl  lg:justify-center">
-          <form
-            onSubmit={handleSubmit(onSubmit)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-              }
-            }}
-            className="flex flex-col lg:grid lg:grid-cols-2 xl:gap-x-16 lg:gap-y-8 gap-y-6 gap-x-4 lg:w-full py-10 lg:px-16 md:px-10 sm:px-8 px-3 items-start"
-          >
-            <div className="col-span-2 w-full">
-              <p className="font-semibold md:text-xl text-base">Company Profile</p>
-              <p className="text-[#9C9791] text-xs">
-                Please enter all relevant attributes of your company
-              </p>
-            </div>
-            <div className="space-y-2 w-full pt-1">
-              <Label htmlFor="companyName">
-                <p className="md:text-[1rem] text-sm font-semibold pb-[2px]">
-                  Company Name
+    <div className="lg:px-16 md:px-14 px-4 lg:mt-12 mt-6 flex flex-col gap-4">
+      <div className="sm:pl-12">
+        <div className="bg-[#fbfbfb] rounded-xl">
+          <div className="lg:flex rounded-xl  lg:justify-center">
+            <form
+              onSubmit={handleSubmit(onSubmit)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                }
+              }}
+              className="flex flex-col lg:grid lg:grid-cols-2 xl:gap-x-16 lg:gap-y-8 gap-y-6 gap-x-4 lg:w-full py-10 lg:px-16 md:px-10 sm:px-8 px-3 items-start"
+            >
+              <div className="col-span-2 w-full">
+                <p className="font-semibold md:text-xl text-base">
+                  Company Profile
                 </p>
-                <p className="text-[#9C9791] text-xs font-light">
-                  Please enter the name of the company
+                <p className="text-[#9C9791] text-xs">
+                  Please enter all relevant attributes of your company
                 </p>
-              </Label>
-              <Input
-                id="companyName"
-                placeholder=""
-                {...register("name")}
-                className="w-full text-sm md:text-base"
-                isError={!!errors.name}
-              />
-              {errors.name && (
-                <p className="text-sm text-red-500">{errors.name.message}</p>
-              )}
-            </div>
-            <div className="space-y-2 w-full pt-1">
-              <Label htmlFor="contactPhone">
-                <p className="md:text-[1rem] text-sm font-semibold pb-[2px]">
-                  Contact Phone
-                </p>
-                <p className="text-[#9C9791] text-xs font-light">
-                  Please enter the phone number
-                </p>
-              </Label>
-              <div className="flex gap-2">
-                <Input className="w-[100px]" value="+251" disabled />
-                <div className="w-full">
-                  <Input
-                    id="contactPhone"
-                    placeholder="9XXXXXXXX or 7XXXXXXXX"
-                    {...register("phone")}
-                    className="flex-1 text-sm md:text-base"
-                    maxLength={9}
-                    isError={!!errors.phone}
-                  />
-                </div>
               </div>
-              {errors.phone && (
-                <p className="text-sm text-red-500">{errors.phone.message}</p>
-              )}
-            </div>
-
-            <div className="space-y-2 w-full pt-1">
-              <Label htmlFor="countryOfIncorporation">
-                <p className="md:text-[1rem] text-sm font-semibold pb-[2px]">
-                  Country of Incorporation
-                </p>
-                <p className="text-[#9C9791] text-xs font-light">
-                  Please select the country where the company is incorporated
-                </p>
-              </Label>
-              <Input
-                id="countryOfIncorporation"
-                placeholder=""
-                {...register("countryOfIncorporation")}
-                className="w-full text-sm md:text-base"
-                isError={!!errors.countryOfIncorporation}
-              />
-              {errors.countryOfIncorporation && (
-                <p className="text-sm text-red-500">
-                  {errors.countryOfIncorporation.message}
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-2 w-full pt-1">
-              <Label htmlFor="taxIdentificationNumber">
-                <p className="md:text-[1rem] text-sm   font-semibold pb-[2px]">
-                  Tax Identification Number
-                </p>
-                <p className="text-[#9C9791] text-xs font-light">
-                  Please enter the TIN (10 digits)
-                </p>
-              </Label>
-              <Input
-                id="taxIdentificationNumber"
-                placeholder=""
-                {...register("taxIdentificationNumber")}
-                className="w-full text-sm md:text-base"
-                isError={!!errors.taxIdentificationNumber}
-                maxLength={10}
-                minLength={10}
-              />
-              {errors.taxIdentificationNumber && (
-                <p className="text-sm text-red-500">
-                  {errors.taxIdentificationNumber.message}
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-2 w-full pt-1">
-              <Label htmlFor="companyAddress">
-                <p className="md:text-[1rem] text-sm font-semibold pb-[2px]">
-                  Company Address
-                </p>
-                <p className="text-[#9C9791] text-xs font-light">
-                  Please enter the company&apos;s address
-                </p>
-              </Label>
-              <Input
-                id="companyAddress"
-                placeholder=""
-                {...register("address")}
-                className="w-full text-sm md:text-base"
-                isError={!!errors.address}
-              />
-              {errors.address && (
-                <p className="text-sm text-red-500">{errors.address.message}</p>
-              )}
-            </div>
-
-            <div className="space-y-2 w-full pt-1">
-              <Label htmlFor="companyWebsite">
-                <p className="md:text-[1rem] text-sm font-semibold pb-[2px]">
-                  Company Website Link
-                  <span className="text-brand text-sm font-light">
-                    &nbsp;(optional)
-                  </span>
-                </p>
-                <p className="text-[#9C9791] text-xs font-light">
-                  Please enter the website URL
-                </p>
-              </Label>
-              <Input
-                id="companyWebsite"
-                placeholder=""
-                {...register("websiteUrl")}
-                className="w-full text-sm md:text-base"
-                isError={!!errors.websiteUrl}
-              />
-              {errors.websiteUrl && (
-                <p className="text-sm text-red-500">
-                  {errors.websiteUrl.message}
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-2 w-full pt-1">
-              <Label htmlFor="industryType">
-                <p className="md:text-[1rem] text-sm font-semibold pb-[2px]">
-                  Industry Type
-                </p>
-                <p className="text-[#9C9791] text-xs font-light">
-                  Please select your industry type
-                </p>
-              </Label>
-              <Select
-                onValueChange={(value) => {
-                  const selected = industryTypes.find(
-                    (type) => type.id === value
-                  );
-                  if (selected) {
-                    setValue("industryType", selected);
-                  }
-                }}
-                value={watch("industryType")?.id}
-              >
-                <SelectTrigger className="w-full h-12">
-                  <SelectValue placeholder="Select" className="text-sm md:text-base" />
-                </SelectTrigger>
-                <SelectContent>
-                  {industryTypes.map((type) => (
-                    <SelectItem key={type.id} value={type.id}>
-                      {type.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.industryType && (
-                <p className="text-sm text-red-500">
-                  {errors.industryType.message}
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-2 w-full pt-1">
-              <Label htmlFor="businessType">
-                <p className="md:text-[1rem] text-sm font-semibold pb-[2px]">
-                  Business Type
-                </p>
-                <p className="text-[#9C9791] text-xs font-light">
-                  Please select your business type
-                </p>
-              </Label>
-              <Select
-                onValueChange={(value) => {
-                  const selected = businessTypes.find(
-                    (type) => type.id === value
-                  );
-                  if (selected) {
-                    setValue("businessType", selected);
-                  }
-                }}
-                value={watch("businessType")?.id}
-              >
-                <SelectTrigger className="w-full h-12">
-                  <SelectValue placeholder="Select" className="text-sm md:text-base" />
-                </SelectTrigger>
-                <SelectContent>
-                  {businessTypes.map((type) => (
-                    <SelectItem key={type.id} value={type.id}>
-                      {type.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {errors.businessType && (
-                <p className="text-sm text-red-500">
-                  {errors.businessType.message}
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-2 w-full pt-1">
-              <Label htmlFor="employeeCount">
-                <p className="md:text-[1rem] text-sm font-semibold pb-[2px]">
-                  Number of Employees
-                </p>
-                <p className="text-[#9C9791] text-xs font-light">
-                  Select the number of employees in your company
-                </p>
-              </Label>
-              <Select
-                onValueChange={(value) =>
-                  setValue(
-                    "numberOfEmployees",
-                    value as "SMALL" | "MEDIUM" | "LARGE"
-                  )
-                }
-                value={watch("numberOfEmployees")}
-              >
-                <SelectTrigger className="w-full h-12">
-                  <SelectValue placeholder="Select" className="text-sm md:text-base" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="MICRO">Micro</SelectItem>
-                  <SelectItem value="SMALL">Small</SelectItem>
-                  <SelectItem value="MEDIUM">Medium</SelectItem>
-                  <SelectItem value="LARGE">Large</SelectItem>
-                </SelectContent>
-              </Select>
-              {errors.numberOfEmployees && (
-                <p className="text-sm text-red-500">
-                  {errors.numberOfEmployees.message}
-                </p>
-              )}
-            </div>
-            <div className="space-y-2 col-span-2 w-full pt-1">
-              <Label htmlFor="employeeCount">
-                <p className="md:text-[1rem] text-sm  font-semibold pb-[2px]">
-                  Other Description
-                </p>
-                <p className="text-[#9C9791] text-xs font-light">
-                  please enter any other description about your company
-                </p>
-              </Label>
-              <textarea
-                id="otherDescription"
-                placeholder="Enter description"
-                {...register("otherDescription")}
-                className="w-full min-h-[100px] p-2 border rounded-md text-sm md:text-base"
-              />
-              {errors.otherDescription && (
-                <p className="text-sm text-red-500">
-                  {errors.otherDescription.message}
-                </p>
-              )}
-            </div>
-
-            <div className="space-x-10 lg:mt-10 mt-2 col-span-2 w-full flex justify-center">
-              <Button
-                variant="secondary"
-                size="default"
-                className={cn(
-                  `w-40 h-10 px-4 py-3 rounded-sm font-medium border border-[#9C9791] lg:mr-20 md:mr-10`
+              <div className="space-y-2 w-full pt-1">
+                <Label htmlFor="companyName">
+                  <p className="md:text-[1rem] text-sm font-semibold pb-[2px]">
+                    Company Name
+                  </p>
+                  <p className="text-[#9C9791] text-xs font-light">
+                    Please enter the name of the company
+                  </p>
+                </Label>
+                <Input
+                  id="companyName"
+                  placeholder=""
+                  {...register("name")}
+                  className="w-full text-sm md:text-base"
+                  isError={!!errors.name}
+                />
+                {errors.name && (
+                  <p className="text-sm text-red-500">{errors.name.message}</p>
                 )}
-                type="reset"
-                onClick={() => onBack()}
-              >
-                Back
-              </Button>
-              <Button
-                variant="default"
-                size="default"
-                disabled={
-                  isFetchingCompanyProfile ||
-                  isUpdatingCompanyProfile ||
-                  isFetchingError
-                }
-                type="submit"
-                className={cn(
-                  `w-40 h-10 px-4 py-3 rounded-sm font-medium text-white disabled:opacity-50`
+              </div>
+              <div className="space-y-2 w-full pt-1">
+                <Label htmlFor="contactPhone">
+                  <p className="md:text-[1rem] text-sm font-semibold pb-[2px]">
+                    Contact Phone
+                  </p>
+                  <p className="text-[#9C9791] text-xs font-light">
+                    Please enter the phone number
+                  </p>
+                </Label>
+                <div className="flex gap-2">
+                  <Input className="w-[100px]" value="+251" disabled />
+                  <div className="w-full">
+                    <Input
+                      id="contactPhone"
+                      placeholder="9XXXXXXXX or 7XXXXXXXX"
+                      {...register("phone")}
+                      className="flex-1 text-sm md:text-base"
+                      maxLength={9}
+                      isError={!!errors.phone}
+                    />
+                  </div>
+                </div>
+                {errors.phone && (
+                  <p className="text-sm text-red-500">{errors.phone.message}</p>
                 )}
-              >
-                {isUpdatingCompanyProfile ? "Saving..." : "Save"}
-              </Button>
-            </div>
-          </form>
+              </div>
+
+              <div className="space-y-2 w-full pt-1">
+                <Label htmlFor="countryOfIncorporation">
+                  <p className="md:text-[1rem] text-sm font-semibold pb-[2px]">
+                    Country of Incorporation
+                  </p>
+                  <p className="text-[#9C9791] text-xs font-light">
+                    Please select the country where the company is incorporated
+                  </p>
+                </Label>
+                <Input
+                  id="countryOfIncorporation"
+                  placeholder=""
+                  {...register("countryOfIncorporation")}
+                  className="w-full text-sm md:text-base"
+                  isError={!!errors.countryOfIncorporation}
+                />
+                {errors.countryOfIncorporation && (
+                  <p className="text-sm text-red-500">
+                    {errors.countryOfIncorporation.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2 w-full pt-1">
+                <Label htmlFor="taxIdentificationNumber">
+                  <p className="md:text-[1rem] text-sm   font-semibold pb-[2px]">
+                    Tax Identification Number
+                  </p>
+                  <p className="text-[#9C9791] text-xs font-light">
+                    Please enter the TIN (10 digits)
+                  </p>
+                </Label>
+                <Input
+                  id="taxIdentificationNumber"
+                  placeholder=""
+                  {...register("taxIdentificationNumber")}
+                  className="w-full text-sm md:text-base"
+                  isError={!!errors.taxIdentificationNumber}
+                  maxLength={10}
+                  minLength={10}
+                />
+                {errors.taxIdentificationNumber && (
+                  <p className="text-sm text-red-500">
+                    {errors.taxIdentificationNumber.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2 w-full pt-1">
+                <Label htmlFor="companyAddress">
+                  <p className="md:text-[1rem] text-sm font-semibold pb-[2px]">
+                    Company Address
+                  </p>
+                  <p className="text-[#9C9791] text-xs font-light">
+                    Please enter the company&apos;s address
+                  </p>
+                </Label>
+                <Input
+                  id="companyAddress"
+                  placeholder=""
+                  {...register("address")}
+                  className="w-full text-sm md:text-base"
+                  isError={!!errors.address}
+                />
+                {errors.address && (
+                  <p className="text-sm text-red-500">
+                    {errors.address.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2 w-full pt-1">
+                <Label htmlFor="companyWebsite">
+                  <p className="md:text-[1rem] text-sm font-semibold pb-[2px]">
+                    Company Website Link
+                    <span className="text-brand text-sm font-light">
+                      &nbsp;(optional)
+                    </span>
+                  </p>
+                  <p className="text-[#9C9791] text-xs font-light">
+                    Please enter the website URL
+                  </p>
+                </Label>
+                <Input
+                  id="companyWebsite"
+                  placeholder=""
+                  {...register("websiteUrl")}
+                  className="w-full text-sm md:text-base"
+                  isError={!!errors.websiteUrl}
+                />
+                {errors.websiteUrl && (
+                  <p className="text-sm text-red-500">
+                    {errors.websiteUrl.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2 w-full pt-1">
+                <Label htmlFor="industryType">
+                  <p className="md:text-[1rem] text-sm font-semibold pb-[2px]">
+                    Industry Type
+                  </p>
+                  <p className="text-[#9C9791] text-xs font-light">
+                    Please select your industry type
+                  </p>
+                </Label>
+                <Select
+                  onValueChange={(value) => {
+                    const selected = industryTypes.find(
+                      (type) => type.id === value
+                    );
+                    if (selected) {
+                      setValue("industryType", selected);
+                    }
+                  }}
+                  value={watch("industryType")?.id}
+                >
+                  <SelectTrigger className="w-full h-12">
+                    <SelectValue
+                      placeholder="Select"
+                      className="text-sm md:text-base"
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {industryTypes.map((type) => (
+                      <SelectItem key={type.id} value={type.id}>
+                        {type.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {errors.industryType && (
+                  <p className="text-sm text-red-500">
+                    {errors.industryType.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2 w-full pt-1">
+                <Label htmlFor="businessType">
+                  <p className="md:text-[1rem] text-sm font-semibold pb-[2px]">
+                    Business Type
+                  </p>
+                  <p className="text-[#9C9791] text-xs font-light">
+                    Please select your business type
+                  </p>
+                </Label>
+                <Select
+                  onValueChange={(value) => {
+                    const selected = businessTypes.find(
+                      (type) => type.id === value
+                    );
+                    if (selected) {
+                      setValue("businessType", selected);
+                    }
+                  }}
+                  value={watch("businessType")?.id}
+                >
+                  <SelectTrigger className="w-full h-12">
+                    <SelectValue
+                      placeholder="Select"
+                      className="text-sm md:text-base"
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {businessTypes.map((type) => (
+                      <SelectItem key={type.id} value={type.id}>
+                        {type.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {errors.businessType && (
+                  <p className="text-sm text-red-500">
+                    {errors.businessType.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2 w-full pt-1">
+                <Label htmlFor="employeeCount">
+                  <p className="md:text-[1rem] text-sm font-semibold pb-[2px]">
+                    Number of Employees
+                  </p>
+                  <p className="text-[#9C9791] text-xs font-light">
+                    Select the number of employees in your company
+                  </p>
+                </Label>
+                <Select
+                  onValueChange={(value) =>
+                    setValue(
+                      "numberOfEmployees",
+                      value as "SMALL" | "MEDIUM" | "LARGE"
+                    )
+                  }
+                  value={watch("numberOfEmployees")}
+                >
+                  <SelectTrigger className="w-full h-12">
+                    <SelectValue
+                      placeholder="Select"
+                      className="text-sm md:text-base"
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="MICRO">Micro</SelectItem>
+                    <SelectItem value="SMALL">Small</SelectItem>
+                    <SelectItem value="MEDIUM">Medium</SelectItem>
+                    <SelectItem value="LARGE">Large</SelectItem>
+                  </SelectContent>
+                </Select>
+                {errors.numberOfEmployees && (
+                  <p className="text-sm text-red-500">
+                    {errors.numberOfEmployees.message}
+                  </p>
+                )}
+              </div>
+              <div className="space-y-2 col-span-2 w-full pt-1">
+                <Label htmlFor="employeeCount">
+                  <p className="md:text-[1rem] text-sm  font-semibold pb-[2px]">
+                    Other Description
+                  </p>
+                  <p className="text-[#9C9791] text-xs font-light">
+                    please enter any other description about your company
+                  </p>
+                </Label>
+                <textarea
+                  id="otherDescription"
+                  placeholder="Enter description"
+                  {...register("otherDescription")}
+                  className="w-full min-h-[100px] p-2 border rounded-md text-sm md:text-base"
+                />
+                {errors.otherDescription && (
+                  <p className="text-sm text-red-500">
+                    {errors.otherDescription.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-x-10 lg:mt-10 mt-2 col-span-2 w-full flex justify-center">
+                <Button
+                  variant="secondary"
+                  size="default"
+                  className={cn(
+                    `w-40 h-10 px-4 py-3 rounded-sm font-medium border border-[#9C9791] lg:mr-20 md:mr-10`
+                  )}
+                  type="reset"
+                  onClick={() => onBack()}
+                >
+                  Back
+                </Button>
+                <Button
+                  variant="default"
+                  size="default"
+                  disabled={
+                    isFetchingCompanyProfile ||
+                    isUpdatingCompanyProfile ||
+                    isFetchingError
+                  }
+                  type="submit"
+                  className={cn(
+                    `w-40 h-10 px-4 py-3 rounded-sm font-medium text-white disabled:opacity-50`
+                  )}
+                >
+                  {isUpdatingCompanyProfile ? "Saving..." : "Save"}
+                </Button>
+              </div>
+            </form>
+          </div>
         </div>
       </div>
     </div>

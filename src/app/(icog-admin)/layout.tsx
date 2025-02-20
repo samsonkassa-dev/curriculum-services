@@ -19,14 +19,14 @@ const adminNavItems = [
   },
   {
     icon: (
-      <img src="/training.svg" alt="icon" width={19} height={19} />
+      <img src="/users.svg" alt="icon" width={19} height={19} />
     ),
     href: "/trainings",
     label: "Trainings"
   },
   {
     icon: (
-      <img src="/users.svg" alt="icon" width={19} height={19} />
+      <img src="/training.svg" alt="icon" width={19} height={19} />
     ),
     href: "/basedata",
     label: "Base Data"
