@@ -72,7 +72,7 @@ export function useProfile() {
       );
       return response.data.user;
     },
-    enabled: typeof window !== 'undefined' && !!localStorage.getItem("auth_token"),
+    enabled: false,
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     gcTime: 30 * 60 * 1000,
