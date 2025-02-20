@@ -1,49 +1,39 @@
-import Sidebar from "@/components/ui/sidebar"
-import Topbar from "@/components/ui/topbar"
+import Sidebar from "@/components/ui/sidebar";
+import Topbar from "@/components/ui/topbar";
 
 const adminNavItems = [
   {
-    icon: (
-      <img src="/home.svg" alt="icon" width={19} height={19} />
-    ),
+    icon: <img src="/home.svg" alt="icon" width={19} height={19} />,
     href: "/dashboard",
-    label: "Dashboard"
+    label: "Dashboard",
   },
 
   {
-    icon: (
-      <img src="/profile.svg" alt="icon" width={19} height={19} />
-    ),
+    icon: <img src="/profile.svg" alt="icon" width={19} height={19} />,
     href: "/users",
-    label: "Users"
+    label: "Users",
   },
   {
-    icon: (
-      <img src="/training.svg" alt="icon" width={19} height={19} />
-    ),
+    icon: <img src="/training.svg" alt="icon" width={19} height={19} />,
     href: "/trainings",
-    label: "Trainings"
+    label: "Trainings",
   },
   {
-    icon: (
-      <img src="/users.svg" alt="icon" width={19} height={19} />
-    ),
+    icon: <img src="/users.svg" alt="icon" width={19} height={19} />,
     href: "/basedata",
-    label: "Base Data"
+    label: "Base Data",
   },
   {
-    icon: (
-      <img src="/settings.svg" alt="icon" width={19} height={19} />
-    ),
+    icon: <img src="/settings.svg" alt="icon" width={19} height={19} />,
     href: "/unauthorized",
-    label: "Settings"
+    label: "Settings",
   },
-]
+];
 
 export default function ICOGAdminLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
   return (
     <div>
@@ -51,5 +41,5 @@ export default function ICOGAdminLayout({
       <Topbar />
       {children}
     </div>
-  )
+  );
 }

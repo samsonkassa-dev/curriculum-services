@@ -1,0 +1,13 @@
+version: "3.9"
+services:
+  frontend:
+    container_name: curriculum-staging-app
+    build:
+      context: .
+      dockerfile: Dockerfile.staging
+    ports:
+      - "3003:3000" # Map port 3000 in the container to port 3000 on the host
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: pnpm start # Run the Next.js production server
