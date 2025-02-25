@@ -37,13 +37,13 @@ export const trainingColumns: ColumnDef<Training>[] = [
     },
   },
   {
-    accessorKey: "targetAudienceGenders",
-    header: "Target Audience Genders",
+    accessorKey: "genderPercentages",
+    header: "Gender Distribution",
     cell: ({ row }) => {
-      const genders = row.getValue<Training["targetAudienceGenders"]>(
-        "targetAudienceGenders"
-      );
-      return genders.join(", ");
+      const genderPercentages = row.getValue<Training["genderPercentages"]>("genderPercentages");
+      return genderPercentages
+        .map((item) => `${item.gender.charAt(0)}${item.gender.slice(1).toLowerCase()} (${item.percentage}%)`)
+        .join(" | ");
     },
   },
   {

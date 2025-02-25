@@ -10,39 +10,7 @@ import { X, Menu } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-
-interface Training {
-  id: string
-  title: string
-  cities: Array<{
-    id: string
-    name: string
-    country: {
-      id: string
-      name: string
-    }
-  }>
-  duration: number
-  durationType: string
-  trainingPurposes: Array<{
-    id: string
-    name: string
-  }>
-  ageGroups: Array<{
-    id: string
-    name: string
-    range: string
-  }>
-  targetAudienceGenders: string[]
-  economicBackgrounds: Array<{
-    id: string
-    name: string
-  }>
-  academicQualifications: Array<{
-    id: string
-    name: string
-  }>
-}
+import { Training } from "@/types/training"
 
 interface OverviewEditProps {
   training: Training
@@ -63,7 +31,7 @@ export function OverviewEdit({ training, onSave, onCancel }: OverviewEditProps) 
   const [targetAudience, setTargetAudience] = useState(() => {
     const audiences = [
       ...training.ageGroups.map(ag => `Age Group: ${ag.name} (${ag.range})`),
-      ...training.targetAudienceGenders.map(g => `Gender: ${g.toLowerCase()}`),
+      ...training.genderPercentages.map(g => `Gender: ${g.gender.charAt(0)}${g.gender.slice(1).toLowerCase()} (${g.percentage}%)`),
       ...training.economicBackgrounds.map(eb => `Economic Background: ${eb.name}`),
       ...training.academicQualifications.map(aq => `Academic Qualification: ${aq.name}`)
     ]

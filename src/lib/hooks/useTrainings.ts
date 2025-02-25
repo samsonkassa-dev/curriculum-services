@@ -3,69 +3,7 @@
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { toast } from "sonner";
-
-interface Training {
-  id: string;
-  title: string;
-  cities: {
-    id: string;
-    name: string;
-    description: string;
-    country: {
-      id: string;
-      name: string;
-      description: string;
-    };
-  }[];
-  duration: number;
-  durationType: "DAYS" | "WEEKS" | "MONTHS";
-  ageGroups: {
-    id: string;
-    name: string;
-    range: string;
-    description: string;
-  }[];
-  targetAudienceGenders: ("MALE" | "FEMALE")[];
-  economicBackgrounds: {
-    id: string;
-    name: string;
-    description: string;
-  }[];
-  academicQualifications: {
-    id: string;
-    name: string;
-    description: string;
-  }[];
-  trainingPurposes: {
-    id: string;
-    name: string;
-    description: string;
-  }[];
-  companyProfile: {
-    id: string;
-    name: string;
-    taxIdentificationNumber: string;
-    businessType: {
-      id: string;
-      name: string;
-      description: string;
-    };
-    industryType: {
-      id: string;
-      name: string;
-      description: string;
-    };
-    countryOfIncorporation: string;
-    address: string;
-    phone: string;
-    websiteUrl: string;
-    numberOfEmployees: string;
-    otherDescription: string;
-    logoUrl: string | null;
-    verificationStatus: string;
-    createdAt: string;
-  };
-}
+import { Training } from "@/types/training";
 
 interface TrainingsResponse {
   code: string;

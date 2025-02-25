@@ -10,39 +10,7 @@ import {
 } from "@/components/ui/accordion";
 import { useState } from "react";
 import { OverviewEdit } from "./overview/overview-edit";
-
-interface Training {
-  id: string
-  title: string
-  cities: Array<{
-    id: string
-    name: string
-    country: {
-      id: string
-      name: string
-    }
-  }>
-  duration: number
-  durationType: string
-  trainingPurposes: Array<{
-    id: string
-    name: string
-  }>
-  ageGroups: Array<{
-    id: string
-    name: string
-    range: string
-  }>
-  targetAudienceGenders: string[]
-  economicBackgrounds: Array<{
-    id: string
-    name: string
-  }>
-  academicQualifications: Array<{
-    id: string
-    name: string
-  }>
-}
+import { Training } from "@/types/training";
 
 export function Overview({ training }: { training: Training }) {
   const [isEditing, setIsEditing] = useState(false)
@@ -180,7 +148,7 @@ export function Overview({ training }: { training: Training }) {
               <div className="bg-white p-6">
                 <div className="space-y-4">
                   <p className="text-gray-600 text-sm md:text-lg">
-                    Gender: {training.targetAudienceGenders.join(", ")}
+                    Gender: {training.genderPercentages.map(g => `${g.gender.charAt(0)}${g.gender.slice(1).toLowerCase()} (${g.percentage}%)`).join(", ")}
                   </p>
                 </div>
               </div>

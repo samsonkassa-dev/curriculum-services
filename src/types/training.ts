@@ -19,7 +19,10 @@ export interface Training {
     range: string;
     description: string;
   }[];
-  targetAudienceGenders: ("MALE" | "FEMALE")[];
+  genderPercentages: {
+    gender: "MALE" | "FEMALE";
+    percentage: number;
+  }[];
   economicBackgrounds: {
     id: string;
     name: string;
