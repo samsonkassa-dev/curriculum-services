@@ -1,40 +1,80 @@
 "use client"
 
 import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { StepProps } from '../types'
+import { durationSchema, DurationFormData } from '@/types/training-form'
+import { useBaseData } from '@/lib/hooks/useBaseData'
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Check, ChevronsUpDown } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { cn } from '@/lib/utils'
 
-type DurationType = 'DAYS' | 'WEEKS' | 'MONTHS'
-
-interface Step3Data {
-  duration: number
-  durationType: DurationType
+interface BaseItem {
+  id: string
+  name: string
+  description: string
 }
 
 export function CreateTrainingStep3({ onNext, onBack, initialData }: StepProps) {
-  const [duration, setDuration] = useState<string>(
-    initialData?.duration?.toString() || ''
-  )
-  const [durationType, setDurationType] = useState<DurationType>(
-    initialData?.durationType || 'DAYS'
-  )
+  const { data: trainingTypes, isLoading: isLoadingTrainingTypes } = useBaseData('training-type')
+  const { data: trainingPurposes, isLoading: isLoadingTrainingPurposes } = useBaseData('training-purpose')
+  const [openPurposes, setOpenPurposes] = useState(false)
 
-  const handleSubmit = () => {
-    onNext({
-      duration: parseInt(duration),
-      durationType
-    })
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    watch,
+    formState: { errors }
+  } = useForm<DurationFormData>({
+    resolver: zodResolver(durationSchema),
+    defaultValues: {
+      duration: initialData?.duration || undefined,
+      durationType: initialData?.durationType || 'DAYS',
+      trainingTypeId: initialData?.trainingTypeId || '',
+      trainingPurposeIds: initialData?.trainingPurposeIds || []
+    }
+  })
+
+  const duration = watch('duration')
+  const durationType = watch('durationType')
+  const trainingTypeId = watch('trainingTypeId')
+  const trainingPurposeIds = watch('trainingPurposeIds')
+
+  const safeTrainingTypes = trainingTypes || []
+  const safeTrainingPurposes = trainingPurposes || []
+
+  const handleDurationTypeChange = (value: "DAYS" | "WEEKS" | "MONTHS" | "HOURS") => {
+    setValue('durationType', value, { shouldValidate: true })
   }
 
-  const isValid = duration && parseInt(duration) > 0
+  const handleTrainingTypeChange = (value: string) => {
+    setValue('trainingTypeId', value, { shouldValidate: true })
+  }
+
+  const handleSelectPurpose = (purposeId: string) => {
+    const currentPurposes = trainingPurposeIds || []
+    const newPurposes = currentPurposes.includes(purposeId)
+      ? currentPurposes.filter(id => id !== purposeId)
+      : [...currentPurposes, purposeId]
+    
+    setValue('trainingPurposeIds', newPurposes, { shouldValidate: true })
+  }
+
+  const onSubmit = (data: DurationFormData) => {
+    onNext(data)
+  }
 
   return (
     <div className="space-y-8">
       <div>
         <h2 className="lg:text-2xl md:text-xl text-lg font-semibold mb-2 text-center">
-          What is the duration of this training?
+          What is the duration and type of this training?
         </h2>
         <p className="lg:text-sm md:text-xs text-xs text-gray-500 text-center mb-8">
           Enter brief description about this question here
@@ -42,43 +82,127 @@ export function CreateTrainingStep3({ onNext, onBack, initialData }: StepProps) 
       </div>
 
       <div className="max-w-xl mx-auto space-y-6">
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Estimated duration</label>
-          <Input
-            type="number"
-            min="1"
-            value={duration}
-            onChange={(e) => setDuration(e.target.value)}
-            placeholder="Enter duration"
-            className="text-sm md:text-md"
-          />
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Estimated duration</label>
+            <Input
+              type="number"
+              min={1}
+              {...register('duration', { valueAsNumber: true })}
+              placeholder="Enter duration"
+              className="text-sm md:text-md"
+            />
+            {errors.duration && (
+              <p className="text-sm text-red-500">{errors.duration.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Duration type</label>
+            <Select value={durationType} onValueChange={handleDurationTypeChange}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select duration type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="HOURS">Hours</SelectItem>
+                <SelectItem value="DAYS">Days</SelectItem>
+                <SelectItem value="WEEKS">Weeks</SelectItem>
+                <SelectItem value="MONTHS">Months</SelectItem>
+              </SelectContent>
+            </Select>
+            {errors.durationType && (
+              <p className="text-sm text-red-500">{errors.durationType.message}</p>
+            )}
+          </div>
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-medium">Duration type</label>
-          <Select
-            value={durationType}
-            onValueChange={(value: DurationType) => setDurationType(value)}
+          <label className="text-sm font-medium">Training Type</label>
+          <Select 
+            value={trainingTypeId} 
+            onValueChange={handleTrainingTypeChange}
+            disabled={isLoadingTrainingTypes}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Select duration type" />
+              <SelectValue placeholder="Select training type" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="DAYS">Days</SelectItem>
-              <SelectItem value="WEEKS">Weeks</SelectItem>
-              <SelectItem value="MONTHS">Months</SelectItem>
+              {safeTrainingTypes.map((type: BaseItem) => (
+                <SelectItem key={type.id} value={type.id}>
+                  {type.name}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
+          {errors.trainingTypeId && (
+            <p className="text-sm text-red-500">{errors.trainingTypeId.message}</p>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Training Purposes</label>
+          <Popover open={openPurposes} onOpenChange={setOpenPurposes}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className="w-full justify-between py-6"
+                disabled={isLoadingTrainingPurposes}
+                type="button"
+              >
+                <div className="flex flex-wrap gap-1">
+                  {trainingPurposeIds?.length > 0 ? (
+                    trainingPurposeIds.map(id => {
+                      const purpose = safeTrainingPurposes.find((p: BaseItem) => p.id === id)
+                      return (
+                        <Badge key={id} variant="pending">
+                          {purpose?.name}
+                        </Badge>
+                      )
+                    })
+                  ) : (
+                    "Select training purposes..."
+                  )}
+                </div>
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-full p-0">
+              <div className="max-h-[300px] overflow-auto">
+                {safeTrainingPurposes.map((purpose: BaseItem) => (
+                  <div
+                    key={purpose.id}
+                    className={cn(
+                      "flex items-center px-4 py-2 text-sm cursor-pointer hover:bg-gray-100",
+                      trainingPurposeIds?.includes(purpose.id) && "bg-gray-100"
+                    )}
+                    onClick={() => handleSelectPurpose(purpose.id)}
+                  >
+                    <Check
+                      className={cn(
+                        "mr-2 h-4 w-4",
+                        trainingPurposeIds?.includes(purpose.id) ? "opacity-100" : "opacity-0"
+                      )}
+                    />
+                    {purpose.name}
+                  </div>
+                ))}
+              </div>
+            </PopoverContent>
+          </Popover>
+          {errors.trainingPurposeIds && (
+            <p className="text-sm text-red-500">{errors.trainingPurposeIds.message}</p>
+          )}
         </div>
 
         <div className="flex justify-between pt-8">
-          <Button onClick={onBack} variant="outline">
+          <Button onClick={onBack} variant="outline" type="button">
             Back
           </Button>
           <Button 
-            onClick={handleSubmit}
+            onClick={handleSubmit(onSubmit)}
             className="bg-blue-500 text-white px-8"
-            disabled={!isValid}
+            disabled={!duration || !durationType || !trainingTypeId || !trainingPurposeIds?.length}
+            type="button"
           >
             Continue
           </Button>

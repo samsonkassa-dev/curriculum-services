@@ -64,7 +64,8 @@ export interface CompanyProfileFormData {
   numberOfEmployees: "MICRO" | "SMALL" | "MEDIUM" | "LARGE";
   otherDescription?: string;
   companyFiles?: CompanyFileUpload[];
-  fileType?: string;
+  accreditation: string;
+  license: string;
 }
 
 // Client-side only interface

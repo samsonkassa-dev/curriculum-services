@@ -24,7 +24,7 @@ export default function CompanyAdminTraining() {
 
   if (!data?.trainings?.length) {
     return (
-      <div className="md:w-[calc(100%-85px)] md:pl-[65px] px-[10px] mx-auto">
+      <div className="lg:px-16 md:px-14 px-4 ">
         <div className="rounded-lg p-12">
           <h1 className="text-2xl font-semibold mb-4">Create Training</h1>
           

@@ -5,7 +5,7 @@ import { toast } from 'sonner';
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API || 'http://164.90.209.220:8081/api',
+  baseURL: process.env.NEXT_PUBLIC_API,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -16,6 +16,7 @@ const getResponseKey = (type: BaseDataType) => {
   // Special cases for city and country
   if (type === 'city') return 'cities';
   if (type === 'country') return 'countries';
+  if (type === 'disability') return 'disabilties';
 
   // Default case for other types
   return type

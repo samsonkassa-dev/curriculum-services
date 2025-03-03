@@ -8,7 +8,7 @@ interface CreateTrainingData {
   title: string;
   cityIds: string[];
   duration: number;
-  durationType: 'DAYS' | 'WEEKS' | 'MONTHS';
+  durationType: 'HOURS' | 'DAYS' | 'WEEKS' | 'MONTHS';
   ageGroupIds: string[];
   targetAudienceGenders: ('MALE' | 'FEMALE' | 'OTHER')[];
   economicBackgroundIds: string[];
@@ -23,13 +23,16 @@ export function useCreateTraining() {
   const { data: economicBackgrounds } = useBaseData('economic-background');
   const { data: academicQualifications } = useBaseData('academic-qualification');
   const { data: trainingPurposes } = useBaseData('training-purpose');
+  const { data: disabilities } = useBaseData('disability');
+  const { data: marginalizedGroups } = useBaseData('marginalized-group');
+  const { data: trainingTypes } = useBaseData('training-type');
 
   // Create training mutation
   const createTrainingMutation = useMutation({
     mutationFn: async (data: CreateTrainingData) => {
       const token = localStorage.getItem('auth_token');
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API || 'http://164.90.209.220:8081/api'}/training`,
+        `${process.env.NEXT_PUBLIC_API}/training`,
         data,
         {
           headers: { Authorization: `Bearer ${token}` }

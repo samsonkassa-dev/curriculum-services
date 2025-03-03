@@ -34,3 +34,6 @@ export type BaseDataType =
 | "work-experience"
 | "trainer-requirement"
 | "assessment-type"
+| "disability"
+| "marginalized-group"
+| "training-type"

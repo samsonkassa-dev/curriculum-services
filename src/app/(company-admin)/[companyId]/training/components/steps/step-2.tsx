@@ -1,6 +1,8 @@
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
 import { Button } from '@/components/ui/button'
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Check, ChevronsUpDown } from "lucide-react"
@@ -9,6 +11,13 @@ import { cn } from '@/lib/utils'
 import { useBaseData } from '@/lib/hooks/useBaseData'
 import { useCities } from '@/lib/hooks/useCities'
 import { StepProps } from '../types'
+import { z } from 'zod'
+
+const locationSchema = z.object({
+  cityIds: z.array(z.string()).min(1, "At least one city must be selected")
+})
+
+type LocationFormData = z.infer<typeof locationSchema>
 
 interface Country {
   id: string;
@@ -28,12 +37,22 @@ export function CreateTrainingStep2({ onNext, onBack, initialData }: StepProps) 
   const [selectedCountryIds, setSelectedCountryIds] = useState<string[]>(
     initialData?.countryIds || []
   )
-  const [selectedCityIds, setSelectedCityIds] = useState<string[]>(
-    initialData?.cityIds || []
-  )
   const [open, setOpen] = useState(false)
   const [openCities, setOpenCities] = useState(false)
 
+  const {
+    handleSubmit,
+    setValue,
+    watch,
+    formState: { errors }
+  } = useForm<LocationFormData>({
+    resolver: zodResolver(locationSchema),
+    defaultValues: {
+      cityIds: initialData?.cityIds || []
+    }
+  })
+
+  const selectedCityIds = watch('cityIds')
   const { data: cities, isLoading: isLoadingCities } = useCities(selectedCountryIds)
 
   const safeCountries = countries || []
@@ -46,12 +65,13 @@ export function CreateTrainingStep2({ onNext, onBack, initialData }: StepProps) 
         : [...prev, countryId]
       
       if (prev.includes(countryId)) {
-        setSelectedCityIds(prevCities => 
-          prevCities.filter(cityId => {
-            const city = safeCities.find(c => c.id === cityId)
-            return city && newIds.includes(city.country.id)
-          })
-        )
+        // Update form cityIds when removing a country
+        const currentCityIds = watch('cityIds') || []
+        const newCityIds = currentCityIds.filter(cityId => {
+          const city = safeCities.find(c => c.id === cityId)
+          return city && newIds.includes(city.country.id)
+        })
+        setValue('cityIds', newCityIds, { shouldValidate: true })
       }
       
       return newIds
@@ -59,11 +79,19 @@ export function CreateTrainingStep2({ onNext, onBack, initialData }: StepProps) 
   }
 
   const handleSelectCity = (cityId: string) => {
-    setSelectedCityIds(prev => 
-      prev.includes(cityId)
-        ? prev.filter(id => id !== cityId)
-        : [...prev, cityId]
-    )
+    const currentCityIds = watch('cityIds') || []
+    const newCityIds = currentCityIds.includes(cityId)
+      ? currentCityIds.filter(id => id !== cityId)
+      : [...currentCityIds, cityId]
+    
+    setValue('cityIds', newCityIds, { shouldValidate: true })
+  }
+
+  const onSubmit = (data: LocationFormData) => {
+    onNext({
+      ...data,
+      countryIds: selectedCountryIds
+    })
   }
 
   return (
@@ -86,6 +114,7 @@ export function CreateTrainingStep2({ onNext, onBack, initialData }: StepProps) 
                 variant="outline"
                 className="w-full justify-between py-6"
                 disabled={isLoadingCountries}
+                type="button"
               >
                 <div className="flex flex-wrap gap-1">
                   {selectedCountryIds.length > 0 ? (
@@ -127,6 +156,9 @@ export function CreateTrainingStep2({ onNext, onBack, initialData }: StepProps) 
               </div>
             </PopoverContent>
           </Popover>
+          {errors.cityIds && (
+            <p className="text-sm text-red-500">{errors.cityIds.message}</p>
+          )}
         </div>
 
         <div className="space-y-2">
@@ -137,9 +169,10 @@ export function CreateTrainingStep2({ onNext, onBack, initialData }: StepProps) 
                 variant="outline"
                 className="w-full justify-between py-6"
                 disabled={isLoadingCities || !selectedCountryIds.length}
+                type="button"
               >
                 <div className="flex flex-wrap gap-1">
-                  {selectedCityIds.length > 0 ? (
+                  {selectedCityIds?.length > 0 ? (
                     selectedCityIds.map(cityId => {
                       const city = safeCities.find(c => c.id === cityId)
                       return (
@@ -162,14 +195,14 @@ export function CreateTrainingStep2({ onNext, onBack, initialData }: StepProps) 
                     key={city.id}
                     className={cn(
                       "flex items-center px-4 py-2 cursor-pointer hover:bg-gray-100",
-                      selectedCityIds.includes(city.id) && "bg-gray-100"
+                      selectedCityIds?.includes(city.id) && "bg-gray-100"
                     )}
                     onClick={() => handleSelectCity(city.id)}
                   >
                     <Check
                       className={cn(
                         "mr-2 h-4 w-4",
-                        selectedCityIds.includes(city.id) ? "opacity-100" : "opacity-0"
+                        selectedCityIds?.includes(city.id) ? "opacity-100" : "opacity-0"
                       )}
                     />
                     {city.name} ({city.country.name})
@@ -181,16 +214,14 @@ export function CreateTrainingStep2({ onNext, onBack, initialData }: StepProps) 
         </div>
 
         <div className="flex justify-between pt-8">
-          <Button onClick={onBack} variant="outline">
+          <Button onClick={onBack} variant="outline" type="button">
             Back
           </Button>
           <Button 
-            onClick={() => onNext({ 
-              countryIds: selectedCountryIds,
-              cityIds: selectedCityIds 
-            })}
+            onClick={handleSubmit(onSubmit)}
             className="bg-blue-500 text-white px-8"
-            disabled={!selectedCityIds.length}
+            disabled={!selectedCityIds?.length}
+            type="button"
           >
             Continue
           </Button>

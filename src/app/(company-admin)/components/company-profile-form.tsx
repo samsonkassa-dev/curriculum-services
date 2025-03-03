@@ -34,7 +34,7 @@ export function CompanyProfileForm({
   step,
   onStepChange,
 }: CompanyProfileFormProps) {
-  const { createCompanyProfile, isLoading } = useCompanyProfile();
+  const { createCompanyProfile, isCreating } = useCompanyProfile();
   const [formData, setFormData] = useState<Partial<CompanyProfileFormData>>({});
   const router = useRouter();
   const {
@@ -100,9 +100,9 @@ export function CompanyProfileForm({
       }
 
       // Cast formData to CompanyProfileFormData since we've validated required fields
-      createCompanyProfile(formData as CompanyProfileFormData, {
+      createCompanyProfile({ data: formData as CompanyProfileFormData }, {
         onSuccess: (response) => {
-          const { id, verificationStatus } = response.data.companyProfile;
+          const { id, verificationStatus } = response.companyProfile;
 
           // Save as cookie instead of localStorage
           document.cookie = `company_info=${JSON.stringify({ 
@@ -194,7 +194,7 @@ export function CompanyProfileForm({
 
         <Button
           type="submit"
-          disabled={step === "additionalInfo" && isLoading}
+          disabled={step === "additionalInfo" && isCreating}
           className={`px-9 py-5 font-semibold ${
             step === "additionalInfo"
               ? "bg-[#0B75FF] hover:bg-[#0052CC]"
@@ -202,7 +202,7 @@ export function CompanyProfileForm({
           } text-white`}
         >
           {step === "additionalInfo"
-            ? isLoading
+            ? isCreating
               ? "Submitting..."
               : "Send Request"
             : "Continue"}

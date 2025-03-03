@@ -52,9 +52,10 @@ export const businessDetailsSchema = z.object({
 
 // Additional Information step
 export const additionalInformationSchema = z.object({
-  fileType: z.string().optional(),
-  companyFiles: z.array(companyFileSchema).optional(),
   otherDescription: z.string().optional(),
+  companyFiles: z.array(companyFileSchema).optional(),
+  accreditation: z.string().min(2, "Accreditation is required"),
+  license: z.string().min(2, "License is required")
 });
 
 // Combined schema for the entire form

@@ -1,6 +1,7 @@
 'use client'
 
 import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
 import { CompanyProfileFormData, CompanyFileType } from "@/types/company"
 import { UseFormRegister, FieldErrors, UseFormSetValue, UseFormWatch } from "react-hook-form"
 import { FileUploadSection } from "@/components/file-upload/file-upload-section"
@@ -18,31 +19,56 @@ export function AdditionalInfoStep({
   errors,
   setValue,
   watch,
-  fileTypes
+  fileTypes,
 }: AdditionalInfoStepProps) {
   return (
-    <div className="grid grid-cols-1 gap-6">
+    <div className="space-y-6">
       <div className="space-y-2">
-        <FileUploadSection 
-          setValue={setValue}
-          watch={watch}
-          fileTypes={fileTypes}
+        <Label htmlFor="accreditation">Accreditation</Label>
+        <Input
+          id="accreditation"
+          placeholder="Enter company accreditation"
+          {...register("accreditation")}
+          className="w-full"
         />
+        {errors.accreditation && (
+          <p className="text-sm text-red-500">{errors.accreditation.message}</p>
+        )}
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="otherDescription">Other Description</Label>
-        <p className="text-sm text-gray-500">Please write a description about this section</p>
-        <textarea
+        <Label htmlFor="license">License</Label>
+        <Input
+          id="license"
+          placeholder="Enter company license"
+          {...register("license")}
+          className="w-full"
+        />
+        {errors.license && (
+          <p className="text-sm text-red-500">{errors.license.message}</p>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="otherDescription">
+          Other Description <span className="text-gray-500">(Optional)</span>
+        </Label>
+        <Input
           id="otherDescription"
-          placeholder="Enter description"
+          placeholder="Enter other description"
           {...register("otherDescription")}
-          className="w-full min-h-[100px] p-2 border rounded-md"
+          className="w-full"
         />
         {errors.otherDescription && (
           <p className="text-sm text-red-500">{errors.otherDescription.message}</p>
         )}
       </div>
+
+      <FileUploadSection
+        fileTypes={fileTypes}
+        setValue={setValue}
+        watch={watch}
+      />
     </div>
   )
 } 

@@ -11,19 +11,43 @@ import {
 import { useState } from "react";
 import { OverviewEdit } from "./overview/overview-edit";
 import { Training } from "@/types/training";
+import { useUpdateTraining } from "@/lib/hooks/useUpdateTraining";
+import { toast } from "sonner";
+
+type SectionName = "title" | "location" | "duration" | "target" | "purpose"
 
 export function Overview({ training }: { training: Training }) {
   const [isEditing, setIsEditing] = useState(false)
+  const [initialStep, setInitialStep] = useState(1)
   const userRole = localStorage.getItem("user_role")
   const isCompanyAdmin = userRole === "ROLE_COMPANY_ADMIN"
+  const { mutate: updateTraining, isPending } = useUpdateTraining()
+
+  const handleEdit = (section: SectionName) => {
+    // Map section to step number
+    const stepMap: Record<SectionName, number> = {
+      title: 1,
+      location: 2,
+      duration: 2,
+      target: 3,
+      purpose: 5
+    }
+    setInitialStep(stepMap[section])
+    setIsEditing(true)
+  }
 
   if (isEditing) {
     return (
       <OverviewEdit 
         training={training}
+        initialStep={initialStep}
         onSave={(data) => {
-          // Handle save
-          setIsEditing(false)
+          updateTraining(
+            { id: training.id, data },
+            {
+              onSuccess: () => setIsEditing(false)
+            }
+          )
         }}
         onCancel={() => setIsEditing(false)}
       />
@@ -53,7 +77,10 @@ export function Overview({ training }: { training: Training }) {
                     src="/edit.svg" 
                     alt="" 
                     className="w-5 h-5 cursor-pointer" 
-                    onClick={() => setIsEditing(true)}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleEdit("title")
+                    }}
                   />
                 )}
                 <ChevronRight className="h-5 w-5 transition-transform group-data-[state=open]:hidden text-black" />
@@ -81,7 +108,10 @@ export function Overview({ training }: { training: Training }) {
                     src="/edit.svg" 
                     alt="" 
                     className="w-5 h-5 cursor-pointer" 
-                    onClick={() => setIsEditing(true)}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleEdit("location")
+                    }}
                   />
                 )}
                 <ChevronRight className="h-5 w-5 transition-transform group-data-[state=open]:hidden text-black" />
@@ -109,7 +139,10 @@ export function Overview({ training }: { training: Training }) {
                     src="/edit.svg" 
                     alt="" 
                     className="w-5 h-5 cursor-pointer" 
-                    onClick={() => setIsEditing(true)}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleEdit("duration")
+                    }}
                   />
                 )}
                 <ChevronRight className="h-5 w-5 transition-transform group-data-[state=open]:hidden text-black" />
@@ -137,7 +170,10 @@ export function Overview({ training }: { training: Training }) {
                     src="/edit.svg" 
                     alt="" 
                     className="w-5 h-5 cursor-pointer" 
-                    onClick={() => setIsEditing(true)}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleEdit("target")
+                    }}
                   />
                 )}
                 <ChevronRight className="h-5 w-5 transition-transform group-data-[state=open]:hidden text-black" />
@@ -169,7 +205,10 @@ export function Overview({ training }: { training: Training }) {
                     src="/edit.svg" 
                     alt="" 
                     className="w-5 h-5 cursor-pointer" 
-                    onClick={() => setIsEditing(true)}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleEdit("purpose")
+                    }}
                   />
                 )}
                 <ChevronRight className="h-5 w-5 transition-transform group-data-[state=open]:hidden text-black" />

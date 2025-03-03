@@ -1,9 +1,10 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { CompanyProfileFormData, transformToApiFormat } from "@/types/company";
-import { useMutation } from "@tanstack/react-query";
-import axios from "axios";
+"use client"
 
-const API_URL = process.env.NEXT_PUBLIC_API || "http://164.90.209.220:8081/api";
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { BusinessType, CompanyFileUpload, CompanyProfileFormData, IndustryType } from "@/types/company";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import axios from "axios";
+import { toast } from "sonner";
 
 interface ApiResponse {
   code: string;
@@ -14,101 +15,198 @@ interface ApiResponse {
   };
 }
 
-export const useCompanyProfile = () => {
-  const { mutate: createCompanyProfile, isPending: isCreating } = useMutation({
-    mutationFn: async (data: CompanyProfileFormData) => {
+interface CreateCompanyProfileData {
+  data: CompanyProfileFormData;
+}
+
+interface UpdateCompanyProfileData {
+  id: string;
+  data: Partial<CompanyProfileFormData>;
+}
+
+// Add type guards
+function isBusinessType(value: unknown): value is BusinessType {
+  return typeof value === "object" && value !== null && "id" in value
+}
+
+function isIndustryType(value: unknown): value is IndustryType {
+  return typeof value === "object" && value !== null && "id" in value
+}
+
+function isCompanyFileUpload(value: unknown): value is CompanyFileUpload[] {
+  return Array.isArray(value) && value.every(item => 
+    typeof item === "object" && 
+    item !== null && 
+    "fileTypeId" in item && 
+    "file" in item
+  )
+}
+
+function formatPhoneNumber(phone: string): string {
+  // Remove any existing +251 prefix
+  const cleanPhone = phone.replace(/^\+251/, '')
+  // Add the prefix
+  return `+251${cleanPhone}`
+}
+
+export function useCompanyProfile() {
+  const queryClient = useQueryClient();
+  const baseUrl = process.env.NEXT_PUBLIC_API;
+
+  const createMutation = useMutation<ApiResponse, Error, CreateCompanyProfileData>({
+    mutationFn: async ({ data }) => {
       const token = localStorage.getItem("auth_token");
       const formData = new FormData();
 
-      // Transform data to API format and append each field directly to formData
-      const apiData = transformToApiFormat(data);
-      Object.entries(apiData).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
-          formData.append(key, value.toString());
-        }
-      });
+      try {
+        // Transform data to API format and append each field
+        Object.entries(data).forEach(([key, value]) => {
+          if (value !== undefined && value !== null) {
+            if (key === "businessType" && isBusinessType(value)) {
+              formData.append("businessTypeId", value.id);
+            } else if (key === "industryType" && isIndustryType(value)) {
+              formData.append("industryTypeId", value.id);
+            } else if (key === "companyFiles" && isCompanyFileUpload(value)) {
+              value.forEach((fileData) => {
+                formData.append(fileData.fileTypeId, fileData.file);
+              });
+            } else if (key === "phone") {
+              formData.append(key, formatPhoneNumber(value.toString()));
+            } else {
+              formData.append(key, value.toString());
+            }
+          }
+        });
 
-      // Add files if present - now using file ID as the key directly
-      data.companyFiles?.forEach((fileData) => {
-        formData.append(fileData.fileTypeId, fileData.file);
-      });
-
-      return axios.post<ApiResponse>(`${API_URL}/company-profile`, formData, {
-        headers: {
-          "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-    },
-  });
-
-  const { mutate: updateCompanyProfile, isPending: isUpdating } = useMutation({
-    mutationFn: async ({
-      id,
-      data,
-    }: {
-      id: string;
-      data: Partial<CompanyProfileFormData>;
-    }) => {
-      const token = localStorage.getItem("auth_token");
-      const formData = new FormData();
-
-      // Append each field directly to formData
-      if (data.name) formData.append("name", data.name);
-      if (data.taxIdentificationNumber)
-        formData.append(
-          "taxIdentificationNumber",
-          data.taxIdentificationNumber
+        const response = await axios.post<ApiResponse>(
+          `${baseUrl}/company-profile`,
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+              Authorization: `Bearer ${token}`,
+            },
+          }
         );
-      if (data.businessType?.id)
-        formData.append("businessTypeId", data.businessType.id);
-      if (data.industryType?.id)
-        formData.append("industryTypeId", data.industryType.id);
-      if (data.countryOfIncorporation)
-        formData.append("countryOfIncorporation", data.countryOfIncorporation);
-      if (data.address) formData.append("address", data.address);
-      if (data.phone) formData.append("phone", data.phone);
-      if (data.websiteUrl) formData.append("websiteUrl", data.websiteUrl);
-      if (data.numberOfEmployees)
-        formData.append("numberOfEmployees", data.numberOfEmployees.toString());
-      if (data.otherDescription)
-        formData.append("otherDescription", data.otherDescription);
 
-      // Add files if present - using file ID as the key directly
-      data.companyFiles?.forEach((fileData) => {
-        formData.append(fileData.fileTypeId, fileData.file);
-      });
-
-      const response = await axios.put(
-        `${API_URL}/company-profile/edit/${id}`,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-            Authorization: `Bearer ${token}`,
-          },
+        return response.data;
+      } catch (error) {
+        if (axios.isAxiosError(error)) {
+          const message = error.response?.data?.message || "Failed to create company profile";
+          // Don't show toast here since we handle it in onError
+          throw new Error(message);
         }
-      );
-      return response.data;
+        throw error;
+      }
     },
+    onSuccess: (data) => {
+      toast.success("Success", { description: data.message });
+      queryClient.invalidateQueries({ queryKey: ["company-profiles"] });
+      queryClient.invalidateQueries({ queryKey: ["my-company-profile"] });
+    },
+    onError: (error) => {
+      toast.error("Error", {
+        description: error.message || "Failed to create company profile"
+      });
+    }
   });
 
-  const { mutate: deleteCompanyProfile, isPending: isDeleting } = useMutation({
-    mutationFn: async (id: string) => {
+  const updateMutation = useMutation<ApiResponse, Error, UpdateCompanyProfileData>({
+    mutationFn: async ({ id, data }) => {
       const token = localStorage.getItem("auth_token");
-      const response = await axios.delete(`${API_URL}/company-profile/${id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      return response.data;
+      const formData = new FormData();
+
+      try {
+        // Append each field to formData
+        Object.entries(data).forEach(([key, value]) => {
+          if (value !== undefined && value !== null) {
+            if (key === "businessType" && isBusinessType(value)) {
+              formData.append("businessTypeId", value.id);
+            } else if (key === "industryType" && isIndustryType(value)) {
+              formData.append("industryTypeId", value.id);
+            } else if (key === "companyFiles" && isCompanyFileUpload(value)) {
+              value.forEach((fileData) => {
+                formData.append(fileData.fileTypeId, fileData.file);
+              });
+            } else if (key === "phone") {
+              formData.append(key, formatPhoneNumber(value.toString()));
+            } else {
+              formData.append(key, value.toString());
+            }
+          }
+        });
+
+        const response = await axios.put<ApiResponse>(
+          `${baseUrl}/company-profile/edit/${id}`,
+          formData,
+          {
+            headers: {
+              "Content-Type": "multipart/form-data",
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        return response.data;
+      } catch (error) {
+        if (axios.isAxiosError(error)) {
+          const message = error.response?.data?.message || "Failed to update company profile";
+          // Don't show toast here since we handle it in onError
+          throw new Error(message);
+        }
+        throw error;
+      }
     },
+    onSuccess: (data) => {
+      toast.success("Success", { description: data.message });
+      queryClient.invalidateQueries({ queryKey: ["company-profiles"] });
+      queryClient.invalidateQueries({ queryKey: ["my-company-profile"] });
+    },
+    onError: (error) => {
+      toast.error("Error", {
+        description: error.message || "Failed to update company profile"
+      });
+    }
+  });
+
+  const deleteMutation = useMutation<ApiResponse, Error, string>({
+    mutationFn: async (id) => {
+      try {
+        const token = localStorage.getItem("auth_token");
+        const response = await axios.delete<ApiResponse>(
+          `${baseUrl}/company-profile/${id}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+        return response.data;
+      } catch (error) {
+        if (axios.isAxiosError(error)) {
+          const message = error.response?.data?.message || "Failed to delete company profile";
+          toast.error("Error", { description: message });
+        }
+        throw error;
+      }
+    },
+    onSuccess: (data) => {
+      toast.success("Success", { description: data.message });
+      queryClient.invalidateQueries({ queryKey: ["company-profiles"] });
+    },
+    onError: (error) => {
+      toast.error("Error", {
+        description: error.message || "Failed to delete company profile"
+      });
+    }
   });
 
   return {
-    createCompanyProfile,
-    updateCompanyProfile,
-    deleteCompanyProfile,
-    isLoading: isCreating || isUpdating || isDeleting,
+    createCompanyProfile: createMutation.mutate,
+    updateCompanyProfile: updateMutation.mutate,
+    deleteCompanyProfile: deleteMutation.mutate,
+    isCreating: createMutation.isPending,
+    isUpdating: updateMutation.isPending,
+    isDeleting: deleteMutation.isPending
   };
-};
+}

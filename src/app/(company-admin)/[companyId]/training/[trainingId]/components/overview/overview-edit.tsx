@@ -1,217 +1,179 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
-import { OutlineSidebar } from "@/components/ui/outline-sidebar"
-import { EditFormContainer } from "@/components/ui/edit-form-container"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { X, Menu } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
+import { useState, useEffect } from "react"
 import { Training } from "@/types/training"
+import {
+  CreateTrainingStep1,
+  CreateTrainingStep2,
+  CreateTrainingStep3,
+  CreateTrainingStep4,
+} from "@/app/(company-admin)/[companyId]/training/components/create-training-forms"
+import { CreateTrainingStep5 } from "@/app/(company-admin)/[companyId]/training/components/steps/step-5"
+import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 
 interface OverviewEditProps {
   training: Training
-  onSave: (data: any) => void
+  initialStep?: number
+  onSave: (data: Partial<Training>) => void
   onCancel: () => void
 }
 
-export function OverviewEdit({ training, onSave, onCancel }: OverviewEditProps) {
-  const [isMobile, setIsMobile] = useState(false)
-  const [showSidebar, setShowSidebar] = useState(true)
-  const [activeSection, setActiveSection] = useState("Title")
-  
-  // State for form values
-  const [title, setTitle] = useState(training.title || "")
-  const [location, setLocation] = useState(training.cities[0]?.name || "")
-  const [duration, setDuration] = useState(training.duration?.toString() || "")
-  const [durationType, setDurationType] = useState(training.durationType?.toLowerCase() || "")
-  const [targetAudience, setTargetAudience] = useState(() => {
-    const audiences = [
-      ...training.ageGroups.map(ag => `Age Group: ${ag.name} (${ag.range})`),
-      ...training.genderPercentages.map(g => `Gender: ${g.gender.charAt(0)}${g.gender.slice(1).toLowerCase()} (${g.percentage}%)`),
-      ...training.economicBackgrounds.map(eb => `Economic Background: ${eb.name}`),
-      ...training.academicQualifications.map(aq => `Academic Qualification: ${aq.name}`)
-    ]
-    return audiences.join('\n')
+type StepData = {
+  title?: string
+  cityIds?: string[]
+  duration?: number
+  durationType?: "DAYS" | "WEEKS" | "MONTHS"
+  ageGroupIds?: string[]
+  genderPercentages?: Training['genderPercentages']
+  economicBackgroundIds?: string[]
+  academicQualificationIds?: string[]
+  trainingPurposeIds?: string[]
+}
+
+export function OverviewEdit({ training, initialStep = 1, onSave, onCancel }: OverviewEditProps) {
+  const [currentStep, setCurrentStep] = useState(initialStep)
+  const [formData, setFormData] = useState<StepData>({
+    title: training.title,
+    cityIds: training.cities.map(c => c.id),
+    duration: training.duration,
+    durationType: training.durationType as "DAYS" | "WEEKS" | "MONTHS",
+    ageGroupIds: training.ageGroups.map(ag => ag.id),
+    genderPercentages: training.genderPercentages,
+    economicBackgroundIds: training.economicBackgrounds.map(eb => eb.id),
+    academicQualificationIds: training.academicQualifications.map(aq => aq.id),
+    trainingPurposeIds: training.trainingPurposes.map(tp => tp.id)
   })
-  const [purpose, setPurpose] = useState(training.trainingPurposes[0]?.name || "")
+  const [dirtyFields, setDirtyFields] = useState<Set<keyof StepData>>(new Set())
 
+  // Update currentStep when initialStep changes
   useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768)
-    checkMobile()
-    window.addEventListener('resize', checkMobile)
-    return () => window.removeEventListener('resize', checkMobile)
-  }, [])
+    setCurrentStep(initialStep)
+  }, [initialStep])
 
-  const outlineGroups = useMemo(() => [
-    {
-      title: "Overview",
-      items: [
-        { label: "Title", isCompleted: !!title.trim() },
-        { label: "Location", isCompleted: !!location.trim() },
-        { label: "Duration", isCompleted: !!duration && !!durationType },
-        { label: "Target Audience", isCompleted: !!targetAudience.trim() },
-        { label: "Purpose of the training", isCompleted: !!purpose.trim() },
-      ]
-    }
-  ], [title, location, duration, durationType, targetAudience, purpose])
-
-  const renderContent = () => {
-    switch (activeSection) {
-      case "Title":
-        return (
-          <Input 
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="Enter Title"
-            className="max-w-md"
-          />
-        )
-      case "Location":
-        return (
-          <Input 
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-            placeholder="Enter Location"
-            className="max-w-md"
-          />
-        )
-      case "Duration":
-        return (
-          <div className="flex gap-4 max-w-md">
-            <Input 
-              value={duration}
-              onChange={(e) => setDuration(e.target.value)}
-              placeholder="Enter Duration"
-              type="number"
-              className="w-32"
-            />
-            <Select
-              value={durationType}
-              onValueChange={setDurationType}
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Duration Type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="days">Days</SelectItem>
-                <SelectItem value="weeks">Weeks</SelectItem>
-                <SelectItem value="months">Months</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        )
-      case "Target Audience":
-        return (
-          <Textarea
-            value={targetAudience}
-            onChange={(e) => setTargetAudience(e.target.value)}
-            placeholder="Enter Target Audience"
-            className="min-h-[200px]"
-          />
-        )
-      case "Purpose of the training":
-        return (
-          <Textarea
-            value={purpose}
-            onChange={(e) => setPurpose(e.target.value)}
-            placeholder="Enter Purpose"
-            className="min-h-[200px]"
-          />
-        )
-      default:
-        return null
-    }
-  }
-
-  const handleSave = () => {
-    onSave({
-      title,
-      location,
-      duration: Number(duration),
-      durationType: durationType.toUpperCase(),
-      targetAudience,
-      purpose
+  const trackChanges = (newData: Partial<StepData>) => {
+    Object.keys(newData).forEach(key => {
+      const typedKey = key as keyof StepData
+      if (JSON.stringify(newData[typedKey]) !== JSON.stringify(formData[typedKey])) {
+        setDirtyFields(prev => new Set([...prev, typedKey]))
+      }
     })
   }
 
-  const renderMobileHeader = () => {
-    if (!isMobile) return null
-    
-    if (showSidebar) {
-      return (
-        <div className="fixed top-0 left-0 right-0 bg-white z-[51] flex justify-between items-center p-4 border-b">
-          <h2 className="text-xl font-medium">Overview Outline</h2>
-          <Button 
-            variant="ghost" 
-            size="icon"
-            onClick={() => setShowSidebar(false)}
-            className="hover:bg-transparent"
-          >
-            <X className="h-5 w-5" />
-          </Button>
-        </div>
-      )
-    }
+  const handleStepChange = (step: number) => {
+    setCurrentStep(step)
+  }
 
-    return (
-      <div className="flex items-center gap-2 mb-6">
-        <Button 
-          variant="ghost"
-          className="text-brand flex items-center gap-2 hover:bg-transparent hover:text-brand p-0"
-          onClick={() => setShowSidebar(true)}
-        >
-          <Menu className="h-5 w-5" />
-          <span>Overview Outline</span>
-        </Button>
-      </div>
-    )
+  const handleStepSave = (stepData: Partial<StepData>) => {
+    setFormData(prev => ({ ...prev, ...stepData }))
+    trackChanges(stepData)
+  }
+
+  const handleSave = () => {
+    const changedData = {} as Partial<Training>
+    dirtyFields.forEach(field => {
+      if (formData[field] !== undefined) {
+        (changedData as any)[field] = formData[field]
+      }
+    })
+    onSave(changedData)
+  }
+
+  // Determine which steps are complete
+  const getCompletedSteps = () => {
+    const completed = new Set<number>()
+    
+    // Step 1: Title
+    if (formData.title) completed.add(1)
+    
+    // Step 2: Location & Duration
+    if (formData.cityIds?.length && formData.duration && formData.durationType) completed.add(2)
+    
+    // Step 3: Target Audience
+    if (formData.ageGroupIds?.length && formData.genderPercentages?.length) completed.add(3)
+    
+    // Step 4: Background & Qualifications
+    if (formData.economicBackgroundIds?.length && formData.academicQualificationIds?.length) completed.add(4)
+    
+    // Step 5: Purpose
+    if (formData.trainingPurposeIds?.length) completed.add(5)
+    
+    return completed
   }
 
   return (
-    <div className={cn(
-      "px-[7%] py-10",
-      isMobile ? "block" : "flex gap-8"
-    )}>
-      {renderMobileHeader()}
-      
-      {(!isMobile || showSidebar) && (
-        <div className={cn(
-          "",
-          isMobile ? "fixed bg-white inset-0 z-50 pt-16 px-4 pb-4" : "w-[300px]"
-        )}>
-          <OutlineSidebar 
-            title="Overview Outline"
-            groups={outlineGroups}
-            activeItem={activeSection}
-            onItemClick={(section) => {
-              setActiveSection(section)
-              if (isMobile) setShowSidebar(false)
-            }}
-          />
-        </div>
-      )}
-
-      <EditFormContainer
-        title={`${activeSection} (Edit)`}
-        description="Enter a brief overview of this section's content to give users a clear understanding of what to enter."
-      >
-        <div className="space-y-6">
-          {renderContent()}
-
-          <div className="flex justify-end gap-4 pt-4">
+    <div className="min-h-screen bg-[#FBFBFB]">
+      <div className="w-full mx-auto py-8">
+        {/* Step Navigation */}
+        <div className="flex justify-between items-center px-10 mb-8">
+          <div className="flex gap-4">
+            {[1, 2, 3, 4, 5].map(step => (
+              <Button
+                key={step}
+                onClick={() => handleStepChange(step)}
+                variant={currentStep === step ? "default" : "outline"}
+                className={cn(
+                  "rounded-full w-10 h-10",
+                  getCompletedSteps().has(step) && "bg-green-50 border-green-500 text-green-500"
+                )}
+              >
+                {step}
+              </Button>
+            ))}
+          </div>
+          <div className="flex gap-4">
             <Button variant="outline" onClick={onCancel}>
               Cancel
             </Button>
-            <Button onClick={handleSave} className="bg-brand text-white">
+            <Button 
+              onClick={handleSave}
+              disabled={dirtyFields.size === 0}
+              className="bg-brand text-white"
+            >
               Save Changes
             </Button>
           </div>
         </div>
-      </EditFormContainer>
+
+        {/* Step Content */}
+        <div className="w-full mx-auto px-5">
+          {currentStep === 1 && (
+            <CreateTrainingStep1
+              initialData={formData}
+              onNext={handleStepSave}
+            />
+          )}
+          {currentStep === 2 && (
+            <CreateTrainingStep2
+              initialData={formData}
+              onNext={handleStepSave}
+              onBack={() => handleStepChange(1)}
+            />
+          )}
+          {currentStep === 3 && (
+            <CreateTrainingStep3
+              initialData={formData}
+              onNext={handleStepSave}
+              onBack={() => handleStepChange(2)}
+            />
+          )}
+          {currentStep === 4 && (
+            <CreateTrainingStep4
+              initialData={formData}
+              onNext={handleStepSave}
+              onBack={() => handleStepChange(3)}
+            />
+          )}
+          {currentStep === 5 && (
+            <CreateTrainingStep5
+              initialData={formData}
+              onNext={handleStepSave}
+              onBack={() => handleStepChange(4)}
+            />
+          )}
+        </div>
+      </div>
     </div>
   )
 } 

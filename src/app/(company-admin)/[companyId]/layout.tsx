@@ -56,19 +56,6 @@ const adminNavItems = [
   },
 ];
 
-// Add middleware to fetch requests to include company info
-// const addCompanyInfoToRequest = () => {
-//   const companyInfo = localStorage.getItem("company_info");
-//   if (companyInfo) {
-//     const requestInit = {
-//       headers: {
-//         "x-company-info": companyInfo,
-//       },
-//     };
-//     return requestInit;
-//   }
-//   return {};
-// };
 
 export default function CompanyAdminLayout({
   children,
@@ -79,24 +66,51 @@ export default function CompanyAdminLayout({
   const pathname = usePathname();
   const [isCurriculumRole, setIsCurriculumRole] = useState(false);
   const [isClientReady, setIsClientReady] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [navItems, setNavItems] = useState(adminNavItems);
   
   // Only fetch verification status for company admin
-  const userRole = localStorage?.getItem("user_role");
   const isCompanyAdmin = userRole === "ROLE_COMPANY_ADMIN";
   
   const { data: verificationData, isLoading } = useVerificationStatus({
-    enabled: isCompanyAdmin // Only enable the query for company admin
+    enabled: isCompanyAdmin && isClientReady // Only enable the query for company admin and when client is ready
   });
   
   useEffect(() => {
-    const userRole = localStorage.getItem("user_role");
+    // Safe to access localStorage inside useEffect
+    const storedUserRole = typeof window !== 'undefined' ? localStorage.getItem("user_role") : null;
+    setUserRole(storedUserRole);
+    
     setIsCurriculumRole([
       'ROLE_SUB_CURRICULUM_ADMIN',
       'ROLE_CURRICULUM_ADMIN',
       'ROLE_CONTENT_DEVELOPER'
-    ].includes(userRole || ''));
+    ].includes(storedUserRole || ''));
+    
     setIsClientReady(true);
   }, []);
+
+  // Setup navigation items when client is ready and we have roles
+  useEffect(() => {
+    if (!isClientReady) return;
+    
+    // Create nav items with the actual route
+    if (isCurriculumRole) {
+      const roleForUrl = typeof window !== 'undefined' 
+        ? localStorage.getItem("user_role")?.toLowerCase().replace('role_', '').replace('_', '-') || 'unauthorized'
+        : 'unauthorized';
+        
+      setNavItems(curriculumNavItems.map(item => ({
+        ...item,
+        href: item.href.replace("[role]", roleForUrl),
+      })));
+    } else {
+      setNavItems(adminNavItems.map(item => ({
+        ...item,
+        href: item.href.replace("[companyId]", params.companyId as string),
+      })));
+    }
+  }, [isClientReady, isCurriculumRole, params.companyId]);
 
   // Special routes that hide the default layout
   const isSpecialRoute = () => {
@@ -121,20 +135,6 @@ export default function CompanyAdminLayout({
   };
 
   const hideDefaultLayout = isSpecialRoute();
-
-  // Create nav items with the actual route
-  const navItems = isCurriculumRole 
-    ? curriculumNavItems.map(item => ({
-        ...item,
-        href: item.href.replace(
-          "[role]", 
-          localStorage?.getItem("user_role")?.toLowerCase().replace('role_', '').replace('_', '-') || 'unauthorized'
-        ),
-      }))
-    : adminNavItems.map(item => ({
-        ...item,
-        href: item.href.replace("[companyId]", params.companyId as string),
-      }));
 
   const handleNavigation = (e: React.MouseEvent<HTMLElement>) => {
     // Only check verification for company admin

@@ -19,17 +19,7 @@ type Step = 1 | 2 | 3 | 4 | 5;
 
 export default function CreateTraining() {
   const [currentStep, setCurrentStep] = useState<Step>(1);
-  const [formData, setFormData] = useState<any>({
-    title: '',
-    cityIds: [],
-    duration: '',
-    durationType: 'DAYS',
-    ageGroupIds: [],
-    economicBackgroundIds: [],
-    academicQualificationIds: [],
-    targetAudienceGenders: [],
-    trainingPurposeIds: []
-  });
+  const [formData, setFormData] = useState<any>();
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const [trainingId, setTrainingId] = useState<string>();

@@ -13,8 +13,13 @@ interface ApiResponse {
   };
 }
 
+interface VerificationData {
+  verificationStatus: 'PENDING' | 'ACCEPTED' | 'REJECTED';
+  rejectionReason: string | null;
+}
+
 export function useVerificationStatus({ enabled = false } = {}) {
-  return useQuery({
+  return useQuery<VerificationData>({
     queryKey: ['verificationStatus'],
     queryFn: async () => {
       try {
@@ -37,6 +42,11 @@ export function useVerificationStatus({ enabled = false } = {}) {
       }
     },
     enabled,
-    retry: 2
+    retry: 2,
+    refetchInterval: (query) => 
+      query.state.data?.verificationStatus === 'ACCEPTED' ? false : 300000000,
+    refetchIntervalInBackground: false,
+    refetchOnWindowFocus: (query) => 
+      query.state.data?.verificationStatus !== 'ACCEPTED'
   })
 } 
