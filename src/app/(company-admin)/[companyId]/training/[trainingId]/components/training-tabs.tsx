@@ -4,7 +4,7 @@
 
 import { cn } from "@/lib/utils"
 
-type TabType = 'overview' | 'profile' | 'audience' | 'curriculum' | 'module'
+type TabType = 'overview' | 'profile' | 'audience' | 'module'
 
 interface TrainingTabsProps {
   activeTab: TabType
@@ -79,27 +79,6 @@ export function TrainingTabs({ activeTab, onTabChange }: TrainingTabsProps) {
         </button>
 
         <button
-          onClick={() => onTabChange("curriculum")}
-          className={cn(
-            "pb-4 text-sm font-medium flex items-center gap-2 relative",
-            activeTab === "curriculum"
-              ? "text-brand border-b-2 border-brand"
-              : "text-gray-500"
-          )}
-        >
-          <img
-            src={
-              activeTab === "curriculum"
-                ? "/curriculum_active.svg"
-                : "/curriculum.svg"
-            }
-            alt=""
-            className="w-4 h-4"
-          />
-          Curriculum
-        </button>
-
-        <button
           onClick={() => onTabChange("module")}
           className={cn(
             "pb-4 text-sm font-medium flex items-center gap-2 relative",
@@ -111,7 +90,7 @@ export function TrainingTabs({ activeTab, onTabChange }: TrainingTabsProps) {
           <img
             src={activeTab === "module" ? "/module_active.svg" : "/module.svg"}
             alt=""
-            className="w-4 h-4"
+            className="w-3 h-4"
           />
           Module
         </button>

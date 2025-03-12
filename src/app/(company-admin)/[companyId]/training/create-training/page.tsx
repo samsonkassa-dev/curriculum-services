@@ -14,6 +14,7 @@ import { useCreateTraining } from "@/lib/hooks/useCreateTraining";
 import { SuccessModal } from "../components/modals/success-modal";
 import { InviteModal } from "../components/modals/invite-modal";
 import { useInviteTrainingUser } from "@/lib/hooks/useInviteTrainingUser";
+import { StepProps } from "../components/types";
 
 type Step = 1 | 2 | 3 | 4 | 5;
 

@@ -4,14 +4,6 @@ import axios from "axios"
 import { toast } from "sonner"
 import { ModulesResponse } from "@/types/module"
 
-
-interface ModuleData {
-  id: string
-  name: string
-  description: string
-  trainingId: string
-}
-
 interface ModuleResponse {
   code: string
   message: string
@@ -20,6 +12,26 @@ interface ModuleResponse {
     name: string
     description: string
     trainingId: string
+  }
+}
+
+interface ModuleDetailsResponse {
+  code: string
+  message: string
+  module: {
+    id: string
+    name: string
+    description: string
+    parentModule: null | {
+      id: string
+      name: string
+      description: string
+    }
+    childModules: Array<{
+      id: string
+      name: string
+      description: string
+    }>
   }
 }
 
@@ -42,9 +54,18 @@ export function useCreateModule() {
       return response.data;
     },
     onSuccess: (_, variables) => {
+      // Invalidate the training modules query
       queryClient.invalidateQueries({
         queryKey: ["modules", variables.trainingId],
       });
+      
+      // If this is a sub-module creation (moduleId exists), invalidate the parent module details
+      if (variables.moduleId) {
+        queryClient.invalidateQueries({
+          queryKey: ["module-details", variables.moduleId],
+        });
+      }
+      
       toast.success("Module created successfully");
     },
     onError: (error) => {
@@ -57,11 +78,11 @@ export function useCreateModule() {
 
 // Hook to fetch modules by module ID
 export function useModules(moduleId: string) {
-  return useQuery({
-    queryKey: ["modules", moduleId],
+  return useQuery<ModuleDetailsResponse>({
+    queryKey: ["module-details", moduleId],
     queryFn: async () => {
       const token = localStorage.getItem("auth_token");
-      const response = await axios.get<ModuleResponse>(
+      const response = await axios.get<ModuleDetailsResponse>(
         `${process.env.NEXT_PUBLIC_API}/module/${moduleId}`,
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -69,6 +90,7 @@ export function useModules(moduleId: string) {
       );
       return response.data;
     },
+    enabled: !!moduleId,
   });
 }
 

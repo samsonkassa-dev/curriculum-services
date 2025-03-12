@@ -8,7 +8,6 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion"
-import { Button } from "@/components/ui/button"
 import { PrerequisiteResponse } from "@/types/curriculum"
 
 interface CurriculumViewProps {

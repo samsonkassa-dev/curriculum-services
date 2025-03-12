@@ -1,6 +1,7 @@
 export interface Training {
   id: string;
   title: string;
+  rationale: string;
   cities: {
     id: string;
     name: string;

@@ -8,6 +8,25 @@ import { AudienceProfileView } from "./audience-profile/audience-profile-view"
 import { Loading } from "@/components/ui/loading"
 import { useBaseData } from "@/lib/hooks/useBaseData"
 
+interface BaseItem {
+  id: string
+  name: string
+  description: string
+}
+
+interface AudienceProfile {
+  id: string
+  trainingId: string
+  learnerLevel: BaseItem
+  language?: BaseItem
+  educationLevel?: BaseItem
+  specificCourseList?: string[]
+  certifications?: string
+  licenses?: string
+  workExperience?: BaseItem
+  specificPrerequisites?: string[]
+}
+
 interface AudienceProfileProps {
   trainingId: string
 }
@@ -16,20 +35,19 @@ export function AudienceProfile({ trainingId }: AudienceProfileProps) {
   const [isEditing, setIsEditing] = useState(false)
   const { data: audienceProfile, isLoading } = useAudienceProfile(trainingId)
   const { data: learnerLevels, isLoading: isLoadingLearnerLevels } = useBaseData('learner-level')
-  const { data: academicLevels, isLoading: isLoadingAcademicLevels } = useBaseData('academic-level')
-  const { data: learnerStylePreferences, isLoading: isLoadingLearningStyles } = useBaseData('learner-style-preference')
+  
+  // Fetch data for prerequisites
+  const { data: educationLevels, isLoading: isLoadingEducationLevels } = useBaseData('education-level')
+  const { data: languages, isLoading: isLoadingLanguages } = useBaseData('language')
+  const { data: workExperiences, isLoading: isLoadingWorkExperiences } = useBaseData('work-experience')
+  
   const userRole = localStorage.getItem("user_role")
   const canEdit = userRole === "ROLE_COMPANY_ADMIN" || userRole === "ROLE_CURRICULUM_ADMIN"
 
-  const isEmptyProfile = !audienceProfile || (
-    !audienceProfile.learnerLevel?.id &&
-    !audienceProfile.academicLevel?.id &&
-    (!audienceProfile.learnerStylePreferences || audienceProfile.learnerStylePreferences.length === 0) &&
-    (!audienceProfile.priorKnowledgeList || audienceProfile.priorKnowledgeList.length === 0) &&
-    !audienceProfile.professionalBackground
-  )
+  const isEmptyProfile = !audienceProfile || !audienceProfile.learnerLevel?.id
 
-  if (isLoading || isLoadingLearnerLevels || isLoadingAcademicLevels || isLoadingLearningStyles) {
+  if (isLoading || isLoadingLearnerLevels || isLoadingEducationLevels || 
+      isLoadingLanguages || isLoadingWorkExperiences) {
     return <Loading />
   }
 
@@ -39,8 +57,9 @@ export function AudienceProfile({ trainingId }: AudienceProfileProps) {
         trainingId={trainingId}
         initialData={audienceProfile || null}
         learnerLevels={learnerLevels || []}
-        academicLevels={academicLevels || []}
-        learnerStylePreferences={learnerStylePreferences || []}
+        educationLevels={educationLevels || []}
+        languages={languages || []}
+        workExperiences={workExperiences || []}
         onSave={() => setIsEditing(false)}
         onCancel={() => setIsEditing(false)}
       />

@@ -2,15 +2,10 @@
 
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import axios from "axios"
+import { TrainingProfile } from "./useTrainingProfile"
 
-interface TrainingProfileData {
-  trainingId: string
-  keywords: string[]
-  scope: string
-  rationale: string
-  alignmentsWithStandard: string
-  executiveSummary: string | null
-}
+// Use the exported TrainingProfile type
+type TrainingProfileData = TrainingProfile
 
 export function useCreateTrainingProfile() {
   const queryClient = useQueryClient()

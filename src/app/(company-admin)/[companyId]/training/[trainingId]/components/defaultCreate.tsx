@@ -8,8 +8,8 @@ interface DefaultCreateProps {
 
 export function DefaultCreate({ title, trainingId, onCreateClick }: DefaultCreateProps) {
   return (
-    <div className="md:w-[calc(100%-85px)] md:pl-[65px] px-[10px] mx-auto">
-      <div className="rounded-lg p-12">
+    <div className="w-full px-[7%]">
+      <div className="rounded-lg py-12">
         <h1 className="text-2xl font-semibold mb-4">{title}</h1>
 
         <p className="text-gray-600 mb-4">

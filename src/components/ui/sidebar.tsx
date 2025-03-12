@@ -76,11 +76,11 @@ export default function Sidebar({ navItems, onClick, disabled }: SidebarProps) {
                   isCurrentPath(item.href) ? "text-brand bg-brand-opacity" : "text-gray-700",
                   // Only center justify on desktop when collapsed
                   isCollapsed && "md:justify-center",
-                  disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-100'
+                  disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-brand-opacity'
                 )}
                 title={isCollapsed ? item.label : undefined}
                 onClick={onClick}
-              >
+              > 
                 {item.icon}
                 {/* Always show labels on mobile, only show on desktop when not collapsed */}
                 {(!isCollapsed || isMobileMenuOpen) && <span>{item.label}</span>}

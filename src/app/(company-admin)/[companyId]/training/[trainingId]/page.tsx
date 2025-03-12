@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useParams } from "next/navigation"
+import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { useTraining } from "@/lib/hooks/useTraining"
 import { Loading } from "@/components/ui/loading"
 import { TrainingTabs } from "./components/training-tabs"
@@ -10,17 +10,39 @@ import { toast } from "sonner"
 import { TrainingNotFound } from "./components/training-not-found"
 import { TrainingProfile } from "./components/trainingProfile"
 import { AudienceProfile } from "./components/audienceProfile"
-import { Curriculum } from "./components/curriculum"
 import { ModuleComponent } from "./components/module"
+
+type TabType = 'overview' | 'profile' | 'audience' | 'module'
 
 export default function TrainingDetail() {
   const params = useParams()
-  const [activeTab, setActiveTab] = useState<'overview' | 'profile' | 'audience' | 'curriculum' | 'module'>('overview')
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const trainingId = params.trainingId as string
+  const companyId = params.companyId as string
   
-  // Handle default companyId case
-  // const companyId = params.companyId === 'default-company-id' ? null : params.companyId;
+  // Get tab from URL query or default to 'overview'
+  const tabParam = searchParams.get('tab')
+  const validTabs: TabType[] = ['overview', 'profile', 'audience', 'module']
+  const initialTab: TabType = validTabs.includes(tabParam as TabType) ? (tabParam as TabType) : 'overview'
   
-  const { data: training, isLoading, error } = useTraining(params.trainingId as string)
+  const [activeTab, setActiveTab] = useState<TabType>(initialTab)
+  
+  // Update the URL when tab changes
+  const handleTabChange = (tab: TabType) => {
+    setActiveTab(tab)
+    
+    // Create new URLSearchParams object from current params
+    const newParams = new URLSearchParams(searchParams)
+    
+    // Set the tab parameter
+    newParams.set('tab', tab)
+    
+    // Update the URL without reloading the page
+    router.replace(`/${companyId}/training/${trainingId}?${newParams.toString()}`, { scroll: false })
+  }
+  
+  const { data: training, isLoading, error } = useTraining(trainingId)
 
   useEffect(() => {
     if (error) {
@@ -36,7 +58,7 @@ export default function TrainingDetail() {
 
   return (
     <div>
-      <TrainingTabs activeTab={activeTab} onTabChange={setActiveTab} />
+      <TrainingTabs activeTab={activeTab} onTabChange={handleTabChange} />
 
       <div className="">
         {!training ? (
@@ -46,7 +68,7 @@ export default function TrainingDetail() {
             {activeTab === 'overview' && <Overview training={training} />}
             {activeTab === 'profile' && <TrainingProfile trainingId={training.id} />}
             {activeTab === 'audience' && <AudienceProfile trainingId={training.id}  />}
-            {activeTab === 'curriculum' && <Curriculum trainingId={training.id} />}
+            {/* {activeTab === 'curriculum' && <Curriculum trainingId={training.id} />} */}
             {activeTab === 'module' && <ModuleComponent trainingId={training.id} />}
           </>
         )}

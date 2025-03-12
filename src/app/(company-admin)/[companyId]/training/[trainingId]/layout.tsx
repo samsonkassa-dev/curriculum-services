@@ -2,7 +2,7 @@
 
 import { useParams, useRouter, usePathname } from "next/navigation"
 import Link from "next/link"
-import { ChevronLeft } from "lucide-react"
+import { ChevronLeft, UserRoundCog } from "lucide-react"
 import { useTraining } from "@/lib/hooks/useTraining"
 
 export default function TrainingLayout({
@@ -42,11 +42,11 @@ export default function TrainingLayout({
         {isCompanyAdmin && (
           <button 
             onClick={handleSettingsClick}
-            className="p-2 hover:bg-gray-50 rounded-full"
-            title="Settings"
-            aria-label="Settings"
+            className="p-3 hover:bg-brand-opacity rounded-full"
+            title="Training Users"
+            aria-label="Training Users"
           >
-            <img src="/settingsTop.svg" alt="Settings" className="w-5 h-5" />
+            <UserRoundCog className="w-7 h-7" />
           </button>
         )}
       </div>

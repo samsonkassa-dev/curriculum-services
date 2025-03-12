@@ -16,9 +16,10 @@ interface Step5Props {
   onBack: () => void
   isSubmitting?: boolean
   initialData?: { trainingPurposeIds?: string[] }
+  isEditing?: boolean
 }
 
-export function CreateTrainingStep5({ onNext, onBack, isSubmitting, initialData }: Step5Props) {
+export function CreateTrainingStep5({ onNext, onBack, isSubmitting, initialData, isEditing = false }: Step5Props) {
   const { data: trainingPurposes, isLoading } = useBaseData('training-purpose')
   const [selectedPurposeId, setSelectedPurposeId] = useState<string>(
     initialData?.trainingPurposeIds?.[0] || ''
@@ -71,7 +72,7 @@ export function CreateTrainingStep5({ onNext, onBack, isSubmitting, initialData 
             className="bg-blue-500 text-white px-8"
             disabled={!selectedPurposeId || isSubmitting}
           >
-            Create Training
+            {isEditing ? 'Edit Training' : 'Create Training'}
           </Button>
         </div>
       </div>

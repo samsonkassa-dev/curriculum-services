@@ -4,13 +4,23 @@
 import { useQuery } from "@tanstack/react-query"
 import axios from "axios"
 
-interface TrainingProfile {
+export interface TrainingProfile {
   trainingId: string
   keywords: string[]
-  scope: string
-  rationale: string
-  alignmentsWithStandard: string
-  executiveSummary: string | null
+  scope: string | null
+  rationale?: string | null
+  alignmentsWithStandard?: Array<{id: string, name: string, description: string}> | string[] | string | null
+  alignmentStandardIds?: string[] | null
+  executiveSummary?: string | null
+  deliveryTools?: Array<{id: string, name: string, description: string}> | string[] | null
+  deliveryToolIds?: string[] | null
+  learnerTechnologicalRequirements?: Array<{id: string, name: string, description: string, technologicalRequirementType?: string}> | string[] | null
+  instructorTechnologicalRequirements?: Array<{id: string, name: string, description: string, technologicalRequirementType?: string}> | string[] | null
+  technologicalRequirementIds?: string[] | null
+  priorKnowledgeList: string[] | null
+  learnerStylePreferences?: Array<{id: string, name: string, description: string}> | string[] | null
+  learnerStylePreferenceIds?: string[] | null
+  professionalBackground: string | null
 }
 
 interface TrainingProfileResponse {

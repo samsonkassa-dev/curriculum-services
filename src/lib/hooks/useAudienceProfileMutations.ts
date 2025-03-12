@@ -4,12 +4,15 @@ import { useMutation, useQueryClient } from "@tanstack/react-query"
 import axios from "axios"
 
 interface AudienceProfileData {
-  learnerLevelId: string
-  academicLevelId: string
-  learningStylePreferenceIds: string[]
-  priorKnowledgeList: string[]
-  professionalBackground: string
   trainingId: string
+  learnerLevelId: string
+  languageId?: string
+  educationLevelId?: string
+  specificCourseList?: string[]
+  certifications?: string
+  licenses?: string
+  workExperienceId?: string
+  specificPrerequisites?: string[]
 }
 
 export function useCreateAudienceProfile() {

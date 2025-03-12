@@ -14,6 +14,7 @@ export type BaseDataType =
 | "academic-level"
 | "academic-qualification"
 | "age-group"
+| "alignment-standard"
 | "assessment-type"
 | "business-type"
 | "city"

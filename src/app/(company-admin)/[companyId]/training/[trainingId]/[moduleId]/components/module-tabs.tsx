@@ -2,7 +2,7 @@
 
 interface ModuleTabsProps {
   activeTab: string;
-  onTabChange: (tab: "information" | "section" | "content") => void;
+  onTabChange: (tab: "information" | "content") => void;
 }
 
 export function ModuleTabs({ activeTab, onTabChange }: ModuleTabsProps) {
@@ -11,14 +11,14 @@ export function ModuleTabs({ activeTab, onTabChange }: ModuleTabsProps) {
       id: "information",
       label: "Module Information",
       src: "/moduleInfo.svg",
-      srcActive: "/module-active.svg",
+      srcActive: "/moduleInfoA.svg",
     },
-    {
-      id: "section",
-      label: "Section",
-      src: "/section.svg",
-      srcActive: "/section-active.svg",
-    },
+    // {
+    //   id: "section",
+    //   label: "Section",
+    //   src: "/section.svg",
+    //   srcActive: "/section-active.svg",
+    // },
     {
       id: "content",
       label: "Content",
@@ -33,7 +33,7 @@ export function ModuleTabs({ activeTab, onTabChange }: ModuleTabsProps) {
         {tabs.map((tab) => (
           <button
             key={tab.id}
-            onClick={() => onTabChange(tab.id as "information" | "section" | "content")}
+            onClick={() => onTabChange(tab.id as "information" | "content")}
             className={`pb-4 text-sm font-medium flex items-center gap-2 relative ${
               activeTab === tab.id
                 ? "text-brand border-b-2 border-brand"

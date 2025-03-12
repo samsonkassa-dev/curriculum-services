@@ -21,6 +21,7 @@ interface ModuleAddModalProps {
     name: string
     description: string
   } | null
+  mode?: 'module' | 'submodule'
 }
 
 export function ModuleAddModal({ 
@@ -28,7 +29,8 @@ export function ModuleAddModal({
   onClose, 
   onSubmit,
   isLoading,
-  editData 
+  editData,
+  mode = 'module'
 }: ModuleAddModalProps) {
   const [formData, setFormData] = useState({
     name: "",
@@ -72,16 +74,23 @@ export function ModuleAddModal({
     }
   }, [formData, onSubmit])
 
+  const getTitle = () => {
+    if (editData) {
+      return `Edit ${mode === 'submodule' ? 'Sub-Module' : 'Module'}`
+    }
+    return `Create ${mode === 'submodule' ? 'Sub-Module' : 'Module'}`
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-lg max-w-[350px]">
+      <DialogContent className="sm:max-w-2xl max-w-[350px]">
         <DialogHeader>
-          <DialogTitle>{editData ? 'Edit' : 'Create'} Module</DialogTitle>
+          <DialogTitle>{getTitle()}</DialogTitle>
         </DialogHeader>
         <hr className="my-1 -mx-6" />
         <div className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium">Module Name</label>
+            <label className="text-sm font-medium">{mode === 'submodule' ? 'Sub-Module' : 'Module'} Name</label>
             <Input
               value={formData.name}
               onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}

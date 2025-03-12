@@ -14,6 +14,7 @@ export interface CreateModuleData {
   name: string
   description: string
   trainingId: string
+  moduleId?: string
 } 
 
 

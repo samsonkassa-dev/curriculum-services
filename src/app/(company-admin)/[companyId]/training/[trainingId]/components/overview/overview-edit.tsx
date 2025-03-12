@@ -22,11 +22,25 @@ interface OverviewEditProps {
 
 type StepData = {
   title?: string
+  rationale?: string
   cityIds?: string[]
+  countryIds?: string[]
   duration?: number
-  durationType?: "DAYS" | "WEEKS" | "MONTHS"
+  durationType?: "DAYS" | "WEEKS" | "MONTHS" | "HOURS"
+  trainingTypeId?: string
   ageGroupIds?: string[]
-  genderPercentages?: Training['genderPercentages']
+  genderPercentages?: Array<{
+    gender: "MALE" | "FEMALE";
+    percentage: number;
+  }>
+  disabilityPercentages?: Array<{
+    disabilityId: string;
+    percentage: number;
+  }>
+  marginalizedGroupPercentages?: Array<{
+    marginalizedGroupId: string;
+    percentage: number;
+  }>
   economicBackgroundIds?: string[]
   academicQualificationIds?: string[]
   trainingPurposeIds?: string[]
@@ -34,18 +48,45 @@ type StepData = {
 
 export function OverviewEdit({ training, initialStep = 1, onSave, onCancel }: OverviewEditProps) {
   const [currentStep, setCurrentStep] = useState(initialStep)
+  
+  // Transform the disability and marginalized group data to match the expected structure
+  const transformedDisabilityPercentages = Array.isArray((training as any).disabilityPercentages) 
+    ? (training as any).disabilityPercentages.map((item: any) => ({
+        disabilityId: item.disability?.id || "",
+        percentage: item.percentage || 0
+      }))
+    : [];
+  
+  const transformedMarginalizedGroupPercentages = Array.isArray((training as any).marginalizedGroupPercentages)
+    ? (training as any).marginalizedGroupPercentages.map((item: any) => ({
+        marginalizedGroupId: item.marginalizedGroup?.id || "",
+        percentage: item.percentage || 0
+      }))
+    : [];
+  
   const [formData, setFormData] = useState<StepData>({
     title: training.title,
+    rationale: training.rationale,
+    countryIds: training.cities.map(c => c.country?.id).filter(Boolean) as string[],
     cityIds: training.cities.map(c => c.id),
     duration: training.duration,
-    durationType: training.durationType as "DAYS" | "WEEKS" | "MONTHS",
+    durationType: training.durationType as "DAYS" | "WEEKS" | "MONTHS" | "HOURS",
+    trainingTypeId: (training as any).trainingType?.id ?? "",
     ageGroupIds: training.ageGroups.map(ag => ag.id),
     genderPercentages: training.genderPercentages,
+    disabilityPercentages: transformedDisabilityPercentages,
+    marginalizedGroupPercentages: transformedMarginalizedGroupPercentages,
     economicBackgroundIds: training.economicBackgrounds.map(eb => eb.id),
     academicQualificationIds: training.academicQualifications.map(aq => aq.id),
     trainingPurposeIds: training.trainingPurposes.map(tp => tp.id)
   })
   const [dirtyFields, setDirtyFields] = useState<Set<keyof StepData>>(new Set())
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  // Log form data to debug
+  useEffect(() => {
+    console.log('Form data initialized:', formData);
+  }, [formData]);
 
   // Update currentStep when initialStep changes
   useEffect(() => {
@@ -66,112 +107,97 @@ export function OverviewEdit({ training, initialStep = 1, onSave, onCancel }: Ov
   }
 
   const handleStepSave = (stepData: Partial<StepData>) => {
-    setFormData(prev => ({ ...prev, ...stepData }))
+    const updatedData = { ...formData, ...stepData }
+    setFormData(updatedData)
     trackChanges(stepData)
+    
+    // Automatically move to the next step
+    if (currentStep < 5) {
+      setCurrentStep(currentStep + 1)
+    } else {
+      // If we're on the last step, trigger the save
+      const changedData = {} as Partial<Training>
+      
+      Object.keys(updatedData).forEach(key => {
+        const typedKey = key as keyof StepData
+        if (updatedData[typedKey] !== undefined) {
+          (changedData as any)[typedKey] = updatedData[typedKey]
+        }
+      })
+      
+      setIsSubmitting(true)
+      onSave(changedData)
+    }
   }
 
-  const handleSave = () => {
-    const changedData = {} as Partial<Training>
-    dirtyFields.forEach(field => {
-      if (formData[field] !== undefined) {
-        (changedData as any)[field] = formData[field]
-      }
-    })
-    onSave(changedData)
+  const handleBack = () => {
+    if (currentStep > 1) {
+      setCurrentStep(currentStep - 1)
+    } else {
+      onCancel()
+    }
   }
 
-  // Determine which steps are complete
-  const getCompletedSteps = () => {
-    const completed = new Set<number>()
-    
-    // Step 1: Title
-    if (formData.title) completed.add(1)
-    
-    // Step 2: Location & Duration
-    if (formData.cityIds?.length && formData.duration && formData.durationType) completed.add(2)
-    
-    // Step 3: Target Audience
-    if (formData.ageGroupIds?.length && formData.genderPercentages?.length) completed.add(3)
-    
-    // Step 4: Background & Qualifications
-    if (formData.economicBackgroundIds?.length && formData.academicQualificationIds?.length) completed.add(4)
-    
-    // Step 5: Purpose
-    if (formData.trainingPurposeIds?.length) completed.add(5)
-    
-    return completed
+  const renderCurrentStep = () => {
+    switch (currentStep) {
+      case 1:
+        return (
+          <CreateTrainingStep1
+            initialData={formData as any}
+            onNext={handleStepSave}
+          />
+        )
+      case 2:
+        return (
+          <CreateTrainingStep2
+            initialData={formData as any}
+            onNext={handleStepSave}
+            onBack={handleBack}
+          />
+        )
+      case 3:
+        return (
+          <CreateTrainingStep3
+            initialData={formData as any}
+            onNext={handleStepSave}
+            onBack={handleBack}
+          />
+        )
+      case 4:
+        return (
+          <CreateTrainingStep4
+            initialData={formData as any}
+            onNext={handleStepSave}
+            onBack={handleBack}
+          />
+        )
+      case 5:
+        return (
+          <CreateTrainingStep5
+            initialData={formData as any}
+            onNext={handleStepSave}
+            onBack={handleBack}
+            isSubmitting={isSubmitting}
+            isEditing={true}
+          />
+        )
+      default:
+        return null
+    }
   }
 
   return (
-    <div className="min-h-screen bg-[#FBFBFB]">
+    <div className="min-h-screen">
       <div className="w-full mx-auto py-8">
-        {/* Step Navigation */}
-        <div className="flex justify-between items-center px-10 mb-8">
-          <div className="flex gap-4">
-            {[1, 2, 3, 4, 5].map(step => (
-              <Button
-                key={step}
-                onClick={() => handleStepChange(step)}
-                variant={currentStep === step ? "default" : "outline"}
-                className={cn(
-                  "rounded-full w-10 h-10",
-                  getCompletedSteps().has(step) && "bg-green-50 border-green-500 text-green-500"
-                )}
-              >
-                {step}
-              </Button>
-            ))}
-          </div>
-          <div className="flex gap-4">
-            <Button variant="outline" onClick={onCancel}>
-              Cancel
-            </Button>
-            <Button 
-              onClick={handleSave}
-              disabled={dirtyFields.size === 0}
-              className="bg-brand text-white"
-            >
-              Save Changes
-            </Button>
-          </div>
+        <div className="flex justify-end px-10 mb-8">
+          <Button variant="outline" onClick={onCancel} className="mr-4">
+            Cancel
+          </Button>
         </div>
 
         {/* Step Content */}
         <div className="w-full mx-auto px-5">
-          {currentStep === 1 && (
-            <CreateTrainingStep1
-              initialData={formData}
-              onNext={handleStepSave}
-            />
-          )}
-          {currentStep === 2 && (
-            <CreateTrainingStep2
-              initialData={formData}
-              onNext={handleStepSave}
-              onBack={() => handleStepChange(1)}
-            />
-          )}
-          {currentStep === 3 && (
-            <CreateTrainingStep3
-              initialData={formData}
-              onNext={handleStepSave}
-              onBack={() => handleStepChange(2)}
-            />
-          )}
-          {currentStep === 4 && (
-            <CreateTrainingStep4
-              initialData={formData}
-              onNext={handleStepSave}
-              onBack={() => handleStepChange(3)}
-            />
-          )}
-          {currentStep === 5 && (
-            <CreateTrainingStep5
-              initialData={formData}
-              onNext={handleStepSave}
-              onBack={() => handleStepChange(4)}
-            />
-          )}
+          {renderCurrentStep()}
         </div>
       </div>
     </div>

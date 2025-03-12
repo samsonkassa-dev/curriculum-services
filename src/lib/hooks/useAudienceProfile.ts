@@ -15,10 +15,13 @@ interface AudienceProfile {
   id: string
   trainingId: string
   learnerLevel: BaseItem
-  academicLevel: BaseItem
-  learnerStylePreferences: BaseItem[]
-  priorKnowledgeList: string[]
-  professionalBackground: string
+  language?: BaseItem
+  educationLevel?: BaseItem
+  specificCourseList?: string[]
+  certifications?: string
+  licenses?: string
+  workExperience?: BaseItem
+  specificPrerequisites?: string[]
 }
 
 interface AudienceProfileResponse {

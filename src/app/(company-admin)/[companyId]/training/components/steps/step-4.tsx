@@ -74,9 +74,15 @@ export function CreateTrainingStep4({ onNext, onBack, initialData }: StepProps) 
   const safeAcademicQualifications = academicQualifications || []
 
 
+
   // Handle age group selection
   const handleAgeGroupChange = (value: string) => {
-    setValue('ageGroupIds', [value], { shouldValidate: true })
+    const currentAgeGroups = watch('ageGroupIds') || []
+    const newAgeGroups = currentAgeGroups.includes(value)
+      ? currentAgeGroups.filter(id => id !== value)
+      : [...currentAgeGroups, value]
+    
+    setValue('ageGroupIds', newAgeGroups, { shouldValidate: true })
   }
 
   // Handle economic background selection
@@ -94,6 +100,9 @@ export function CreateTrainingStep4({ onNext, onBack, initialData }: StepProps) 
 
   // Handle disability selection
   const handleSelectDisability = (disabilityId: string) => {
+    console.log('Selecting disability:', disabilityId);
+    console.log('Current disability percentages:', disabilityPercentages);
+    
     const newDisabilityPercentages = [...(disabilityPercentages || [])]
     
     // Check if it's already selected
@@ -110,6 +119,7 @@ export function CreateTrainingStep4({ onNext, onBack, initialData }: StepProps) 
       })
     }
     
+    console.log('New disability percentages:', newDisabilityPercentages);
     setValue('disabilityPercentages', newDisabilityPercentages, { shouldValidate: true })
   }
 
@@ -126,6 +136,9 @@ export function CreateTrainingStep4({ onNext, onBack, initialData }: StepProps) 
 
   // Handle marginalized group selection
   const handleSelectMarginalizedGroup = (groupId: string) => {
+    console.log('Selecting marginalized group:', groupId);
+    console.log('Current marginalized group percentages:', marginalizedGroupPercentages);
+    
     const newMarginalizedGroupPercentages = [...(marginalizedGroupPercentages || [])]
     
     // Check if it's already selected
@@ -142,6 +155,7 @@ export function CreateTrainingStep4({ onNext, onBack, initialData }: StepProps) 
       })
     }
     
+    console.log('New marginalized group percentages:', newMarginalizedGroupPercentages);
     setValue('marginalizedGroupPercentages', newMarginalizedGroupPercentages, { shouldValidate: true })
   }
 
@@ -200,16 +214,46 @@ export function CreateTrainingStep4({ onNext, onBack, initialData }: StepProps) 
         {/* Age Group Selection */}
         <div className="space-y-2">
           <label className="text-sm font-medium">Age Group</label>
-          <Select value={ageGroupIds?.[0]} onValueChange={handleAgeGroupChange}>
+          <Select value={ageGroupIds[0] || ""} onValueChange={handleAgeGroupChange}>
             <SelectTrigger>
-              <SelectValue placeholder="Select age group" />
+              <SelectValue>
+                {ageGroupIds && ageGroupIds.length > 0 ? (
+                  <div className="flex flex-wrap gap-1 py-0.5">
+                    {ageGroupIds.map(id => {
+                      const ageGroup = safeAgeGroups.find((group: BaseItem) => group.id === id)
+                      return ageGroup ? (
+                        <Badge key={id} variant="pending" className="rounded-sm text-xs">
+                          {ageGroup.name}
+                        </Badge>
+                      ) : null
+                    })}
+                  </div>
+                ) : (
+                  "Select age groups"
+                )}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
-              {safeAgeGroups.map((item: BaseItem) => (
-                <SelectItem key={item.id} value={item.id}>
-                  {item.name}
+              {safeAgeGroups.length > 0 ? (
+                safeAgeGroups.map((item: BaseItem) => (
+                  <SelectItem 
+                    key={item.id} 
+                    value={item.id}
+                    className="flex items-center gap-2"
+                  >
+                    <div className="flex items-center gap-2 flex-1">
+                      {item.name}
+                      {ageGroupIds.includes(item.id) && (
+                        <Check className="h-4 w-4 ml-auto" />
+                      )}
+                    </div>
+                  </SelectItem>
+                ))
+              ) : (
+                <SelectItem value="" disabled>
+                  No age groups available
                 </SelectItem>
-              ))}
+              )}
             </SelectContent>
           </Select>
           {errors.ageGroupIds && (
@@ -243,19 +287,19 @@ export function CreateTrainingStep4({ onNext, onBack, initialData }: StepProps) 
                 <div className="flex flex-wrap gap-1 items-center">
                   {disabilityPercentages && disabilityPercentages.length > 0 ? (
                     <>
-                      {(() => {
+                      {disabilityPercentages.slice(0, 2).map(dp => {
                         const disability = safeDisabilities.find((item: BaseItem) => 
-                          item.id === disabilityPercentages[0].disabilityId
+                          item.id === dp.disabilityId
                         )
                         return (
-                          <Badge key={disabilityPercentages[0].disabilityId} variant="pending">
-                            {disability?.name} ({disabilityPercentages[0].percentage}%)
+                          <Badge key={dp.disabilityId} variant="pending" className="mr-1 mb-1">
+                            {disability?.name} ({dp.percentage}%)
                           </Badge>
                         )
-                      })()}
-                      {disabilityPercentages.length > 1 && (
+                      })}
+                      {disabilityPercentages.length > 2 && (
                         <span className="text-sm text-gray-500 ml-1">
-                          + {disabilityPercentages.length - 1} more
+                          + {disabilityPercentages.length - 2} more
                         </span>
                       )}
                     </>
@@ -299,6 +343,8 @@ export function CreateTrainingStep4({ onNext, onBack, initialData }: StepProps) 
                                 const val = e.target.value === '' ? null : parseInt(e.target.value);
                                 handleDisabilityPercentageChange(disability.id, val);
                               }}
+                              onClick={(e) => e.stopPropagation()}
+                              onFocus={(e) => e.stopPropagation()}
                               className="w-16 h-7 text-xs border rounded-md px-2"
                               aria-label={`Percentage for ${disability.name}`}
                               title={`Set percentage for ${disability.name}`}
@@ -332,19 +378,19 @@ export function CreateTrainingStep4({ onNext, onBack, initialData }: StepProps) 
                 <div className="flex flex-wrap gap-1 items-center">
                   {marginalizedGroupPercentages && marginalizedGroupPercentages.length > 0 ? (
                     <>
-                      {(() => {
+                      {marginalizedGroupPercentages.slice(0, 2).map(mgp => {
                         const group = safeMarginalizedGroups.find((item: BaseItem) => 
-                          item.id === marginalizedGroupPercentages[0].marginalizedGroupId
+                          item.id === mgp.marginalizedGroupId
                         )
                         return (
-                          <Badge key={marginalizedGroupPercentages[0].marginalizedGroupId} variant="pending">
-                            {group?.name} ({marginalizedGroupPercentages[0].percentage}%)
+                          <Badge key={mgp.marginalizedGroupId} variant="pending" className="mr-1 mb-1">
+                            {group?.name} ({mgp.percentage}%)
                           </Badge>
                         )
-                      })()}
-                      {marginalizedGroupPercentages.length > 1 && (
+                      })}
+                      {marginalizedGroupPercentages.length > 2 && (
                         <span className="text-sm text-gray-500 ml-1">
-                          + {marginalizedGroupPercentages.length - 1} more
+                          + {marginalizedGroupPercentages.length - 2} more
                         </span>
                       )}
                     </>
@@ -388,6 +434,8 @@ export function CreateTrainingStep4({ onNext, onBack, initialData }: StepProps) 
                                 const val = e.target.value === '' ? null : parseInt(e.target.value);
                                 handleMarginalizedGroupPercentageChange(group.id, val);
                               }}
+                              onClick={(e) => e.stopPropagation()}
+                              onFocus={(e) => e.stopPropagation()}
                               className="w-16 h-7 text-xs border rounded-md px-2"
                               aria-label={`Percentage for ${group.name}`}
                               title={`Set percentage for ${group.name}`}
@@ -411,21 +459,76 @@ export function CreateTrainingStep4({ onNext, onBack, initialData }: StepProps) 
         {/* Economic Backgrounds Selection */}
         <div className="space-y-2">
           <label className="text-sm font-medium">Economic Background</label>
-          <Select
-            value={economicBackgroundIds?.[0]}
-            onValueChange={handleSelectEconomicBackground}
+          <Popover
+            open={openEconomicBackgrounds}
+            onOpenChange={setOpenEconomicBackgrounds}
           >
-            <SelectTrigger>
-              <SelectValue placeholder="Select economic background" />
-            </SelectTrigger>
-            <SelectContent>
-              {safeEconomicBackgrounds.map((item: BaseItem) => (
-                <SelectItem key={item.id} value={item.id}>
-                  {item.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className="w-full justify-between py-6"
+                type="button"
+              >
+                <div className="flex flex-wrap gap-1 items-center">
+                  {economicBackgroundIds && economicBackgroundIds.length > 0 ? (
+                    <>
+                      {economicBackgroundIds.slice(0, 1).map((id, index) => {
+                        const background = safeEconomicBackgrounds.find((item: BaseItem) => 
+                          item.id === id
+                        )
+                        return (
+                          <Badge key={`econ-${id}-${index}`} variant="pending">
+                            {background?.name}
+                          </Badge>
+                        );
+                      })}
+                      {economicBackgroundIds.length > 1 && (
+                        <span className="text-sm text-gray-500 ml-1">
+                          + {economicBackgroundIds.length - 1} more
+                        </span>
+                      )}
+                    </>
+                  ) : (
+                    "Select economic backgrounds..."
+                  )}
+                </div>
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-full p-0">
+              <div className="max-h-[300px] overflow-auto">
+                {safeEconomicBackgrounds.length > 0 ? (
+                  safeEconomicBackgrounds.map((background: BaseItem) => (
+                    <div
+                      key={background.id}
+                      className={cn(
+                        "flex items-center px-4 py-2 text-sm cursor-pointer hover:bg-gray-100",
+                        economicBackgroundIds.includes(background.id) &&
+                          "bg-gray-100"
+                      )}
+                      onClick={() =>
+                        handleSelectEconomicBackground(background.id)
+                      }
+                    >
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4",
+                          economicBackgroundIds.includes(background.id)
+                            ? "opacity-100"
+                            : "opacity-0"
+                        )}
+                      />
+                      {background.name}
+                    </div>
+                  ))
+                ) : (
+                  <div className="px-4 py-2 text-sm text-gray-500">
+                    No economic backgrounds available
+                  </div>
+                )}
+              </div>
+            </PopoverContent>
+          </Popover>
           {errors.economicBackgroundIds && (
             <p className="text-sm text-red-500">
               {errors.economicBackgroundIds.message}
@@ -447,18 +550,18 @@ export function CreateTrainingStep4({ onNext, onBack, initialData }: StepProps) 
                 type="button"
               >
                 <div className="flex flex-wrap gap-1 items-center">
-                  {academicQualificationIds.length > 0 ? (
+                  {academicQualificationIds && academicQualificationIds.length > 0 ? (
                     <>
-                      {(() => {
-                        const qualification = safeAcademicQualifications.find(
-                          (q: BaseItem) => q.id === academicQualificationIds[0]
-                        );
+                      {academicQualificationIds.slice(0, 1).map((id, index) => {
+                        const qualification = safeAcademicQualifications.find((item: BaseItem) => 
+                          item.id === id
+                        )
                         return (
-                          <Badge key={academicQualificationIds[0]} variant="pending">
+                          <Badge key={`acad-${id}-${index}`} variant="pending">
                             {qualification?.name}
                           </Badge>
                         );
-                      })()}
+                      })}
                       {academicQualificationIds.length > 1 && (
                         <span className="text-sm text-gray-500 ml-1">
                           + {academicQualificationIds.length - 1} more
