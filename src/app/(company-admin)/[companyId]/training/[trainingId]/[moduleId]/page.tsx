@@ -1,29 +1,39 @@
 "use client"
 
-import { useState } from "react"
-import { useParams } from "next/navigation"
+import { useState, useEffect } from "react"
+import { useParams, useSearchParams } from "next/navigation"
 import { ModuleTabs } from "./components/module-tabs"
 import { ModuleInformation } from "./components/module-information"
 import { Section } from "./components/section"
 import { Content } from "./components/content"
-// import { Section } from "./components/section"
-// import { Content } from "./components/content"
+import { AssessmentMethod } from "./components/assesment-method"
 // import Link from "next/link"
 
 export default function ModuleDetail() {
   const params = useParams()
-  const [activeTab, setActiveTab] = useState<'information' | 'section' | 'content'>('information')
+  const searchParams = useSearchParams()
+  const tabParam = searchParams.get('tab')
+  
+  const [activeTab, setActiveTab] = useState<'information' | 'section' | 'content' | 'assessment-method'>(
+    tabParam === 'assessment-method' ? 'assessment-method' : 'information'
+  )
+
+  // Update activeTab when URL changes
+  useEffect(() => {
+    if (tabParam === 'assessment-method') {
+      setActiveTab('assessment-method')
+    }
+  }, [tabParam])
 
   return (
     <div className="">
-
-
       <ModuleTabs activeTab={activeTab} onTabChange={setActiveTab} />
 
       <div>
         {activeTab === 'information' && <ModuleInformation moduleId={params.moduleId as string} />}
         {activeTab === 'section' && <Section moduleId={params.moduleId as string} />}
         {activeTab === 'content' && <Content/>}
+        {activeTab === 'assessment-method' && <AssessmentMethod sectionId={params.moduleId as string} />}
       </div>
     </div>
   )

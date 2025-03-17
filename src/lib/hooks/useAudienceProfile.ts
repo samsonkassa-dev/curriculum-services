@@ -17,7 +17,7 @@ interface AudienceProfile {
   learnerLevel: BaseItem
   language?: BaseItem
   educationLevel?: BaseItem
-  specificCourseList?: string[]
+  specificCoursesList?: string[]
   certifications?: string
   licenses?: string
   workExperience?: BaseItem
@@ -42,7 +42,7 @@ export function useAudienceProfile(trainingId: string) {
             headers: { Authorization: `Bearer ${token}` }
           }
         )
-        return response.data.audienceProfile || null
+        return response.data.audienceProfile || null  
       } catch (error: any) {
         return null
       }

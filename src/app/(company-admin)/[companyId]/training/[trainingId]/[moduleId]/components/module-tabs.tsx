@@ -2,7 +2,7 @@
 
 interface ModuleTabsProps {
   activeTab: string;
-  onTabChange: (tab: "information" | "content") => void;
+  onTabChange: (tab: "information" | "content" | "assessment-method") => void;
 }
 
 export function ModuleTabs({ activeTab, onTabChange }: ModuleTabsProps) {
@@ -19,6 +19,13 @@ export function ModuleTabs({ activeTab, onTabChange }: ModuleTabsProps) {
     //   src: "/section.svg",
     //   srcActive: "/section-active.svg",
     // },
+
+    {
+      id: "assessment-method",
+      label: "Assessment Methods",
+      src: "/assessment.svg",
+      srcActive: "/assessment-active.svg",
+    },
     {
       id: "content",
       label: "Content",
@@ -33,7 +40,7 @@ export function ModuleTabs({ activeTab, onTabChange }: ModuleTabsProps) {
         {tabs.map((tab) => (
           <button
             key={tab.id}
-            onClick={() => onTabChange(tab.id as "information" | "content")}
+            onClick={() => onTabChange(tab.id as "information" | "content" | "assessment-method")}
             className={`pb-4 text-sm font-medium flex items-center gap-2 relative ${
               activeTab === tab.id
                 ? "text-brand border-b-2 border-brand"

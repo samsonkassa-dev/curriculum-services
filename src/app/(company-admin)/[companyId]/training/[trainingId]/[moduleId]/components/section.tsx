@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import Image from "next/image"
 import { Loading } from "@/components/ui/loading"
 import { SectionView } from "./sectionView"
-import { AssessmentMethod } from "./section/assesment-method"
+import { AssessmentMethod } from "./assesment-method"
 import { AssessmentFormProvider } from "@/contexts/AssessmentFormContext"
 import { SectionAddModal } from "./section/sectionAddModal"
 

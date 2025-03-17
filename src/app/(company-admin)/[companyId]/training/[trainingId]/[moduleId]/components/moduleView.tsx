@@ -94,7 +94,7 @@ export function ModuleView({
   const handleAssessmentClick = useCallback((moduleId: string, e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    router.push(`/${params.companyId}/training/${params.trainingId}/${moduleId}`)
+    router.push(`/${params.companyId}/training/${params.trainingId}/${moduleId}?tab=assessment-method`)
   }, [router, params.companyId, params.trainingId])
 
   const handleSubModuleClick = useCallback((module: Module, e: React.MouseEvent) => {
@@ -139,7 +139,11 @@ export function ModuleView({
     <div className="bg-white data-[state=open]:bg-[#f7fbff] rounded-lg m-6 flex items-center justify-between hover:no-underline group">
       <div 
         className="flex items-center gap-3 flex-1 cursor-pointer" 
-        onClick={(e) => handleAssessmentClick(module.id, e)}
+        onClick={(e) => {
+          e.preventDefault()
+          e.stopPropagation()
+          router.push(`/${params.companyId}/training/${params.trainingId}/${module.id}?tab=information`)
+        }}
       >
         <span className="font-semibold text-md md:text-xl">
           Module {index + 1} - {title}
@@ -237,8 +241,8 @@ export function ModuleView({
     })
   }, [mainModuleLessons, subModuleLessons, canEdit, handleEditLesson])
 
-  const renderSubModules = useCallback((moduleId: string) => {
-    if (!moduleDetails || moduleDetails.module.id !== moduleId) return null
+  const renderSubModules = useCallback((module: Module) => {
+    if (!moduleDetails || moduleDetails.module.id !== module.id) return null
 
     return moduleDetails.module.childModules.map((subModule, index) => {
       const isExpanded = expandedSubModules.includes(subModule.id)
@@ -314,54 +318,40 @@ export function ModuleView({
               {renderHeader(module.name, index, module)}
               <AccordionContent>
                 <div className="p-6 space-y-4">
-                  <div className="flex flex-wrap gap-4">
-                    <div
-                      onClick={(e) => handleAssessmentClick(module.id, e)}
-                      className="inline-flex font-semibold items-center gap-2 text-brand hover:text-blue-600 hover:bg-blue-50 px-3 py-2 rounded-md cursor-pointer"
-                    >
-                      <Image
-                        src="/modulePlus.svg"
-                        alt="Add Assessment"
-                        width={16}
-                        height={20}
-                      />
-                      <span>Assessment Methods</span>
-                    </div>
+                  {expandedModules.includes(module.id) && (
+                    <div className="p-4 bg-gray-50">
+                      <div className="flex flex-wrap gap-2 mb-4">
+                        <div
+                          onClick={(e) => handleAssessmentClick(module.id, e)}
+                          className="inline-flex font-semibold items-center gap-2 text-brand hover:text-blue-600 hover:bg-blue-50 px-3 py-2 rounded-md cursor-pointer"
+                        >
+                          <Image
+                            src="/modulePlus.svg"
+                            alt="Add Assessment"
+                            width={16}
+                            height={20}
+                          />
+                          <span>Assessment Methods</span>
+                        </div>
 
-                    <div
-                      onClick={(e) => handleSubModuleClick(module, e)}
-                      className="inline-flex font-semibold items-center gap-2 text-brand hover:text-blue-600 hover:bg-blue-50 px-3 py-2 rounded-md cursor-pointer"
-                    >
-                      <Image
-                        src="/modulePlus.svg"
-                        alt="Add Sub Module"
-                        width={16}
-                        height={20}
-                      />
-                      <span>Sub Module</span>
+                        <div
+                          onClick={(e) => handleSubModuleClick(module, e)}
+                          className="inline-flex font-semibold items-center gap-2 text-brand hover:text-blue-600 hover:bg-blue-50 px-3 py-2 rounded-md cursor-pointer"
+                        >
+                          <Image
+                            src="/modulePlus.svg"
+                            alt="Add Sub Module"
+                            width={16}
+                            height={20}
+                          />
+                          <span>Sub Module</span>
+                        </div>
+                      </div>
                     </div>
-
-                    <div
-                      onClick={(e) => handleLessonClick(module, e)}
-                      className="inline-flex font-semibold items-center gap-2 text-brand hover:text-blue-600 hover:bg-blue-50 px-3 py-2 rounded-md cursor-pointer"
-                    >
-                      <Image
-                        src="/modulePlus.svg"
-                        alt="Add Lesson"
-                        width={16}
-                        height={20}
-                      />
-                      <span>Lesson</span>
-                    </div>
-                  </div>
-
-                  {/* Main module lessons */}
-                  <div className="space-y-2">
-                    {renderLessons(module.id)}
-                  </div>
+                  )}
 
                   {/* Sub-modules section */}
-                  {renderSubModules(module.id)}
+                  {renderSubModules(module)}
                 </div>
               </AccordionContent>
             </AccordionItem>

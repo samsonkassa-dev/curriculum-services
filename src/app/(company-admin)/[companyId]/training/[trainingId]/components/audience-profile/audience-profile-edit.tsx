@@ -24,7 +24,7 @@ interface AudienceProfile {
   learnerLevel: BaseItem
   language?: BaseItem
   educationLevel?: BaseItem
-  specificCourseList?: string[]
+  specificCoursesList?: string[]
   certifications?: string
   licenses?: string
   workExperience?: BaseItem
@@ -36,7 +36,7 @@ interface AudienceProfileData {
   learnerLevelId: string
   languageId?: string
   educationLevelId?: string
-  specificCourseList?: string[]
+  specificCoursesList?: string[]
   certifications?: string
   licenses?: string
   workExperienceId?: string
@@ -87,7 +87,7 @@ export function AudienceProfileEdit({
       
       // Check if prerequisites are completed
       if (initialData.language?.id || initialData.educationLevel?.id || 
-          initialData.specificCourseList?.length || initialData.certifications || 
+          initialData.specificCoursesList?.length || initialData.certifications || 
           initialData.licenses || initialData.workExperience?.id || 
           initialData.specificPrerequisites?.length) {
         completed.push("Prerequisites")
@@ -241,7 +241,7 @@ export function AudienceProfileEdit({
             initialData={initialData ? {
               languageId: initialData.language?.id,
               educationLevelId: initialData.educationLevel?.id,
-              specificCourseList: initialData.specificCourseList,
+              specificCoursesList: initialData.specificCoursesList,
               certifications: initialData.certifications,
               licenses: initialData.licenses,
               workExperienceId: initialData.workExperience?.id,

@@ -19,9 +19,11 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { useCreateContent } from "@/lib/hooks/useContent"
-import { useSectionsByModuleId } from "@/lib/hooks/useSection"
+import { useModules } from "@/lib/hooks/useModule"
+import { useGetLessons } from "@/lib/hooks/useLesson"
 import { toast } from "sonner"
 import { useParams } from "next/navigation"
+
 interface ContentRequestModalProps {
   isOpen: boolean
   onClose: () => void
@@ -32,7 +34,7 @@ interface ContentFormData {
   name: string
   description: string
   contentFileType: 'PDF' | 'VIDEO' | 'LINK'
-  sectionId?: string
+  subModuleId?: string
   lessonId?: string
   email: string
 }
@@ -50,7 +52,12 @@ export function ContentRequestModal({
   })
   const [errors, setErrors] = useState<Partial<Record<keyof ContentFormData, boolean>>>({})
 
-  const { data: sectionsData } = useSectionsByModuleId(moduleId)
+  // Fetch module details to get sub-modules
+  const { data: moduleDetails } = useModules(moduleId)
+  
+  // Fetch lessons for the selected sub-module
+  const { data: lessonData } = useGetLessons(formData.subModuleId || "")
+  
   const { mutateAsync: createContent } = useCreateContent()
 
   const validateForm = () => {
@@ -59,7 +66,7 @@ export function ContentRequestModal({
     if (!formData.name.trim()) newErrors.name = true
     if (!formData.description.trim()) newErrors.description = true
     if (!formData.contentFileType) newErrors.contentFileType = true
-    if (!formData.sectionId) newErrors.sectionId = true
+    if (!formData.subModuleId) newErrors.subModuleId = true
     if (!formData.lessonId) newErrors.lessonId = true
     if (!formData.email.trim()) newErrors.email = true
 
@@ -80,15 +87,14 @@ export function ContentRequestModal({
         contentFileType: formData.contentFileType
       }],
       email: formData.email,
-      moduleId,
+      moduleId: formData.subModuleId || "", // Use sub-module as the moduleId
       lessonId: formData.lessonId
     })
     onClose()
   }
 
-  const hasNoSections = !sectionsData?.sections?.length
-  const hasNoLessons = formData.sectionId && 
-    !sectionsData?.sections.find(s => s.id === formData.sectionId)?.lessons.length
+  const hasNoSubModules = !moduleDetails?.module?.childModules?.length
+  const hasNoLessons = !lessonData || lessonData.length === 0
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -152,38 +158,38 @@ export function ContentRequestModal({
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-sm font-medium mb-2 block">
-                  Choose Section <span className="text-red-500">*</span>
+                  Choose Sub-module <span className="text-red-500">*</span>
                 </label>
                 <Select
-                  value={formData.sectionId}
+                  value={formData.subModuleId}
                   onValueChange={(value) => {
                     setFormData((prev) => ({ 
                       ...prev, 
-                      sectionId: value,
+                      subModuleId: value,
                       lessonId: undefined
                     }))
-                    setErrors((prev) => ({ ...prev, sectionId: false }))
+                    setErrors((prev) => ({ ...prev, subModuleId: false }))
                   }}
                 >
-                  <SelectTrigger className={cn(!!errors.sectionId && "border-red-500")}>
-                    <SelectValue placeholder="Select Section" />
+                  <SelectTrigger className={cn(!!errors.subModuleId && "border-red-500")}>
+                    <SelectValue placeholder="Select sub-module" />
                   </SelectTrigger>
                   <SelectContent>
-                    {hasNoSections ? (
-                      <SelectItem value="no-sections" disabled>
-                        No sections available
+                    {hasNoSubModules ? (
+                      <SelectItem value="no-submodules" disabled>
+                        No sub-modules available
                       </SelectItem>
                     ) : (
-                      sectionsData?.sections.map((section) => (
-                        <SelectItem key={section.id} value={section.id}>
-                          {section.name}
+                      moduleDetails?.module?.childModules?.map((subModule) => (
+                        <SelectItem key={subModule.id} value={subModule.id}>
+                          {subModule.name}
                         </SelectItem>
                       ))
                     )}
                   </SelectContent>
                 </Select>
-                {errors.sectionId && (
-                  <span className="text-xs text-red-500 mt-1">Section is required</span>
+                {errors.subModuleId && (
+                  <span className="text-xs text-red-500 mt-1">Sub-module is required</span>
                 )}
               </div>
 
@@ -197,7 +203,7 @@ export function ContentRequestModal({
                     setFormData((prev) => ({ ...prev, lessonId: value }))
                     setErrors((prev) => ({ ...prev, lessonId: false }))
                   }}
-                  disabled={Boolean(!formData.sectionId || hasNoLessons)}
+                  disabled={Boolean(!formData.subModuleId || hasNoLessons)}
                 >
                   <SelectTrigger className={cn(!!errors.lessonId && "border-red-500")}>
                     <SelectValue placeholder="Select Lesson" />
@@ -208,13 +214,11 @@ export function ContentRequestModal({
                         No lessons available
                       </SelectItem>
                     ) : (
-                      sectionsData?.sections
-                        .find(s => s.id === formData.sectionId)
-                        ?.lessons.map((lesson) => (
-                          <SelectItem key={lesson.id} value={lesson.id}>
-                            {lesson.name}
-                          </SelectItem>
-                        ))
+                      lessonData?.map((lesson) => (
+                        <SelectItem key={lesson.id} value={lesson.id}>
+                          {lesson.name}
+                        </SelectItem>
+                      ))
                     )}
                   </SelectContent>
                 </Select>
@@ -250,12 +254,12 @@ export function ContentRequestModal({
                 onClick={handleSubmit}
                 className="bg-blue-500 hover:bg-blue-600 text-white"
                 disabled={Boolean(
-                  hasNoSections ||
+                  hasNoSubModules ||
                   hasNoLessons ||
                   !formData.name.trim() ||
                   !formData.description.trim() ||
                   !formData.contentFileType ||
-                  !formData.sectionId ||
+                  !formData.subModuleId ||
                   !formData.lessonId ||
                   !formData.email.trim()
                 )}

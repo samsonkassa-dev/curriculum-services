@@ -222,7 +222,7 @@ function ModuleInformationContent({
         isMobile && showSidebar ? "hidden" : "block"
       )}>
         {renderContent()}
-        <div className="flex justify-center gap-6 md:gap-10">
+        <div className="flex justify-center gap-6 md:gap-10 py-10">
           {activeSection !== "Key Concepts" && (
             <Button 
               variant="outline" 
