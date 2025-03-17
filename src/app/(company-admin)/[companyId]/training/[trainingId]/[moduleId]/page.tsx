@@ -4,7 +4,6 @@ import { useState, useEffect } from "react"
 import { useParams, useSearchParams } from "next/navigation"
 import { ModuleTabs } from "./components/module-tabs"
 import { ModuleInformation } from "./components/module-information"
-import { Section } from "./components/section"
 import { Content } from "./components/content"
 import { AssessmentMethod } from "./components/assesment-method"
 // import Link from "next/link"
@@ -14,7 +13,7 @@ export default function ModuleDetail() {
   const searchParams = useSearchParams()
   const tabParam = searchParams.get('tab')
   
-  const [activeTab, setActiveTab] = useState<'information' | 'section' | 'content' | 'assessment-method'>(
+  const [activeTab, setActiveTab] = useState<'information'  | 'content' | 'assessment-method'>(
     tabParam === 'assessment-method' ? 'assessment-method' : 'information'
   )
 
@@ -31,7 +30,6 @@ export default function ModuleDetail() {
 
       <div>
         {activeTab === 'information' && <ModuleInformation moduleId={params.moduleId as string} />}
-        {activeTab === 'section' && <Section moduleId={params.moduleId as string} />}
         {activeTab === 'content' && <Content/>}
         {activeTab === 'assessment-method' && <AssessmentMethod sectionId={params.moduleId as string} />}
       </div>

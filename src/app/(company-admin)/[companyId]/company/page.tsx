@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -27,6 +27,7 @@ import { toast } from "sonner";
 const Company = () => {
   const router = useRouter();
   const { companyId } = useParams();
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const {
     register,
@@ -45,53 +46,77 @@ const Company = () => {
     isError: isFetchingError,
   } = useMyCompanyProfile();
 
-  const { updateCompanyProfile, isLoading: isUpdatingCompanyProfile } =
+  const { updateCompanyProfile, isUpdating: isUpdatingCompanyProfile } =
     useCompanyProfile();
 
   useEffect(() => {
-    console.log("Company data: ", company); // Debugging step
     if (!isFetchingCompanyProfile && company) {
       const mapNumberOfEmployees = (employeeSize: string | undefined) => {
-        if (employeeSize === undefined) return undefined; // Handle missing data
+        if (!employeeSize) return undefined;
         if (employeeSize.includes("MICRO")) return "MICRO";
         if (employeeSize.includes("SMALL")) return "SMALL";
         if (employeeSize.includes("MEDIUM")) return "MEDIUM";
-        return "LARGE"; // 250 or more
+        if (employeeSize.includes("LARGE")) return "LARGE";
+        return undefined;
       };
 
       const numberOfEmployees = mapNumberOfEmployees(company.numberOfEmployees);
+      
+      // Extract phone number without country code if it exists
+      const phoneNumber = company.phone?.startsWith("+251") 
+        ? company.phone.slice(4) 
+        : company.phone || "";
 
       reset({
         name: company.name || "",
-        phone: company.phone.slice(4) || "",
+        phone: phoneNumber,
         address: company.address || "",
         websiteUrl: company.websiteUrl || "",
         countryOfIncorporation: company.countryOfIncorporation || "",
         taxIdentificationNumber: company.taxIdentificationNumber || "",
         industryType: company.industryType || undefined,
         businessType: company.businessType || undefined,
-        numberOfEmployees,
+        numberOfEmployees: numberOfEmployees as "MICRO" | "SMALL" | "MEDIUM" | "LARGE" | undefined,
         otherDescription: company.otherDescription || "",
       });
     }
   }, [isFetchingCompanyProfile, company, reset]);
 
-  const onSubmit = (data: CompanyProfileFormSchema) => {
-    console.log(data);
-
-    const modifiedData = {
-      ...data,
-    };
-    updateCompanyProfile(
-      { id: companyId as string, data: modifiedData },
-      {
-        onSuccess: () => {
-          toast.success("Company profile updated successfully");
-          router.push(`/`);
-        },
-      }
-    );
+  const onSubmit = async (data: CompanyProfileFormSchema) => {
+    if (isSubmitting) return;
+    
+    try {
+      setIsSubmitting(true);
+      
+      // Format phone with country code
+      const formattedData = {
+        ...data,
+        phone: data.phone ? `+251${data.phone}` : "",
+      };
+      
+      await updateCompanyProfile(
+        { id: companyId as string, data: formattedData },
+        {
+          onSuccess: () => {
+            toast.success("Company profile updated successfully");
+            router.push(`/`);
+          },
+          onError: (error) => {
+            toast.error("Failed to update profile", {
+              description: error.message || "Please try again"
+            });
+          },
+        }
+      );
+    } catch (error) {
+      toast.error("An error occurred", {
+        description: "Please try again later"
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+  
   const onBack = () => {
     router.push(`/`);
   };
@@ -359,7 +384,7 @@ const Company = () => {
                   onValueChange={(value) =>
                     setValue(
                       "numberOfEmployees",
-                      value as "SMALL" | "MEDIUM" | "LARGE"
+                      value as "MICRO" | "SMALL" | "MEDIUM" | "LARGE"
                     )
                   }
                   value={watch("numberOfEmployees")}
@@ -371,10 +396,10 @@ const Company = () => {
                     />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="MICRO">Micro</SelectItem>
-                    <SelectItem value="SMALL">Small</SelectItem>
-                    <SelectItem value="MEDIUM">Medium</SelectItem>
-                    <SelectItem value="LARGE">Large</SelectItem>
+                    <SelectItem value="MICRO">Micro (1-9 employees)</SelectItem>
+                    <SelectItem value="SMALL">Small (10-49 employees)</SelectItem>
+                    <SelectItem value="MEDIUM">Medium (50-249 employees)</SelectItem>
+                    <SelectItem value="LARGE">Large (250+ employees)</SelectItem>
                   </SelectContent>
                 </Select>
                 {errors.numberOfEmployees && (
@@ -384,12 +409,12 @@ const Company = () => {
                 )}
               </div>
               <div className="space-y-2 col-span-2 w-full pt-1">
-                <Label htmlFor="employeeCount">
+                <Label htmlFor="otherDescription">
                   <p className="md:text-[1rem] text-sm  font-semibold pb-[2px]">
                     Other Description
                   </p>
                   <p className="text-[#9C9791] text-xs font-light">
-                    please enter any other description about your company
+                    Please enter any other description about your company
                   </p>
                 </Label>
                 <textarea
@@ -412,8 +437,8 @@ const Company = () => {
                   className={cn(
                     `w-40 h-10 px-4 py-3 rounded-sm font-medium border border-[#9C9791] lg:mr-20 md:mr-10`
                   )}
-                  type="reset"
-                  onClick={() => onBack()}
+                  type="button"
+                  onClick={onBack}
                 >
                   Back
                 </Button>
@@ -423,14 +448,15 @@ const Company = () => {
                   disabled={
                     isFetchingCompanyProfile ||
                     isUpdatingCompanyProfile ||
-                    isFetchingError
+                    isFetchingError ||
+                    isSubmitting
                   }
                   type="submit"
                   className={cn(
                     `w-40 h-10 px-4 py-3 rounded-sm font-medium text-white disabled:opacity-50`
                   )}
                 >
-                  {isUpdatingCompanyProfile ? "Saving..." : "Save"}
+                  {isUpdatingCompanyProfile || isSubmitting ? "Saving..." : "Save"}
                 </Button>
               </div>
             </form>
