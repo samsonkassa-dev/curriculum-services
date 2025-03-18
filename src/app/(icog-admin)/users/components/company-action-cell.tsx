@@ -3,12 +3,12 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { CompanyUser } from "@/types/users"
+import { CompanyFilesType } from "@/types/users"
 import { useRouter } from "next/navigation"
 
 export function CompanyActionCell({ row }: { row: any }) {
   const router = useRouter()
-  const item = row.original as CompanyUser
+  const item = row.original as CompanyFilesType
 
   const handleView = () => {
     router.push(`/users/${item.id}`)

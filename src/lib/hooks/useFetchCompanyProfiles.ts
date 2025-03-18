@@ -1,11 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { toast } from "sonner";
-import { CompanyUser } from "@/types/users";
+import { CompanyFilesType } from "@/types/users";
 
 interface CompanyProfilesResponse {
   code: string;
-  companyProfiles: CompanyUser[];
+  companyProfiles: CompanyFilesType[];
   totalPages: number;
   message: string;
   totalElements: number;
@@ -13,7 +13,7 @@ interface CompanyProfilesResponse {
 
 interface SingleCompanyResponse {
   code: string;
-  companyProfile: CompanyUser;
+  companyProfile: CompanyFilesType;
   message: string;
 }
 

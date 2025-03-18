@@ -22,7 +22,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
 import { ChevronLeftIcon, ChevronRightIcon, Loader2 } from "lucide-react"
-import { IndividualUser, CompanyUser } from "@/types/users"
+import { IndividualUser, CompanyFilesType } from "@/types/users"
 
 interface DataTableProps<TData> {
   columns: ColumnDef<TData, any>[]
@@ -197,7 +197,7 @@ export function CompanyDataTable({
   data,
   isLoading,
   pagination,
-}: DataTableProps<CompanyUser>) {
+}: DataTableProps<CompanyFilesType>) {
   const [sorting, setSorting] = useState<SortingState>([])
 
 

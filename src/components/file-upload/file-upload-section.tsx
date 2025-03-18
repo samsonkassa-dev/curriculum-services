@@ -16,7 +16,7 @@ interface FileUploadSectionProps {
 
 export function FileUploadSection({ setValue, watch, fileTypes }: FileUploadSectionProps) {
   const [error, setError] = useState<string | null>(null)
-  const fileType = watch('fileType')
+  const [selectedFileType, setSelectedFileType] = useState<string>('')
 
   const handleFileChange = (file: File | null) => {
     setError(null)
@@ -36,11 +36,11 @@ export function FileUploadSection({ setValue, watch, fileTypes }: FileUploadSect
       return
     }
 
-    if (file && fileType) {
+    if (file && selectedFileType) {
       const currentFiles = watch('companyFiles') || []
       setValue('companyFiles', [
         ...currentFiles,
-        { fileTypeId: fileType, file } as CompanyFileUpload
+        { fileTypeId: selectedFileType, file } as CompanyFileUpload
       ])
     }
   }
@@ -61,7 +61,7 @@ export function FileUploadSection({ setValue, watch, fileTypes }: FileUploadSect
           onValueChange={(value) => {
             const selected = fileTypes.find(type => type.id === value)
             if (selected) {
-              setValue('fileType', selected.id)
+              setSelectedFileType(selected.id)
             }
           }}
         >
