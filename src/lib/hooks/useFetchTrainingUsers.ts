@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query"
 import axios from "axios"
 import { toast } from "sonner"
-import { TrainingUsersResponse } from "@/types/users"
+import { TrainingUsersResponse, CompanyUsersResponse } from "@/types/users"
 
 // Hook to fetch training users by training ID
 export function useTrainingUsersByTrainingId(trainingId: string) {
@@ -28,11 +28,44 @@ export function useTrainingUsersByTrainingId(trainingId: string) {
   })
 }
 
-// We can keep the paginated version for other use cases
-export function useTrainingUsers({ page, pageSize, searchQuery }: {
+// Hook to fetch company users with server-side pagination
+export function useCompanyUsers({ page, pageSize, searchQuery, companyId, role }: {
   page: number
   pageSize: number
   searchQuery?: string
+  companyId: string
+  role?: string
 }) {
-  // ... implementation for the all users endpoint with server-side pagination
+  return useQuery({
+    queryKey: ['company-users', companyId, page, pageSize, searchQuery, role],
+    queryFn: async () => {
+      try {
+        const token = localStorage.getItem('auth_token')
+        
+        // Build the URL with query parameters
+        let url = `${process.env.NEXT_PUBLIC_API}/company-profile/users?page=${page}&page-size=${pageSize}`
+        
+        // Add search query if provided
+        if (searchQuery) {
+          url += `&search-query=${encodeURIComponent(searchQuery)}`
+        }
+
+        if (role) {
+          url += `&roles=${encodeURIComponent(role)}`
+        }
+        
+        const response = await axios.get<CompanyUsersResponse>(url, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        
+        return response.data
+      } catch (error) {
+        if (axios.isAxiosError(error)) {
+          toast.error(error.response?.data?.message || 'Failed to fetch company users')
+        }
+        throw error
+      }
+    },
+    placeholderData: (previousData) => previousData // Use previous data as placeholder while loading
+  })
 }

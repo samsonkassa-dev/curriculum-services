@@ -1,83 +1,106 @@
 "use client"
 
+import { use } from 'react'
 import { useState } from "react"
 import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Search } from "lucide-react"
-import { IndividualDataTable } from "./components/data-table"
-import { individualColumns } from "./components/columns"
+import Image from 'next/image'
 import { useDebounce } from "@/lib/hooks/useDebounce"
-import { IndividualUser } from "@/types/users"
+import { useCompanyUsers } from "@/lib/hooks/useFetchTrainingUsers"
+import { companyColumns } from "./components/company-columns"
+import { CompanyUsersDataTable } from "./components/company-data-table"
+import { Filter } from "@/components/ui/filter";
 
-// Temporary mock data
-const mockIndividuals: IndividualUser[] = [
-  {
-    id: "1",
-    fullName: "Jane Cooper",
-    email: "jessica.hanson@example.com",
-    status: "Active" as const,
-    role: {
-      name: "Curriculum Admin",
-      colorCode: "#4CAF50"  // or whatever color code you want to use
-    }
-  }
-]
-
-export default function CompanyAdminUsers() {
+export default function CompanyAdminUsers({
+  params
+}: {
+  params: Promise<{ companyId: string }>
+}) {
+  const { companyId } = use(params)
   const [page, setPage] = useState(1)
-  const [pageSize, setPageSize] = useState(7)
+  const [pageSize, setPageSize] = useState(10)
   const [searchQuery, setSearchQuery] = useState("")
   const debouncedSearch = useDebounce(searchQuery, 500)
+  const [role, setRole] = useState<string>();
  
-  // Calculate showing range
-  const startRecord = ((page - 1) * pageSize) + 1
-  const endRecord = Math.min(page * pageSize, mockIndividuals.length)
-  const totalRecords = mockIndividuals.length
+  // Fetch company users with server-side pagination
+  const { data, isLoading } = useCompanyUsers({
+    page,
+    pageSize,
+    searchQuery: debouncedSearch,
+    companyId,
+    role
+  })
 
+  const roleOptions = [
+    { id: 'ROLE_COMPANY_ADMIN', label: 'Company Admin' },
+    { id: 'ROLE_CURRICULUM_ADMIN', label: 'Curriculum Admin' },
+    { id: 'ROLE_CONTENT_DEVELOPER', label: 'Content Developer' },
+  ];
+
+  const handleFilterApply = ({
+    selectedStatus,
+  }: {
+    selectedStatus?: string;
+  }) => {
+    setRole(selectedStatus);
+    setPage(1);
+  };
+
+
+
+
+  // Handle page size change
   const handlePageSizeChange = (newPageSize: number) => {
     setPageSize(newPageSize)
     setPage(1) // Reset to first page when changing page size
   }
 
   return (
-    <div className="flex min-h-screen md:w-[calc(100%-85px)] md:pl-[85px] md:mx-auto w-full">
-        <div className="flex-1 p-4 md:p-8 min-w-0">
-        <h1 className="text-lg font-semibold mb-6">Users</h1>
-        
-      
+    <div className="flex lg:px-16 md:px-14 px-4 w-full">
+      <div className="flex-1 py-4 md:pl-12 min-w-0">
+        <h1 className="text-lg font-normal mb-6">Users</h1>
+
         <div className="flex items-center lg:justify-end gap-3 mb-6">
           <div className="relative md:w-[300px]">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+            <Image
+              src="/search.svg"
+              alt="Search"
+              width={19}
+              height={19}
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black h-5 w-5 z-10"
+            />
             <Input
-              placeholder="Search"
+              placeholder="Search users..."
               className="pl-10 h-10 bg-white border-gray-200 rounded-lg"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <Button
-       
-            className=" text-brand border-[0.3px] border-brand"
-            variant="outline"
-          >
-            Invite Curriculum Admin
-          </Button>
+          <Filter
+              statusOptions={roleOptions}
+              onApply={handleFilterApply}
+              defaultSelected={{
+                status: role,
+              }}
+            />
+
+
         </div>
 
-        <IndividualDataTable
-          columns={individualColumns}
-          data={mockIndividuals}
-          isLoading={false}
+        <CompanyUsersDataTable
+          columns={companyColumns}
+          data={data?.users || []}
+          isLoading={isLoading}
           pagination={{
-            pageCount: Math.ceil(mockIndividuals.length / pageSize),
-            page,
+            totalPages: data?.totalPages || 1,
+            currentPage: page,
             setPage,
             pageSize,
             setPageSize: handlePageSizeChange,
-            showingText: `Showing ${startRecord} to ${endRecord} out of ${totalRecords} records`
+            totalElements: data?.totalElements || 0,
           }}
         />
       </div>
     </div>
-  )
+  );
 }

@@ -23,7 +23,7 @@ export interface IndustryType {
   description: string;
 }
 
-export interface CompanyUser {
+export interface CompanyFilesType {
   id: string;
   name: string;
   taxIdentificationNumber: string;
@@ -73,3 +73,12 @@ export interface TrainingUsersResponse {
   message: string;
   users: TrainingUser[];
 } 
+
+export interface CompanyUsersResponse{
+  totalPages: number;
+  pageSize: number;
+  currentPage: number;
+  message: string;
+  totalElements: number;
+  users:TrainingUser[];
+}

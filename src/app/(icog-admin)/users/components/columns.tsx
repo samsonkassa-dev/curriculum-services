@@ -1,7 +1,7 @@
 "use client"
 
 import { ColumnDef } from "@tanstack/react-table"
-import { IndividualUser, CompanyUser } from "@/types/users"
+import { IndividualUser, CompanyFilesType } from "@/types/users"
 import { Badge } from "@/components/ui/badge"
 import { IndividualActionCell } from "./individual-action-cell"
 import { CompanyActionCell } from "./company-action-cell"
@@ -65,7 +65,7 @@ export const individualColumns: ColumnDef<IndividualUser>[] = [
   }
 ]
 
-export const companyColumns: ColumnDef<CompanyUser>[] = [
+export const companyColumns: ColumnDef<CompanyFilesType>[] = [
   {
     accessorKey: "name",
     header: "Company Name",
