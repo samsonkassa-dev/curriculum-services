@@ -46,9 +46,9 @@ jobs:
         git pull 
 
         # Ensure Docker is running and deploy the app using Docker Compose
-        docker compose down --volumes
-        docker compose build
-        docker compose up -d
+        docker compose -f docker-compose.prod.yml down
+        docker compose -f docker-compose.prod.yml up --build -d
+        docker ps
 
         # List running Docker containers
         docker ps
