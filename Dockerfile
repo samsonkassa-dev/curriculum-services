@@ -17,7 +17,6 @@ RUN pnpm install --frozen-lockfile
 # Copy the rest of the files
 COPY . .
 
-COPY .env .env
 
 
 # Build the project
