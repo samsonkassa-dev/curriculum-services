@@ -1,28 +1,28 @@
-# Use the official Node.js image as a base
-FROM node:18-alpine
+FROM node:23-alpine3.20
 
-# Install pnpm globally
-RUN npm install -g pnpm
+# Set up environment variables
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
 
-# Set the working directory inside the container
+# Enable corepack for pnpm
+RUN corepack enable
+
 WORKDIR /app
 
-# Copy package.json and pnpm-lock.yaml into the container
+# Copy only package files first to leverage Docker caching
 COPY package.json pnpm-lock.yaml ./
 
-# Install dependencies using pnpm
 RUN pnpm install --frozen-lockfile
 
-# Copy the entire project into the working directory inside the container
+# Copy the rest of the files
 COPY . .
 
-# Copy the .env file into the container
 COPY .env .env
 
-# Expose the port on which Next.js will run (default is 3000)
-EXPOSE 3000 
 
-# Build the Next.js app
-RUN pnpm build
-# Start the Next.js app
-CMD ["pnpm", "start"]
+# Build the project
+RUN pnpm run build
+
+EXPOSE 3000
+
+CMD ["pnpm", "run", "start"]

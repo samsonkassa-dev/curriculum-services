@@ -16,42 +16,24 @@ jobs:
     - name: Checkout Repository
       uses: actions/checkout@v3
 
-    # Step 2: Set up Node.js
+    # Step 2: Set up Node.js (only needed if caching dependencies)
     - name: Set up Node.js
       uses: actions/setup-node@v3
       with:
         node-version: 18.19.1
 
-    # Step 3: Cache Node Modules
-    - name: Cache Node Modules
-      uses: actions/cache@v3
-      with:
-        path: ~/.pnpm-store # Use pnpm's global store
-        key: ${{ runner.os }}-node-${{ hashFiles('pnpm-lock.yaml') }}
-        restore-keys: |
-          ${{ runner.os }}-node-
-
-    # Step 4: Install dependencies using pnpm
-    - name: Install Dependencies
-      run: |
-        npm install -g pnpm
-        pnpm install --frozen-lockfile
-
-    # Step 5: Build Next.js application
-    - name: Build Next.js Application
-      run: pnpm build
-
-    # Step 6: SSH Agent Setup for Deployment
+    # Step 3: SSH Agent Setup for Deployment
     - name: SSH Agent Setup
       uses: webfactory/ssh-agent@v0.5.3
       with:
         ssh-private-key: ${{ secrets.SSH_KEY }}
 
-    # Step 7: Deploy to Server
+    # Step 4: Deploy to Dev Environment
     - name: Deploy to Dev Environment
       run: |
         ssh -v -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} <<'ENDSSH'
         cd frontend
+
         # Clone the repository if it doesn't already exist
         if [ ! -d "curriculum-services" ]; then
           git clone git@github.com:training-solution-frontend/curriculum-services.git
@@ -61,17 +43,12 @@ jobs:
         cd curriculum-services
 
         # Pull the latest changes from the repository
-        git pull
-
-        # Install dependencies
-        pnpm install --frozen-lockfile
-
-        # Build the Next.js application
-        pnpm build
+        git pull 
 
         # Ensure Docker is running and deploy the app using Docker Compose
         docker compose down --volumes
-        docker compose up --build -d
+        docker compose build
+        docker compose up -d
 
         # List running Docker containers
         docker ps
