@@ -253,7 +253,7 @@ export function LessonAddModal({
                         </SelectItem>
                       ))
                     ) : (
-                      <SelectItem value="" disabled>
+                      <SelectItem value="No instructional methods available" disabled>
                         No instructional methods available
                       </SelectItem>
                     )}
@@ -298,7 +298,7 @@ export function LessonAddModal({
                         </SelectItem>
                       ))
                     ) : (
-                      <SelectItem value="" disabled>
+                      <SelectItem value="No technology integrations available" disabled>
                         No technology integrations available
                       </SelectItem>
                     )}

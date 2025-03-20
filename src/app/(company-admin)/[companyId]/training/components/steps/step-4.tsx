@@ -250,7 +250,7 @@ export function CreateTrainingStep4({ onNext, onBack, initialData }: StepProps) 
                   </SelectItem>
                 ))
               ) : (
-                <SelectItem value="" disabled>
+                <SelectItem value="0" disabled>
                   No age groups available
                 </SelectItem>
               )}
