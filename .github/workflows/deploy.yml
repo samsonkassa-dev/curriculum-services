@@ -24,7 +24,7 @@ jobs:
 
     # Step 3: Cache Node Modules
     - name: Cache Node Modules
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: ~/.pnpm-store # Use pnpm's global store
         key: ${{ runner.os }}-node-${{ hashFiles('pnpm-lock.yaml') }}
