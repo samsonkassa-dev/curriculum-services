@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect, useRef } from "react"
 import { ChevronRight, ChevronDown, MoreVertical, Ban } from "lucide-react"
 import {
   Accordion,
@@ -20,9 +20,10 @@ import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { useParams } from "next/navigation"
 import { ModuleAddModal } from "./moduleAddModal"
-import { LessonAddModal } from "./section/lessonAddModal"
-import { useCreateModule, useModules } from "@/lib/hooks/useModule"
+import { LessonAddModal } from "./lessonAddModal"
+import { useCreateModule, useModules, useUpdateModule } from "@/lib/hooks/useModule"
 import { useGetLessons, useUpdateLesson, Lesson as APILesson, InstructionalMethod, TechnologyIntegration } from "@/lib/hooks/useLesson"
+import { useQueryClient } from "@tanstack/react-query"
 
 // Type for the form data
 interface LessonFormData {
@@ -63,24 +64,77 @@ export function ModuleView({
   const [expandedSubModules, setExpandedSubModules] = useState<string[]>([])
   const { mutateAsync: createModule, isPending: isCreating } = useCreateModule()
   const { mutateAsync: updateLesson } = useUpdateLesson()
+  const { mutateAsync: updateModule, isPending: isUpdating } = useUpdateModule()
+  const queryClient = useQueryClient()
+  const [isEditingSubModule, setIsEditingSubModule] = useState(false)
 
   // Fetch module details when accordion is opened
-  const { data: moduleDetails } = useModules(
-    expandedModules.length > 0 ? expandedModules[0] : ""
+  const { data: moduleDetails, isLoading: isModuleDetailsLoading } = useModules(
+    expandedModules.length > 0 ? expandedModules[0] : params.moduleId as string
   )
 
+  // Initialize with the current module ID if it exists
+  useEffect(() => {
+    if (params.moduleId) {
+      setExpandedModules([params.moduleId as string]);
+    }
+  }, [params.moduleId]);
+
   // Fetch lessons for the expanded module
-  const { data: mainModuleLessons } = useGetLessons(
+  const { data: mainModuleLessons, isLoading: isMainModuleLessonsLoading } = useGetLessons(
     expandedModules.length > 0 ? expandedModules[0] : ""
   )
 
   // Fetch lessons for expanded sub-modules - now using an object to store multiple sub-module lessons
   const expandedSubModuleId = expandedSubModules[0]
-  const { data: subModuleLessons } = useGetLessons(expandedSubModuleId || "")
+  const { data: subModuleLessons, isLoading: isSubModuleLessonsLoading } = useGetLessons(expandedSubModuleId || "")
+
+  // Track previous state of modals
+  const prevShowSubModuleModalRef = useRef(showSubModuleModal);
+  const prevShowLessonModalRef = useRef(showLessonModal);
+  
+  // Effect to refresh data when modals close
+  useEffect(() => {
+    // Check if either modal was just closed
+    const subModuleModalJustClosed = prevShowSubModuleModalRef.current && !showSubModuleModal;
+    const lessonModalJustClosed = prevShowLessonModalRef.current && !showLessonModal;
+    
+    // Update refs for next render
+    prevShowSubModuleModalRef.current = showSubModuleModal;
+    prevShowLessonModalRef.current = showLessonModal;
+    
+    // If either modal just closed, refresh the data
+    if (subModuleModalJustClosed || lessonModalJustClosed) {
+      const activeModuleId = params.moduleId as string || '';
+      
+      if (activeModuleId) {
+        // Refresh the module details
+        queryClient.invalidateQueries({ queryKey: ["module-details", activeModuleId] });
+      }
+      
+      // Also refresh any expanded modules/submodules
+      if (expandedModules.length > 0) {
+        queryClient.invalidateQueries({ queryKey: ["module-details", expandedModules[0]] });
+        queryClient.invalidateQueries({ queryKey: ["lessons", expandedModules[0]] });
+      }
+      
+      if (expandedSubModules.length > 0) {
+        queryClient.invalidateQueries({ queryKey: ["lessons", expandedSubModules[0]] });
+      }
+    }
+  }, [showSubModuleModal, showLessonModal, params.moduleId, expandedModules, expandedSubModules, queryClient]);
 
   const handleAccordionChange = (value: string) => {
-    setExpandedModules(value ? [value] : [])
-    setExpandedSubModules([]) // Reset sub-module expansion when main module changes
+    console.log('Accordion value changed to:', value);
+    
+    // If value is empty (accordion closing) or different from current expanded module
+    // then update the state and reset sub-module expansion
+    setExpandedModules(value ? [value] : []);
+    
+    // Reset sub-module expansion when accordion changes
+    if (!value || (expandedModules.length > 0 && expandedModules[0] !== value)) {
+      setExpandedSubModules([]);
+    }
   }
 
   const handleSubModuleExpand = useCallback((subModuleId: string, e: React.MouseEvent) => {
@@ -97,10 +151,11 @@ export function ModuleView({
     router.push(`/${params.companyId}/training/${params.trainingId}/${moduleId}?tab=assessment-method`)
   }, [router, params.companyId, params.trainingId])
 
-  const handleSubModuleClick = useCallback((module: Module, e: React.MouseEvent) => {
+  const handleSubModuleClick = useCallback((module: Module, e: React.MouseEvent, isEdit = false) => {
     e.preventDefault()
     e.stopPropagation()
     setSelectedModule(module)
+    setIsEditingSubModule(isEdit)
     setShowSubModuleModal(true)
   }, [])
 
@@ -123,15 +178,29 @@ export function ModuleView({
     if (!selectedModule) return
 
     try {
-      await createModule({
-        ...data,
-        trainingId: params.trainingId as string,
-        moduleId: selectedModule.id
-      })
+      if (isEditingSubModule) {
+        // Update existing sub-module
+        await updateModule({
+          moduleId: selectedModule.id,
+          data: {
+            ...data,
+            trainingId: params.trainingId as string,
+          }
+        })
+      } else {
+        // Create new sub-module
+        await createModule({
+          ...data,
+          trainingId: params.trainingId as string,
+          moduleId: selectedModule.id
+        })
+      }
+      
       setShowSubModuleModal(false)
       setSelectedModule(null)
+      setIsEditingSubModule(false)
     } catch (error) {
-      console.error("Failed to create sub-module:", error)
+      console.error("Failed to manage sub-module:", error)
     }
   }
 
@@ -140,9 +209,10 @@ export function ModuleView({
       <div 
         className="flex items-center gap-3 flex-1 cursor-pointer" 
         onClick={(e) => {
-          e.preventDefault()
-          e.stopPropagation()
-          router.push(`/${params.companyId}/training/${params.trainingId}/${module.id}?tab=information`)
+          // Prevent this click from affecting the accordion state
+          e.preventDefault();
+          e.stopPropagation();
+          router.push(`/${params.companyId}/training/${params.trainingId}/${module.id}?tab=information`);
         }}
       >
         <span className="font-semibold text-md md:text-xl">
@@ -169,7 +239,13 @@ export function ModuleView({
             </DropdownMenuContent>
           </DropdownMenu>
         )}
-        <AccordionTrigger className="p-1 hover:bg-gray-100 rounded-md data-[state=open]:rotate-180 transition-transform">
+        <AccordionTrigger 
+          className="p-1 hover:bg-gray-100 rounded-md data-[state=open]:rotate-180 transition-transform"
+          onClick={(e) => {
+            // Explicitly handle the accordion state change
+            e.stopPropagation();
+          }}
+        >
           <ChevronDown className="h-5 w-5 text-black" />
         </AccordionTrigger>
       </div>
@@ -183,12 +259,25 @@ export function ModuleView({
     console.log('Sub module lessons:', subModuleLessons)
 
     const moduleLessons = isSubModule ? subModuleLessons : mainModuleLessons
+    const isLoading = isSubModule ? isSubModuleLessonsLoading : isMainModuleLessonsLoading
+    
+    if (isLoading) {
+      return (
+        <div className="flex items-center justify-center p-4 bg-gray-50/50 rounded-md">
+          <div className="animate-pulse flex space-x-2">
+            <div className="h-2 w-2 bg-gray-400 rounded-full"></div>
+            <div className="h-2 w-2 bg-gray-400 rounded-full"></div>
+            <div className="h-2 w-2 bg-gray-400 rounded-full"></div>
+          </div>
+        </div>
+      )
+    }
     
     if (!moduleLessons || moduleLessons.length === 0) {
       return (
         <div className="flex items-center gap-2 p-4 bg-gray-50/50 rounded-md text-gray-500">
           <Ban className="h-4 w-4" />
-          <span>No lessons added yet</span>
+          <span>No {isSubModule ? 'sub-module' : 'module'} lessons added yet</span>
         </div>
       )
     }
@@ -239,18 +328,51 @@ export function ModuleView({
         </div>
       )
     })
-  }, [mainModuleLessons, subModuleLessons, canEdit, handleEditLesson])
+  }, [mainModuleLessons, subModuleLessons, isMainModuleLessonsLoading, isSubModuleLessonsLoading, canEdit, handleEditLesson])
 
   const renderSubModules = useCallback((module: Module) => {
-    if (!moduleDetails || moduleDetails.module.id !== module.id) return null
-
+    // If we're still loading module details, show a loading indicator
+    if (isModuleDetailsLoading) {
+      return (
+        <div className="ml-8 pl-4 mb-4">
+          <div className="flex items-center gap-2 p-4 bg-gray-50/50 rounded-md text-gray-500">
+            <span>Loading sub-modules...</span>
+          </div>
+        </div>
+      );
+    }
+    
+    // If no module details, don't render
+    if (!moduleDetails) {
+      return null;
+    }
+    
+    // No need to check module ID here since we're using the current moduleId
+    
+    // If no child modules, show a message
+    if (!moduleDetails.module.childModules || moduleDetails.module.childModules.length === 0) {
+      return (
+        <div className="ml-8 pl-4 mb-4">
+          <div className="flex items-center gap-2 p-4 bg-gray-50/50 rounded-md text-gray-500">
+            <Ban className="h-4 w-4" />
+            <span>No sub-modules added yet</span>
+          </div>
+        </div>
+      );
+    }
+    
     return moduleDetails.module.childModules.map((subModule, index) => {
       const isExpanded = expandedSubModules.includes(subModule.id)
 
       return (
         <div key={subModule.id} className="ml-8 border-l-2 border-gray-200 pl-4 mb-4">
           <div className="flex items-center justify-between bg-gray-50 p-4 rounded-lg cursor-pointer hover:bg-gray-100">
-            <div className="flex items-center gap-2 flex-1" onClick={(e) => handleSubModuleClick(subModule, e)}>
+            <div className="flex items-center gap-2 flex-1" 
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                router.push(`/${params.companyId}/training/${params.trainingId}/${subModule.id}?tab=information`)
+              }}>
               <span className="font-medium">
                 Sub-module {index + 1} - {subModule.name}
               </span>
@@ -267,6 +389,28 @@ export function ModuleView({
               >
                 Add Lesson
               </Button>
+              {canEdit && (
+                <DropdownMenu modal={false}>
+                  <DropdownMenuTrigger asChild>
+                    <div 
+                      role="button"
+                      tabIndex={0}
+                      className="hover:bg-gray-100 h-8 w-8 p-0 rounded-md flex items-center justify-center cursor-pointer"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <MoreVertical className="h-4 w-4" />
+                    </div>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={(e) => {
+                      e.stopPropagation()
+                      handleSubModuleClick(subModule, e, true)
+                    }}>
+                      Edit
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
               <div
                 role="button"
                 className="p-1 hover:bg-gray-100 rounded-md transition-transform"
@@ -278,13 +422,14 @@ export function ModuleView({
           </div>
           {isExpanded && (
             <div className="mt-2 space-y-2 pl-4">
+              <h3 className="font-medium text-gray-700 mb-2">Lessons for Sub-Module</h3>
               {renderLessons(subModule.id, true)}
             </div>
           )}
         </div>
       )
     })
-  }, [moduleDetails, expandedSubModules, handleSubModuleClick, handleLessonClick, handleSubModuleExpand, renderLessons])
+  }, [moduleDetails, expandedModules, expandedSubModules, handleSubModuleClick, handleLessonClick, handleSubModuleExpand, renderLessons, canEdit, router, params, isModuleDetailsLoading])
 
   if (error) {
     return <div className="text-red-500">Error loading modules: {error.message}</div>
@@ -303,17 +448,18 @@ export function ModuleView({
       <div className="space-y-4">
         <Accordion
           type="single"
-          collapsible
+          collapsible={true}
           defaultValue=""
           className="space-y-4"
           onValueChange={handleAccordionChange}
-          value={expandedModules[0]}
+          value={expandedModules[0] || ""}
         >
           {modules.map((module, index) => (
             <AccordionItem
               key={module.id}
               value={module.id}
               className="border-[0.5px] border-[#CED4DA] rounded-md"
+              data-module-id={module.id}
             >
               {renderHeader(module.name, index, module)}
               <AccordionContent>
@@ -335,6 +481,19 @@ export function ModuleView({
                         </div>
 
                         <div
+                          onClick={(e) => handleLessonClick(module, e)}
+                          className="inline-flex font-semibold items-center gap-2 text-brand hover:text-blue-600 hover:bg-blue-50 px-3 py-2 rounded-md cursor-pointer"
+                        >
+                          <Image
+                            src="/modulePlus.svg"
+                            alt="Add Lesson"
+                            width={16}
+                            height={20}
+                          />
+                          <span>Add Lesson</span>
+                        </div>
+
+                        <div
                           onClick={(e) => handleSubModuleClick(module, e)}
                           className="inline-flex font-semibold items-center gap-2 text-brand hover:text-blue-600 hover:bg-blue-50 px-3 py-2 rounded-md cursor-pointer"
                         >
@@ -346,6 +505,31 @@ export function ModuleView({
                           />
                           <span>Sub Module</span>
                         </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Display main module lessons */}
+                  {expandedModules.includes(module.id) && (
+                    <div className="mt-4 mb-6 mx-6 space-y-2">
+                      <h3 className="font-medium text-gray-700 mb-2">Lessons for Module</h3>
+                      <div className="space-y-2">
+                        {isMainModuleLessonsLoading ? (
+                          <div className="flex items-center justify-center p-4 bg-gray-50/50 rounded-md">
+                            <div className="animate-pulse flex space-x-2">
+                              <div className="h-2 w-2 bg-gray-400 rounded-full"></div>
+                              <div className="h-2 w-2 bg-gray-400 rounded-full"></div>
+                              <div className="h-2 w-2 bg-gray-400 rounded-full"></div>
+                            </div>
+                          </div>
+                        ) : mainModuleLessons && mainModuleLessons.length > 0 ? (
+                          renderLessons(module.id, false)
+                        ) : (
+                          <div className="flex items-center gap-2 p-4 bg-gray-50/50 rounded-md text-gray-500">
+                            <Ban className="h-4 w-4" />
+                            <span>No module lessons added yet</span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
@@ -380,21 +564,23 @@ export function ModuleView({
         onClose={() => {
           setShowSubModuleModal(false)
           setSelectedModule(null)
+          setIsEditingSubModule(false)
         }}
         onSubmit={handleCreateSubModule}
-        isLoading={isCreating}
+        isLoading={isCreating || isUpdating}
         mode="submodule"
+        editData={isEditingSubModule ? selectedModule : null}
       />
 
       {selectedModule && (
-        <LessonAddModal 
+        <LessonAddModal
           isOpen={showLessonModal}
           onClose={() => {
             setShowLessonModal(false)
             setSelectedModule(null)
             setSelectedLesson(null)
           }}
-          moduleId={selectedModule.id}
+          moduleId={selectedModule?.id || ""}
           initialData={selectedLesson as LessonFormData}
           isEdit={!!selectedLesson}
         />

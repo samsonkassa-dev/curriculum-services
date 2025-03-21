@@ -23,8 +23,8 @@ export function ModuleTabs({ activeTab, onTabChange }: ModuleTabsProps) {
     {
       id: "assessment-method",
       label: "Assessment Methods",
-      src: "/assessment.svg",
-      srcActive: "/assessment-active.svg",
+      src: "/curriculum.svg",
+      srcActive: "/curriculum_active.svg",
     },
     {
       id: "content",
@@ -36,7 +36,7 @@ export function ModuleTabs({ activeTab, onTabChange }: ModuleTabsProps) {
 
   return (
     <div className="w-full overflow-x-auto scrollbar-hide">
-      <div className="flex my-14 min-w-max gap-8 border-b-[0.5px] border-[#CED4DA] mb-6 px-[7%]">
+      <div className="flex my-9 min-w-max gap-8 border-b-[0.5px] border-[#CED4DA] mb-6 px-[7%]">
         {tabs.map((tab) => (
           <button
             key={tab.id}

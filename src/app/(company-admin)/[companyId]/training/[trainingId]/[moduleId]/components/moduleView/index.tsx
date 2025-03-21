@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/accordion"
 import { Button } from "@/components/ui/button"
 import { ModuleAddModal } from "../moduleAddModal"
-import { LessonAddModal } from "../section/lessonAddModal"
+import { LessonAddModal } from "../lessonAddModal"
 import { useCreateModule, useModules } from "@/lib/hooks/useModule"
 import { useGetLessons } from "@/lib/hooks/useLesson"
 import { ModuleHeader } from "./ModuleHeader"

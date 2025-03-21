@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { OutlineSidebar } from "@/components/ui/outline-sidebar"
 import { KeyConcepts } from "./moduleInformation/key-concepts"
 import { LearningResource } from "./moduleInformation/learning-resource"
@@ -13,9 +13,55 @@ import { Title } from "./moduleInformation/title"
 import { TeachingStrategies } from "./moduleInformation/teaching-strategies"
 import { InclusionStrategies } from "./moduleInformation/inclusion-strategies"
 import { EstimatedDurations } from "./moduleInformation/estimated-durations"
+import { ModuleReferences, ModuleReferencesHandle } from "./moduleInformation/references"
+import { ModuleAppendices, ModuleAppendicesHandle } from "./moduleInformation/appendices"
+import { useQuery } from "@tanstack/react-query"
+import axios from "axios"
+import { useParams } from "next/navigation"
+import { toast } from "sonner"
 
 interface ModuleInformationProps {
   moduleId: string
+}
+
+// Custom hook to check if a module has references
+function useHasModuleReferences(moduleId: string) {
+  return useQuery({
+    queryKey: ['moduleReferencesCheck', moduleId],
+    queryFn: async () => {
+      const token = localStorage.getItem('auth_token')
+      const { data } = await axios.get(
+        `${process.env.NEXT_PUBLIC_API}/module/reference/${moduleId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      )
+      return data?.references?.length > 0 || false
+    },
+    enabled: !!moduleId,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    refetchOnWindowFocus: false
+  })
+}
+
+// Custom hook to check if a module has appendices
+function useHasModuleAppendices(moduleId: string) {
+  return useQuery({
+    queryKey: ['moduleAppendicesCheck', moduleId],
+    queryFn: async () => {
+      const token = localStorage.getItem('auth_token')
+      const { data } = await axios.get(
+        `${process.env.NEXT_PUBLIC_API}/module/appendix/${moduleId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      )
+      return data?.appendices?.length > 0 || false
+    },
+    enabled: !!moduleId,
+    staleTime: 1000 * 60 * 5, // 5 minutes
+    refetchOnWindowFocus: false
+  })
 }
 
 export function ModuleInformation({ moduleId }: ModuleInformationProps) {
@@ -26,7 +72,9 @@ export function ModuleInformation({ moduleId }: ModuleInformationProps) {
     "Title",
     "Inclusion Strategies",
     "Teaching Strategies",
-    "Estimated Duration"
+    "Estimated Duration",
+    "References",
+    "Appendices"
   ]
 
   return (
@@ -52,9 +100,17 @@ function ModuleInformationContent({
   const { formData, submitForm } = useModuleInformation()
   const { data: instructionalMethods, isLoading: instructionalMethodsLoading } = useBaseData('instructional-method')
   const { data: technologyIntegrations, isLoading: technologyIntegrationsLoading } = useBaseData('technology-integration')
+  const params = useParams()
+  const currentModuleId = params.moduleId as string
+  const { data: hasReferences = false } = useHasModuleReferences(currentModuleId)
+  const { data: hasAppendices = false } = useHasModuleAppendices(currentModuleId)
   const [isMobile, setIsMobile] = useState(false)
   const [showSidebar, setShowSidebar] = useState(true)
   const [completedSteps, setCompletedSteps] = useState<string[]>([])
+
+  // References for the component instances
+  const referencesRef = useRef<ModuleReferencesHandle>(null);
+  const appendicesRef = useRef<ModuleAppendicesHandle>(null);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -118,7 +174,10 @@ function ModuleInformationContent({
           formData.duration > 0 && 
           formData.durationType !== undefined
         )
-
+      case "References":
+        return hasReferences
+      case "Appendices":
+        return hasAppendices
       default:
         return false
     }
@@ -138,7 +197,6 @@ function ModuleInformationContent({
           label: "Learning Resource", 
           isCompleted: isStepCompleted("Learning Resource") 
         },
-
       ]
     },
     {
@@ -153,6 +211,13 @@ function ModuleInformationContent({
       title: "Time Frame and Pacing Guide",
       items: [
           { label: "Estimated Duration", isCompleted: isStepCompleted("Estimated Duration") },
+      ]
+    },
+    {
+      title: "Additional Materials",
+      items: [
+          { label: "References", isCompleted: isStepCompleted("References") },
+          { label: "Appendices", isCompleted: isStepCompleted("Appendices") },
       ]
     }
   ]
@@ -174,6 +239,10 @@ function ModuleInformationContent({
         return <InclusionStrategies />
       case "Estimated Duration":
         return <EstimatedDurations />
+      case "References":
+        return <ModuleReferences ref={referencesRef} />
+      case "Appendices":
+        return <ModuleAppendices ref={appendicesRef} />
       default:
         return null
     }
@@ -183,11 +252,45 @@ function ModuleInformationContent({
 
   const handleNext = async () => {
     const currentIndex = sections.indexOf(activeSection)
-    if (isLastStep) {
-      await submitForm()
-    } else {
-      setCompletedSteps(prev => [...prev, activeSection])
-      setActiveSection(sections[currentIndex + 1])
+    const nextIndex = currentIndex + 1
+    const nextSection = sections[nextIndex]
+    
+    try {
+      // Case 1: Last step (Appendices)
+      if (isLastStep) {
+        if (activeSection === "Appendices" && appendicesRef.current) {
+          await appendicesRef.current.handleSave();
+          toast.success('Module information completed successfully')
+        }
+      } 
+      // Case 2: Going from Estimated Duration to References - save all module information
+      else if (activeSection === "Estimated Duration" && nextSection === "References") {
+        await submitForm() // Submit all module information at this point
+        setCompletedSteps(prev => [...prev, activeSection])
+        setActiveSection(nextSection)
+      }
+      // Case 3: References section - save references and move to Appendices
+      else if (activeSection === "References" && referencesRef.current) {
+        await referencesRef.current.handleSave();
+        setCompletedSteps(prev => [...prev, activeSection])
+        setActiveSection(nextSection)
+      }
+      // Case 4: Normal navigation within main module information
+      else if (sections.indexOf(activeSection) < sections.indexOf("References")) {
+        // For normal navigation between main module information sections,
+        // just move to the next section without saving
+        setCompletedSteps(prev => [...prev, activeSection])
+        setActiveSection(nextSection)
+      }
+      // Case 5: Appendices - should never happen as it's handled in Case 1
+      else if (activeSection === "Appendices" && appendicesRef.current) {
+        await appendicesRef.current.handleSave();
+        setCompletedSteps(prev => [...prev, activeSection])
+        setActiveSection(nextSection)
+      }
+    } catch (error) {
+      console.error("Error saving form:", error);
+      // Error handling is done inside each handler
     }
   }
 

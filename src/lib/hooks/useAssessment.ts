@@ -24,12 +24,12 @@ interface AssessmentPayload {
   subjectSpecificAssessmentMethod?: string
 }
 
-export function useSubmitAssessment(sectionId: string) {
+export function useSubmitAssessment(moduleId: string) {
   return useMutation({
     mutationFn: async (data: AssessmentPayload) => {
       const token = localStorage.getItem('auth_token')
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API}/section/add-assessment-methods/${sectionId}`,
+        `${process.env.NEXT_PUBLIC_API}/module/add-assessment-methods/${moduleId}`,
         data,
         {
           headers: { Authorization: `Bearer ${token}` }
@@ -48,13 +48,13 @@ export function useSubmitAssessment(sectionId: string) {
   })
 }
 
-export function useGetAssessment(sectionId: string) {
+export function useGetAssessment(moduleId: string) {
   return useQuery({
-    queryKey: ['assessment', sectionId],
+    queryKey: ['assessment', moduleId],
     queryFn: async () => {
       const token = localStorage.getItem('auth_token')
       const response = await axios.get<AssessmentResponse>(
-        `${process.env.NEXT_PUBLIC_API}/section/assessment-method/${sectionId}`,
+        `${process.env.NEXT_PUBLIC_API}/module/assessment-method/${moduleId}`,
         {
           headers: { Authorization: `Bearer ${token}` }
         }
