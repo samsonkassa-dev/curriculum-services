@@ -17,22 +17,36 @@ interface UserProfile {
 interface ApiResponse {
   code: string;
   message: string;
-  companyAdmin: UserProfile;
+  user: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    phoneNumber: string | null;
+    email: string;
+    role: {
+      name: string;
+      colorCode: string;
+    };
+    profilePictureUrl: string | null;
+    deactivated: boolean;
+    phoneVerified: boolean;
+    emailVerified: boolean;
+  };
 }
 
-export function useUserProfile({ enabled = false }) {
+export function useUserProfile({ enabled = true }) {
   return useQuery({
     queryKey: ['userProfile'],
     queryFn: async () => {
       try {
         const token = localStorage.getItem('auth_token')
         const response = await axios.get<ApiResponse>(
-          `${process.env.NEXT_PUBLIC_API || 'http://164.90.209.220:8081/api'}/company-admin/me`,
+          `${process.env.NEXT_PUBLIC_API}/user/me`,
           {
             headers: { Authorization: `Bearer ${token}` }
           }
         )
-        return response.data.companyAdmin
+        return response.data.user
       } catch (error) {
         if (axios.isAxiosError(error)) {
           const message = error.response?.data?.message || 'Failed to fetch user profile'

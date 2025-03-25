@@ -4,15 +4,12 @@
 import React from "react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Button } from "@/components/ui/button"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import Image from "next/image"
 
-interface FilterAttribute {
-  id: string
-  label: string
-}
+
 
 interface FilterProps {
   statusOptions?: { id: string; label: string }[]
@@ -40,12 +37,15 @@ export function Filter({
   const [selectedAttributes, setSelectedAttributes] = React.useState<string[]>(
     defaultSelected.attributes || []
   )
+  
+  const [open, setOpen] = React.useState(false)
 
   const handleApply = () => {
     onApply({
       selectedAttributes,
       selectedStatus,
     })
+    setOpen(false)
   }
 
   const handleAttributeToggle = (checked: boolean, id: string) => {
@@ -55,7 +55,7 @@ export function Filter({
   }
 
   return (
-    <Popover>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
@@ -118,7 +118,6 @@ export function Filter({
                       checked={selectedStatus === status.id}
                       onCheckedChange={(checked) => {
                         setSelectedStatus(checked ? status.id : undefined)
-                        handleApply()
                       }}
                       className="h-5 w-5 rounded-[4px] border-gray-300 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
                     />

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -83,6 +83,18 @@ export function EditProfileModal({
       phoneNumber: profile.data.phoneNumber?.slice(4) || '',
     } : undefined,
   })
+
+  // Reset form when profile data changes
+  useEffect(() => {
+    if (profile.data) {
+      resetProfile({
+        firstName: profile.data.firstName,
+        lastName: profile.data.lastName,
+        email: profile.data.email,
+        phoneNumber: profile.data.phoneNumber?.slice(4) || '',
+      })
+    }
+  }, [profile.data, resetProfile])
 
   // Password form
   const {
@@ -210,8 +222,10 @@ export function EditProfileModal({
                           <img
                             src={profile.data.profilePictureUrl}
                             alt="Profile"
-                            className="w-10 h-10 object-cover"
-                            onError={handleImageError}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.src = '/camera.svg'
+                            }}
                           />
                         ) : (
                           <img src="/camera.svg" alt="Upload" className="w-8 h-8" />

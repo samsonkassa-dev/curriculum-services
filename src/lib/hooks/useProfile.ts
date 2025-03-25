@@ -72,10 +72,11 @@ export function useProfile() {
       );
       return response.data.user;
     },
-    enabled: false,
-    refetchOnWindowFocus: false,
+    staleTime: Infinity, // Data never goes stale automatically
+    gcTime: Infinity,    // Cache never expires
     refetchOnMount: false,
-    gcTime: 30 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false
   });
 
   // Profile Picture Upload Mutation
@@ -125,8 +126,17 @@ export function useProfile() {
       );
       return response.data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["user-profile"] });
+    onSuccess: (_, variables) => {
+      // Update the cache with new data
+      queryClient.setQueryData(['user-profile'], (old: User | null) => {
+        if (!old) return old;
+        return {
+          ...old,
+          firstName: variables.firstName,
+          lastName: variables.lastName,
+          phoneNumber: variables.phoneNumber,
+        };
+      });
       toast.success("Profile updated successfully");
     },
     onError: (error: any) => {
