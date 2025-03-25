@@ -29,7 +29,7 @@ const adminNavItems = [
   },
   {
     icon: <img src="/settings.svg" alt="icon" width={19} height={19} />,
-    href: "/unauthorized",
+    href: "/settings",
     label: "Settings",
   },
 ];

@@ -22,8 +22,7 @@ interface BaseItem {
 
 export function CreateTrainingStep3({ onNext, onBack, initialData }: StepProps) {
   const { data: trainingTypes, isLoading: isLoadingTrainingTypes } = useBaseData('training-type')
-  const { data: trainingPurposes, isLoading: isLoadingTrainingPurposes } = useBaseData('training-purpose')
-  const [openPurposes, setOpenPurposes] = useState(false)
+
 
   const {
     register,
@@ -37,17 +36,17 @@ export function CreateTrainingStep3({ onNext, onBack, initialData }: StepProps) 
       duration: initialData?.duration || undefined,
       durationType: initialData?.durationType || 'DAYS',
       trainingTypeId: initialData?.trainingTypeId || '',
-      trainingPurposeIds: initialData?.trainingPurposeIds || []
+      //trainingPurposeIds: initialData?.trainingPurposeIds || []
     }
   })
 
   const duration = watch('duration')
   const durationType = watch('durationType')
   const trainingTypeId = watch('trainingTypeId')
-  const trainingPurposeIds = watch('trainingPurposeIds')
+  //const trainingPurposeIds = watch('trainingPurposeIds')
 
   const safeTrainingTypes = trainingTypes || []
-  const safeTrainingPurposes = trainingPurposes || []
+
 
   const handleDurationTypeChange = (value: "DAYS" | "WEEKS" | "MONTHS" | "HOURS") => {
     setValue('durationType', value, { shouldValidate: true })
@@ -57,14 +56,7 @@ export function CreateTrainingStep3({ onNext, onBack, initialData }: StepProps) 
     setValue('trainingTypeId', value, { shouldValidate: true })
   }
 
-  const handleSelectPurpose = (purposeId: string) => {
-    const currentPurposes = trainingPurposeIds || []
-    const newPurposes = currentPurposes.includes(purposeId)
-      ? currentPurposes.filter(id => id !== purposeId)
-      : [...currentPurposes, purposeId]
-    
-    setValue('trainingPurposeIds', newPurposes, { shouldValidate: true })
-  }
+
 
   const onSubmit = (data: DurationFormData) => {
     onNext(data)
@@ -139,60 +131,6 @@ export function CreateTrainingStep3({ onNext, onBack, initialData }: StepProps) 
           )}
         </div>
 
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Training Purposes</label>
-          <Popover open={openPurposes} onOpenChange={setOpenPurposes}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                className="w-full justify-between py-6"
-                disabled={isLoadingTrainingPurposes}
-                type="button"
-              >
-                <div className="flex flex-wrap gap-1">
-                  {trainingPurposeIds?.length > 0 ? (
-                    trainingPurposeIds.map(id => {
-                      const purpose = safeTrainingPurposes.find((p: BaseItem) => p.id === id)
-                      return (
-                        <Badge key={id} variant="pending">
-                          {purpose?.name}
-                        </Badge>
-                      )
-                    })
-                  ) : (
-                    "Select training purposes..."
-                  )}
-                </div>
-                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-full p-0">
-              <div className="max-h-[300px] overflow-auto">
-                {safeTrainingPurposes.map((purpose: BaseItem) => (
-                  <div
-                    key={purpose.id}
-                    className={cn(
-                      "flex items-center px-4 py-2 text-sm cursor-pointer hover:bg-gray-100",
-                      trainingPurposeIds?.includes(purpose.id) && "bg-gray-100"
-                    )}
-                    onClick={() => handleSelectPurpose(purpose.id)}
-                  >
-                    <Check
-                      className={cn(
-                        "mr-2 h-4 w-4",
-                        trainingPurposeIds?.includes(purpose.id) ? "opacity-100" : "opacity-0"
-                      )}
-                    />
-                    {purpose.name}
-                  </div>
-                ))}
-              </div>
-            </PopoverContent>
-          </Popover>
-          {errors.trainingPurposeIds && (
-            <p className="text-sm text-red-500">{errors.trainingPurposeIds.message}</p>
-          )}
-        </div>
 
         <div className="flex justify-between pt-8">
           <Button onClick={onBack} variant="outline" type="button">
@@ -201,7 +139,7 @@ export function CreateTrainingStep3({ onNext, onBack, initialData }: StepProps) 
           <Button 
             onClick={handleSubmit(onSubmit)}
             className="bg-blue-500 text-white px-8"
-            disabled={!duration || !durationType || !trainingTypeId || !trainingPurposeIds?.length}
+            disabled={!duration || !durationType || !trainingTypeId }
             type="button"
           >
             Continue

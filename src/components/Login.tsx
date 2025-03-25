@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { ApiError } from '@/types/auth';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic'
+import Link from 'next/link';
 
 interface GoogleTokenResponse {
   access_token: string;
@@ -137,12 +138,12 @@ export default function Login() {
               )}
 
               <div className="text-right">
-                <a
-                  href="#"
+                <Link
+                  href="/forgotPassword"
                   className="text-sm font-normal text-brand hover:underline"
                 >
                   Forgot password?
-                </a>
+                </Link>
               </div>
 
               <form onSubmit={handleLogin}>

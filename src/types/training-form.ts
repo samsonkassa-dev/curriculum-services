@@ -20,7 +20,7 @@ export const durationSchema = z.object({
   duration: z.number().min(1, "Duration must be at least 1"),
   durationType: z.enum(["DAYS", "WEEKS", "MONTHS", "HOURS"]),
   trainingTypeId: z.string().min(1, "Training type is required"),
-  trainingPurposeIds: z.array(z.string()).min(1, "At least one training purpose is required")
+  //trainingPurposeIds: z.array(z.string()).min(1, "At least one training purpose is required")
 })
 
 export type DurationFormData = z.infer<typeof durationSchema>
