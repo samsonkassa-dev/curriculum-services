@@ -1,12 +1,14 @@
 "use client"
 
 import { cn } from "@/lib/utils"
+import { BaseDataType } from "@/types/base-data"
 
 interface Tab {
-  id: string
+  id: BaseDataType
   name: string
 }
 
+// Create a map from type to display name
 const tabs: Tab[] = [
   { id: "academic-level", name: "Academic Level" },
   { id: "academic-qualification", name: "Academic Qualification" },
@@ -28,6 +30,11 @@ const tabs: Tab[] = [
   { id: "technological-requirement", name: "Technological Requirement" },
   { id: "technology-integration", name: "Technology Integration" },
   { id: "training-purpose", name: "Training Purpose" },
+  { id: "work-experience", name: "Work Experience" },
+  { id: "trainer-requirement", name: "Trainer Requirement" },
+  { id: "disability", name: "Disability" },
+  { id: "marginalized-group", name: "Marginalized Group" },
+  { id: "training-type", name: "Training Type" },
 ]
 
 interface SidebarTabsProps {

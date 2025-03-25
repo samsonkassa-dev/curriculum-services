@@ -9,6 +9,12 @@ import { BaseData } from "../columns"
 import { useBaseData } from "@/lib/hooks/useBaseData"
 import { BaseDataType } from "@/types/base-data"
 
+// Constants
+const ICON_PATHS = {
+  EDIT: "/edit.svg",
+  DELETE: "/delete.svg",
+};
+
 export function ActionCell({ row, activeTab }: { row: any; activeTab: string }) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [showEditDialog, setShowEditDialog] = useState(false)
@@ -34,7 +40,7 @@ export function ActionCell({ row, activeTab }: { row: any; activeTab: string }) 
           onClick={() => setShowEditDialog(true)}
         >
           <span className="sr-only">Edit</span>
-          <img src="/edit.svg" alt="Edit" className="h-6 w-6" />
+          <img src={ICON_PATHS.EDIT} alt="Edit" className="h-6 w-6" />
         </Button>
         <Button 
           variant="ghost" 
@@ -42,7 +48,7 @@ export function ActionCell({ row, activeTab }: { row: any; activeTab: string }) 
           onClick={() => setShowDeleteDialog(true)}
         >
           <span className="sr-only">Delete</span>
-          <img src="/delete.svg" alt="Delete" className="h-6 w-6" />
+          <img src={ICON_PATHS.DELETE} alt="Delete" className="h-6 w-6" />
         </Button>
       </div>
 

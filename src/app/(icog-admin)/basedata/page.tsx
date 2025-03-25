@@ -11,6 +11,9 @@ import { Button } from "@/components/ui/button"
 import { X, Menu } from "lucide-react"
 import { cn } from "@/lib/utils"
 
+// Constants
+const NEW_ITEM_HIGHLIGHT_DURATION = 2000; // milliseconds
+
 export default function BaseData() {
   const [activeTab, setActiveTab] = useState<BaseDataType>("education-level")
   const [newItemId, setNewItemId] = useState<string | undefined>()
@@ -38,7 +41,7 @@ export default function BaseData() {
       onSuccess: (response) => {
         if (response?.id) {
           setNewItemId(response.id);
-          setTimeout(() => setNewItemId(undefined), 2000);
+          setTimeout(() => setNewItemId(undefined), NEW_ITEM_HIGHLIGHT_DURATION);
         }
       }
     });

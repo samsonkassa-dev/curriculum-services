@@ -24,6 +24,10 @@ import { useState } from "react"
 import { Loader2, ChevronLeftIcon, ChevronRightIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 
+// Constants
+const PAGE_SIZES = [5, 10, 20, 30, 50];
+const DEFAULT_PAGE_SIZE = 5;
+
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
@@ -47,7 +51,7 @@ function PaginationControls({ table, data }: { table: any, data: any[] }) {
           className="border rounded-md md:text-sm text-xs px-2 py-1 bg-white"
           title="Page Size"
         >
-          {[5, 10, 20, 30, 50].map(size => (
+          {PAGE_SIZES.map(size => (
             <option key={size} value={size}>{size}</option>
           ))}
         </select>
@@ -115,7 +119,7 @@ export function DataTable<TData, TValue>({
     },
     initialState: {
       pagination: {
-        pageSize: 5,
+        pageSize: DEFAULT_PAGE_SIZE,
       },
     },
   })

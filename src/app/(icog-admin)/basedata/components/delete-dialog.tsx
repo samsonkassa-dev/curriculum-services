@@ -12,6 +12,9 @@ import {
 } from "@/components/ui/alert-dialog"
 import Image from "next/image"
 
+// Constants
+const DELETE_ICON_PATH = "/dialogdelete.svg";
+
 interface DeleteDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -24,7 +27,7 @@ export function DeleteDialog({ open, onOpenChange, onConfirm, loading }: DeleteD
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <div className="relative w-full h-10">
-          <Image src="/dialogdelete.svg" alt="Delete" fill objectFit="contain" />
+          <Image src={DELETE_ICON_PATH} alt="Delete" fill objectFit="contain" />
         </div>
         <AlertDialogHeader>
           <AlertDialogTitle className="text-center">Are you sure you want to delete this?</AlertDialogTitle>
