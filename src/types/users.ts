@@ -2,7 +2,7 @@ export interface IndividualUser {
   id: string;
   fullName: string;
   email: string;
-  status: 'Active' | 'Deactivated';
+  deactivated: boolean;
   role: Role;
 }
 

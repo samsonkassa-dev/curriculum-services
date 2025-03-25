@@ -32,13 +32,13 @@ export const individualColumns: ColumnDef<IndividualUser>[] = [
     header: "E-mail",
   },
   {
-    accessorKey: "status",
+    accessorKey: "deactivated",
     header: "Status",
     cell: ({ row }) => {
-      const status = row.getValue<string>("status").toLowerCase()
+      const status = row.original.deactivated
       return (
-        <Badge variant={status as "active" | "deactivated"}>
-          {row.getValue<string>("status")}
+        <Badge variant={status ? "deactivated" : "active"}>
+          {status ? "Deactivated" : "Active"}
         </Badge>
       )
     }
@@ -71,7 +71,7 @@ export const companyColumns: ColumnDef<CompanyFilesType>[] = [
     header: "Company Name",
     cell: ({ row }) => {
       const name = row.original.name
-      const firstLetter = name.charAt(0).toUpperCase()
+ 
       
       return (
         <div className="flex items-center gap-3">

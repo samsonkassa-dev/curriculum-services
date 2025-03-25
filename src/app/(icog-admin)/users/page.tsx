@@ -62,7 +62,7 @@ export default function Users() {
       id: admin.id,
       fullName: `${admin.firstName} ${admin.lastName}`,
       email: admin.email,
-      status: admin.emailVerified ? "Active" : "Deactivated" as "Active" | "Deactivated",
+      deactivated: admin.deactivated,
       role: admin.role,
     }));
 

@@ -21,6 +21,7 @@ export interface CompanyAdmin {
   profilePictureUrl: string | null
   emailVerified: boolean
   phoneVerified: boolean
+  deactivated: boolean
 }
 
 interface CompanyAdminsResponse {
