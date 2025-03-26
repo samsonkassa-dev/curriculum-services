@@ -13,6 +13,7 @@ const tabs: Tab[] = [
   { id: "academic-level", name: "Academic Level" },
   { id: "academic-qualification", name: "Academic Qualification" },
   { id: "age-group", name: "Age Group" },
+  { id: "alignment-standard", name: "Alignment Standard" },
   { id: "assessment-type", name: "Assessment Type" },
   { id: "business-type", name: "Business Type" },
   { id: "city", name: "City" },

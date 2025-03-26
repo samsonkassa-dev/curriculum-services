@@ -18,10 +18,32 @@ import { useBaseData } from "@/lib/hooks/useBaseData"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { BaseDataOptions } from "@/types/base-data"
 
+// Constants
+const REQUIREMENT_TYPES = [
+  { value: "LEARNER", label: "Learner" },
+  { value: "INSTRUCTOR", label: "Instructor" }
+];
+
 interface AddDataDialogProps {
-  onAddData?: (data: { name: string; description: string; countryId?: string }) => void;
-  onUpdateData?: (data: { name: string; description: string; countryId?: string }) => void;
-  initialData?: BaseDataItem & { countryId?: string };
+  onAddData?: (data: { 
+    name: string; 
+    description: string; 
+    countryId?: string;
+    range?: string;
+    technologicalRequirementType?: string;
+  }) => void;
+  onUpdateData?: (data: { 
+    name: string; 
+    description: string; 
+    countryId?: string;
+    range?: string;
+    technologicalRequirementType?: string;
+  }) => void;
+  initialData?: BaseDataItem & { 
+    countryId?: string;
+    range?: string;
+    technologicalRequirementType?: string;
+  };
   isLoading?: boolean;
   mode?: 'add' | 'edit';
   open?: boolean;
@@ -42,6 +64,8 @@ export function AddDataDialog({
   const [name, setName] = useState(initialData?.name || "")
   const [description, setDescription] = useState(initialData?.description || "")
   const [countryId, setCountryId] = useState(initialData?.countryId || "")
+  const [range, setRange] = useState(initialData?.range || "")
+  const [requirementType, setRequirementType] = useState(initialData?.technologicalRequirementType || "LEARNER")
   const [dialogOpen, setDialogOpen] = useState(false)
 
   // Fetch countries if we're adding/editing a city
@@ -55,7 +79,9 @@ export function AddDataDialog({
     const data = {
       name,
       description,
-      ...(type === 'city' && { countryId })
+      ...(type === 'city' && { countryId }),
+      ...(type === 'age-group' && { range }),
+      ...(type === 'technological-requirement' && { technologicalRequirementType: requirementType })
     }
 
     if (mode === 'edit' && onUpdateData) {
@@ -64,6 +90,14 @@ export function AddDataDialog({
       onAddData(data)
     }
     actualOnOpenChange(false)
+  }
+
+  const isSubmitDisabled = () => {
+    if (isLoading) return true;
+    if (type === 'city' && !countryId) return true;
+    if (type === 'age-group' && !range) return true;
+    if (!name || !description) return true;
+    return false;
   }
 
   return (
@@ -110,6 +144,37 @@ export function AddDataDialog({
             </div>
           )}
 
+          {type === 'age-group' && (
+            <div className="grid gap-2 px-5">
+              <Label htmlFor="range">Age Range</Label>
+              <Input
+                id="range"
+                value={range}
+                onChange={(e) => setRange(e.target.value)}
+                placeholder="Enter age range (e.g. 18-24)"
+                className="h-9"
+              />
+            </div>
+          )}
+
+          {type === 'technological-requirement' && (
+            <div className="grid gap-2 px-5">
+              <Label htmlFor="requirementType">Requirement Type</Label>
+              <Select value={requirementType} onValueChange={setRequirementType}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select requirement type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {REQUIREMENT_TYPES.map((type) => (
+                    <SelectItem key={type.value} value={type.value}>
+                      {type.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           <div className="grid gap-2 px-5 pt-5">
             <Label htmlFor="description">Description</Label>
             <Textarea
@@ -127,7 +192,7 @@ export function AddDataDialog({
             </Button>
             <Button 
               type="submit" 
-              disabled={isLoading || (type === 'city' && !countryId)} 
+              disabled={isSubmitDisabled()} 
               className="bg-brand text-white hover:bg-brand/90"
             >
               {isLoading ? (

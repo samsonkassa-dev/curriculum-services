@@ -36,7 +36,13 @@ export default function BaseData() {
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
-  const handleAddData = (newData: { name: string; description: string }) => {
+  const handleAddData = (newData: { 
+    name: string; 
+    description: string; 
+    countryId?: string;
+    range?: string;
+    technologicalRequirementType?: string;
+  }) => {
     addMutation.mutate(newData, {
       onSuccess: (response) => {
         if (response?.id) {
@@ -47,7 +53,13 @@ export default function BaseData() {
     });
   }
 
-  const handleUpdateData = (id: string, data: { name: string; description: string }) => {
+  const handleUpdateData = (id: string, data: { 
+    name: string; 
+    description: string;
+    countryId?: string;
+    range?: string;
+    technologicalRequirementType?: string;
+  }) => {
     update({ id, data });
   }
 

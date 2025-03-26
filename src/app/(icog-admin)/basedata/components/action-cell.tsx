@@ -15,13 +15,25 @@ const ICON_PATHS = {
   DELETE: "/delete.svg",
 };
 
+interface ExtendedBaseData extends BaseData {
+  countryId?: string;
+  range?: string;
+  technologicalRequirementType?: string;
+}
+
 export function ActionCell({ row, activeTab }: { row: any; activeTab: string }) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [showEditDialog, setShowEditDialog] = useState(false)
-  const item = row.original as BaseData
+  const item = row.original as ExtendedBaseData
   const { update, remove, isUpdateLoading, isDeleteLoading } = useBaseData(activeTab as BaseDataType)
 
-  const handleUpdate = async (data: { name: string; description: string }) => {
+  const handleUpdate = async (data: { 
+    name: string; 
+    description: string; 
+    countryId?: string;
+    range?: string;
+    technologicalRequirementType?: string;
+  }) => {
     await update({ id: item.id, data });
     setShowEditDialog(false);
   }
