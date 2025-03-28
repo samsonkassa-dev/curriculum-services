@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
 import { useParams } from "next/navigation"
-import { useTrainings } from "@/lib/hooks/useTrainings"
+import { useTrainings, useUnarchiveTraining } from "@/lib/hooks/useTrainings"
 import { TrainingCard } from "@/components/ui/training-card"
 import { Loading } from "@/components/ui/loading"
 
@@ -11,8 +11,13 @@ export default function CompanyAdminArchive() {
   const router = useRouter()
   const params = useParams()
   const { data, isLoading } = useTrainings({ isArchived: true })
+  const { isPending: isUnarchiving } = useUnarchiveTraining()
 
-  if (isLoading) {
+  const handleViewActiveTrainings = () => {
+    router.push(`/${params.companyId}/training`)
+  }
+
+  if (isLoading || isUnarchiving) {
     return <Loading />
   }
 
@@ -28,7 +33,7 @@ export default function CompanyAdminArchive() {
           </p>
 
           <Button 
-            onClick={() => router.push(`/${params.companyId}/training`)}
+            onClick={handleViewActiveTrainings}
             className="bg-[#0B75FF] hover:bg-[#0052CC] text-white px-6 py-5"
           >
             View Active Trainings

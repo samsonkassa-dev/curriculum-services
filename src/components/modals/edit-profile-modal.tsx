@@ -158,7 +158,7 @@ export function EditProfileModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[900px] w-[95vw] p-0">
+      <DialogContent className="sm:max-w-[900px] w-[95vw] p-0 max-h-[90vh] overflow-hidden">
         {!isFirstTimeLogin && profile.isLoading ? (
           <div className="flex items-center justify-center p-8">
             <DialogTitle className="sr-only">Loading Profile</DialogTitle>
@@ -177,18 +177,12 @@ export function EditProfileModal({
 
             <hr className="border-[#f2f2f2]" />
 
-            {/* {isFirstTimeLogin && (
-              <div className="bg-blue-50 p-4 text-sm text-blue-700">
-                Please change your password before continuing
-              </div>
-            )} */}
-
-            <div className="flex flex-col sm:flex-row min-h-[480px] ">
-              {/* Sidebar Navigatio*/}
-              <div className="sm:w-[200px] w-full border-r border-[#f2f2f2] -mt-4 py-5">
-                <div className="space-y-4 w-[70%] mx-auto md:w-full">
+            <div className="flex flex-col sm:flex-row h-[calc(90vh-120px)] overflow-hidden">
+              {/* Sidebar Navigation */}
+              <div className="sm:w-[200px] w-full border-r border-[#f2f2f2] sm:h-full">
+                <div className="flex sm:flex-col gap-2 p-4 sm:p-5">
                   <div
-                    className={`flex items-center gap-2 px-6 py-1 cursor-pointer rounded-lg mx-2 text-md font-normal ${
+                    className={`flex items-center gap-2 px-6 py-2 cursor-pointer rounded-lg text-md font-normal ${
                       activeTab === "profile" ? "bg-[#e7f2ff] text-brand" : ""
                     }`}
                     onClick={() => setActiveTab("profile")}
@@ -197,7 +191,7 @@ export function EditProfileModal({
                     <span>Profile</span>
                   </div>
                   <div
-                    className={`flex items-center gap-2 px-6 py-1 cursor-pointer rounded-lg mx-2 text-md font-normal ${
+                    className={`flex items-center gap-2 px-6 py-2 cursor-pointer rounded-lg text-md font-normal ${
                       activeTab === "security" ? "bg-[#e7f2ff] text-brand" : ""
                     }`}
                     onClick={() => setActiveTab("security")}
@@ -209,112 +203,110 @@ export function EditProfileModal({
               </div>
 
               {/* Main Content Area */}
-              {activeTab === "profile" && (
-                <form onSubmit={handleProfileSubmit(onProfileSubmit)} className="flex-1 px-6 space-y-6">
-                  {/* Profile Picture */}
-                  <div className="flex justify-center mt-6">
-                    <div
-                      className="relative cursor-pointer"
-                      onClick={handleImageClick}
-                    >
-                      <div className="w-20 h-20 rounded-full bg-[#e4e4e4] flex items-center justify-center overflow-hidden">
-                        {profile.data?.profilePictureUrl ? (
-                          <img
-                            src={profile.data.profilePictureUrl}
-                            alt="Profile"
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              e.currentTarget.src = '/camera.svg'
-                            }}
-                          />
-                        ) : (
-                          <img src="/camera.svg" alt="Upload" className="w-8 h-8" />
-                        )}
-                      </div>
-                      <input
-                        type="file"
-                        ref={fileInputRef}
-                        className="hidden"
-                        accept="image/*"
-                        onChange={handleImageChange}
-                        aria-label="Upload profile picture"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    {/* Form Fields */}
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">First Name</label>
-                        <Input
-                          {...profileRegister('firstName')}
-                          placeholder="Enter first name"
-                          className="w-full"
+              <div className="flex-1 overflow-y-auto">
+                {activeTab === "profile" && (
+                  <form onSubmit={handleProfileSubmit(onProfileSubmit)} className="p-6 space-y-6">
+                    {/* Profile Picture */}
+                    <div className="flex justify-center">
+                      <div
+                        className="relative cursor-pointer"
+                        onClick={handleImageClick}
+                      >
+                        <div className="w-20 h-20 rounded-full bg-[#e4e4e4] flex items-center justify-center overflow-hidden">
+                          {profile.data?.profilePictureUrl ? (
+                            <img
+                              src={profile.data.profilePictureUrl}
+                              alt="Profile"
+                              className="w-full h-full object-cover"
+                              onError={handleImageError}
+                            />
+                          ) : (
+                            <img src="/camera.svg" alt="Upload" className="w-8 h-8" />
+                          )}
+                        </div>
+                        <input
+                          type="file"
+                          ref={fileInputRef}
+                          className="hidden"
+                          accept="image/*"
+                          onChange={handleImageChange}
+                          aria-label="Upload profile picture"
                         />
-                        {profileErrors.firstName && (
-                          <p className="text-red-500 text-sm">{profileErrors.firstName.message}</p>
-                        )}
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">Last Name</label>
-                        <Input
-                          {...profileRegister('lastName')}
-                          placeholder="Enter last name"
-                          className="w-full"
-                        />
-                        {profileErrors.lastName && (
-                          <p className="text-red-500 text-sm">{profileErrors.lastName.message}</p>
-                        )}
                       </div>
                     </div>
 
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">Email</label>
-                        <Input
-                          {...profileRegister('email')}
-                          placeholder="Enter email address"
-                          type="email"
-                          className="w-full"
-                          disabled
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium">Phone Number</label>
-                        <div className="flex gap-2 w-full">
-                          <Input className="w-[100px]" value="+251" disabled />
+                    <div className="space-y-4">
+                      {/* Form Fields */}
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">First Name</label>
                           <Input
-                            {...profileRegister('phoneNumber')}
-                            placeholder="9XXXXXXXX or 7XXXXXXXX"
-                            className="flex-1"
+                            {...profileRegister('firstName')}
+                            placeholder="Enter first name"
+                            className="w-full"
+                          />
+                          {profileErrors.firstName && (
+                            <p className="text-red-500 text-sm">{profileErrors.firstName.message}</p>
+                          )}
+                        </div>
+
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Last Name</label>
+                          <Input
+                            {...profileRegister('lastName')}
+                            placeholder="Enter last name"
+                            className="w-full"
+                          />
+                          {profileErrors.lastName && (
+                            <p className="text-red-500 text-sm">{profileErrors.lastName.message}</p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Email</label>
+                          <Input
+                            {...profileRegister('email')}
+                            placeholder="Enter email address"
+                            type="email"
+                            className="w-full"
+                            disabled
                           />
                         </div>
-                        {profileErrors.phoneNumber && (
-                          <p className="text-red-500 text-sm">{profileErrors.phoneNumber.message}</p>
-                        )}
+
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium">Phone Number</label>
+                          <div className="flex gap-2 w-full">
+                            <Input className="w-[100px]" value="+251" disabled />
+                            <Input
+                              {...profileRegister('phoneNumber')}
+                              placeholder="9XXXXXXXX or 7XXXXXXXX"
+                              className="flex-1"
+                            />
+                          </div>
+                          {profileErrors.phoneNumber && (
+                            <p className="text-red-500 text-sm">{profileErrors.phoneNumber.message}</p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Action Button */}
+                      <div className="flex justify-center pt-6">
+                        <Button
+                          type="submit"
+                          className="bg-brand hover:bg-blue-700 text-white px-8"
+                          disabled={!isProfileDirty || editProfile.isPending}
+                        >
+                          {editProfile.isPending ? "Updating..." : "Edit"}
+                        </Button>
                       </div>
                     </div>
+                  </form>
+                )}
 
-                    {/* Action Button */}
-                    <div className="flex justify-center py-10">
-                      <Button
-                        type="submit"
-                        className="bg-brand hover:bg-blue-700 text-white px-8"
-                        disabled={!isProfileDirty || editProfile.isPending}
-                      >
-                        {editProfile.isPending ? "Updating..." : "Edit"}
-                      </Button>
-                    </div>
-                  </div>
-                </form>
-              )}
-
-              {activeTab === "security" && !showPasswordForm && (
-                <div className="flex-1 p-6 flex flex-col">
-                  <div className="flex-1">
+                {activeTab === "security" && !showPasswordForm && (
+                  <div className="p-6">
                     <div className="space-y-3">
                       <h2 className="text-xl font-semibold">Password</h2>
                       <p className="text-gray-500 text-sm">
@@ -330,27 +322,58 @@ export function EditProfileModal({
                       </Button>
                     </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {activeTab === "security" && showPasswordForm && (
-                <form onSubmit={handlePasswordSubmit(onPasswordSubmit)} className="space-y-6 p-6">
-                  {!isFirstTimeLogin && (
+                {activeTab === "security" && showPasswordForm && (
+                  <form onSubmit={handlePasswordSubmit(onPasswordSubmit)} className="p-6 space-y-6">
+                    {!isFirstTimeLogin && (
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium">
+                          Current Password
+                        </label>
+                        <div className="relative w-full">
+                          <Input
+                            type={showOldPassword ? "text" : "password"}
+                            {...passwordRegister('oldPassword')}
+                            placeholder="Enter current password"
+                            className="w-full pr-10 text-sm"
+                          />
+                          <button
+                            type="button"
+                            title="Toggle password visibility"
+                            onClick={() => setShowOldPassword(!showOldPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2"
+                          >
+                            <Image 
+                              src="/solar_eye-broken.svg" 
+                              alt="Toggle password visibility"
+                              width={20}
+                              height={20}
+                              className={showOldPassword ? "opacity-70" : "opacity-40"}
+                            />
+                          </button>
+                        </div>
+                        {passwordErrors.oldPassword && (
+                          <p className="text-red-500 text-sm">{passwordErrors.oldPassword.message}</p>
+                        )}
+                      </div>
+                    )}
+
                     <div className="space-y-2">
                       <label className="text-sm font-medium">
-                        Current Password
+                        New Password
                       </label>
                       <div className="relative w-full">
                         <Input
-                          type={showOldPassword ? "text" : "password"}
-                          {...passwordRegister('oldPassword')}
-                          placeholder="Enter current password"
+                          type={showNewPassword ? "text" : "password"}
+                          {...passwordRegister('newPassword')}
+                          placeholder="Enter new password"
                           className="w-full pr-10 text-sm"
                         />
                         <button
-                          type="button"
                           title="Toggle password visibility"
-                          onClick={() => setShowOldPassword(!showOldPassword)}
+                          type="button"
+                          onClick={() => setShowNewPassword(!showNewPassword)}
                           className="absolute right-3 top-1/2 -translate-y-1/2"
                         >
                           <Image 
@@ -358,88 +381,57 @@ export function EditProfileModal({
                             alt="Toggle password visibility"
                             width={20}
                             height={20}
-                            className={showOldPassword ? "opacity-70" : "opacity-40"}
+                            className={showNewPassword ? "opacity-70" : "opacity-40"}
                           />
                         </button>
                       </div>
-                      {passwordErrors.oldPassword && (
-                        <p className="text-red-500 text-sm">{passwordErrors.oldPassword.message}</p>
+                      {passwordErrors.newPassword && (
+                        <p className="text-red-500 text-sm">{passwordErrors.newPassword.message}</p>
                       )}
                     </div>
-                  )}
 
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">
-                      New Password
-                    </label>
-                    <div className="relative w-full">
-                      <Input
-                        type={showNewPassword ? "text" : "password"}
-                        {...passwordRegister('newPassword')}
-                        placeholder="Enter new password"
-                        className="w-full pr-10 text-sm"
-                      />
-                      <button
-                        title="Toggle password visibility"
-                        type="button"
-                        onClick={() => setShowNewPassword(!showNewPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2"
-                      >
-                        <Image 
-                          src="/solar_eye-broken.svg" 
-                          alt="Toggle password visibility"
-                          width={20}
-                          height={20}
-                          className={showNewPassword ? "opacity-70" : "opacity-40"}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">
+                        Confirm Password
+                      </label>
+                      <div className="relative w-full">
+                        <Input
+                          type={showConfirmPassword ? "text" : "password"}
+                          {...passwordRegister('confirmPassword')}
+                          placeholder="Confirm new password"
+                          className="w-full pr-10 text-sm"
                         />
-                      </button>
+                        <button
+                          type="button"
+                          title="Toggle password visibility"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2"
+                        >
+                          <Image 
+                            src="/solar_eye-broken.svg" 
+                            alt="Toggle password visibility"
+                            width={20}
+                            height={20}
+                            className={showConfirmPassword ? "opacity-70" : "opacity-40"}
+                          />
+                        </button>
+                      </div>
+                      {passwordErrors.confirmPassword && (
+                        <p className="text-red-500 text-sm">{passwordErrors.confirmPassword.message}</p>
+                      )}
                     </div>
-                    {passwordErrors.newPassword && (
-                      <p className="text-red-500 text-sm">{passwordErrors.newPassword.message}</p>
-                    )}
-                  </div>
 
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">
-                      Confirm Password
-                    </label>
-                    <div className="relative w-full">
-                      <Input
-                        type={showConfirmPassword ? "text" : "password"}
-                        {...passwordRegister('confirmPassword')}
-                        placeholder="Confirm new password"
-                        className="w-full pr-10 text-sm"
-                      />
-                      <button
-                        type="button"
-                        title="Toggle password visibility"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2"
+                    <div className="flex justify-start pt-6">
+                      <Button
+                        type="submit"
+                        className="bg-brand hover:bg-blue-700 text-white"
                       >
-                        <Image 
-                          src="/solar_eye-broken.svg" 
-                          alt="Toggle password visibility"
-                          width={20}
-                          height={20}
-                          className={showConfirmPassword ? "opacity-70" : "opacity-40"}
-                        />
-                      </button>
+                        Change Password
+                      </Button>
                     </div>
-                    {passwordErrors.confirmPassword && (
-                      <p className="text-red-500 text-sm">{passwordErrors.confirmPassword.message}</p>
-                    )}
-                  </div>
-
-                  <div className="py-10 flex justify-start">
-                    <Button
-                      type="submit"
-                      className="bg-brand  hover:bg-blue-700 text-white"
-                    >
-                      Change Password
-                    </Button>
-                  </div>
-                </form>
-              )}
+                  </form>
+                )}
+              </div>
             </div>
           </>
         )}

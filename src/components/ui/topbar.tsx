@@ -156,7 +156,7 @@ export default function Topbar() {
               <Popover>
                 <PopoverTrigger asChild>
                   <button
-                    className="p-3 rounded-full overflow-hidden border border-gray-200"
+                    className="p-3 rounded-full overflow-hidden border border-gray-200 hover:border-gray-300 transition-colors"
                     aria-label="Open profile menu"
                     title="Profile menu"
                   >
@@ -169,29 +169,29 @@ export default function Topbar() {
                     />
                   </button>
                 </PopoverTrigger>
-                <PopoverContent className="w-[300px] p-0 mr-6" align="end">
-                  <div className="space-y-4">
+                <PopoverContent className="w-[300px] p-0 my-5 mx-10" align="start">
+                  <div className="space-y-3">
                     {/* Profile Header */}
                     <div className="px-6">
                       <div className="flex items-center gap-4 py-3">
-                        <div className="w-14 h-14 shrink-0 rounded-full overflow-hidden border border-gray-200 flex items-center justify-center">
+                        <div className="w-14 h-14  shrink-0 rounded-full overflow-hidden border border-gray-200 flex items-center justify-center">
                           <Image
                             src={profilePicture}
                             alt="Profile"
-                            width={30}
-                            height={30}
-                            className="w-full h-full object-cover"
+                            width={24}
+                            height={24}
+                            className=" object-cover"
                           />
                         </div>
-                        <div className="min-w-0">
-                          <h3 className="font-medium text-md text-[#292827] break-words">
+                        <div className="min-w-0 flex-1">
+                          <h3 className="font-semibold text-lg text-gray-900 break-words">
                             {isIcogAdmin()
                               ? "iCog Admin"
                               : isCompanyAdmin()
                                 ? `${decoded?.firstName} ${decoded?.lastName}`
                                 : decoded?.email}
                           </h3>
-                          <p className="text-[#8C8C8C] font-normal text-sm break-words">
+                          <p className="text-gray-500 font-medium text-sm break-words">
                             {isIcogAdmin()
                               ? "iCog Admin"
                               : getDisplayRole(decoded?.role || '')}
@@ -200,24 +200,21 @@ export default function Topbar() {
                       </div>
                     </div>
 
-                    <hr className="border-[#f2f2f2] border-[0.1px] " />
+                    <hr className="border-gray-100" />
 
                     {/* Menu Items */}
-                    <div className="space-y-1 px-6 pb-4">
+                    <div className="space-y-1 py-2">
                       <button 
-                        className="w-full font-light text-sm text-left px-4 py-2 text-[#16151C] hover:bg-gray-50 rounded-md"
+                        className="w-full font-medium text-sm text-left px-6 py-2.5 text-gray-700 hover:bg-gray-50 transition-colors"
                         onClick={() => setIsEditProfileOpen(true)}
                       >
                         Edit Profile
                       </button>
-                      {/* <button className="w-full text-left px-4 py-2 hover:bg-gray-50 rounded-md te">
-                        Help and Support
-                      </button> */}
 
-                      <hr className="border-[#f2f2f2] border-[0.1px] -mx-6" />
+                      <hr className="border-gray-100" />
                       <button
                         onClick={handleLogout}
-                        className="w-full text-left px-4 py-2 hover:bg-gray-50 rounded-md text-[#16151c] font-normal text-sm"
+                        className="w-full text-left px-6 py-2.5 hover:bg-gray-50 transition-colors text-gray-700 font-medium text-sm"
                       >
                         Log Out
                       </button>

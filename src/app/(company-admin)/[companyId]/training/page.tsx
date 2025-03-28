@@ -3,22 +3,21 @@
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
 import { useParams } from "next/navigation"
-import { useTrainings } from "@/lib/hooks/useTrainings"
+import { useTrainings, useArchiveTraining } from "@/lib/hooks/useTrainings"
 import { TrainingCard } from "@/components/ui/training-card"
 import { Loading } from "@/components/ui/loading"
-
-
 
 export default function CompanyAdminTraining() {
   const router = useRouter()
   const params = useParams()
   const { data, isLoading } = useTrainings()
+  const { isPending: isArchiving } = useArchiveTraining()
 
   const handleCreateTraining = () => {
     router.push(`/${params.companyId}/training/create-training`)
   }
 
-  if (isLoading) {
+  if (isLoading || isArchiving) {
     return <Loading />
   }
 
@@ -61,11 +60,8 @@ export default function CompanyAdminTraining() {
               id={training.id}
               title={training.title}
               location={training.cities[0]?.name || "N/A"}
-              duration={`${
-                training.duration
-              } ${training.durationType.toLowerCase()}`}
+              duration={`${training.duration} ${training.durationType.toLowerCase()}`}
               ageGroup={training.ageGroups[0]?.name || "N/A"}
-              // description={training.trainingPurposes[0]?.description || 'No description available'}
             />
           ))}
         </div>
