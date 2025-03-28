@@ -45,6 +45,11 @@ const adminNavItems = [
     label: "Training",
   },
   {
+    icon: <img src="/archive.svg" alt="icon" width={19} height={19} />,
+    href: "/[companyId]/archive",
+    label: "Archive",
+  },
+  {
     icon: <img src="/profile.svg" alt="icon" width={19} height={19} />,
     href: "/[companyId]/users",
     label: "Users",

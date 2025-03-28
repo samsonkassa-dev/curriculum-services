@@ -2,7 +2,7 @@ import { CompanyFileTypesResponse } from "@/types/company"
 import { useQuery } from "@tanstack/react-query"
 import axios from "axios"
 
-const API_URL = process.env.NEXT_PUBLIC_API || 'http://164.90.209.220:8081/api'
+const API_URL = process.env.NEXT_PUBLIC_API
 
 export const useCompanyFileTypes = () => {
   const { data: fileTypes, isLoading } = useQuery<CompanyFileTypesResponse>({

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -11,9 +12,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { useCompanyProfile } from "@/lib/hooks/useCompanyProfile";
+import { useUpdateCompanyProfile, useGetMyCompanyProfile } from "@/lib/hooks/useCompanyProfile";
 import { useParams, useRouter } from "next/navigation";
-import { useMyCompanyProfile } from "@/lib/hooks/useFetchCompanyProfiles";
 import {
   Select,
   SelectContent,
@@ -23,11 +23,14 @@ import {
 } from "@/components/ui/select";
 import { useBusinessTypes } from "@/lib/hooks/useBusinessTypes";
 import { toast } from "sonner";
+import axios from "axios";
 
 const Company = () => {
   const router = useRouter();
   const { companyId } = useParams();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hasChanges, setHasChanges] = useState(false);
+  const [initialValues, setInitialValues] = useState<Partial<CompanyProfileFormSchema> | null>(null);
 
   const {
     register,
@@ -39,15 +42,43 @@ const Company = () => {
   } = useForm<CompanyProfileFormSchema>({
     resolver: zodResolver(companyProfileSchema),
   });
-
+  
+  // Use our consolidated hook instead of the one from useFetchCompanyProfiles
   const {
     data: company,
     isLoading: isFetchingCompanyProfile,
-    isError: isFetchingError,
-  } = useMyCompanyProfile();
+  } = useGetMyCompanyProfile();
 
-  const { updateCompanyProfile, isUpdating: isUpdatingCompanyProfile } =
-    useCompanyProfile();
+  // Use the updated hook
+  const updateCompanyProfile = useUpdateCompanyProfile();
+
+  // Watch all form values to determine if there are changes
+  const formValues = watch();
+
+  useEffect(() => {
+    if (initialValues && Object.keys(initialValues).length > 0) {
+      // Compare current form values with initial values
+      const valueChanged = Object.keys(formValues).some(key => {
+        const initialValue = initialValues[key as keyof CompanyProfileFormSchema];
+        const currentValue = formValues[key as keyof CompanyProfileFormSchema];
+        
+        // Special case for objects like businessType and industryType
+        if (
+          (key === 'businessType' || key === 'industryType') && 
+          typeof initialValue === 'object' && 
+          initialValue !== null &&
+          typeof currentValue === 'object' && 
+          currentValue !== null
+        ) {
+          return (initialValue as any).id !== (currentValue as any).id;
+        }
+        
+        return initialValue !== currentValue;
+      });
+      
+      setHasChanges(valueChanged);
+    }
+  }, [formValues, initialValues]);
 
   useEffect(() => {
     if (!isFetchingCompanyProfile && company) {
@@ -67,7 +98,7 @@ const Company = () => {
         ? company.phone.slice(4) 
         : company.phone || "";
 
-      reset({
+      const formData: Partial<CompanyProfileFormSchema> = {
         name: company.name || "",
         phone: phoneNumber,
         address: company.address || "",
@@ -78,50 +109,61 @@ const Company = () => {
         businessType: company.businessType || undefined,
         numberOfEmployees: numberOfEmployees as "MICRO" | "SMALL" | "MEDIUM" | "LARGE" | undefined,
         otherDescription: company.otherDescription || "",
-      });
+      };
+
+      // Store initial values for change detection
+      setInitialValues(formData);
+      reset(formData);
     }
   }, [isFetchingCompanyProfile, company, reset]);
 
-  const onSubmit = async (data: CompanyProfileFormSchema) => {
-    if (isSubmitting) return;
-    
-    try {
-      setIsSubmitting(true);
-      
-      // Format phone with country code
-      const formattedData = {
-        ...data,
-        phone: data.phone ? `+251${data.phone}` : "",
-      };
-      
-      await updateCompanyProfile(
-        { id: companyId as string, data: formattedData },
-        {
-          onSuccess: () => {
-            toast.success("Company profile updated successfully");
-            router.push(`/`);
-          },
-          onError: (error) => {
-            toast.error("Failed to update profile", {
-              description: error.message || "Please try again"
-            });
-          },
-        }
-      );
-    } catch (error) {
-      toast.error("An error occurred", {
-        description: "Please try again later"
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-  
   const onBack = () => {
     router.push(`/`);
   };
 
   const { businessTypes, industryTypes } = useBusinessTypes();
+
+  // Add a simple direct handler for the button
+  const handleEditClick = async () => {
+    console.log("Edit button clicked");
+    
+    // Check if submission should be prevented
+    if (isSubmitting || !hasChanges) {
+      console.log("Not submitting due to isSubmitting or !hasChanges");
+      return;
+    }
+    
+    // Get the current form values directly instead of using handleSubmit
+    const data = formValues;
+    console.log("Current form values:", data);
+    
+    // Set submitting state
+    setIsSubmitting(true);
+    
+    // Ensure businessType and industryType are valid objects with id property
+    if (!data.businessType || typeof data.businessType !== 'object' || !data.businessType.id) {
+      toast.error("Business Type is required");
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (!data.industryType || typeof data.industryType !== 'object' || !data.industryType.id) {
+      toast.error("Industry Type is required");
+      setIsSubmitting(false);
+      return;
+    }
+
+    await updateCompanyProfile.mutateAsync({
+      id: companyId as string,
+      data,
+      initialValues,
+      company
+    });
+    
+    setHasChanges(false);
+    router.push(`/${companyId}/dashboard`);
+    setIsSubmitting(false);
+  };
 
   return (
     <div className="lg:px-16 md:px-14 px-4 lg:mt-12 mt-6 flex flex-col gap-4">
@@ -129,7 +171,10 @@ const Company = () => {
         <div className="bg-[#fbfbfb] rounded-xl">
           <div className="lg:flex rounded-xl  lg:justify-center">
             <form
-              onSubmit={handleSubmit(onSubmit)}
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleEditClick();
+              }}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   e.preventDefault();
@@ -447,16 +492,16 @@ const Company = () => {
                   size="default"
                   disabled={
                     isFetchingCompanyProfile ||
-                    isUpdatingCompanyProfile ||
-                    isFetchingError ||
-                    isSubmitting
+                    isSubmitting ||
+                    !hasChanges
                   }
-                  type="submit"
+                  onClick={handleEditClick}
+                  type="button"
                   className={cn(
                     `w-40 h-10 px-4 py-3 rounded-sm font-medium text-white disabled:opacity-50`
                   )}
                 >
-                  {isUpdatingCompanyProfile || isSubmitting ? "Saving..." : "Save"}
+                  {isSubmitting ? "Editing..." : "Edit"}
                 </Button>
               </div>
             </form>

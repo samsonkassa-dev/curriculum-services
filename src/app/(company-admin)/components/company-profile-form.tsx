@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useCompanyProfile } from "@/lib/hooks/useCompanyProfile";
+import { useCreateCompanyProfile } from "@/lib/hooks/useCompanyProfile";
 import { useState, useEffect } from "react";
 import { CompanyProfileFormData } from "@/types/company";
 
@@ -34,7 +34,7 @@ export function CompanyProfileForm({
   step,
   onStepChange,
 }: CompanyProfileFormProps) {
-  const { createCompanyProfile, isCreating } = useCompanyProfile();
+  const { mutateAsync: createCompanyProfile, isPending: isCreating } = useCreateCompanyProfile();
   const [formData, setFormData] = useState<Partial<CompanyProfileFormData>>({});
   const router = useRouter();
   const {
@@ -99,38 +99,36 @@ export function CompanyProfileForm({
         return;
       }
 
-      // Cast formData to CompanyProfileFormData since we've validated required fields
-      createCompanyProfile({ data: formData as CompanyProfileFormData }, {
-        onSuccess: (response) => {
-          const { id, verificationStatus } = response.companyProfile;
+      try {
+        // Cast formData to CompanyProfileFormData since we've validated required fields
+        const response = await createCompanyProfile(formData as CompanyProfileFormData);
+        const { id, verificationStatus } = response.companyProfile;
 
-          // Save as cookie instead of localStorage
-          document.cookie = `company_info=${JSON.stringify({ 
-            id, 
-            verificationStatus 
-          })}; path=/`;
+        // Save as cookie instead of localStorage
+        document.cookie = `company_info=${JSON.stringify({ 
+          id, 
+          verificationStatus 
+        })}; path=/`;
 
-          toast.success("Company profile created successfully", {
-            description: "You will be redirected to the dashboard",
+        toast.success("Company profile created successfully", {
+          description: "You will be redirected to the dashboard",
+        });
+
+        setTimeout(() => router.push(`/${id}/dashboard`), 1000);
+      } catch (error) {
+        // Handle API errors
+        if (axios.isAxiosError(error)) {
+          toast.error("API Error", {
+            description:
+              error.response?.data?.message ||
+              "Failed to create company profile",
           });
-
-          setTimeout(() => router.push(`/${id}/dashboard`), 1000);
-        },
-        onError: (error: unknown) => {
-          // Handle API errors
-          if (axios.isAxiosError(error)) {
-            toast.error("API Error", {
-              description:
-                error.response?.data?.message ||
-                "Failed to create company profile",
-            });
-          } else {
-            toast.error("Error", {
-              description: "An unexpected error occurred",
-            });
-          }
-        },
-      });
+        } else {
+          toast.error("Error", {
+            description: "An unexpected error occurred",
+          });
+        }
+      }
     } else if (step === "companyInfo") {
       onStepChange("businessDetail");
     } else if (step === "businessDetail") {

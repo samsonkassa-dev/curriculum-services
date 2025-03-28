@@ -1,6 +1,7 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { toast } from "sonner";
 import { Training } from "@/types/training";
@@ -11,15 +12,22 @@ interface TrainingsResponse {
   message: string;
 }
 
-export function useTrainings() {
+interface UseTrainingsProps {
+  isArchived?: boolean;
+}
+
+export function useTrainings({ isArchived }: UseTrainingsProps = {}) {
   return useQuery({
-    queryKey: ["trainings"],
+    queryKey: ["trainings", isArchived],
     queryFn: async () => {
       const token = localStorage.getItem("auth_token");
+      const params = new URLSearchParams();
+      if (isArchived) {
+        params.append("is-archived", "true");
+      }
+      
       const response = await axios.get<TrainingsResponse>(
-        `${
-          process.env.NEXT_PUBLIC_API || "http://164.90.209.220:8081/api"
-        }/training`,
+        `${process.env.NEXT_PUBLIC_API}/training${params.toString() ? `?${params.toString()}` : ''}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -82,5 +90,59 @@ export function usePaginatedTrainings({
         throw error;
       }
     },
+  });
+}
+
+export function useArchiveTraining() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (trainingId: string) => {
+      const token = localStorage.getItem("auth_token");
+      const response = await axios.patch(
+        `${process.env.NEXT_PUBLIC_API}/training/archive/${trainingId}`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      return response.data;
+    },
+    onSuccess: () => {
+      toast.success("Training archived successfully");
+      queryClient.invalidateQueries({ queryKey: ["trainings"] });
+    },
+    onError: (error: any) => {
+      toast.error("Error", {
+        description: error.response?.data?.message || "Failed to archive training"
+      });
+    }
+  });
+}
+
+export function useUnarchiveTraining() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (trainingId: string) => {
+      const token = localStorage.getItem("auth_token");
+      const response = await axios.patch(
+        `${process.env.NEXT_PUBLIC_API}/training/unarchive/${trainingId}`,
+        {},
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      return response.data;
+    },
+    onSuccess: () => {
+      toast.success("Training unarchived successfully");
+      queryClient.invalidateQueries({ queryKey: ["trainings"] });
+    },
+    onError: (error: any) => {
+      toast.error("Error", {
+        description: error.response?.data?.message || "Failed to unarchive training"
+      });
+    }
   });
 }

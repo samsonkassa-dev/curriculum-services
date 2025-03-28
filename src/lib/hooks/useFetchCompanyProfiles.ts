@@ -43,7 +43,7 @@ export function useCompanyProfiles({
         });
 
         const baseUrl =
-          process.env.NEXT_PUBLIC_API || "http://164.90.209.220:8081/api";
+          process.env.NEXT_PUBLIC_API;
 
         const response = await axios.get<CompanyProfilesResponse>(
           `${baseUrl}/company-profile?${params.toString()}`,
@@ -75,7 +75,7 @@ export function useSingleCompanyProfile(id: string) {
       try {
         const token = localStorage.getItem("auth_token");
         const baseUrl =
-          process.env.NEXT_PUBLIC_API || "http://164.90.209.220:8081/api";
+          process.env.NEXT_PUBLIC_API;
         const response = await axios.get<SingleCompanyResponse>(
           `${baseUrl}/company-profile/${id}`,
           {
@@ -106,7 +106,7 @@ export function useMyCompanyProfile() {
         const token = localStorage.getItem("auth_token");
         const response = await axios.get<SingleCompanyResponse>(
           `${
-            process.env.NEXT_PUBLIC_API || "http://164.90.209.220:8081/api"
+            process.env.NEXT_PUBLIC_API
           }/company-profile/me`,
           {
             headers: { Authorization: `Bearer ${token}` },

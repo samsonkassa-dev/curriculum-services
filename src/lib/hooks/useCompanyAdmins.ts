@@ -36,7 +36,7 @@ export function useCompanyAdmins() {
     queryFn: async () => {
       const token = localStorage.getItem('auth_token')
       const response = await axios.get<CompanyAdminsResponse>(
-        `${process.env.NEXT_PUBLIC_API || 'http://164.90.209.220:8081/api'}/company-admin`,
+        `${process.env.NEXT_PUBLIC_API}/company-admin`,
         {
           headers: { Authorization: `Bearer ${token}` }
         }
