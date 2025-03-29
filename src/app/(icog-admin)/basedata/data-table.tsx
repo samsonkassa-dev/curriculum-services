@@ -6,7 +6,6 @@ import {
   flexRender,
   getCoreRowModel,
   useReactTable,
-  getPaginationRowModel,
   SortingState,
   getSortedRowModel,
 } from "@tanstack/react-table"
@@ -26,28 +25,61 @@ import { cn } from "@/lib/utils"
 
 // Constants
 const PAGE_SIZES = [5, 10, 20, 30, 50];
-const DEFAULT_PAGE_SIZE = 5;
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[]
   data: TData[]
-  onUpdate?: (id: string, data: { name: string; description: string }) => void
+  onUpdate?: (id: string, data: { 
+    name: string; 
+    description: string;
+    countryId?: string;
+    range?: string;
+    technologicalRequirementType?: string;
+    assessmentSubType?: string;
+  }) => void
   onDelete?: (id: string) => void
   isLoading?: boolean
   newItemId?: string
   activeTab: string
+  pagination: {
+    totalItems: number;
+    totalPages: number;
+    currentPage: number;
+    pageSize: number;
+    onPageChange: (page: number) => void;
+    onPageSizeChange: (pageSize: number) => void;
+  }
 }
 
 // Add PaginationControls component
-function PaginationControls({ table, data }: { table: any, data: any[] }) {
+function PaginationControls({ pagination }: { 
+  pagination: DataTableProps<any, any>["pagination"]
+}) {
+  // Calculate showing info
+  const startRecord = pagination.totalItems > 0 
+    ? (pagination.currentPage - 1) * pagination.pageSize + 1 
+    : 0;
+  
+  const endRecord = Math.min(
+    pagination.currentPage * pagination.pageSize,
+    pagination.totalItems
+  );
+
+  const showingText = pagination.totalItems > 0
+    ? `Showing ${startRecord} to ${endRecord} out of ${pagination.totalItems} records`
+    : "No records found";
+
   return (
     <div className="flex items-center justify-between w-full">
       {/* Left side - Page Size Selector */}
       <div className="flex items-center gap-2">
         <span className="md:text-sm text-xs text-gray-500">Showing</span>
         <select
-          value={table.getState().pagination.pageSize}
-          onChange={(e) => table.setPageSize(Number(e.target.value))}
+          value={pagination.pageSize}
+          onChange={(e) => {
+            const newSize = Number(e.target.value);
+            pagination.onPageSizeChange(newSize);
+          }}
           className="border rounded-md md:text-sm text-xs px-2 py-1 bg-white"
           title="Page Size"
         >
@@ -59,7 +91,7 @@ function PaginationControls({ table, data }: { table: any, data: any[] }) {
 
       {/* Center - Showing Text */}
       <div className="md:text-sm text-xs pl-2 text-gray-500">
-        Showing {table.getState().pagination.pageSize} out of {data.length} records
+        {showingText}
       </div>
 
       {/* Right side - Pagination Controls */}
@@ -67,29 +99,93 @@ function PaginationControls({ table, data }: { table: any, data: any[] }) {
         <Button
           variant="pagination"
           size="sm"
-          onClick={() => table.previousPage()}
-          disabled={!table.getCanPreviousPage()}
+          onClick={() => pagination.onPageChange(pagination.currentPage - 1)}
+          disabled={pagination.currentPage <= 1}
         >
           <ChevronLeftIcon className="w-4 h-4" />
         </Button>
         <div className="flex gap-1">
-          {Array.from({ length: table.getPageCount() }, (_, i) => (
-            <Button
-              key={i}
-              variant={table.getState().pagination.pageIndex === i ? "outline" : "outline"}
-              className={table.getState().pagination.pageIndex === i ? "border-brand text-brand" : ""}
-              size="sm"
-              onClick={() => table.setPageIndex(i)}
-            >
-              {i + 1}
-            </Button>
-          ))}
+          {pagination.totalPages <= 7 ? (
+            // Display all pages if less than 7
+            Array.from({ length: pagination.totalPages }, (_, i) => (
+              <Button
+                key={i}
+                variant={pagination.currentPage === i + 1 ? "outline" : "outline"}
+                className={pagination.currentPage === i + 1 ? "border-brand text-brand" : ""}
+                size="sm"
+                onClick={() => pagination.onPageChange(i + 1)}
+              >
+                {i + 1}
+              </Button>
+            ))
+          ) : (
+            // Display pagination with ellipsis for many pages
+            <>
+              {/* First page */}
+              <Button
+                variant={pagination.currentPage === 1 ? "outline" : "outline"}
+                className={pagination.currentPage === 1 ? "border-brand text-brand" : ""}
+                size="sm"
+                onClick={() => pagination.onPageChange(1)}
+              >
+                1
+              </Button>
+              
+              {/* Ellipsis for beginning */}
+              {pagination.currentPage > 3 && (
+                <span className="px-2 flex items-center">...</span>
+              )}
+              
+              {/* Pages around current page */}
+              {Array.from(
+                { length: Math.min(3, pagination.totalPages) },
+                (_, i) => {
+                  const pageNum = Math.max(
+                    2,
+                    pagination.currentPage - 1 + i - (pagination.currentPage > pagination.totalPages - 2 ? 2 : 0)
+                  );
+                  
+                  if (pageNum >= pagination.totalPages) return null;
+                  if (pageNum <= 1) return null;
+                  
+                  return (
+                    <Button
+                      key={pageNum}
+                      variant={pagination.currentPage === pageNum ? "outline" : "outline"}
+                      className={pagination.currentPage === pageNum ? "border-brand text-brand" : ""}
+                      size="sm"
+                      onClick={() => pagination.onPageChange(pageNum)}
+                    >
+                      {pageNum}
+                    </Button>
+                  );
+                }
+              )}
+              
+              {/* Ellipsis for end */}
+              {pagination.currentPage < pagination.totalPages - 2 && (
+                <span className="px-2 flex items-center">...</span>
+              )}
+              
+              {/* Last page */}
+              {pagination.totalPages > 1 && (
+                <Button
+                  variant={pagination.currentPage === pagination.totalPages ? "outline" : "outline"}
+                  className={pagination.currentPage === pagination.totalPages ? "border-brand text-brand" : ""}
+                  size="sm"
+                  onClick={() => pagination.onPageChange(pagination.totalPages)}
+                >
+                  {pagination.totalPages}
+                </Button>
+              )}
+            </>
+          )}
         </div>
         <Button
           variant="pagination"
           size="sm"
-          onClick={() => table.nextPage()}
-          disabled={!table.getCanNextPage()}
+          onClick={() => pagination.onPageChange(pagination.currentPage + 1)}
+          disabled={pagination.currentPage >= pagination.totalPages}
         >
           <ChevronRightIcon className="md:w-4 md:h-4 w-2 h-2" />
         </Button>
@@ -103,7 +199,10 @@ export function DataTable<TData, TValue>({
   data,
   isLoading,
   newItemId,
-  // activeTab,
+  pagination,
+  onUpdate,
+  onDelete,
+  activeTab,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([])
 
@@ -111,16 +210,15 @@ export function DataTable<TData, TValue>({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
     onSortingChange: setSorting,
     getSortedRowModel: getSortedRowModel(),
+    manualPagination: true,
     state: {
       sorting,
-    },
-    initialState: {
       pagination: {
-        pageSize: DEFAULT_PAGE_SIZE,
-      },
+        pageIndex: pagination.currentPage - 1,
+        pageSize: pagination.pageSize,
+      }
     },
   })
 
@@ -183,7 +281,7 @@ export function DataTable<TData, TValue>({
         </Table>
       </div>
       <div className="flex items-center justify-between py-4">
-        <PaginationControls table={table} data={data} />
+        <PaginationControls pagination={pagination} />
       </div>
     </div>
   )

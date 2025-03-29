@@ -24,6 +24,12 @@ const REQUIREMENT_TYPES = [
   { value: "INSTRUCTOR", label: "Instructor" }
 ];
 
+const ASSESSMENT_SUB_TYPES=[
+  {value: "GENERAL_FORMATIVE", label: "General Formative"},
+  {value: "TECHNOLOGY_SPECIFIC_FORMATIVE", label: "Technology Specific Formative"},
+  {value: "ALTERNATIVE_FORMATIVE", label: "Alternative Formative"}
+]
+
 interface AddDataDialogProps {
   onAddData?: (data: { 
     name: string; 
@@ -31,6 +37,7 @@ interface AddDataDialogProps {
     countryId?: string;
     range?: string;
     technologicalRequirementType?: string;
+    assessmentSubType?: string;
   }) => void;
   onUpdateData?: (data: { 
     name: string; 
@@ -38,11 +45,13 @@ interface AddDataDialogProps {
     countryId?: string;
     range?: string;
     technologicalRequirementType?: string;
+    assessmentSubType?: string;
   }) => void;
   initialData?: BaseDataItem & { 
     countryId?: string;
     range?: string;
     technologicalRequirementType?: string;
+    assessmentSubType?: string;
   };
   isLoading?: boolean;
   mode?: 'add' | 'edit';
@@ -67,6 +76,7 @@ export function AddDataDialog({
   const [range, setRange] = useState(initialData?.range || "")
   const [requirementType, setRequirementType] = useState(initialData?.technologicalRequirementType || "LEARNER")
   const [dialogOpen, setDialogOpen] = useState(false)
+  const [assessmentSubType, setAssessmentSubType] = useState(initialData?.assessmentSubType || "GENERAL_FORMATIVE")
 
   // Fetch countries if we're adding/editing a city
   const { data: countries } = useBaseData('country', { enabled: type === 'city' } as BaseDataOptions)
@@ -81,7 +91,8 @@ export function AddDataDialog({
       description,
       ...(type === 'city' && { countryId }),
       ...(type === 'age-group' && { range }),
-      ...(type === 'technological-requirement' && { technologicalRequirementType: requirementType })
+      ...(type === 'technological-requirement' && { technologicalRequirementType: requirementType }),
+      ...(type === 'assessment-type' && { assessmentSubType })
     }
 
     if (mode === 'edit' && onUpdateData) {
@@ -96,6 +107,7 @@ export function AddDataDialog({
     if (isLoading) return true;
     if (type === 'city' && !countryId) return true;
     if (type === 'age-group' && !range) return true;
+    if (type === 'assessment-type' && !assessmentSubType) return true;
     if (!name || !description) return true;
     return false;
   }
@@ -166,6 +178,24 @@ export function AddDataDialog({
                 </SelectTrigger>
                 <SelectContent>
                   {REQUIREMENT_TYPES.map((type) => (
+                    <SelectItem key={type.value} value={type.value}>
+                      {type.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {type === 'assessment-type' && (
+            <div className="grid gap-2 px-5">
+              <Label htmlFor="assessmentSubType">Assessment Sub Type</Label>
+              <Select value={assessmentSubType} onValueChange={setAssessmentSubType}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select assessment sub type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {ASSESSMENT_SUB_TYPES.map((type) => (
                     <SelectItem key={type.value} value={type.value}>
                       {type.label}
                     </SelectItem>

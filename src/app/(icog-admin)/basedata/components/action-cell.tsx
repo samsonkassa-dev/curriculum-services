@@ -19,6 +19,7 @@ interface ExtendedBaseData extends BaseData {
   countryId?: string;
   range?: string;
   technologicalRequirementType?: string;
+  assessmentSubType?: string;
 }
 
 export function ActionCell({ row, activeTab }: { row: any; activeTab: string }) {
@@ -33,6 +34,7 @@ export function ActionCell({ row, activeTab }: { row: any; activeTab: string }) 
     countryId?: string;
     range?: string;
     technologicalRequirementType?: string;
+    assessmentSubType?: string;
   }) => {
     await update({ id: item.id, data });
     setShowEditDialog(false);
@@ -78,6 +80,7 @@ export function ActionCell({ row, activeTab }: { row: any; activeTab: string }) 
         initialData={item}
         onUpdateData={handleUpdate}
         isLoading={isUpdateLoading}
+        type={activeTab as BaseDataType}
       />
     </>
   )

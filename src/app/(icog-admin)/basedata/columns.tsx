@@ -10,6 +10,7 @@ export type BaseData = {
   description: string
   range?: string
   technologicalRequirementType?: string
+  assessmentSubType?: string
 }
 
 export const columns = (activeTab: string): ColumnDef<BaseData>[] => {
@@ -40,6 +41,21 @@ export const columns = (activeTab: string): ColumnDef<BaseData>[] => {
       cell: ({ row }) => {
         const type = row.getValue("technologicalRequirementType") as string;
         return <div>{type === "LEARNER" ? "Learner" : "Instructor"}</div>;
+      }
+    });
+  }
+
+  if (activeTab === 'assessment-type') {
+    baseColumns.splice(1, 0, {
+      accessorKey: "assessmentSubType",
+      header: "Assessment Sub Type",
+      cell: ({ row }) => {
+        const type = row.getValue("assessmentSubType") as string;
+        const formattedType = type
+          .split('_')
+          .map(word => word.charAt(0) + word.slice(1).toLowerCase())
+          .join(' ');
+        return <div>{formattedType}</div>;
       }
     });
   }

@@ -13,21 +13,28 @@ import { cn } from "@/lib/utils"
 
 // Constants
 const NEW_ITEM_HIGHLIGHT_DURATION = 2000; // milliseconds
+const DEFAULT_PAGE_SIZE = 10;
 
 export default function BaseData() {
   const [activeTab, setActiveTab] = useState<BaseDataType>("education-level")
   const [newItemId, setNewItemId] = useState<string | undefined>()
   const [isMobile, setIsMobile] = useState(false)
   const [showSidebar, setShowSidebar] = useState(true)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [pageSize, setPageSize] = useState(DEFAULT_PAGE_SIZE)
   
   const { 
     data, 
+    pagination,
     isLoading, 
     add: addMutation, 
     update, 
     remove,
     isAddLoading,
-  } = useBaseData(activeTab)
+  } = useBaseData(activeTab, {
+    page: currentPage,
+    pageSize,
+  })
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768)
@@ -36,12 +43,18 @@ export default function BaseData() {
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
+  // Reset to first page when changing tabs
+  useEffect(() => {
+    setCurrentPage(1)
+  }, [activeTab])
+
   const handleAddData = (newData: { 
     name: string; 
     description: string; 
     countryId?: string;
     range?: string;
     technologicalRequirementType?: string;
+    assessmentSubType?: string;
   }) => {
     addMutation.mutate(newData, {
       onSuccess: (response) => {
@@ -59,12 +72,22 @@ export default function BaseData() {
     countryId?: string;
     range?: string;
     technologicalRequirementType?: string;
+    assessmentSubType?: string;
   }) => {
     update({ id, data });
   }
 
   const handleDeleteData = (id: string) => {
     remove(id);
+  }
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  }
+
+  const handlePageSizeChange = (size: number) => {
+    setPageSize(size);
+    setCurrentPage(1); // Reset to first page when changing page size
   }
 
   const renderMobileHeader = () => {
@@ -138,6 +161,14 @@ export default function BaseData() {
           isLoading={isLoading}
           newItemId={newItemId}
           activeTab={activeTab}
+          pagination={{
+            totalItems: pagination?.totalItems || 0,
+            totalPages: pagination?.totalPages || 1,
+            currentPage: currentPage,
+            pageSize: pageSize,
+            onPageChange: handlePageChange,
+            onPageSizeChange: handlePageSizeChange,
+          }}
         />
       </div>
     </div>

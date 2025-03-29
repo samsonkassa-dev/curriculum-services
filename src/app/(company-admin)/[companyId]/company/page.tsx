@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/select";
 import { useBusinessTypes } from "@/lib/hooks/useBusinessTypes";
 import { toast } from "sonner";
-import axios from "axios";
+
 
 const Company = () => {
   const router = useRouter();
@@ -34,7 +34,6 @@ const Company = () => {
 
   const {
     register,
-    handleSubmit,
     reset,
     setValue,
     watch,
@@ -125,19 +124,16 @@ const Company = () => {
 
   // Add a simple direct handler for the button
   const handleEditClick = async () => {
-    console.log("Edit button clicked");
+    // console.log("Edit button clicked");
     
     // Check if submission should be prevented
     if (isSubmitting || !hasChanges) {
-      console.log("Not submitting due to isSubmitting or !hasChanges");
+      // console.log("Not submitting due to isSubmitting or !hasChanges");
       return;
     }
     
     // Get the current form values directly instead of using handleSubmit
     const data = formValues;
-    console.log("Current form values:", data);
-    
-    // Set submitting state
     setIsSubmitting(true);
     
     // Ensure businessType and industryType are valid objects with id property
