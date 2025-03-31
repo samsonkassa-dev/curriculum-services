@@ -8,13 +8,12 @@ import {
   CreateTrainingStep2,
   CreateTrainingStep3,
   CreateTrainingStep4,
-} from "../components/create-training-forms";
-import { CreateTrainingStep5 } from "../components/steps/step-5";
+} from "./components/create-training-forms";
+import { CreateTrainingStep5 } from "./components/steps/step-5";
 import { useCreateTraining } from "@/lib/hooks/useCreateTraining";
-import { SuccessModal } from "../components/modals/success-modal";
-import { InviteModal } from "../components/modals/invite-modal";
+import { SuccessModal } from "./components/modals/success-modal";
+import { InviteModal } from "./components/modals/invite-modal";
 import { useInviteTrainingUser } from "@/lib/hooks/useInviteTrainingUser";
-import { StepProps } from "../components/types";
 
 type Step = 1 | 2 | 3 | 4 | 5;
 

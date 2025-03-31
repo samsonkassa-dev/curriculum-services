@@ -11,14 +11,17 @@ interface AssessmentMethod {
   assessmentSubType: 'GENERAL_FORMATIVE' | 'TECHNOLOGY_SPECIFIC_FORMATIVE' | 'ALTERNATIVE_FORMATIVE'
 }
 
+// Define a common interface for the assessment data structure
+interface AssessmentData {
+  assessmentMethods: AssessmentMethod[]
+  subjectSpecificAssessmentMethod: string
+}
+
 interface AssessmentResponse {
   code: string
   message: string
-  sectionAssessmentMethods: {
-    sectionId: string
-    assessmentMethods: AssessmentMethod[]
-    subjectSpecificAssessmentMethod: string
-  }
+  moduleAssessmentMethods?: AssessmentData & { moduleId: string }
+  sectionAssessmentMethods?: AssessmentData & { sectionId: string }
 }
 
 interface AssessmentFormData {
@@ -37,6 +40,7 @@ interface AssessmentFormContextType {
   ) => void
   submitForm: () => Promise<void>
   hasAssessmentMethods: boolean
+  isEditing: boolean
 }
 
 const AssessmentFormContext = createContext<AssessmentFormContextType | null>(null)
@@ -48,35 +52,49 @@ const initialFormData: AssessmentFormData = {
   subjectSpecificMethod: ''
 }
 
-export function AssessmentFormProvider({ children, sectionId }: { children: ReactNode, sectionId: string }) {
+export function AssessmentFormProvider({ children, moduleId }: { children: ReactNode, moduleId: string }) {
   const [formData, setFormData] = useState<AssessmentFormData>(initialFormData)
-  const { mutateAsync: submitAssessment } = useSubmitAssessment(sectionId)
-  const { data: existingData, isLoading: isLoadingAssessment } = useGetAssessment(sectionId)
+  const [isEditing, setIsEditing] = useState(false)
+  const { mutateAsync: submitAssessment } = useSubmitAssessment(moduleId)
+  const { data: existingData, isLoading: isLoadingAssessment } = useGetAssessment(moduleId)
 
   useEffect(() => {
-    if (existingData?.sectionAssessmentMethods) {
-      const transformed: AssessmentFormData = {
-        genericFormative: {},
-        technologyFormative: {},
-        alternativeFormative: {},
-        subjectSpecificMethod: existingData.sectionAssessmentMethods.subjectSpecificAssessmentMethod || ''
-      }
+    if (existingData) {
+      // Handle both response structures (moduleAssessmentMethods or sectionAssessmentMethods)
+      const assessmentData = existingData.moduleAssessmentMethods || existingData.sectionAssessmentMethods
       
-      existingData.sectionAssessmentMethods.assessmentMethods.forEach((method: AssessmentMethod) => {
-        switch (method.assessmentSubType) {
-          case 'GENERAL_FORMATIVE':
-            transformed.genericFormative[method.id] = true
-            break
-          case 'TECHNOLOGY_SPECIFIC_FORMATIVE':
-            transformed.technologyFormative[method.id] = true
-            break
-          case 'ALTERNATIVE_FORMATIVE':
-            transformed.alternativeFormative[method.id] = true
-            break
+      if (assessmentData) {
+        const transformed: AssessmentFormData = {
+          genericFormative: {},
+          technologyFormative: {},
+          alternativeFormative: {},
+          subjectSpecificMethod: assessmentData.subjectSpecificAssessmentMethod || ''
         }
-      })
-      
-      setFormData(transformed)
+        
+        assessmentData.assessmentMethods.forEach((method: AssessmentMethod) => {
+          switch (method.assessmentSubType) {
+            case 'GENERAL_FORMATIVE':
+              transformed.genericFormative[method.id] = true
+              break
+            case 'TECHNOLOGY_SPECIFIC_FORMATIVE':
+              transformed.technologyFormative[method.id] = true
+              break
+            case 'ALTERNATIVE_FORMATIVE':
+              transformed.alternativeFormative[method.id] = true
+              break
+          }
+        })
+        
+        setFormData(transformed)
+        
+        // Set editing flag if there's existing data
+        if (
+          assessmentData.assessmentMethods.length > 0 || 
+          assessmentData.subjectSpecificAssessmentMethod
+        ) {
+          setIsEditing(true)
+        }
+      }
     }
   }, [existingData])
 
@@ -116,8 +134,12 @@ export function AssessmentFormProvider({ children, sectionId }: { children: Reac
   }
 
   const hasAssessmentMethods = Boolean(
-    existingData?.sectionAssessmentMethods?.assessmentMethods.length || 
-    existingData?.sectionAssessmentMethods?.subjectSpecificAssessmentMethod
+    existingData && (
+      (existingData.moduleAssessmentMethods?.assessmentMethods.length ?? 0) > 0 || 
+      (existingData.sectionAssessmentMethods?.assessmentMethods.length ?? 0) > 0 || 
+      existingData.moduleAssessmentMethods?.subjectSpecificAssessmentMethod ||
+      existingData.sectionAssessmentMethods?.subjectSpecificAssessmentMethod
+    )
   )
 
   if (isLoadingAssessment) {
@@ -129,7 +151,8 @@ export function AssessmentFormProvider({ children, sectionId }: { children: Reac
       formData, 
       updateFormData, 
       submitForm,
-      hasAssessmentMethods 
+      hasAssessmentMethods,
+      isEditing
     }}>
       {children}
     </AssessmentFormContext.Provider>

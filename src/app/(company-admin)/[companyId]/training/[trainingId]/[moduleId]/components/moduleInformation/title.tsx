@@ -133,7 +133,7 @@ export function Title({ instructionalMethods, technologyIntegrations }: TitlePro
               }
             >
               <SelectTrigger>
-                <SelectValue>
+                <SelectValue placeholder="Select technology integration">
                   {technologyIntegrations.find(
                     (t) => t.id === formData.technologyIntegrationId
                   )?.name || "Select technology"}

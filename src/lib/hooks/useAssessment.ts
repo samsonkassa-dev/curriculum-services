@@ -9,14 +9,17 @@ interface AssessmentMethod {
   assessmentSubType: 'GENERAL_FORMATIVE' | 'TECHNOLOGY_SPECIFIC_FORMATIVE' | 'ALTERNATIVE_FORMATIVE'
 }
 
+// Common structure for assessment data
+interface AssessmentData {
+  assessmentMethods: AssessmentMethod[]
+  subjectSpecificAssessmentMethod: string
+}
+
 interface AssessmentResponse {
   code: string
   message: string
-  sectionAssessmentMethods: {
-    sectionId: string
-    assessmentMethods: AssessmentMethod[]
-    subjectSpecificAssessmentMethod: string
-  }
+  moduleAssessmentMethods?: AssessmentData & { moduleId: string }
+  sectionAssessmentMethods?: AssessmentData & { sectionId: string }
 }
 
 interface AssessmentPayload {

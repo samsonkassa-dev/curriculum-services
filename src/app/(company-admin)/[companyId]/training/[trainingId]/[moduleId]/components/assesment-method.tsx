@@ -14,22 +14,22 @@ import { AlternativeFormative } from "./assesmentForm/alternativeFormative"
 import { SubjectFormative } from "./assesmentForm/subjectFormative"
 
 interface AssessmentMethodProps {
-  sectionId: string
+  moduleId: string
 }
 
-export function AssessmentMethod({ sectionId }: AssessmentMethodProps) {
+export function AssessmentMethod({ moduleId }: AssessmentMethodProps) {
   return (
-    <AssessmentFormProvider sectionId={sectionId}>
-      <AssessmentMethodContent sectionId={sectionId} />
+    <AssessmentFormProvider moduleId={moduleId}>
+      <AssessmentMethodContent moduleId={moduleId} />
     </AssessmentFormProvider>
   )
 }
 
-function AssessmentMethodContent({ sectionId }: { sectionId: string }) {
+function AssessmentMethodContent({ moduleId }: { moduleId: string }) {
   const [activeSection, setActiveSection] = useState("Generic Formative Assessments")
   const [isMobile, setIsMobile] = useState(false)
   const [showSidebar, setShowSidebar] = useState(true)
-  const { formData, submitForm } = useAssessmentForm()
+  const { formData, submitForm, isEditing } = useAssessmentForm()
 
   // Fetch assessment methods for each type
   const { data: genericMethods, isLoading: isLoadingGeneric } = useBaseData('assessment-type', {
@@ -195,7 +195,7 @@ function AssessmentMethodContent({ sectionId }: { sectionId: string }) {
             onClick={handleNext}
             className="bg-brand text-white text-sm md:text-base"
           >
-            {isLastStep ? 'Save Changes' : 'Continue'}
+            {isLastStep ? (isEditing ? 'Update Changes' : 'Save Changes') : 'Continue'}
           </Button>
         </div>
       </div>

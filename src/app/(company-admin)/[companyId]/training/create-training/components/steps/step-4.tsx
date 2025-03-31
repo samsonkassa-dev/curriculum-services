@@ -20,7 +20,6 @@ interface BaseItem {
   description: string
 }
 
-type GenderType = "MALE" | "FEMALE"
 
 export function CreateTrainingStep4({ onNext, onBack, initialData }: StepProps) {
   const { data: ageGroups } = useBaseData('age-group')
@@ -30,6 +29,7 @@ export function CreateTrainingStep4({ onNext, onBack, initialData }: StepProps) 
   const { data: academicQualifications } = useBaseData('academic-qualification')
 
   // Popover states
+  const [openAgeGroups, setOpenAgeGroups] = useState(false)
   const [openDisabilities, setOpenDisabilities] = useState(false)
   const [openMarginalizedGroups, setOpenMarginalizedGroups] = useState(false)
   const [openEconomicBackgrounds, setOpenEconomicBackgrounds] = useState(false)
@@ -100,8 +100,8 @@ export function CreateTrainingStep4({ onNext, onBack, initialData }: StepProps) 
 
   // Handle disability selection
   const handleSelectDisability = (disabilityId: string) => {
-    console.log('Selecting disability:', disabilityId);
-    console.log('Current disability percentages:', disabilityPercentages);
+    // console.log('Selecting disability:', disabilityId);
+    // console.log('Current disability percentages:', disabilityPercentages);
     
     const newDisabilityPercentages = [...(disabilityPercentages || [])]
     
@@ -136,8 +136,8 @@ export function CreateTrainingStep4({ onNext, onBack, initialData }: StepProps) 
 
   // Handle marginalized group selection
   const handleSelectMarginalizedGroup = (groupId: string) => {
-    console.log('Selecting marginalized group:', groupId);
-    console.log('Current marginalized group percentages:', marginalizedGroupPercentages);
+    // console.log('Selecting marginalized group:', groupId);
+    // console.log('Current marginalized group percentages:', marginalizedGroupPercentages);
     
     const newMarginalizedGroupPercentages = [...(marginalizedGroupPercentages || [])]
     
@@ -211,51 +211,67 @@ export function CreateTrainingStep4({ onNext, onBack, initialData }: StepProps) 
       </div>
 
       <div className="max-w-xl mx-auto space-y-6">
-        {/* Age Group Selection */}
+        {/* Age Group Selection - Popover Implementation */}
         <div className="space-y-2">
           <label className="text-sm font-medium">Age Group</label>
-          <Select value={ageGroupIds[0] || ""} onValueChange={handleAgeGroupChange}>
-            <SelectTrigger>
-              <SelectValue>
-                {ageGroupIds && ageGroupIds.length > 0 ? (
-                  <div className="flex flex-wrap gap-1 py-0.5">
-                    {ageGroupIds.map(id => {
-                      const ageGroup = safeAgeGroups.find((group: BaseItem) => group.id === id)
-                      return ageGroup ? (
-                        <Badge key={id} variant="pending" className="rounded-sm text-xs">
-                          {ageGroup.name}
-                        </Badge>
-                      ) : null
-                    })}
-                  </div>
-                ) : (
-                  "Select age groups"
-                )}
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              {safeAgeGroups.length > 0 ? (
-                safeAgeGroups.map((item: BaseItem) => (
-                  <SelectItem 
-                    key={item.id} 
-                    value={item.id}
-                    className="flex items-center gap-2"
-                  >
-                    <div className="flex items-center gap-2 flex-1">
-                      {item.name}
-                      {ageGroupIds.includes(item.id) && (
-                        <Check className="h-4 w-4 ml-auto" />
+          <Popover
+            open={openAgeGroups}
+            onOpenChange={setOpenAgeGroups}
+          >
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className="w-full justify-between py-6"
+                type="button"
+              >
+                <div className="flex flex-wrap gap-1 items-center">
+                  {ageGroupIds && ageGroupIds.length > 0 ? (
+                    <>
+                      {ageGroupIds.map(id => {
+                        const ageGroup = safeAgeGroups.find((group: BaseItem) => group.id === id)
+                        return ageGroup ? (
+                          <Badge key={id} variant="pending" className="rounded-sm text-xs">
+                            {ageGroup.name}
+                          </Badge>
+                        ) : null
+                      })}
+                    </>
+                  ) : (
+                    "Select age groups..."
+                  )}
+                </div>
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-full p-0">
+              <div className="max-h-[300px] overflow-auto">
+                {safeAgeGroups.length > 0 ? (
+                  safeAgeGroups.map((ageGroup: BaseItem) => (
+                    <div
+                      key={ageGroup.id}
+                      className={cn(
+                        "flex items-center px-4 py-2 text-sm cursor-pointer hover:bg-gray-100",
+                        ageGroupIds.includes(ageGroup.id) && "bg-gray-100"
                       )}
+                      onClick={() => handleAgeGroupChange(ageGroup.id)}
+                    >
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4",
+                          ageGroupIds.includes(ageGroup.id) ? "opacity-100" : "opacity-0"
+                        )}
+                      />
+                      {ageGroup.name}
                     </div>
-                  </SelectItem>
-                ))
-              ) : (
-                <SelectItem value="No age groups available" disabled>
-                  No age groups available
-                </SelectItem>
-              )}
-            </SelectContent>
-          </Select>
+                  ))
+                ) : (
+                  <div className="px-4 py-2 text-sm text-gray-500">
+                    No age groups available
+                  </div>
+                )}
+              </div>
+            </PopoverContent>
+          </Popover>
           {errors.ageGroupIds && (
             <p className="text-sm text-red-500">{errors.ageGroupIds.message}</p>
           )}

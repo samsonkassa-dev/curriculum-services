@@ -78,7 +78,7 @@ export default function ModuleDetail() {
       <div>
         {activeTab === 'information' && <ModuleInformation moduleId={moduleId} />}
         {activeTab === 'content' && <Content/>}
-        {activeTab === 'assessment-method' && <AssessmentMethod sectionId={moduleId} />}
+        {activeTab === 'assessment-method' && <AssessmentMethod moduleId={moduleId} />}
       </div>
     </div>
   )

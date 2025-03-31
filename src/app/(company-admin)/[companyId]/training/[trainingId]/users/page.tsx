@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Search } from "lucide-react"
 import { useInviteTrainingUser } from "@/lib/hooks/useInviteTrainingUser";
-import { InviteModal } from "../../components/modals/invite-modal";
+import { InviteModal } from "../../create-training/components/modals/invite-modal";
 
 
 export default function TrainingUsersPage({ 

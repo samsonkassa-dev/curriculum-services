@@ -8,8 +8,8 @@ import {
   CreateTrainingStep2,
   CreateTrainingStep3,
   CreateTrainingStep4,
-} from "@/app/(company-admin)/[companyId]/training/components/create-training-forms"
-import { CreateTrainingStep5 } from "@/app/(company-admin)/[companyId]/training/components/steps/step-5"
+} from "@/app/(company-admin)/[companyId]/training/create-training/components/create-training-forms"
+import { CreateTrainingStep5 } from "@/app/(company-admin)/[companyId]/training/create-training/components/steps/step-5"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
