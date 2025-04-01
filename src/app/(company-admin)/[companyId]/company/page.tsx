@@ -124,11 +124,8 @@ const Company = () => {
 
   // Add a simple direct handler for the button
   const handleEditClick = async () => {
-    // console.log("Edit button clicked");
-    
     // Check if submission should be prevented
     if (isSubmitting || !hasChanges) {
-      // console.log("Not submitting due to isSubmitting or !hasChanges");
       return;
     }
     
@@ -149,16 +146,20 @@ const Company = () => {
       return;
     }
 
-    await updateCompanyProfile.mutateAsync({
-      id: companyId as string,
-      data,
-      initialValues,
-      company
-    });
-    
-    setHasChanges(false);
-    router.push(`/${companyId}/dashboard`);
-    setIsSubmitting(false);
+    try {
+      await updateCompanyProfile.mutateAsync({
+        id: companyId as string,
+        data,
+        initialValues,
+        company
+      });
+      
+      setHasChanges(false);
+    } catch (error) {
+      // Error is already handled by the mutation's onError callback
+      // Just ensure we reset the submitting state
+      setIsSubmitting(false);
+    }
   };
 
   return (

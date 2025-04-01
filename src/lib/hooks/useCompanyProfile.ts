@@ -6,14 +6,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { toast } from "sonner";
 
-interface ApiResponse {
-  code: string;
-  message: string;
-  companyProfile: {
-    id: string;
-    verificationStatus: "PENDING" | "ACCEPTED" | "REJECTED";
-  };
-}
 
 // Utility functions
 function isBusinessType(value: unknown): value is BusinessType {
@@ -38,28 +30,16 @@ function formatPhoneNumber(phone: string): string {
   return `+251${cleanPhone}`
 }
 
-// Changed to return properly formatted object for API instead of FormData
-function formatCompanyData(data: Partial<CompanyProfileFormData>): Record<string, any> {
-  const formattedData: Record<string, any> = {};
-  
-  Object.entries(data).forEach(([key, value]) => {
-    if (value !== undefined && value !== null) {
-      if (key === "businessType" && isBusinessType(value)) {
-        formattedData.businessTypeId = value.id;
-      } else if (key === "industryType" && isIndustryType(value)) {
-        formattedData.industryTypeId = value.id;
-      } else if (key === "companyFiles" && isCompanyFileUpload(value)) {
-        // Handle files if needed
-      } else if (key === "phone") {
-        formattedData.phone = formatPhoneNumber(value.toString());
-      } else {
-        formattedData[key] = value.toString();
-      }
-    }
-  });
-  
-  return formattedData;
+function truncateEmployeeSize(size: string | undefined): string | undefined {
+  if (!size) return undefined;
+  if (size.includes("MICRO")) return "MICRO";
+  if (size.includes("SMALL")) return "SMALL";
+  if (size.includes("MEDIUM")) return "MEDIUM";
+  if (size.includes("LARGE")) return "LARGE";
+  return undefined;
 }
+
+
 
 export function useGetMyCompanyProfile() {
   return useQuery({
@@ -168,7 +148,7 @@ export function useUpdateCompanyProfile() {
           : company?.websiteUrl,
         numberOfEmployees: data.numberOfEmployees !== initialValues?.numberOfEmployees 
           ? data.numberOfEmployees 
-          : company?.numberOfEmployees,
+          : truncateEmployeeSize(company?.numberOfEmployees),
         otherDescription: data.otherDescription !== initialValues?.otherDescription 
           ? data.otherDescription 
           : company?.otherDescription,
@@ -182,7 +162,7 @@ export function useUpdateCompanyProfile() {
         formattedData,
         {
           headers: {
-            "Content-Type": "application/json",
+            "Content-Type": "multipart/form-data",
             Authorization: `Bearer ${token}`,
           },
         }
