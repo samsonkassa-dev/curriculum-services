@@ -20,19 +20,28 @@ export function useTrainings({ isArchived }: UseTrainingsProps = {}) {
   return useQuery({
     queryKey: ["trainings", isArchived],
     queryFn: async () => {
-      const token = localStorage.getItem("auth_token");
-      const params = new URLSearchParams();
-      if (isArchived) {
-        params.append("is-archived", "true");
-      }
-      
-      const response = await axios.get<TrainingsResponse>(
-        `${process.env.NEXT_PUBLIC_API}/training${params.toString() ? `?${params.toString()}` : ''}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
+      try {
+        const token = localStorage.getItem("auth_token");
+        const params = new URLSearchParams();
+        if (isArchived) {
+          params.append("is-archived", "true");
         }
-      );
-      return response.data;
+        
+        const response = await axios.get<TrainingsResponse>(
+          `${process.env.NEXT_PUBLIC_API}/training${params.toString() ? `?${params.toString()}` : ''}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        return response.data;
+      } catch (error) {
+        if (axios.isAxiosError(error)) {
+          const message = error.response?.data?.message || "Failed to fetch trainings";
+          // We don't toast here anymore since we handle it in the component
+          // This allows the component to display the error in the UI as well
+        }
+        throw error; // Re-throw to let the component handle it
+      }
     },
   });
 }

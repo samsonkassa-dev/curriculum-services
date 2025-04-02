@@ -108,7 +108,7 @@ export function LearningResource() {
         </div>
 
         {/* Digital Tools */}
-        <div className="space-y-2">
+        {/* <div className="space-y-2">
           <div className="flex items-center gap-2">
            <h2 className="md:text-base text-sm font-semibold">Digital Tools</h2>
             <span className="text-[10px] md:text-xs text-blue-500">(Optional)</span>
@@ -141,7 +141,7 @@ export function LearningResource() {
           >
             + Add more
           </Button>
-        </div>
+        </div> */}
 
 
       </div>
