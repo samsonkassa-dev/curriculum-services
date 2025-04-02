@@ -19,7 +19,7 @@ interface TitleProps {
   }>
 }
 
-export function Title({ instructionalMethods, technologyIntegrations }: TitleProps) {
+export function InstructionalMethod({ instructionalMethods, technologyIntegrations }: TitleProps) {
   const { formData, updateFormData } = useModuleInformation()
 
   const handleMethodToggle = (methodId: string, checked: boolean) => {

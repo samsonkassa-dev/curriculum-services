@@ -9,7 +9,6 @@ import { Menu, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ModuleInformationProvider, useModuleInformation } from "@/contexts/ModuleInformationContext"
 import { useBaseData } from "@/lib/hooks/useBaseData"
-import { Title } from "./moduleInformation/title"
 import { TeachingStrategies } from "./moduleInformation/teaching-strategies"
 import { InclusionStrategies } from "./moduleInformation/inclusion-strategies"
 import { EstimatedDurations } from "./moduleInformation/estimated-durations"
@@ -19,7 +18,7 @@ import { useQuery } from "@tanstack/react-query"
 import axios from "axios"
 import { useParams } from "next/navigation"
 import { toast } from "sonner"
-
+import { InstructionalMethod } from "./moduleInformation/title"
 interface ModuleInformationProps {
   moduleId: string
 }
@@ -69,7 +68,7 @@ export function ModuleInformation({ moduleId }: ModuleInformationProps) {
   const sections = [
     "Key Concepts",
     "Learning Resource",
-    "Title",
+    "Instructional method",
     "Inclusion Strategies",
     "Teaching Strategies",
     "Estimated Duration",
@@ -161,7 +160,7 @@ function ModuleInformationContent({
         return Boolean(formData.keyConcepts?.trim())
       case "Learning Resource":
         return formData.primaryMaterials?.some(m => m.trim() !== '')
-      case "Title":
+      case "Instructional method":
         return Boolean(formData.instructionMethodIds?.length > 0) || 
                Boolean(formData.differentiationStrategies?.trim()) || 
                Boolean(formData.technologyIntegrationId)
@@ -202,7 +201,7 @@ function ModuleInformationContent({
     {
       title: "Teaching Strategies and Methods",
       items: [
-        { label: "Title", isCompleted: isStepCompleted("Title") },
+        { label: "Instructional method", isCompleted: isStepCompleted("Instructional method") },
         { label: "Inclusion Strategies", isCompleted: isStepCompleted("Inclusion Strategies") },
         { label: "Teaching Strategies", isCompleted: isStepCompleted("Teaching Strategies") },
       ]
@@ -228,8 +227,8 @@ function ModuleInformationContent({
         return <KeyConcepts />
       case "Learning Resource":
         return <LearningResource />
-      case "Title":
-        return <Title 
+      case "Instructional method":
+        return <InstructionalMethod 
           instructionalMethods={instructionalMethods || []}
           technologyIntegrations={technologyIntegrations || []}
         />

@@ -15,6 +15,7 @@ import { useArchiveTraining, useUnarchiveTraining } from "@/lib/hooks/useTrainin
 interface TrainingCardProps {
   id: string
   title: string
+  rationale: string
   location: string
   duration: string
   ageGroup: string
@@ -24,6 +25,7 @@ interface TrainingCardProps {
 export function TrainingCard({ 
   id,
   title, 
+  rationale,
   location, 
   duration, 
   ageGroup,
@@ -97,12 +99,7 @@ export function TrainingCard({
       </div>
 
       <p className="text-sm font-light text-[#292827] mb-4 line-clamp-3">
-        freestar Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-        Integer ultricies arcu vel urna rutrum, at dignissim leo ultricies.
-        Nulla dignissim vel odio a scelerisque. Sed a tellus tincidunt, placerat
-        elit sit amet, sollicitudin augue. Aenean ullamcorper sem ut sodales
-        accumsan. Orci varius natoque penatibus et magnis dis parturient montes,
-        nascetur ridiculus mus.
+        {rationale}
       </p>
 
       <div className="flex items-end justify-end py-3">

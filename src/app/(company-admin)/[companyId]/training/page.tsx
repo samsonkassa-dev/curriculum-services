@@ -120,6 +120,7 @@ export default function CompanyAdminTraining() {
               location={training.cities[0]?.name || "N/A"}
               duration={`${training.duration} ${training.durationType.toLowerCase()}`}
               ageGroup={training.ageGroups[0]?.name || "N/A"}
+              rationale={training.rationale}
             />
           ))}
         </div>

@@ -58,6 +58,7 @@ export default function CompanyAdminArchive() {
               duration={`${training.duration} ${training.durationType.toLowerCase()}`}
               ageGroup={training.ageGroups[0]?.name || "N/A"}
               isArchived={true}
+              rationale={training.rationale}
             />
           ))}
         </div>
