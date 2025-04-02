@@ -9,58 +9,11 @@ import { VerificationStatus } from "./components/verification-status";
 import { Loading } from "@/components/ui/loading";
 import { usePathname, useParams } from "next/navigation";
 
-const curriculumNavItems = [
-  {
-    icon: <img src="/home.svg" alt="icon" width={19} height={19} />,
-    href: "/[role]/dashboard",
-    label: "Dashboard",
-  },
-  {
-    icon: <img src="/training.svg" alt="icon" width={19} height={19} />,
-    href: "/[role]/training",
-    label: "Training",
-  },
-  {
-    icon: <img src="/settings.svg" alt="icon" width={19} height={19} />,
-    href: "/[role]/settings",
-    label: "Settings",
-  },
-];
-
-const adminNavItems = [
-  {
-    icon: <img src="/home.svg" alt="icon" width={19} height={19} />,
-    href: "/[companyId]/dashboard",
-    label: "Dashboard",
-  },
-
-  {
-    icon: <img src="/company-dash.svg" alt="icon" width={17} height={17} />,
-    href: "/[companyId]/company",
-    label: "My Company",
-  },
-  {
-    icon: <img src="/users.svg" alt="icon" width={19} height={19} />,
-    href: "/[companyId]/training",
-    label: "Training",
-  },
-  {
-    icon: <img src="/archive.svg" alt="icon" width={19} height={19} />,
-    href: "/[companyId]/archive",
-    label: "Archive",
-  },
-  {
-    icon: <img src="/profile.svg" alt="icon" width={19} height={19} />,
-    href: "/[companyId]/users",
-    label: "Users",
-  },
-  {
-    icon: <img src="/settings.svg" alt="icon" width={19} height={19} />,
-    href: "/[companyId]/settings",
-    label: "Settings",
-  },
-];
-
+interface NavItem {
+  icon: JSX.Element;
+  href: string;
+  label: string;
+}
 
 export default function CompanyAdminLayout({
   children,
@@ -72,12 +25,14 @@ export default function CompanyAdminLayout({
   const [isCurriculumRole, setIsCurriculumRole] = useState(false);
   const [isClientReady, setIsClientReady] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
-  const [navItems, setNavItems] = useState(adminNavItems);
+  const [navItems, setNavItems] = useState<NavItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [verificationStatus, setVerificationStatus] = useState<string | null>(null);
   
   // Only fetch verification status for company admin
   const isCompanyAdmin = userRole === "ROLE_COMPANY_ADMIN";
   
-  const { data: verificationData, isLoading } = useVerificationStatus({
+  const { data: verificationData, isLoading: verificationLoading } = useVerificationStatus({
     enabled: isCompanyAdmin && isClientReady // Only enable the query for company admin and when client is ready
   });
   
@@ -99,23 +54,61 @@ export default function CompanyAdminLayout({
   useEffect(() => {
     if (!isClientReady) return;
     
-    // Create nav items with the actual route
-    if (isCurriculumRole) {
-      const roleForUrl = typeof window !== 'undefined' 
-        ? localStorage.getItem("user_role")?.toLowerCase().replace('role_', '').replace('_', '-') || 'unauthorized'
-        : 'unauthorized';
-        
-      setNavItems(curriculumNavItems.map(item => ({
-        ...item,
-        href: item.href.replace("[role]", roleForUrl),
-      })));
-    } else {
-      setNavItems(adminNavItems.map(item => ({
-        ...item,
-        href: item.href.replace("[companyId]", params.companyId as string),
-      })));
+    if (userRole === "ROLE_CURRICULUM_ADMIN" || userRole === "ROLE_CONTENT_DEVELOPER") {
+      // For curriculum roles, use their role as the companyId
+      const roleForUrl = userRole.toLowerCase().replace('role_', '').replace('_', '-');
+      setNavItems([
+        {
+          icon: <img src="/home.svg" alt="icon" width={19} height={19} />,
+          href: `/${roleForUrl}/dashboard`,
+          label: "Dashboard",
+        },
+        {
+          icon: <img src="/training.svg" alt="icon" width={19} height={19} />,
+          href: `/${roleForUrl}/training`,
+          label: "Training",
+        },
+        {
+          icon: <img src="/settings.svg" alt="icon" width={19} height={19} />,
+          href: `/${roleForUrl}/settings`,
+          label: "Settings",
+        },
+      ]);
+    } else if (userRole === "ROLE_COMPANY_ADMIN") {
+      setNavItems([
+        {
+          icon: <img src="/home.svg" alt="icon" width={19} height={19} />,
+          href: `/${params.companyId}/dashboard`,
+          label: "Dashboard",
+        },
+        {
+          icon: <img src="/company-dash.svg" alt="icon" width={17} height={17} />,
+          href: `/${params.companyId}/company`,
+          label: "My Company",
+        },
+        {
+          icon: <img src="/users.svg" alt="icon" width={19} height={19} />,
+          href: `/${params.companyId}/training`,
+          label: "Training",
+        },
+        {
+          icon: <img src="/archive.svg" alt="icon" width={19} height={19} />,
+          href: `/${params.companyId}/archive`,
+          label: "Archive",
+        },
+        {
+          icon: <img src="/profile.svg" alt="icon" width={19} height={19} />,
+          href: `/${params.companyId}/users`,
+          label: "Users",
+        },
+        {
+          icon: <img src="/settings.svg" alt="icon" width={19} height={19} />,
+          href: `/${params.companyId}/settings`,
+          label: "Settings",
+        },
+      ]);
     }
-  }, [isClientReady, isCurriculumRole, params.companyId]);
+  }, [isClientReady, userRole, params.companyId]);
 
   // Special routes that hide the default layout
   const isSpecialRoute = () => {
@@ -159,7 +152,7 @@ export default function CompanyAdminLayout({
   }
 
   // Only show loading for company admin verification check
-  if (isCompanyAdmin && isLoading) {
+  if (isCompanyAdmin && verificationLoading) {
     return <Loading />;
   }
 

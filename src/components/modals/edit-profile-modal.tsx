@@ -106,12 +106,6 @@ export function EditProfileModal({
     resolver: zodResolver(passwordSchema),
   })
 
-  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\D/g, '') // Only allow digits
-    if (value.length <= 9) {
-      profileRegister('phoneNumber').onChange({ target: { value } })
-    }
-  }
 
   const handleImageClick = () => {
     fileInputRef.current?.click()

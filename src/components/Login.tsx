@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Input } from "@/components/ui/input";
 import { useAuth } from '@/lib/hooks/useAuth';
 import { LoginCredentials, LoginResponse } from '@/types/auth';
@@ -14,22 +14,16 @@ interface GoogleTokenResponse {
   access_token: string;
 }
 
-const EditProfileModal = dynamic(() => import('@/components/modals/edit-profile-modal').then(mod => mod.EditProfileModal), { ssr: false });
+const FirstTimePasswordModal = dynamic(() => import('@/components/modals/first-time-password-modal').then(mod => mod.FirstTimePasswordModal), { ssr: false });
 
 export default function Login() {
   const router = useRouter();
   const { login, googleLogin } = useAuth();
-  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [credentials, setCredentials] = useState<LoginCredentials>({
     email: '',
     password: '',
   });
-
-  // useEffect(() => {
-  //   if (window.google?.accounts?.oauth2) {
-  //     // Google auth initialization
-  //   }
-  // }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,7 +31,7 @@ export default function Login() {
       const response = await login.mutateAsync(credentials) as LoginResponse;
 
       if (response.isFirstTimeLogin) {
-        setIsEditProfileOpen(true);
+        setIsPasswordModalOpen(true);
         toast.success('Please change your password to continue');
         return;
       }
@@ -72,7 +66,7 @@ export default function Login() {
   };
 
   const handleModalClose = () => {
-    setIsEditProfileOpen(false);
+    setIsPasswordModalOpen(false);
     router.refresh(); // Trigger middleware routing when modal is closed without password change
   };
 
@@ -187,11 +181,9 @@ export default function Login() {
         <div className="hidden w-1/2 bg-brand lg:block" />
       </div>
 
-      <EditProfileModal
-        isOpen={isEditProfileOpen}
+      <FirstTimePasswordModal
+        isOpen={isPasswordModalOpen}
         onClose={handleModalClose}
-        initialTab="security"
-        isFirstTimeLogin
       />
     </>
   );
