@@ -155,9 +155,10 @@ const Company = () => {
       });
       
       setHasChanges(false);
+      setIsSubmitting(false);
+      setInitialValues(data);
     } catch (error) {
       // Error is already handled by the mutation's onError callback
-      // Just ensure we reset the submitting state
       setIsSubmitting(false);
     }
   };
