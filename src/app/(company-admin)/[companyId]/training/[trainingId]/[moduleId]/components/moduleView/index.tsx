@@ -130,7 +130,7 @@ export function ModuleView({
           onValueChange={handleAccordionChange}
           value={expandedModules[0]}
         >
-          {modules.map((module, index) => (
+          {modules.map((module) => (
             <AccordionItem
               key={module.id}
               value={module.id}
@@ -138,7 +138,6 @@ export function ModuleView({
             >
               <ModuleHeader
                 title={module.name}
-                index={index}
                 module={module}
                 canEdit={canEdit}
                 onEditClick={onEditClick}

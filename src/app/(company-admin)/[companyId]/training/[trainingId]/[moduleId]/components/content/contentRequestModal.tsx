@@ -115,11 +115,9 @@ export function ContentRequestModal({
         moduleId: moduleId,
         lessonId: formData.lessonId
       })
-      toast.success("Content request submitted successfully")
       onClose()
     } catch (error) {
-      toast.error("Failed to submit content request")
-      console.error("Content request error:", error)
+      console.log("Content request error:", error)
     }
   }
 

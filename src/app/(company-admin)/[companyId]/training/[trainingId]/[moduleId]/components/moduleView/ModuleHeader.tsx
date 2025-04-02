@@ -10,7 +10,6 @@ import { ModuleHeaderProps } from "./types"
 
 export function ModuleHeader({ 
   title, 
-  index, 
   module, 
   canEdit,
   onEditClick,
@@ -23,7 +22,7 @@ export function ModuleHeader({
         onClick={(e) => onAssessmentClick(module.id, e)}
       >
         <span className="font-semibold text-md md:text-xl">
-          Module {index + 1} - {title}
+          {title}
         </span>
       </div>
       <div className="text-gray-400 flex items-center gap-2">

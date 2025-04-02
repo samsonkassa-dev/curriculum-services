@@ -91,6 +91,7 @@ export function useGetContents({ trainingId, page = 1, pageSize = 10, searchQuer
 }
 
 export function useCreateContent() {
+  const queryClient = useQueryClient()
   return useMutation({
     mutationFn: async (data: ContentPayload) => {
       const token = localStorage.getItem('auth_token')
@@ -105,6 +106,7 @@ export function useCreateContent() {
     },
     onSuccess: () => {
       toast.success('Content created successfully')
+      queryClient.invalidateQueries({ queryKey: ['contents'] })
     },
     onError: (error: AxiosError<ErrorResponse>) => {
       toast.error("Error", { 

@@ -24,7 +24,6 @@ export interface ModuleViewProps {
 
 export interface ModuleHeaderProps {
   title: string
-  index: number
   module: Module
   canEdit: boolean
   onEditClick: (module: Module) => void

@@ -204,7 +204,7 @@ export function ModuleView({
     }
   }
 
-  const renderHeader = useCallback((title: string, index: number, module: Module) => (
+  const renderHeader = useCallback((title: string, module: Module) => (
     <div className="bg-white data-[state=open]:bg-[#f7fbff] rounded-lg m-6 flex items-center justify-between hover:no-underline group">
       <div 
         className="flex items-center gap-3 flex-1 cursor-pointer" 
@@ -216,7 +216,7 @@ export function ModuleView({
         }}
       >
         <span className="font-semibold text-md md:text-xl">
-          Module {index + 1} - {title}
+           {title}
         </span>
       </div>
       <div className="text-gray-400 flex items-center gap-2">
@@ -361,7 +361,7 @@ export function ModuleView({
       );
     }
     
-    return moduleDetails.module.childModules.map((subModule, index) => {
+    return moduleDetails.module.childModules.map((subModule) => {
       const isExpanded = expandedSubModules.includes(subModule.id)
 
       return (
@@ -374,7 +374,7 @@ export function ModuleView({
                 router.push(`/${params.companyId}/training/${params.trainingId}/${subModule.id}?tab=information`)
               }}>
               <span className="font-medium">
-                Sub-module {index + 1} - {subModule.name}
+              {subModule.name}
               </span>
             </div>
             <div className="flex items-center gap-2">
@@ -461,7 +461,7 @@ export function ModuleView({
               className="border-[0.5px] border-[#CED4DA] rounded-md"
               data-module-id={module.id}
             >
-              {renderHeader(module.name, index, module)}
+              {renderHeader(module.name, module)}
               <AccordionContent>
                 <div className="p-6 space-y-4">
                   {expandedModules.includes(module.id) && (
