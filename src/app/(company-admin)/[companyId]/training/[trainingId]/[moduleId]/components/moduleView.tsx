@@ -67,6 +67,11 @@ export function ModuleView({
   const { mutateAsync: updateModule, isPending: isUpdating } = useUpdateModule()
   const queryClient = useQueryClient()
   const [isEditingSubModule, setIsEditingSubModule] = useState(false)
+  
+  // Add these lines to determine if the user has edit permissions
+  const userRole = typeof window !== 'undefined' ? localStorage.getItem("user_role") : null
+  const hasEditPermission = userRole === "ROLE_COMPANY_ADMIN" || userRole === "ROLE_CURRICULUM_ADMIN"
+  const effectiveCanEdit = canEdit && hasEditPermission
 
   // Fetch module details when accordion is opened
   const { data: moduleDetails, isLoading: isModuleDetailsLoading } = useModules(
@@ -220,7 +225,7 @@ export function ModuleView({
         </span>
       </div>
       <div className="text-gray-400 flex items-center gap-2">
-        {canEdit && (
+        {effectiveCanEdit && (
           <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
               <div 
@@ -250,7 +255,7 @@ export function ModuleView({
         </AccordionTrigger>
       </div>
     </div>
-  ), [onEditClick, handleAssessmentClick, canEdit])
+  ), [onEditClick, router, params.companyId, params.trainingId, effectiveCanEdit])
 
   const renderLessons = useCallback((moduleId: string, isSubModule: boolean = false) => {
     // Log for debugging
@@ -306,7 +311,7 @@ export function ModuleView({
             <span className="font-medium">{lesson.name}</span>
             <span className="text-sm text-gray-500">{lesson.objective}</span>
           </div>
-          {canEdit && (
+          {effectiveCanEdit && (
             <DropdownMenu modal={false}>
               <DropdownMenuTrigger asChild>
                 <div
@@ -328,7 +333,7 @@ export function ModuleView({
         </div>
       )
     })
-  }, [mainModuleLessons, subModuleLessons, isMainModuleLessonsLoading, isSubModuleLessonsLoading, canEdit, handleEditLesson])
+  }, [mainModuleLessons, subModuleLessons, isMainModuleLessonsLoading, isSubModuleLessonsLoading, effectiveCanEdit, handleEditLesson])
 
   const renderSubModules = useCallback((module: Module) => {
     // If we're still loading module details, show a loading indicator
@@ -378,18 +383,21 @@ export function ModuleView({
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  handleLessonClick(subModule, e)
-                }}
-                className="text-blue-500 hover:text-blue-600 hover:bg-blue-50"
-              >
-                Add Lesson
-              </Button>
-              {canEdit && (
+              {/* Only show Add Lesson button if user has edit permission */}
+              {effectiveCanEdit && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleLessonClick(subModule, e)
+                  }}
+                  className="text-blue-500 hover:text-blue-600 hover:bg-blue-50"
+                >
+                  Add Lesson
+                </Button>
+              )}
+              {effectiveCanEdit && (
                 <DropdownMenu modal={false}>
                   <DropdownMenuTrigger asChild>
                     <div 
@@ -429,7 +437,7 @@ export function ModuleView({
         </div>
       )
     })
-  }, [moduleDetails, expandedModules, expandedSubModules, handleSubModuleClick, handleLessonClick, handleSubModuleExpand, renderLessons, canEdit, router, params, isModuleDetailsLoading])
+  }, [moduleDetails, expandedSubModules, handleSubModuleClick, handleLessonClick, handleSubModuleExpand, renderLessons, effectiveCanEdit, router, params, isModuleDetailsLoading])
 
   if (error) {
     return <div className="text-red-500">Error loading modules: {error.message}</div>
@@ -464,7 +472,7 @@ export function ModuleView({
               {renderHeader(module.name, module)}
               <AccordionContent>
                 <div className="p-6 space-y-4">
-                  {expandedModules.includes(module.id) && (
+                  {expandedModules.includes(module.id) && effectiveCanEdit && (
                     <div className="p-4 bg-gray-50">
                       <div className="flex flex-wrap gap-2 mb-4">
                         <div
@@ -543,7 +551,7 @@ export function ModuleView({
         </Accordion>
       </div>
 
-      {canEdit && (
+      {effectiveCanEdit && (
         <Button
           variant="ghost"
           className="w-full border-2 border-dashed rounded-lg py-8 text-blue-500 hover:text-blue-600 bg-[#fbfbfb] hover:bg-blue-50/50 mt-4 justify-start pl-6"
@@ -583,6 +591,7 @@ export function ModuleView({
           moduleId={selectedModule?.id || ""}
           initialData={selectedLesson as LessonFormData}
           isEdit={!!selectedLesson}
+          readOnly={!hasEditPermission}
         />
       )}
     </div>

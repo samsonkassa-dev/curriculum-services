@@ -9,7 +9,7 @@ import { ContentRequestModal } from "./content/contentRequestModal"
 import { columns } from "./content/columns"
 import { DataTable } from "./content/data-table"
 import { Input } from "@/components/ui/input"
-import { Filter, Search, SlidersHorizontal } from "lucide-react"
+import { Search } from "lucide-react"
 import { useDebounce } from "@/lib/hooks/useDebounce"
 
 export function Content() {

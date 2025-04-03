@@ -38,7 +38,7 @@ export function ContentModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg max-w-[330px]">
+      <DialogContent className="sm:max-w-xl max-w-[330px]">
         <DialogHeader>
           <DialogTitle className="text-lg font-semibold">
             {mode === 'add' ? 'Add Content Link' : 'Edit Content Link'}

@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Content } from "@/lib/hooks/useContent"
-import { RejectionDialog } from "@/components/ui/rejection-dialog"
 import { useAcceptContent, useRejectContent } from "@/lib/hooks/useContent"
 import { Textarea } from "@/components/ui/textarea"
 import { Loader2, AlertCircle, ExternalLink, CheckCircle, XCircle } from "lucide-react"
@@ -34,11 +33,11 @@ export function ContentApprovalModal({ content, isOpen, onClose }: ContentApprov
   const handleAccept = async () => {
     try {
       await acceptContent(content.id)
-      toast.success("Content accepted successfully")
+        // toast.success("Content accepted successfully")
       onClose()
     } catch (error) {
-      toast.error("Failed to accept content")
-      console.error("Error accepting content:", error)
+      // toast.error("Failed to accept content")
+      // console.error("Error accepting content:", error)
     }
   }
 
@@ -50,12 +49,12 @@ export function ContentApprovalModal({ content, isOpen, onClose }: ContentApprov
     
     try {
       await rejectContent({ contentId: content.id, reason })
-      toast.success("Content rejected with feedback")
+      // toast.success("Content rejected with feedback")
       setShowRejectionDialog(false)
       onClose()
     } catch (error) {
-      toast.error("Failed to reject content")
-      console.error("Error rejecting content:", error)
+      // toast.error("Failed to reject content")
+      // console.error("Error rejecting content:", error)
     }
   }
 
@@ -221,7 +220,7 @@ export function ContentApprovalModal({ content, isOpen, onClose }: ContentApprov
           <DialogFooter className="p-6 border-t bg-gray-50 flex justify-end gap-3">
             <Button
               variant="outline"
-              className="border-red-300 text-red-500 hover:bg-red-50"
+              className="border-red-300 text-red-500"
               onClick={() => setShowRejectionDialog(true)}
               disabled={isAccepting}
             >

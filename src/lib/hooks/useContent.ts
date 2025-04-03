@@ -213,7 +213,7 @@ export function useEditContentLink() {
     }) => {
       const token = localStorage.getItem('auth_token')
       const response = await axios.patch(
-        `${process.env.NEXT_PUBLIC_API}/content/edit-link/${contentId}`,
+        `${process.env.NEXT_PUBLIC_API}/content/add-link/${contentId}`,
         { link, referenceLink },
         {
           headers: { Authorization: `Bearer ${token}` }
