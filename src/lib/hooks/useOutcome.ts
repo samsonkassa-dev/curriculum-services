@@ -21,6 +21,11 @@ export function useCreateOutcome() {
         }
       )
       return response.data
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ 
+        queryKey: ['objective', variables.trainingId] 
+      })
     }
   })
 } 

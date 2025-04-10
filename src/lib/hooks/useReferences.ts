@@ -7,29 +7,29 @@ interface ReferenceResponse {
   references?: Array<{
     id: string
     definition: string
-    trainingId: string
+    moduleId: string
   }>
 }
 
 interface ReferenceData {
   definition: string
-  trainingId: string
+  moduleId: string
 }
 
-export const useReferences = (trainingId: string) => {
+export const useReferences = (moduleId: string) => {
   return useQuery<ReferenceResponse>({
-    queryKey: ['references', trainingId],
+    queryKey: ['references', moduleId],
     queryFn: async () => {
       const token = localStorage.getItem('auth_token')
       const { data } = await axios.get(
-        `${process.env.NEXT_PUBLIC_API}/training/reference/${trainingId}`,
+        `${process.env.NEXT_PUBLIC_API}/module/reference/${moduleId}`,
         {
           headers: { Authorization: `Bearer ${token}` }
         }
       )
       return data
     },
-    enabled: !!trainingId
+    enabled: !!moduleId
   })
 }
 
@@ -40,7 +40,7 @@ export const useAddReference = () => {
     mutationFn: async (data: ReferenceData) => {
       const token = localStorage.getItem('auth_token')
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API}/training/add-reference`,
+        `${process.env.NEXT_PUBLIC_API}/module/add-reference`,
         data,
         {
           headers: { Authorization: `Bearer ${token}` }
@@ -50,7 +50,7 @@ export const useAddReference = () => {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
-        queryKey: ['references', variables.trainingId]
+        queryKey: ['references', variables.moduleId]
       })
     }
   })

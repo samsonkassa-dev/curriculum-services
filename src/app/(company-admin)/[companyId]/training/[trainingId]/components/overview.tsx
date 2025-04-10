@@ -1,7 +1,6 @@
 "use client";
 
 import { ChevronRight, ChevronDown } from "lucide-react";
-import { TrainingNotFound } from "./training-not-found";
 import {
   Accordion,
   AccordionContent,
@@ -12,9 +11,8 @@ import { useState } from "react";
 import { OverviewEdit } from "./overview/overview-edit";
 import { Training } from "@/types/training";
 import { useUpdateTraining } from "@/lib/hooks/useUpdateTraining";
-import { toast } from "sonner";
 
-type SectionName = "title" | "location" | "duration" | "target" | "purpose"
+type SectionName = "title" | "location" | "duration" | "target" | "purpose" | "type" | "rationale"
 
 export function Overview({ training }: { training: Training }) {
   const [isEditing, setIsEditing] = useState(false)
@@ -30,7 +28,9 @@ export function Overview({ training }: { training: Training }) {
       location: 2,
       duration: 2,
       target: 3,
-      purpose: 5
+      purpose: 5,
+      type: 1,
+      rationale: 1
     }
     setInitialStep(stepMap[section])
     setIsEditing(true)
@@ -121,7 +121,9 @@ export function Overview({ training }: { training: Training }) {
             <AccordionContent>
               <div className="bg-white p-6">
                 <p className="text-gray-600 text-sm md:text-lg">
-                  {training.cities[0]?.name || "N/A"}
+                  {training.cities.length > 0 
+                    ? training.cities.map(city => city.name).join(", ")
+                    : "N/A"}
                 </p>
               </div>
             </AccordionContent>
@@ -181,12 +183,66 @@ export function Overview({ training }: { training: Training }) {
               </div>
             </AccordionTrigger>
             <AccordionContent>
-              <div className="bg-white p-6">
-                <div className="space-y-4">
+              <div className="bg-white p-6 space-y-4">
+                {/* Gender */}
+                <div>
+                  <h3 className="text-gray-700 font-medium mb-1">Gender Distribution:</h3>
                   <p className="text-gray-600 text-sm md:text-lg">
-                    Gender: {training.genderPercentages.map(g => `${g.gender.charAt(0)}${g.gender.slice(1).toLowerCase()} (${g.percentage}%)`).join(", ")}
+                    {training.genderPercentages.map(g => `${g.gender.charAt(0)}${g.gender.slice(1).toLowerCase()} (${g.percentage}%)`).join(", ")}
                   </p>
                 </div>
+
+                {/* Age Groups */}
+                {training.ageGroups?.length > 0 && (
+                  <div>
+                    <h3 className="text-gray-700 font-medium mb-1">Age Groups:</h3>
+                    <p className="text-gray-600 text-sm md:text-lg">
+                      {training.ageGroups.map(age => age.name).join(", ")}
+                    </p>
+                  </div>
+                )}
+
+                {/* Economic Backgrounds */}
+                {training.economicBackgrounds?.length > 0 && (
+                  <div>
+                    <h3 className="text-gray-700 font-medium mb-1">Economic Backgrounds:</h3>
+                    <p className="text-gray-600 text-sm md:text-lg">
+                      {training.economicBackgrounds.map(eb => eb.name).join(", ")}
+                    </p>
+                  </div>
+                )}
+
+                {/* Academic Qualifications */}
+                {training.academicQualifications?.length > 0 && (
+                  <div>
+                    <h3 className="text-gray-700 font-medium mb-1">Academic Qualifications:</h3>
+                    <p className="text-gray-600 text-sm md:text-lg">
+                      {training.academicQualifications.map(aq => aq.name).join(", ")}
+                    </p>
+                  </div>
+                )}
+
+                {/* Disability Information */}
+                {training.disabilityPercentages?.length > 0 && (
+                  <div>
+                    <h3 className="text-gray-700 font-medium mb-1">Disability Distribution:</h3>
+                    <p className="text-gray-600 text-sm md:text-lg">
+                      {training.disabilityPercentages.map(d => 
+                        `${d.disability.name} (${d.percentage}%)`).join(", ")}
+                    </p>
+                  </div>
+                )}
+
+                {/* Marginalized Groups */}
+                {training.marginalizedGroupPercentages?.length > 0 && (
+                  <div>
+                    <h3 className="text-gray-700 font-medium mb-1">Marginalized Groups:</h3>
+                    <p className="text-gray-600 text-sm md:text-lg">
+                      {training.marginalizedGroupPercentages.map(mg => 
+                        `${mg.marginalizedGroup.name} (${mg.percentage}%)`).join(", ")}
+                    </p>
+                  </div>
+                )}
               </div>
             </AccordionContent>
           </AccordionItem>
@@ -218,7 +274,82 @@ export function Overview({ training }: { training: Training }) {
             <AccordionContent>
               <div className="bg-white p-6">
                 <p className="text-gray-600 text-sm md:text-lg">
-                  {training.trainingPurposes[0]?.name || "N/A"}
+                  {training.trainingPurposes.length > 0 
+                    ? training.trainingPurposes.map(purpose => purpose.name).join(", ")
+                    : "N/A"}
+                </p>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* Training Type Section */}
+          <AccordionItem value="type" className="border-[0.5px] border-[#CED4DA] rounded-md">
+            <AccordionTrigger className="bg-white data-[state=open]:bg-[#f7fbff] rounded-lg p-6 flex items-center justify-between hover:no-underline group">
+              <div className="flex items-center gap-3">
+                <span className="font-semibold text-md md:text-xl">
+                  Training Type
+                </span>
+              </div>
+              <div className="text-gray-400 flex gap-2 ">
+                {isCompanyAdmin && (
+                  <img 
+                    src="/edit.svg" 
+                    alt="" 
+                    className="w-5 h-5 cursor-pointer" 
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleEdit("type")
+                    }}
+                  />
+                )}
+                <ChevronRight className="h-5 w-5 transition-transform group-data-[state=open]:hidden text-black" />
+                <ChevronDown className="h-5 w-5 transition-transform hidden group-data-[state=open]:block text-black" />
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="bg-white p-6">
+                <div className="space-y-2">
+                  <p className="text-gray-600 text-sm md:text-lg font-medium">
+                    {training.trainingType?.name || "N/A"}
+                  </p>
+                  {training.trainingType?.description && (
+                    <p className="text-gray-500 text-sm md:text-base">
+                      {training.trainingType.description}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* Rationale Section */}
+          <AccordionItem value="rationale" className="border-[0.5px] border-[#CED4DA] rounded-md">
+            <AccordionTrigger className="bg-white data-[state=open]:bg-[#f7fbff] rounded-lg p-6 flex items-center justify-between hover:no-underline group">
+              <div className="flex items-center gap-3">
+                <span className="font-semibold text-md md:text-xl">
+                  Rationale
+                </span>
+              </div>
+              <div className="text-gray-400 flex gap-2 ">
+                {isCompanyAdmin && (
+                  <img 
+                    src="/edit.svg" 
+                    alt="" 
+                    className="w-5 h-5 cursor-pointer" 
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleEdit("rationale")
+                    }}
+                  />
+                )}
+                <ChevronRight className="h-5 w-5 transition-transform group-data-[state=open]:hidden text-black" />
+                <ChevronDown className="h-5 w-5 transition-transform hidden group-data-[state=open]:block text-black" />
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="bg-white p-6">
+                <p className="text-gray-600 text-sm md:text-lg">
+                  {training.rationale || "N/A"}
                 </p>
               </div>
             </AccordionContent>

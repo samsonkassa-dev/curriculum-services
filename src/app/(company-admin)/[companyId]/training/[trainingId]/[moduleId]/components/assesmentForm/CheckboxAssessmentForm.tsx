@@ -54,7 +54,12 @@ export function CheckboxAssessmentForm({
                       updateFormData(formKey, method.id, checked as boolean)
                     }
                   />
-                  <label htmlFor={method.id}>{method.name}</label>
+                  <label 
+                    htmlFor={method.id} 
+                    className="cursor-pointer text-sm"
+                  >
+                    {method.name}
+                  </label>
                 </div>
               ))}
             </div>
@@ -69,11 +74,22 @@ export function CheckboxAssessmentForm({
                       updateFormData(formKey, method.id, checked as boolean)
                     }
                   />
-                  <label htmlFor={method.id}>{method.name}</label>
+                  <label 
+                    htmlFor={method.id} 
+                    className="cursor-pointer text-sm"
+                  >
+                    {method.name}
+                  </label>
                 </div>
               ))}
             </div>
           </div>
+
+          {assessmentMethods.length === 0 && (
+            <div className="mt-4 text-sm text-gray-500">
+              No assessment methods available for this category
+            </div>
+          )}
         </div>
       </div>
     </EditFormContainer>

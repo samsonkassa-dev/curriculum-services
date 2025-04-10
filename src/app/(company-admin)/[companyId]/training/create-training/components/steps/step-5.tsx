@@ -14,18 +14,30 @@ interface BaseItem {
 interface Step5Props {
   onNext: (data: { trainingPurposeIds: string[] }) => void
   onBack: () => void
+  onCancel?: () => void
   isSubmitting?: boolean
-  initialData?: { trainingPurposeIds?: string[] }
+  initialData?: { 
+    trainingPurposeIds?: string[] 
+    preloadedTrainingPurposes?: BaseItem[]
+  }
   isEditing?: boolean
 }
 
-export function CreateTrainingStep5({ onNext, onBack, isSubmitting, initialData, isEditing = false }: Step5Props) {
-  const { data: trainingPurposes, isLoading } = useBaseData('training-purpose')
+export function CreateTrainingStep5({ onNext, onBack, onCancel, isSubmitting, initialData, isEditing = false }: Step5Props) {
+  // Only fetch if not preloaded
+  const { data: trainingPurposes, isLoading } = useBaseData(
+    'training-purpose', 
+    { enabled: !initialData?.preloadedTrainingPurposes?.length }
+  )
+  
   const [selectedPurposeId, setSelectedPurposeId] = useState<string>(
     initialData?.trainingPurposeIds?.[0] || ''
   )
 
-  const safePurposes = trainingPurposes || []
+  // Use preloaded data or fetched data
+  const safePurposes = initialData?.preloadedTrainingPurposes?.length
+    ? initialData.preloadedTrainingPurposes
+    : trainingPurposes || []
 
   const handleSubmit = () => {
     onNext({
@@ -49,6 +61,7 @@ export function CreateTrainingStep5({ onNext, onBack, isSubmitting, initialData,
           <Select
             value={selectedPurposeId}
             onValueChange={setSelectedPurposeId}
+            disabled={isLoading && !initialData?.preloadedTrainingPurposes?.length}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select purpose" />
@@ -64,16 +77,40 @@ export function CreateTrainingStep5({ onNext, onBack, isSubmitting, initialData,
         </div>
 
         <div className="flex justify-between pt-8">
-          <Button onClick={onBack} variant="outline">
-            Back
-          </Button>
-          <Button 
-            onClick={handleSubmit}
-            className="bg-blue-500 text-white px-8"
-            disabled={!selectedPurposeId || isSubmitting}
-          >
-            {isEditing ? 'Edit Training' : 'Create Training'}
-          </Button>
+          {isEditing ? (
+            <>
+              <Button onClick={onBack} variant="outline">
+                Back
+              </Button>
+              <div className="flex gap-2">
+                {onCancel && (
+                  <Button onClick={onCancel} variant="outline">
+                    Cancel
+                  </Button>
+                )}
+                <Button 
+                  onClick={handleSubmit}
+                  className="bg-blue-500 text-white px-8"
+                  disabled={!selectedPurposeId || isSubmitting}
+                >
+                  {isSubmitting ? 'Editing...' : 'Edit Training'}
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              <Button onClick={onBack} variant="outline">
+                Back
+              </Button>
+              <Button 
+                onClick={handleSubmit}
+                className="bg-blue-500 text-white px-8"
+                disabled={!selectedPurposeId || isSubmitting}
+              >
+                {isSubmitting ? 'Creating...' : 'Create Training'}
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </div>

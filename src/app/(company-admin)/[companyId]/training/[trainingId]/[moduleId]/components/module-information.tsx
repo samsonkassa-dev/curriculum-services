@@ -1,9 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useState, Suspense } from "react"
 import { ModuleInformationProvider, useModuleInformation } from "@/contexts/ModuleInformationContext"
 import { ModuleInformationContent } from "./moduleInformation/module-information-content"
 import { ModuleInformationView } from "./module-information-view"
+import { Loading } from "@/components/ui/loading"
 
 interface ModuleInformationProps {
   moduleId: string
@@ -38,11 +39,20 @@ function ModuleInformationWrapper({ moduleId }: ModuleInformationProps) {
   )
 }
 
+// Create a loading fallback component
+const ModuleInformationFallback = () => (
+  <div className="w-full p-6">
+    <Loading />
+  </div>
+)
+
 export function ModuleInformation({ moduleId }: ModuleInformationProps) {
   // Wrap the component with the provider to get access to the context
   return (
-    <ModuleInformationProvider moduleId={moduleId}>
-      <ModuleInformationWrapper moduleId={moduleId} />
-    </ModuleInformationProvider>
+    <Suspense fallback={<ModuleInformationFallback />}>
+      <ModuleInformationProvider moduleId={moduleId}>
+        <ModuleInformationWrapper moduleId={moduleId} />
+      </ModuleInformationProvider>
+    </Suspense>
   )
 } 

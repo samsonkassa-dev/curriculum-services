@@ -21,12 +21,23 @@ interface BaseItem {
 }
 
 
-export function CreateTrainingStep4({ onNext, onBack, initialData }: StepProps) {
-  const { data: ageGroups } = useBaseData('age-group')
-  const { data: disabilities } = useBaseData('disability')
-  const { data: marginalizedGroups } = useBaseData('marginalized-group')
-  const { data: economicBackgrounds } = useBaseData('economic-background')
-  const { data: academicQualifications } = useBaseData('academic-qualification')
+export function CreateTrainingStep4({ onNext, onBack, onCancel, initialData, isEditing = false }: StepProps) {
+  // Only fetch data if not preloaded
+  const { data: ageGroups } = useBaseData('age-group', { 
+    enabled: !initialData?.preloadedAgeGroups?.length
+  })
+  const { data: disabilities } = useBaseData('disability', {
+    enabled: !initialData?.preloadedDisabilities?.length
+  })
+  const { data: marginalizedGroups } = useBaseData('marginalized-group', {
+    enabled: !initialData?.preloadedMarginalizedGroups?.length
+  })
+  const { data: economicBackgrounds } = useBaseData('economic-background', {
+    enabled: !initialData?.preloadedEconomicBackgrounds?.length
+  })
+  const { data: academicQualifications } = useBaseData('academic-qualification', {
+    enabled: !initialData?.preloadedAcademicQualifications?.length
+  })
 
   // Popover states
   const [openAgeGroups, setOpenAgeGroups] = useState(false)
@@ -66,14 +77,26 @@ export function CreateTrainingStep4({ onNext, onBack, initialData }: StepProps) 
   const disabilityIds = disabilityPercentages?.map(d => d.disabilityId) || []
   const marginalizedGroupIds = marginalizedGroupPercentages?.map(m => m.marginalizedGroupId) || []
 
-  // Safe arrays to prevent errors
-  const safeAgeGroups = ageGroups || []
-  const safeDisabilities = disabilities || []
-  const safeMarginalizedGroups = marginalizedGroups || []
-  const safeEconomicBackgrounds = economicBackgrounds || []
-  const safeAcademicQualifications = academicQualifications || []
-
-
+  // Use preloaded data or fetched data
+  const safeAgeGroups = initialData?.preloadedAgeGroups?.length 
+    ? initialData.preloadedAgeGroups 
+    : ageGroups || []
+  
+  const safeDisabilities = initialData?.preloadedDisabilities?.length
+    ? initialData.preloadedDisabilities
+    : disabilities || []
+  
+  const safeMarginalizedGroups = initialData?.preloadedMarginalizedGroups?.length
+    ? initialData.preloadedMarginalizedGroups
+    : marginalizedGroups || []
+  
+  const safeEconomicBackgrounds = initialData?.preloadedEconomicBackgrounds?.length
+    ? initialData.preloadedEconomicBackgrounds
+    : economicBackgrounds || []
+  
+  const safeAcademicQualifications = initialData?.preloadedAcademicQualifications?.length
+    ? initialData.preloadedAcademicQualifications
+    : academicQualifications || []
 
   // Handle age group selection
   const handleAgeGroupChange = (value: string) => {
@@ -100,9 +123,6 @@ export function CreateTrainingStep4({ onNext, onBack, initialData }: StepProps) 
 
   // Handle disability selection
   const handleSelectDisability = (disabilityId: string) => {
-    // console.log('Selecting disability:', disabilityId);
-    // console.log('Current disability percentages:', disabilityPercentages);
-    
     const newDisabilityPercentages = [...(disabilityPercentages || [])]
     
     // Check if it's already selected
@@ -119,7 +139,6 @@ export function CreateTrainingStep4({ onNext, onBack, initialData }: StepProps) 
       })
     }
     
-    console.log('New disability percentages:', newDisabilityPercentages);
     setValue('disabilityPercentages', newDisabilityPercentages, { shouldValidate: true })
   }
 
@@ -136,9 +155,6 @@ export function CreateTrainingStep4({ onNext, onBack, initialData }: StepProps) 
 
   // Handle marginalized group selection
   const handleSelectMarginalizedGroup = (groupId: string) => {
-    // console.log('Selecting marginalized group:', groupId);
-    // console.log('Current marginalized group percentages:', marginalizedGroupPercentages);
-    
     const newMarginalizedGroupPercentages = [...(marginalizedGroupPercentages || [])]
     
     // Check if it's already selected
@@ -155,7 +171,6 @@ export function CreateTrainingStep4({ onNext, onBack, initialData }: StepProps) 
       })
     }
     
-    console.log('New marginalized group percentages:', newMarginalizedGroupPercentages);
     setValue('marginalizedGroupPercentages', newMarginalizedGroupPercentages, { shouldValidate: true })
   }
 
@@ -250,24 +265,22 @@ export function CreateTrainingStep4({ onNext, onBack, initialData }: StepProps) 
                     <div
                       key={ageGroup.id}
                       className={cn(
-                        "flex items-center px-4 py-2 text-sm cursor-pointer hover:bg-gray-100",
-                        ageGroupIds.includes(ageGroup.id) && "bg-gray-100"
+                        "flex items-center px-4 py-2 cursor-pointer hover:bg-gray-100",
+                        ageGroupIds?.includes(ageGroup.id) && "bg-gray-100"
                       )}
                       onClick={() => handleAgeGroupChange(ageGroup.id)}
                     >
                       <Check
                         className={cn(
                           "mr-2 h-4 w-4",
-                          ageGroupIds.includes(ageGroup.id) ? "opacity-100" : "opacity-0"
+                          ageGroupIds?.includes(ageGroup.id) ? "opacity-100" : "opacity-0"
                         )}
                       />
                       {ageGroup.name}
                     </div>
                   ))
                 ) : (
-                  <div className="px-4 py-2 text-sm text-gray-500">
-                    No age groups available
-                  </div>
+                  <div className="px-4 py-3 text-sm text-gray-500">No age groups available</div>
                 )}
               </div>
             </PopoverContent>
@@ -634,21 +647,50 @@ export function CreateTrainingStep4({ onNext, onBack, initialData }: StepProps) 
 
         {/* Navigation Buttons */}
         <div className="flex justify-between pt-8">
-          <Button onClick={onBack} variant="outline" type="button">
-            Back
-          </Button>
-          <Button
-            onClick={handleSubmit(onSubmit)}
-            className="bg-blue-500 text-white px-8"
-            disabled={
-              !ageGroupIds?.length ||
-              !economicBackgroundIds?.length ||
-              !academicQualificationIds?.length
-            }
-            type="button"
-          >
-            Continue
-          </Button>
+          {isEditing ? (
+            <>
+              <Button onClick={onBack} variant="outline" type="button">
+                Back
+              </Button>
+              <div className="flex gap-2">
+                {onCancel && (
+                  <Button onClick={onCancel} variant="outline" type="button">
+                    Cancel
+                  </Button>
+                )}
+                <Button
+                  onClick={handleSubmit(onSubmit)}
+                  className="bg-blue-500 text-white px-8"
+                  disabled={
+                    !ageGroupIds?.length ||
+                    !economicBackgroundIds?.length ||
+                    !academicQualificationIds?.length
+                  }
+                  type="button"
+                >
+                  Continue
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              <Button onClick={onBack} variant="outline" type="button">
+                Back
+              </Button>
+              <Button
+                onClick={handleSubmit(onSubmit)}
+                className="bg-blue-500 text-white px-8"
+                disabled={
+                  !ageGroupIds?.length ||
+                  !economicBackgroundIds?.length ||
+                  !academicQualificationIds?.length
+                }
+                type="button"
+              >
+                Continue
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </div>

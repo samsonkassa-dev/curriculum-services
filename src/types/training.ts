@@ -2,6 +2,11 @@ export interface Training {
   id: string;
   title: string;
   rationale: string;
+  trainingType: {
+    id: string;
+    name: string;
+    description: string;
+  };
   cities: {
     id: string;
     name: string;
@@ -24,6 +29,22 @@ export interface Training {
     gender: "MALE" | "FEMALE";
     percentage: number;
   }[];
+  disabilityPercentages: {
+    disability: {
+      id: string;
+      name: string;
+      description: string;
+    };
+    percentage: number;
+  }[];
+  marginalizedGroupPercentages: {
+    marginalizedGroup: {
+      id: string;
+      name: string;
+      description: string;
+    };
+    percentage: number;
+  }[];
   economicBackgrounds: {
     id: string;
     name: string;
@@ -44,4 +65,24 @@ export interface Training {
     name: string;
     // ... other company profile fields
   };
+  
+  // Additional fields used only in API requests, not in API responses
+  cityIds?: string[];
+  countryIds?: string[];
+  trainingTypeId?: string;
+  ageGroupIds?: string[];
+  economicBackgroundIds?: string[];
+  academicQualificationIds?: string[];
+  trainingPurposeIds?: string[];
+  
+  // Special input formats for percentages
+  disabilityPercentagesInput?: Array<{
+    disabilityId: string;
+    percentage: number;
+  }>;
+  
+  marginalizedGroupPercentagesInput?: Array<{
+    marginalizedGroupId: string;
+    percentage: number;
+  }>;
 }

@@ -14,8 +14,6 @@ import { InclusionStrategies } from "./inclusion-strategies"
 import { EstimatedDurations } from "./estimated-durations"
 import { ModuleReferences, ModuleReferencesHandle } from "./references"
 import { ModuleAppendices, ModuleAppendicesHandle } from "./appendices"
-import { useQuery } from "@tanstack/react-query"
-import axios from "axios"
 import { useParams } from "next/navigation"
 import { toast } from "sonner"
 import { InstructionalMethod } from "./title"
@@ -23,46 +21,6 @@ import { InstructionalMethod } from "./title"
 interface ModuleInformationContentProps {
   onSave: () => void
   onCancel: () => void
-}
-
-// Custom hook to check if a module has references
-function useHasModuleReferences(moduleId: string) {
-  return useQuery({
-    queryKey: ['moduleReferencesCheck', moduleId],
-    queryFn: async () => {
-      const token = localStorage.getItem('auth_token')
-      const { data } = await axios.get(
-        `${process.env.NEXT_PUBLIC_API}/module/reference/${moduleId}`,
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      )
-      return data?.references?.length > 0 || false
-    },
-    enabled: !!moduleId,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    refetchOnWindowFocus: false
-  })
-}
-
-// Custom hook to check if a module has appendices
-function useHasModuleAppendices(moduleId: string) {
-  return useQuery({
-    queryKey: ['moduleAppendicesCheck', moduleId],
-    queryFn: async () => {
-      const token = localStorage.getItem('auth_token')
-      const { data } = await axios.get(
-        `${process.env.NEXT_PUBLIC_API}/module/appendix/${moduleId}`,
-        {
-          headers: { Authorization: `Bearer ${token}` }
-        }
-      )
-      return data?.appendices?.length > 0 || false
-    },
-    enabled: !!moduleId,
-    staleTime: 1000 * 60 * 5, // 5 minutes
-    refetchOnWindowFocus: false
-  })
 }
 
 export function ModuleInformationContent({ onSave, onCancel }: ModuleInformationContentProps) {
@@ -78,13 +36,20 @@ export function ModuleInformationContent({ onSave, onCancel }: ModuleInformation
     "Appendices"
   ]
 
-  const { formData, submitForm } = useModuleInformation()
+  const { 
+    formData, 
+    submitForm, 
+    hasReferences, 
+    hasAppendices 
+  } = useModuleInformation()
+  
+  // Add state to track unsaved references and appendices
+  const [hasUnsavedReferences, setHasUnsavedReferences] = useState(false)
+  const [hasUnsavedAppendices, setHasUnsavedAppendices] = useState(false)
+  
   const { data: instructionalMethods, isLoading: instructionalMethodsLoading } = useBaseData('instructional-method')
   const { data: technologyIntegrations, isLoading: technologyIntegrationsLoading } = useBaseData('technology-integration')
   const params = useParams()
-  const currentModuleId = params.moduleId as string
-  const { data: hasReferences = false } = useHasModuleReferences(currentModuleId)
-  const { data: hasAppendices = false } = useHasModuleAppendices(currentModuleId)
   const [isMobile, setIsMobile] = useState(false)
   const [showSidebar, setShowSidebar] = useState(true)
   const [completedSteps, setCompletedSteps] = useState<string[]>([])
@@ -156,9 +121,11 @@ export function ModuleInformationContent({ onSave, onCancel }: ModuleInformation
           formData.durationType !== undefined
         )
       case "References":
-        return hasReferences
+        // Check both API data and unsaved local changes
+        return hasReferences || hasUnsavedReferences
       case "Appendices":
-        return hasAppendices
+        // Check both API data and unsaved local changes
+        return hasAppendices || hasUnsavedAppendices
       default:
         return false
     }
@@ -219,9 +186,15 @@ export function ModuleInformationContent({ onSave, onCancel }: ModuleInformation
       case "Estimated Duration":
         return <EstimatedDurations />
       case "References":
-        return <ModuleReferences ref={referencesRef} />
+        return <ModuleReferences 
+          ref={referencesRef} 
+          onContentChange={(hasContent) => setHasUnsavedReferences(hasContent)}
+        />
       case "Appendices":
-        return <ModuleAppendices ref={appendicesRef} />
+        return <ModuleAppendices 
+          ref={appendicesRef} 
+          onContentChange={(hasContent) => setHasUnsavedAppendices(hasContent)}
+        />
       default:
         return null
     }
@@ -252,6 +225,7 @@ export function ModuleInformationContent({ onSave, onCancel }: ModuleInformation
       // Case 3: References section - save references and move to Appendices
       else if (activeSection === "References" && referencesRef.current) {
         await referencesRef.current.handleSave();
+        setHasUnsavedReferences(false);
         setCompletedSteps(prev => [...prev, activeSection])
         setActiveSection(nextSection)
       }
@@ -265,6 +239,7 @@ export function ModuleInformationContent({ onSave, onCancel }: ModuleInformation
       // Case 5: Appendices - should never happen as it's handled in Case 1
       else if (activeSection === "Appendices" && appendicesRef.current) {
         await appendicesRef.current.handleSave();
+        setHasUnsavedAppendices(false);
         setCompletedSteps(prev => [...prev, activeSection])
         setActiveSection(nextSection)
       }

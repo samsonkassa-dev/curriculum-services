@@ -79,111 +79,125 @@ export type ModuleAppendicesHandle = {
   handleSave: () => Promise<void>;
 }
 
-export const ModuleAppendices = forwardRef<ModuleAppendicesHandle>((_, ref) => {
-  const params = useParams()
-  const moduleId = params.moduleId as string
-  const { data: appendixData } = useModuleAppendices(moduleId)
-  const { mutateAsync: addAppendix } = useAddModuleAppendix()
-  
-  const [appendices, setAppendices] = useState<string[]>([''])
-  const [isSubmitting, setIsSubmitting] = useState(false)
+interface ModuleAppendicesProps {
+  onContentChange?: (hasContent: boolean) => void;
+}
 
-  useEffect(() => {
-    if (appendixData?.appendices?.length) {
-      setAppendices(appendixData.appendices.map(app => app.definition))
-    }
-  }, [appendixData])
+export const ModuleAppendices = forwardRef<ModuleAppendicesHandle, ModuleAppendicesProps>(
+  ({ onContentChange }, ref) => {
+    const params = useParams()
+    const moduleId = params.moduleId as string
+    const { data: appendixData } = useModuleAppendices(moduleId)
+    const { mutateAsync: addAppendix } = useAddModuleAppendix()
+    
+    const [appendices, setAppendices] = useState<string[]>([''])
+    const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const addAppendixItem = () => {
-    setAppendices([...appendices, ''])
-  }
-
-  const updateAppendixItem = (index: number, value: string) => {
-    const newAppendices = [...appendices]
-    newAppendices[index] = value
-    setAppendices(newAppendices)
-  }
-
-  const removeAppendixItem = (index: number) => {
-    if (appendices.length > 1) {
-      setAppendices(appendices.filter((_, i) => i !== index))
-    }
-  }
-
-  const handleSave = async () => {
-    try {
-      setIsSubmitting(true)
-      // Filter out empty appendices
-      const validAppendices = appendices.filter(app => app.trim() !== '')
-      
-      // Only make API calls if there are valid appendices
-      if (validAppendices.length > 0) {
-        for (const appendix of validAppendices) {
-          await addAppendix({
-            definition: appendix,
-            moduleId
-          })
-        }
-        toast.success("Appendices saved successfully")
+    useEffect(() => {
+      if (appendixData?.appendices?.length) {
+        setAppendices(appendixData.appendices.map(app => app.definition))
       }
-    } catch (error: unknown) {
-      const apiError = error as ApiError
-      toast.error(apiError.message || "Failed to save appendices")
-      throw error; // Re-throw for the parent to handle
-    } finally {
-      setIsSubmitting(false)
+    }, [appendixData])
+
+    // Update parent about any content changes
+    useEffect(() => {
+      const hasContent = appendices.some(app => app.trim() !== '')
+      if (onContentChange) {
+        onContentChange(hasContent)
+      }
+    }, [appendices, onContentChange])
+
+    const addAppendixItem = () => {
+      setAppendices([...appendices, ''])
     }
-  }
 
-  // Expose the handleSave method to parent components
-  useImperativeHandle(ref, () => ({
-    handleSave
-  }));
+    const updateAppendixItem = (index: number, value: string) => {
+      const newAppendices = [...appendices]
+      newAppendices[index] = value
+      setAppendices(newAppendices)
+    }
 
-  return (
-    <EditFormContainer title="" description="">
-      <div className="space-y-8 pr-0 md:pr-8">
-        <div className="space-y-2">
-          <div className="flex items-center gap-2">
-            <h2 className="md:text-base text-sm font-semibold">Appendices</h2>
-            <span className="text-[10px] md:text-xs text-blue-500">(Optional)</span>
-          </div>
-          <p className="text-sm text-[#99948E]">
-            Add supporting materials or additional information for this module.
-          </p>
+    const removeAppendixItem = (index: number) => {
+      if (appendices.length > 1) {
+        setAppendices(appendices.filter((_, i) => i !== index))
+      }
+    }
 
-          {appendices.map((appendix, index) => (
-            <div key={index} className="relative">
-              <Input
-                value={appendix}
-                onChange={(e) => updateAppendixItem(index, e.target.value)}
-                placeholder="Enter appendix"
-                className="pr-10 text-sm md:text-base"
-              />
-              <div className="absolute right-10 top-1/2 -translate-y-1/2 h-full w-[1px] bg-gray-200" />
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => removeAppendixItem(index)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 rounded-full bg-red-50 hover:bg-red-100 p-0"
-              >
-                <img src="/delete.svg" alt="delete" className="w-4 h-4" />
-              </Button>
+    const handleSave = async () => {
+      try {
+        setIsSubmitting(true)
+        // Filter out empty appendices
+        const validAppendices = appendices.filter(app => app.trim() !== '')
+        
+        // Only make API calls if there are valid appendices
+        if (validAppendices.length > 0) {
+          for (const appendix of validAppendices) {
+            await addAppendix({
+              definition: appendix,
+              moduleId
+            })
+          }
+          toast.success("Appendices saved successfully")
+        }
+      } catch (error: unknown) {
+        const apiError = error as ApiError
+        toast.error(apiError.message || "Failed to save appendices")
+        throw error; // Re-throw for the parent to handle
+      } finally {
+        setIsSubmitting(false)
+      }
+    }
+
+    // Expose the handleSave method to parent components
+    useImperativeHandle(ref, () => ({
+      handleSave
+    }));
+
+    return (
+      <EditFormContainer title="" description="">
+        <div className="space-y-8 pr-0 md:pr-8">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <h2 className="md:text-base text-sm font-semibold">Appendices</h2>
+              <span className="text-[10px] md:text-xs text-blue-500">(Optional)</span>
             </div>
-          ))}
+            <p className="text-sm text-[#99948E]">
+              Add supporting materials or additional information for this module.
+            </p>
 
-          <Button
-            onClick={addAppendixItem}
-            variant="link"
-            className="text-brand text-sm md:text-base"
-          >
-            + Add Appendix
-          </Button>
+            {appendices.map((appendix, index) => (
+              <div key={index} className="relative">
+                <Input
+                  value={appendix}
+                  onChange={(e) => updateAppendixItem(index, e.target.value)}
+                  placeholder="Enter appendix"
+                  className="pr-10 text-sm md:text-base"
+                />
+                <div className="absolute right-10 top-1/2 -translate-y-1/2 h-full w-[1px] bg-gray-200" />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => removeAppendixItem(index)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 rounded-full bg-red-50 hover:bg-red-100 p-0"
+                >
+                  <img src="/delete.svg" alt="delete" className="w-4 h-4" />
+                </Button>
+              </div>
+            ))}
+
+            <Button
+              onClick={addAppendixItem}
+              variant="link"
+              className="text-brand text-sm md:text-base"
+            >
+              + Add Appendix
+            </Button>
+          </div>
         </div>
-      </div>
-    </EditFormContainer>
-  )
-})
+      </EditFormContainer>
+    )
+  }
+)
 
 // Add display name to fix linter error
 ModuleAppendices.displayName = 'ModuleAppendices'; 

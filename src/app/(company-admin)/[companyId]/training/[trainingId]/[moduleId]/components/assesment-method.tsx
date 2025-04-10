@@ -1,9 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useState, Suspense } from "react"
 import { AssessmentFormProvider, useAssessmentForm } from "@/contexts/AssessmentFormContext"
 import { AssessmentMethodContent } from "./assesmentForm/assessment-method-content"
 import { AssessmentMethodView } from "./assessment-method-view"
+import { Loading } from "@/components/ui/loading"
 
 interface AssessmentMethodProps {
   moduleId: string
@@ -39,11 +40,20 @@ function AssessmentMethodWrapper({ moduleId }: AssessmentMethodProps) {
   )
 }
 
+// Create a loading fallback component
+const AssessmentMethodFallback = () => (
+  <div className="w-full p-6">
+    <Loading />
+  </div>
+)
+
 export function AssessmentMethod({ moduleId }: AssessmentMethodProps) {
   // Wrap the component with the provider to get access to the context
   return (
-    <AssessmentFormProvider moduleId={moduleId}>
-      <AssessmentMethodWrapper moduleId={moduleId} />
-    </AssessmentFormProvider>
+    <Suspense fallback={<AssessmentMethodFallback />}>
+      <AssessmentFormProvider moduleId={moduleId}>
+        <AssessmentMethodWrapper moduleId={moduleId} />
+      </AssessmentFormProvider>
+    </Suspense>
   )
 }    

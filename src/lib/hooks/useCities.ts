@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, UseQueryOptions } from '@tanstack/react-query'
 import axios from 'axios'
 
 interface City {
@@ -18,8 +18,11 @@ interface CityResponse {
   message: string
 }
 
-export function useCities(countryIds: string[]) {
-  return useQuery<City[]>({
+export function useCities(
+  countryIds: string[], 
+  options?: Omit<UseQueryOptions<City[], Error>, 'queryKey' | 'queryFn'>
+) {
+  return useQuery<City[], Error>({
     queryKey: ['cities', countryIds],
     queryFn: async () => {
       if (!countryIds.length) return []
@@ -39,6 +42,7 @@ export function useCities(countryIds: string[]) {
       
       return data.cities
     },
-    enabled: countryIds.length > 0
+    enabled: countryIds.length > 0,
+    ...options
   })
 } 

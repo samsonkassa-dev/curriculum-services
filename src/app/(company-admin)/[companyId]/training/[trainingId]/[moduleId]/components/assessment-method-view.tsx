@@ -12,7 +12,6 @@ import { useBaseData } from "@/lib/hooks/useBaseData"
 import { Loading } from "@/components/ui/loading"
 import { AssessmentFormProvider, useAssessmentForm } from "@/contexts/AssessmentFormContext"
 
-
 interface AssessmentMethodViewProps {
   moduleId: string
   onEdit: () => void
@@ -28,7 +27,7 @@ function AssessmentMethodViewContent({ onEdit }: AssessmentMethodViewProps) {
   const userRole = localStorage.getItem("user_role")
   const canEdit = userRole === "ROLE_COMPANY_ADMIN" || userRole === "ROLE_CURRICULUM_ADMIN"
   
-  const { formData } = useAssessmentForm()
+  const { formData, hasAssessmentMethods } = useAssessmentForm()
   
   // Fetch assessment method types for each category
   const { data: genericMethods, isLoading: isLoadingGeneric } = useBaseData('assessment-type', { subType: 'GENERAL_FORMATIVE' })
@@ -72,7 +71,7 @@ function AssessmentMethodViewContent({ onEdit }: AssessmentMethodViewProps) {
   const hasSubjectSpecific = formData.subjectSpecificMethod && formData.subjectSpecificMethod.trim() !== ''
   
   // Check if any assessment methods exist
-  const hasAnyMethod = hasGenericMethods || hasTechMethods || hasAlternativeMethods || hasSubjectSpecific
+  const hasAnyMethod = hasGenericMethods || hasTechMethods || hasAlternativeMethods || hasSubjectSpecific || hasAssessmentMethods
   
   // If no methods are available and user can't edit, show message
   if (!hasAnyMethod && !canEdit) {

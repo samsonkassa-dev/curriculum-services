@@ -2,6 +2,7 @@
 export interface StepProps {
   onNext: (data: any) => void;
   onBack?: () => void;
+  onCancel?: () => void;
   initialData?: {
     title?: string;
     rationale?: string;
@@ -26,6 +27,18 @@ export interface StepProps {
     }>;
     economicBackgroundIds?: string[];
     academicQualificationIds?: string[];
+    // Preloaded reference data to avoid unnecessary API calls
+    preloadedTrainingType?: any;
+    preloadedTrainingTypes?: any[];
+    preloadedTrainingPurposes?: any[];
+    preloadedCountries?: any[];
+    preloadedCities?: any[];
+    preloadedAgeGroups?: any[];
+    preloadedDisabilities?: any[];
+    preloadedMarginalizedGroups?: any[];
+    preloadedEconomicBackgrounds?: any[];
+    preloadedAcademicQualifications?: any[];
   };
   isSubmitting?: boolean;
+  isEditing?: boolean;
 } 

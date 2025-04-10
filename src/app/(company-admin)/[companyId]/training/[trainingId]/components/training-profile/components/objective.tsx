@@ -64,9 +64,6 @@ type CombinedObjective = ExistingObjective | NewObjective;
 
 export function Objective({ trainingId, initialData, onSave, onCancel }: ObjectiveProps) {
   const [generalObjective, setGeneralObjective] = useState(initialData?.generalObjective?.definition || "")
-  const [specificObjectives, setSpecificObjectives] = useState<SpecificObjective[]>(
-    initialData?.specificObjectives || []
-  )
   const [newSpecificObjectives, setNewSpecificObjectives] = useState<Array<{
     definition: string
     outcomes: string[]
@@ -91,12 +88,6 @@ export function Objective({ trainingId, initialData, onSave, onCancel }: Objecti
         ...obj, 
         outcomes: [...obj.outcomes, ""] 
       } : obj
-    ))
-  }
-
-  const handleAddOutcome = (index: number) => {
-    setNewSpecificObjectives(prev => prev.map((obj, i) => 
-      i === index ? { ...obj, showOutcome: true } : obj
     ))
   }
 

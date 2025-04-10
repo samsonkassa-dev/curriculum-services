@@ -5,25 +5,48 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { StepProps } from '../types'
-import { titleRationaleSchema, TitleRationaleFormData } from '@/types/training-form'
+import { titleRationaleSchema, TitleRationaleFormData, BaseItem } from '@/types/training-form'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { useBaseData } from '@/lib/hooks/useBaseData'
 
-export function CreateTrainingStep1({ onNext, initialData }: StepProps) {
+interface ExtendedTitleRationaleFormData extends TitleRationaleFormData {
+  trainingTypeId?: string;
+}
+
+export function CreateTrainingStep1({ onNext, onBack, onCancel, initialData, isEditing = false }: StepProps) {
+  // Fetch training types if not provided in initialData
+  const { data: trainingTypes, isLoading } = useBaseData(
+    'training-type', 
+    { enabled: !initialData?.preloadedTrainingTypes?.length }
+  )
+
   const {
     register,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors }
-  } = useForm<TitleRationaleFormData>({
+  } = useForm<ExtendedTitleRationaleFormData>({
     resolver: zodResolver(titleRationaleSchema),
     defaultValues: {
       title: initialData?.title || '',
-      rationale: initialData?.rationale || ''
+      rationale: initialData?.rationale || '',
+      trainingTypeId: initialData?.trainingTypeId || ''
     }
   })
 
+  // Use preloaded or fetched training types
+  const allTrainingTypes = initialData?.preloadedTrainingTypes || trainingTypes || []
+  const trainingTypeId = watch('trainingTypeId')
+
   const title = watch('title')
   const rationale = watch('rationale')
-  const onSubmit = (data: TitleRationaleFormData) => {
+  
+  const handleTrainingTypeChange = (value: string) => {
+    setValue('trainingTypeId', value)
+  }
+
+  const onSubmit = (data: ExtendedTitleRationaleFormData) => {
     onNext(data)
   }
 
@@ -63,14 +86,69 @@ export function CreateTrainingStep1({ onNext, initialData }: StepProps) {
           )}
         </div>
 
-        <Button 
-          onClick={handleSubmit(onSubmit)}
-          className="bg-blue-500 text-white px-8 w-[25%] mx-auto"
-          type="button"
-          disabled={!title?.trim() || !rationale?.trim()}
-        >
-          Continue
-        </Button>
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Training Type</label>
+          <Select 
+            value={trainingTypeId} 
+            onValueChange={handleTrainingTypeChange}
+            disabled={isLoading && !allTrainingTypes.length}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select training type" />
+            </SelectTrigger>
+            <SelectContent>
+              {allTrainingTypes.map((type: BaseItem) => (
+                <SelectItem key={type.id} value={type.id}>
+                  {type.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {isEditing ? (
+          <div className="flex justify-between pt-8 w-full">
+            <div>
+              {onBack && (
+                <Button 
+                  onClick={onBack} 
+                  variant="outline" 
+                  type="button"
+                >
+                  Back
+                </Button>
+              )}
+            </div>
+            <div className="flex gap-2">
+              {onCancel && (
+                <Button 
+                  onClick={onCancel} 
+                  variant="outline" 
+                  type="button"
+                >
+                  Cancel
+                </Button>
+              )}
+              <Button 
+                onClick={handleSubmit(onSubmit)}
+                className="bg-blue-500 text-white px-8"
+                type="button"
+                disabled={!title?.trim() || !rationale?.trim() || !trainingTypeId}
+              >
+                Continue
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <Button 
+            onClick={handleSubmit(onSubmit)}
+            className="bg-blue-500 text-white px-8 w-[25%] mx-auto"
+            type="button"
+            disabled={!title?.trim() || !rationale?.trim() || !trainingTypeId}
+          >
+            Continue
+          </Button>
+        )}
       </div>
     </div>
   )

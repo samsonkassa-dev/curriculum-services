@@ -7,29 +7,29 @@ interface AppendixResponse {
   appendices?: Array<{
     id: string
     definition: string
-    trainingId: string
+    moduleId: string
   }>
 }
 
 interface AppendixData {
   definition: string
-  trainingId: string
+  moduleId: string
 }
 
-export const useAppendices = (trainingId: string) => {
+export const useAppendices = (moduleId: string) => {
   return useQuery<AppendixResponse>({
-    queryKey: ['appendices', trainingId],
+    queryKey: ['appendices', moduleId],
     queryFn: async () => {
       const token = localStorage.getItem('auth_token')
       const { data } = await axios.get(
-        `${process.env.NEXT_PUBLIC_API}/training/appendix/${trainingId}`,
+        `${process.env.NEXT_PUBLIC_API}/module/appendix/${moduleId}`,
         {
           headers: { Authorization: `Bearer ${token}` }
         }
       )
       return data
     },
-    enabled: !!trainingId
+    enabled: !!moduleId
   })
 }
 
@@ -40,7 +40,7 @@ export const useAddAppendix = () => {
     mutationFn: async (data: AppendixData) => {
       const token = localStorage.getItem('auth_token')
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API}/training/add-appendix`,
+        `${process.env.NEXT_PUBLIC_API}/module/add-appendix`,
         data,
         {
           headers: { Authorization: `Bearer ${token}` }
@@ -50,7 +50,7 @@ export const useAddAppendix = () => {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
-        queryKey: ['appendices', variables.trainingId]
+        queryKey: ['appendices', variables.moduleId]
       })
     }
   })

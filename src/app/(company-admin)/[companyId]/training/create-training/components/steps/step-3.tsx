@@ -7,22 +7,22 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { StepProps } from '../types'
-import { durationSchema, DurationFormData } from '@/types/training-form'
+import { durationSchema, DurationFormData, BaseItem } from '@/types/training-form'
 import { useBaseData } from '@/lib/hooks/useBaseData'
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Check, ChevronsUpDown } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { cn } from '@/lib/utils'
 
-interface BaseItem {
-  id: string
-  name: string
-  description: string
-}
+export function CreateTrainingStep3({ onNext, onBack, onCancel, initialData, isEditing = false }: StepProps) {
+  // Fetch training types if not provided
+  const { data: trainingTypes, isLoading: isLoadingTrainingTypes } = useBaseData(
+    'training-type', 
+    { enabled: !initialData?.preloadedTrainingTypes?.length }
+  )
 
-export function CreateTrainingStep3({ onNext, onBack, initialData }: StepProps) {
-  const { data: trainingTypes, isLoading: isLoadingTrainingTypes } = useBaseData('training-type')
-
+  // Use preloaded or fetched training types
+  const allTrainingTypes = initialData?.preloadedTrainingTypes || trainingTypes || []
 
   const {
     register,
@@ -36,17 +36,12 @@ export function CreateTrainingStep3({ onNext, onBack, initialData }: StepProps) 
       duration: initialData?.duration || undefined,
       durationType: initialData?.durationType || 'DAYS',
       trainingTypeId: initialData?.trainingTypeId || '',
-      //trainingPurposeIds: initialData?.trainingPurposeIds || []
     }
   })
 
   const duration = watch('duration')
   const durationType = watch('durationType')
   const trainingTypeId = watch('trainingTypeId')
-  //const trainingPurposeIds = watch('trainingPurposeIds')
-
-  const safeTrainingTypes = trainingTypes || []
-
 
   const handleDurationTypeChange = (value: "DAYS" | "WEEKS" | "MONTHS" | "HOURS") => {
     setValue('durationType', value, { shouldValidate: true })
@@ -55,8 +50,6 @@ export function CreateTrainingStep3({ onNext, onBack, initialData }: StepProps) 
   const handleTrainingTypeChange = (value: string) => {
     setValue('trainingTypeId', value, { shouldValidate: true })
   }
-
-
 
   const onSubmit = (data: DurationFormData) => {
     onNext(data)
@@ -113,13 +106,13 @@ export function CreateTrainingStep3({ onNext, onBack, initialData }: StepProps) 
           <Select 
             value={trainingTypeId} 
             onValueChange={handleTrainingTypeChange}
-            disabled={isLoadingTrainingTypes}
+            disabled={isLoadingTrainingTypes && !allTrainingTypes.length}
           >
             <SelectTrigger>
               <SelectValue placeholder="Select training type" />
             </SelectTrigger>
             <SelectContent>
-              {safeTrainingTypes.map((type: BaseItem) => (
+              {allTrainingTypes.map((type: BaseItem) => (
                 <SelectItem key={type.id} value={type.id}>
                   {type.name}
                 </SelectItem>
@@ -133,17 +126,42 @@ export function CreateTrainingStep3({ onNext, onBack, initialData }: StepProps) 
 
 
         <div className="flex justify-between pt-8">
-          <Button onClick={onBack} variant="outline" type="button">
-            Back
-          </Button>
-          <Button 
-            onClick={handleSubmit(onSubmit)}
-            className="bg-blue-500 text-white px-8"
-            disabled={!duration || !durationType || !trainingTypeId }
-            type="button"
-          >
-            Continue
-          </Button>
+          {isEditing ? (
+            <>
+              <Button onClick={onBack} variant="outline" type="button">
+                Back
+              </Button>
+              <div className="flex gap-2">
+                {onCancel && (
+                  <Button onClick={onCancel} variant="outline" type="button">
+                    Cancel
+                  </Button>
+                )}
+                <Button 
+                  onClick={handleSubmit(onSubmit)}
+                  className="bg-blue-500 text-white px-8"
+                  disabled={!duration || !durationType || !trainingTypeId}
+                  type="button"
+                >
+                  Continue
+                </Button>
+              </div>
+            </>
+          ) : (
+            <>
+              <Button onClick={onBack} variant="outline" type="button">
+                Back
+              </Button>
+              <Button 
+                onClick={handleSubmit(onSubmit)}
+                className="bg-blue-500 text-white px-8"
+                disabled={!duration || !durationType || !trainingTypeId}
+                type="button"
+              >
+                Continue
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </div>

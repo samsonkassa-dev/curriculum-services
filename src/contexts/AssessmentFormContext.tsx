@@ -41,6 +41,7 @@ interface AssessmentFormContextType {
   submitForm: () => Promise<void>
   hasAssessmentMethods: boolean
   isEditing: boolean
+  originalAssessmentData: AssessmentData | null
 }
 
 const AssessmentFormContext = createContext<AssessmentFormContextType | null>(null)
@@ -55,8 +56,12 @@ const initialFormData: AssessmentFormData = {
 export function AssessmentFormProvider({ children, moduleId }: { children: ReactNode, moduleId: string }) {
   const [formData, setFormData] = useState<AssessmentFormData>(initialFormData)
   const [isEditing, setIsEditing] = useState(false)
+  const [originalAssessmentData, setOriginalAssessmentData] = useState<AssessmentData | null>(null)
   const { mutateAsync: submitAssessment } = useSubmitAssessment(moduleId)
-  const { data: existingData, isLoading: isLoadingAssessment } = useGetAssessment(moduleId)
+  const { data: existingData, isLoading: isLoadingAssessment } = useGetAssessment(moduleId, {
+    staleTime: 1000 * 60 * 15, // 15 minutes cache
+    gcTime: 1000 * 60 * 30, // 30 minutes garbage collection
+  })
 
   useEffect(() => {
     if (existingData) {
@@ -64,6 +69,8 @@ export function AssessmentFormProvider({ children, moduleId }: { children: React
       const assessmentData = existingData.moduleAssessmentMethods || existingData.sectionAssessmentMethods
       
       if (assessmentData) {
+        setOriginalAssessmentData(assessmentData)
+        
         const transformed: AssessmentFormData = {
           genericFormative: {},
           technologyFormative: {},
@@ -133,13 +140,10 @@ export function AssessmentFormProvider({ children, moduleId }: { children: React
     })
   }
 
+  // Improved method to check if we have assessment methods
   const hasAssessmentMethods = Boolean(
-    existingData && (
-      (existingData.moduleAssessmentMethods?.assessmentMethods.length ?? 0) > 0 || 
-      (existingData.sectionAssessmentMethods?.assessmentMethods.length ?? 0) > 0 || 
-      existingData.moduleAssessmentMethods?.subjectSpecificAssessmentMethod ||
-      existingData.sectionAssessmentMethods?.subjectSpecificAssessmentMethod
-    )
+    (originalAssessmentData?.assessmentMethods?.length ?? 0) > 0 ||
+    (originalAssessmentData?.subjectSpecificAssessmentMethod ?? '').trim() !== ''
   )
 
   if (isLoadingAssessment) {
@@ -152,7 +156,8 @@ export function AssessmentFormProvider({ children, moduleId }: { children: React
       updateFormData, 
       submitForm,
       hasAssessmentMethods,
-      isEditing
+      isEditing,
+      originalAssessmentData
     }}>
       {children}
     </AssessmentFormContext.Provider>
