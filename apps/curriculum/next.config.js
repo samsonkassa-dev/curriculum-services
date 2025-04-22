@@ -3,7 +3,7 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__dirname);
+const __dirname = dirname(__filename);
 
 const nextConfig = {
   output: 'standalone',
@@ -23,35 +23,27 @@ const nextConfig = {
   async headers() {
     return [
       {
-        // Apply these headers to all routes
         source: '/:path*',
         headers: [
           {
-            key: 'Content-Security-Policy',
-            value: process.env.NODE_ENV === 'development' 
-              ? '' // No CSP in development
-              : "upgrade-insecure-requests" // Force HTTPS in production
-          },
-          // Add CORS headers
-          {
-            key: "Access-Control-Allow-Credentials",
-            value: "true"
+            key: 'Access-Control-Allow-Origin',
+            value: '*'
           },
           {
-            key: "Access-Control-Allow-Origin",
-            value: "*" // In production, replace with your specific domain
+            key: 'Access-Control-Allow-Methods',
+            value: 'GET, POST, PUT, DELETE, PATCH, OPTIONS'
           },
           {
-            key: "Access-Control-Allow-Methods",
-            value: "GET,DELETE,PATCH,POST,PUT"
+            key: 'Access-Control-Allow-Headers',
+            value: 'Authorization, Content-Type'
           },
           {
-            key: "Access-Control-Allow-Headers",
-            value: "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version"
+            key: 'Access-Control-Allow-Credentials',
+            value: 'true'
           }
-        ],
-      },
-    ]
+        ]
+      }
+    ];
   },
   // Add async rewrites to proxy API requests in development
   async rewrites() {
