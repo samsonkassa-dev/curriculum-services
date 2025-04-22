@@ -3,7 +3,7 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+const __dirname = dirname(__dirname);
 
 const nextConfig = {
   output: 'standalone',
@@ -31,12 +31,39 @@ const nextConfig = {
             value: process.env.NODE_ENV === 'development' 
               ? '' // No CSP in development
               : "upgrade-insecure-requests" // Force HTTPS in production
+          },
+          // Add CORS headers
+          {
+            key: "Access-Control-Allow-Credentials",
+            value: "true"
+          },
+          {
+            key: "Access-Control-Allow-Origin",
+            value: "*" // In production, replace with your specific domain
+          },
+          {
+            key: "Access-Control-Allow-Methods",
+            value: "GET,DELETE,PATCH,POST,PUT"
+          },
+          {
+            key: "Access-Control-Allow-Headers",
+            value: "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version"
           }
         ],
       },
     ]
   },
-  // any other Next.js config options you need
+  // Add async rewrites to proxy API requests in development
+  async rewrites() {
+    return process.env.NODE_ENV === 'development' 
+      ? [
+          {
+            source: '/api/:path*',
+            destination: `${process.env.NEXT_PUBLIC_API_URL}/api/:path*`
+          }
+        ]
+      : [];
+  }
 }
 
 export default nextConfig; 
