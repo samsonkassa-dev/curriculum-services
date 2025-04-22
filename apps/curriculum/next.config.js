@@ -45,16 +45,28 @@ const nextConfig = {
       }
     ];
   },
-  // Add async rewrites to proxy API requests in development
+  // Add rewrites to proxy API requests through Next.js
   async rewrites() {
-    return process.env.NODE_ENV === 'development' 
-      ? [
-          {
-            source: '/api/:path*',
-            destination: `${process.env.NEXT_PUBLIC_API_URL}/api/:path*`
-          }
-        ]
-      : [];
+    return {
+      beforeFiles: [
+        {
+          source: '/api/:path*',
+          destination: `${process.env.NEXT_PUBLIC_API}/api/:path*`
+        },
+        // Proxy all API calls through Next.js
+        {
+          source: '/:path*',
+          has: [
+            {
+              type: 'header',
+              key: 'accept',
+              value: 'application/json'
+            }
+          ],
+          destination: `${process.env.NEXT_PUBLIC_API}/:path*`
+        }
+      ]
+    };
   }
 }
 
