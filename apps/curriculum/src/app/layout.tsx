@@ -7,6 +7,7 @@ import { AuthProvider } from '../providers/auth-provider';
 import { Toaster } from "sonner";
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState } from 'react';
+import { Analytics } from '@vercel/analytics/next';
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -34,6 +35,7 @@ export default function RootLayout({
               strategy="beforeInteractive"
             />
             {children}
+            <Analytics />
             <Toaster richColors position="top-center" />
           </AuthProvider>
         </QueryClientProvider>

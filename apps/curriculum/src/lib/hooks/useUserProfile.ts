@@ -3,17 +3,9 @@ import axios from "axios"
 import { toast } from "sonner"
 import { getCookie } from "@curriculum-services/auth"
 
-interface UserRole {
-  name: string;
-}
 
-interface UserProfile {
-  firstName: string;
-  lastName: string;
-  email: string;
-  role: UserRole;
-  phone: string;
-}
+
+
 
 interface ApiResponse {
   code: string;
