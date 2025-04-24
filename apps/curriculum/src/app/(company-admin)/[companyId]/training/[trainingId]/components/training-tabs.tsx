@@ -50,11 +50,11 @@ export function TrainingTabs({ activeTab, onTabChange }: TrainingTabsProps) {
 
   let visibleTabs: TabConfig[] = []
 
-  if (isCompanyAdmin || isProjectManager) {
+  if (isProjectManager) {
     visibleTabs = allTabs
   } else if (isMeExpert) {
     visibleTabs = allTabs.filter(tab => ['overview', 'evaluation',].includes(tab.id))
-  } else if (isCurriculumAdmin || isSubCurriculumAdmin || isContentDeveloper) {
+  } else if (isCurriculumAdmin || isSubCurriculumAdmin || isContentDeveloper || isCompanyAdmin)  {
     visibleTabs = allTabs.filter(tab => !['students', 'evaluation', 'sessions'].includes(tab.id))
   } else if (isTrainingAdmin || isTrainerAdmin) {
     visibleTabs = allTabs.filter(tab => tab.id !== 'evaluation')
