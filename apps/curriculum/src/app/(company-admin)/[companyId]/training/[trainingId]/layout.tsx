@@ -24,7 +24,9 @@ export default function TrainingLayout({
   }
 
   const handleBack = () => {
-    router.back()
+    if (params.companyId) {
+      router.push(`/${params.companyId}/training`)
+    }
   }
 
   const isUsersPage = pathname.endsWith('/users')
