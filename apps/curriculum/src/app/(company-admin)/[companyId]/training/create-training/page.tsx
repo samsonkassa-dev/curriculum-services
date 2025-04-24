@@ -13,7 +13,7 @@ import { CreateTrainingStep5 } from "./components/steps/step-5";
 import { useCreateTraining } from "@/lib/hooks/useCreateTraining";
 import { SuccessModal } from "./components/modals/success-modal";
 import { InviteModal } from "./components/modals/invite-modal";
-import { useInviteTrainingUser } from "@/lib/hooks/useInviteTrainingUser";
+import { useInviteTrainingUser, RoleType } from "@/lib/hooks/useInviteTrainingUser";
 
 type Step = 1 | 2 | 3 | 4 | 5;
 
@@ -52,10 +52,8 @@ export default function CreateTraining() {
   const handleInvite = async (email: string) => {
     if (!trainingId) return;
 
-    inviteUser(trainingId, email, {
-      onSuccess: () => {
-        router.push(`/${params.companyId}/training`);
-      },
+    inviteUser(trainingId, email, RoleType.CURRICULUM_ADMIN, () => {
+      router.push(`/${params.companyId}/training`);
     });
   };
 
