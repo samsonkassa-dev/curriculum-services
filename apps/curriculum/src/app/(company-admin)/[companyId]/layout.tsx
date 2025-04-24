@@ -203,6 +203,12 @@ export default function CompanyAdminLayout({
           label: "Trainers",
         },
         {
+          icon: <img src="/job.svg" alt="icon" width={19} height={19} />,
+          href: `/${roleForUrl}/jobs`,
+          label: "Jobs",
+        },
+
+        {
           icon: <img src="/settings.svg" alt="icon" width={19} height={19} />,
           href: `/${roleForUrl}/settings`,
           label: "Settings",
@@ -232,6 +238,10 @@ export default function CompanyAdminLayout({
     if (params.sessionId) {
       routePattern = routePattern.replace(params.sessionId as string, '[sessionId]');
     }
+
+    if (params.applicationId) {
+      routePattern = routePattern.replace(params.applicationId as string, '[applicationId]');
+    }
     
     const specialRoutes = [
       '/[companyId]/training/create-training',  
@@ -244,7 +254,8 @@ export default function CompanyAdminLayout({
       '/[companyId]/training/[trainingId]/students/add',
       '/[companyId]/trainers/add',
       '/[companyId]/training/[trainingId]/sessions/add',
-      '/[companyId]/training/[trainingId]/sessions/[sessionId]'
+      '/[companyId]/training/[trainingId]/sessions/[sessionId]',
+      '/[companyId]/jobs/applications/[applicationId]'
  
     ];
     

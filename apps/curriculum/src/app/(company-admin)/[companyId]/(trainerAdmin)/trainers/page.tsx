@@ -19,7 +19,6 @@ const DEFAULT_PAGE_SIZE = 10
 
 export default function TrainersPage() {
   const params = useParams()
-  const router = useRouter()
   const companyId = params.companyId as string
   const { isTrainerAdmin } = useUserRole()
 

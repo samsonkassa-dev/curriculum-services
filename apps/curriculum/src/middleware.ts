@@ -86,13 +86,21 @@ export function middleware(req: NextRequest) {
         `/${baseRoute}/trainers`,
         `/${baseRoute}/trainers/add`,
         `/${baseRoute}/create-jobs`,
-        `/${baseRoute}/jobs`,
-        `/${baseRoute}/jobs/add`,
-        `/${baseRoute}/job`
+        `/${baseRoute}/job`,
+        `/${baseRoute}/jobs/applications`,
+        `/${baseRoute}/jobs/applicants`,
+        
       ];
 
       // Allow access to training routes and their nested routes
       if (pathname.startsWith(`/${baseRoute}/training`)) {
+        return NextResponse.next({
+          request: { headers: requestHeaders }
+        });
+      }
+
+      // Allow access to jobs routes and their nested routes
+      if (pathname.startsWith(`/${baseRoute}/jobs`)) {
         return NextResponse.next({
           request: { headers: requestHeaders }
         });
