@@ -9,7 +9,7 @@ import { useDebounce } from "@/lib/hooks/useDebounce"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Search } from "lucide-react"
-import { useInviteTrainingUser } from "@/lib/hooks/useInviteTrainingUser";
+import { useInviteTrainingUser, RoleType } from "@/lib/hooks/useInviteTrainingUser";
 import { InviteModal } from "../../create-training/components/modals/invite-modal";
 
 
@@ -23,31 +23,33 @@ export default function TrainingUsersPage({
   const [pageSize, setPageSize] = useState(10)
   const [searchQuery, setSearchQuery] = useState("")
   const debouncedSearch = useDebounce(searchQuery, 500)
-  const [showInviteModal, setShowInviteModal] = useState(false);
+  const [showInviteModal, setShowInviteModal] = useState(false)
+  const [currentRoleType, setCurrentRoleType] = useState<RoleType>(RoleType.CURRICULUM_ADMIN)
 
-  //invite curriculum admin hook
+  // Invite user hook
   const { inviteUser, isLoading: isInviting } = useInviteTrainingUser();
 
   // Using the training-specific hook
   const { data, isLoading } = useTrainingUsersByTrainingId(trainingId)
 
-  //invite user modal functions
+  // Open invite modal with specific role type
+  const openInviteModal = (roleType: RoleType) => {
+    setCurrentRoleType(roleType);
+    setShowInviteModal(true);
+  };
+
+  // Invite user function
   const handleInvite = async (userEmail: string) => {
     if (!trainingId) return;
 
-    inviteUser(trainingId, userEmail, {
-      onSuccess: () => {
-        setShowInviteModal(false);
-      },
+    inviteUser(trainingId, userEmail, currentRoleType, () => {
+      setShowInviteModal(false);
     });
   };
 
-  const handleInviteModalClose = async () => {
+  const handleInviteModalClose = () => {
     setShowInviteModal(false);
-   
   };
-
-  
 
   // Client-side filtering and pagination
   const filteredUsers = data?.users.filter(user => 
@@ -79,11 +81,18 @@ export default function TrainingUsersPage({
                 onChange={(e) => setSearchQuery(e.target.value)} />
             </div>
             <Button
-              className=" text-brand border-[0.3px] border-brand"
+              className="text-brand border-[0.3px] border-brand"
               variant="outline"
-              onClick={() => setShowInviteModal(true)}
+              onClick={() => openInviteModal(RoleType.CURRICULUM_ADMIN)}
             >
               Invite Curriculum Admin
+            </Button>
+            <Button
+              className="text-brand border-[0.3px] border-brand"
+              variant="outline"
+              onClick={() => openInviteModal(RoleType.PROJECT_MANAGER)}
+            >
+              Invite Project Manager
             </Button>
           </div>
         </div>
@@ -111,8 +120,7 @@ export default function TrainingUsersPage({
         isOpen={showInviteModal}
         onClose={handleInviteModalClose}
         onInvite={handleInvite}
-        // inviteLink={inviteLink}
+        roleType={currentRoleType}
         isLoading={isInviting} /></>
-       
   );
 }

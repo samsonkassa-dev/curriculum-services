@@ -7,11 +7,17 @@ import { toast } from "sonner"
 import { AxiosError } from "axios"
 import { getCookie } from "@curriculum-services/auth"
 
+// Role type enum to match API requirements
+export enum RoleType {
+  CURRICULUM_ADMIN = "ROLE_CURRICULUM_ADMIN",
+  PROJECT_MANAGER = "ROLE_PROJECT_MANAGER",
+  COMPANY_ADMIN = "ROLE_COMPANY_ADMIN"
+}
 
 interface InviteUserData {
   trainingId: string
-  roleId: string
   userEmail: string
+  roleType: RoleType
 }
 
 interface InviteUserResponse {
@@ -27,12 +33,15 @@ interface ErrorResponse {
 export function useInviteTrainingUser() {
   const mutation = useMutation({
     mutationFn: async (data: InviteUserData) => {
-        const token = getCookie('auth_token');
+        const token = getCookie('token');
       const response = await axios.patch<InviteUserResponse>(
-        `${process.env.NEXT_PUBLIC_API}/training/invite-curriculum-admin`,
+        `${process.env.NEXT_PUBLIC_API}/training/invite-user`,
         data,
         {
-          headers: { Authorization: `Bearer ${token}` }
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
         }
       )
       return response.data
@@ -48,11 +57,15 @@ export function useInviteTrainingUser() {
     }
   })
 
-  const inviteUser = (trainingId: string, email: string, p0?: { onSuccess: () => void }) => {
+  const inviteUser = (trainingId: string, email: string, roleType: RoleType, onSuccessCallback?: () => void) => {
     return mutation.mutate({
       trainingId,
-      roleId: "a307d367-073b-4c61-8fb6-40995fdef1be", // Curriculum admin role ID
-      userEmail: email
+      userEmail: email,
+      roleType
+    }, {
+      onSuccess: () => {
+        if (onSuccessCallback) onSuccessCallback();
+      }
     })
   }
 
@@ -68,13 +81,16 @@ export function useChangeUserRole() {
 
   return useMutation({
     mutationFn: async ({ userId, newRole }: { userId: string; newRole: string }) => {
-      const token = getCookie('auth_token')
+      const token = getCookie('token')
       const response = await axios.patch(
         `${process.env.NEXT_PUBLIC_API}/user/change-role/${userId}`,
         null, // no body needed since we're using query params
         {
           params: { 'new-role': newRole },
-          headers: { Authorization: `Bearer ${token}` }
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
         }
       )
       return response.data

@@ -9,6 +9,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { RoleType } from "@/lib/hooks/useInviteTrainingUser"
 
 
 interface InviteModalProps {
@@ -18,9 +19,10 @@ interface InviteModalProps {
   inviteLink?: string
   isLoading?: boolean
   isClose?: boolean
+  roleType?: RoleType
 }
 
-export function InviteModal({ isOpen, onClose, onInvite, inviteLink, isLoading, isClose }: InviteModalProps) {
+export function InviteModal({ isOpen, onClose, onInvite, inviteLink, isLoading, isClose, roleType }: InviteModalProps) {
   const [email, setEmail] = useState("");
 
   const handleCopyLink = () => {
@@ -29,11 +31,18 @@ export function InviteModal({ isOpen, onClose, onInvite, inviteLink, isLoading, 
     }
   };
 
+  // Get the role title for display
+  const getRoleTitle = () => {
+    if (roleType === RoleType.CURRICULUM_ADMIN) return "Curriculum Admin";
+    if (roleType === RoleType.PROJECT_MANAGER) return "Project Manager";
+    return "User";
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-lg max-w-[350px]">
         <DialogHeader>
-          <DialogTitle>Invite Curriculum Admin</DialogTitle>
+          <DialogTitle>Invite {getRoleTitle()}</DialogTitle>
         </DialogHeader>
         <hr className="my-1 -mx-6" />
         <div className="space-y-8">
