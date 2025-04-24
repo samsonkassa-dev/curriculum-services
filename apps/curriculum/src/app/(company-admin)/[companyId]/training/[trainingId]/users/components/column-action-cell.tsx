@@ -3,8 +3,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { TrainingUser } from "@/types/users"
-// import { useRouter } from "next/navigation"
+
 
 export function TrainingActionCell({ row }: { row: any }) {
 //   const router = useRouter()

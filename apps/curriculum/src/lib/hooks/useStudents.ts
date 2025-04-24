@@ -114,7 +114,6 @@ export function useStudents(
         const params = new URLSearchParams()
         if (page !== undefined) params.append('page', page.toString())
         if (pageSize !== undefined) params.append('page-size', pageSize.toString())
-        if(sessionId !== undefined) params.append('session-id', sessionId.toString())
         
         // Append query parameters if any exist
         if (params.toString()) {

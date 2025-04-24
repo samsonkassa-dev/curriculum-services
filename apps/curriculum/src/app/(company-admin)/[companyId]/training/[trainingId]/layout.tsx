@@ -15,7 +15,7 @@ export default function TrainingLayout({
   const router = useRouter()
   const pathname = usePathname()
   const { data: training } = useTraining(params.trainingId as string)
-  const { isCompanyAdmin } = useUserRole()
+  const { isCompanyAdmin, isProjectManager } = useUserRole()
   const companyId = params.companyId as string
   const trainingId = params.trainingId as string
 
@@ -83,7 +83,7 @@ export default function TrainingLayout({
 
           </h1>
         </div>
-        {isCompanyAdmin && (
+        {(isCompanyAdmin || isProjectManager) && (
           <button 
             onClick={handleSettingsClick}
             className="p-3 hover:bg-brand-opacity rounded-full"

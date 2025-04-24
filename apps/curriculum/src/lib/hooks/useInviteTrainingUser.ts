@@ -11,7 +11,9 @@ import { getCookie } from "@curriculum-services/auth"
 export enum RoleType {
   CURRICULUM_ADMIN = "ROLE_CURRICULUM_ADMIN",
   PROJECT_MANAGER = "ROLE_PROJECT_MANAGER",
-  COMPANY_ADMIN = "ROLE_COMPANY_ADMIN"
+  COMPANY_ADMIN = "ROLE_COMPANY_ADMIN",
+  TRAINING_ADMIN = "ROLE_TRAINING_ADMIN",
+  TRAINER_ADMIN = "ROLE_TRAINER_ADMIN"
 }
 
 interface InviteUserData {

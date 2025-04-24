@@ -8,9 +8,19 @@ import { useTrainingUsersByTrainingId } from "@/lib/hooks/useFetchTrainingUsers"
 import { useDebounce } from "@/lib/hooks/useDebounce"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Search } from "lucide-react"
+import { Search, UserPlus } from "lucide-react"
 import { useInviteTrainingUser, RoleType } from "@/lib/hooks/useInviteTrainingUser";
+import { useInviteTrainerAdmin } from "@/lib/hooks/useInviteTrainerAdmin";
 import { InviteModal } from "../../create-training/components/modals/invite-modal";
+import { useUserRole } from "@/lib/hooks/useUserRole";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { useQueryClient } from "@tanstack/react-query"
 
 
 export default function TrainingUsersPage({ 
@@ -19,12 +29,16 @@ export default function TrainingUsersPage({
   params: Promise<{ trainingId: string }> 
 }) {
   const { trainingId } = use(params)
+  const queryClient = useQueryClient()
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
   const [searchQuery, setSearchQuery] = useState("")
   const debouncedSearch = useDebounce(searchQuery, 500)
   const [showInviteModal, setShowInviteModal] = useState(false)
-  const [currentRoleType, setCurrentRoleType] = useState<RoleType>(RoleType.CURRICULUM_ADMIN)
+  const [currentRoleType, setCurrentRoleType] = useState<RoleType | undefined>(undefined)
+
+  // Get user role to determine available invite options
+  const { isCompanyAdmin, isProjectManager } = useUserRole();
 
   // Invite user hook
   const { inviteUser, isLoading: isInviting } = useInviteTrainingUser();
@@ -32,19 +46,50 @@ export default function TrainingUsersPage({
   // Using the training-specific hook
   const { data, isLoading } = useTrainingUsersByTrainingId(trainingId)
 
-  // Open invite modal with specific role type
-  const openInviteModal = (roleType: RoleType) => {
-    setCurrentRoleType(roleType);
+  // Invite trainer admin hook
+  const { inviteTrainerAdmin, isLoading: isInvitingTrainerAdmin } = useInviteTrainerAdmin();
+
+  // Get available roles based on user role
+  const getAvailableRoles = () => {
+    if (isCompanyAdmin) {
+      return [
+        { value: RoleType.CURRICULUM_ADMIN, label: "Curriculum Admin" },
+        { value: RoleType.PROJECT_MANAGER, label: "Project Manager" }
+      ];
+    } else if (isProjectManager) {
+      return [
+        { value: RoleType.TRAINING_ADMIN, label: "Training Admin" },
+        { value: RoleType.TRAINER_ADMIN, label: "Trainer Admin" }
+      ];
+    }
+    // Default roles if none of the above
+    return [
+      { value: RoleType.CURRICULUM_ADMIN, label: "Curriculum Admin" }
+    ];
+  };
+
+  // Handle role selection and open invite modal
+  const handleRoleChange = (role: string) => {
+    setCurrentRoleType(role as RoleType);
     setShowInviteModal(true);
   };
 
   // Invite user function
   const handleInvite = async (userEmail: string) => {
-    if (!trainingId) return;
+    if (!trainingId || !currentRoleType) return;
 
-    inviteUser(trainingId, userEmail, currentRoleType, () => {
-      setShowInviteModal(false);
-    });
+    if (currentRoleType === RoleType.TRAINER_ADMIN) {
+      inviteTrainerAdmin(userEmail, () => {
+        setShowInviteModal(false);
+        // No need to invalidate query for trainer admin as it's company-level
+      });
+    } else {
+      inviteUser(trainingId, userEmail, currentRoleType, () => {
+        setShowInviteModal(false);
+        // Invalidate and refetch the training users query
+        queryClient.invalidateQueries({ queryKey: ['training-users', trainingId] });
+      });
+    }
   };
 
   const handleInviteModalClose = () => {
@@ -80,20 +125,23 @@ export default function TrainingUsersPage({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)} />
             </div>
-            <Button
-              className="text-brand border-[0.3px] border-brand"
-              variant="outline"
-              onClick={() => openInviteModal(RoleType.CURRICULUM_ADMIN)}
-            >
-              Invite Curriculum Admin
-            </Button>
-            <Button
-              className="text-brand border-[0.3px] border-brand"
-              variant="outline"
-              onClick={() => openInviteModal(RoleType.PROJECT_MANAGER)}
-            >
-              Invite Project Manager
-            </Button>
+            <div className="flex items-center gap-2">
+              <Select
+                value={currentRoleType || undefined}
+                onValueChange={handleRoleChange}
+              >
+                <SelectTrigger className="w-[250px] text-brand border-[0.3px] border-brand">
+                  <SelectValue placeholder="Invite Admin" />
+                </SelectTrigger>
+                <SelectContent>
+                  {getAvailableRoles().map(role => (
+                    <SelectItem key={role.value} value={role.value}>
+                      {role.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
 
@@ -121,6 +169,6 @@ export default function TrainingUsersPage({
         onClose={handleInviteModalClose}
         onInvite={handleInvite}
         roleType={currentRoleType}
-        isLoading={isInviting} /></>
+        isLoading={isInviting || isInvitingTrainerAdmin} /></>
   );
 }
