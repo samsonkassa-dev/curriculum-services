@@ -6,7 +6,7 @@ import { toast } from 'sonner';
 export default function Home() {
   return (
     <Login 
-      onSuccess={() => toast.success('Successfully logged in')}
+      // onSuccess={() => toast.success('Successfully logged in')}
     />
   );
 }
