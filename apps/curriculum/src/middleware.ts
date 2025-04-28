@@ -6,7 +6,6 @@ import { decodeJWT, isTokenExpired } from "@curriculum-services/auth";
 
 export function middleware(req: NextRequest) {
   console.log('Middleware running for path:', req.nextUrl.pathname);
-  const cookies = req.cookies.getAll();
   const token = req.cookies.get('token')?.value;
   const { pathname } = req.nextUrl;
 
@@ -30,15 +29,6 @@ export function middleware(req: NextRequest) {
   try {
     const decoded = decodeJWT(token);
   
-    // // Log decoded token info for debugging
-    // console.log('Decoded token:', JSON.stringify({
-    //   role: decoded?.role || 'NO_ROLE',
-    //   email: decoded?.email || 'NO_EMAIL',
-    //   isProfileFilled: decoded?.isProfileFilled,
-    //   companyProfileId: decoded?.companyProfileId,
-    //   sub: decoded?.sub,
-    //   profileStatus: decoded?.profileStatus
-    // }, null, 2));
   
     // If token is invalid or expired, clear cookies and redirect to login
     if (!decoded || isTokenExpired(decoded)) {
