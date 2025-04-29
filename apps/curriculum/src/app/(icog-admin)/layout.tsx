@@ -27,11 +27,11 @@ const adminNavItems = [
     href: "/basedata",
     label: "Base Data",
   },
-  {
-    icon: <img src="/settings.svg" alt="icon" width={19} height={19} />,
-    href: "/settings",
-    label: "Settings",
-  },
+  // {
+  //   icon: <img src="/settings.svg" alt="icon" width={19} height={19} />,
+  //   href: "/settings",
+  //   label: "Settings",
+  // },
 ];
 
 export default function ICOGAdminLayout({

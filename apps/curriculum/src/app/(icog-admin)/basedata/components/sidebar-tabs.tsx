@@ -36,6 +36,7 @@ const tabs: Tab[] = [
   { id: "disability", name: "Disability" },
   { id: "marginalized-group", name: "Marginalized Group" },
   { id: "training-type", name: "Training Type" },
+  { id: "training-tag", name: "Training Tag" },
 ]
 
 interface SidebarTabsProps {

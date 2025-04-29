@@ -97,7 +97,7 @@ export function CreateTrainingStep1({ onNext, onBack, onCancel, initialData, isE
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-medium">Training Tags (Optional)</label>
+          <label className="text-sm font-medium">Training Tags</label>
           <Popover
             open={openTrainingTags}
             onOpenChange={setOpenTrainingTags}
