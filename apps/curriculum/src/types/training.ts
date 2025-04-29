@@ -29,30 +29,24 @@ export interface Training {
   economicBackgrounds: BaseItem[];
   academicQualifications: BaseItem[];
   trainingPurposes: BaseItem[];
-  trainingTags?: BaseItem[]; // Added trainingTags as optional array of BaseItem
+  trainingTags?: BaseItem[]; // Populated tags in response
   companyProfile: {
     id: string;
     name: string;
     // ... other company profile fields
   };
   
-  // Additional fields used only in API requests, not in API responses
+  // Fields used only in API requests, align with backend expectations
   cityIds?: string[];
   countryIds?: string[];
   trainingTypeId?: string;
+  trainingTagIds?: string[]; // Added for API request payload
   ageGroupIds?: string[];
   economicBackgroundIds?: string[];
   academicQualificationIds?: string[];
   trainingPurposeIds?: string[];
   
-  // Special input formats for percentages
-  disabilityPercentagesInput?: Array<{
-    disabilityId: string;
-    percentage: number;
-  }>;
-  
-  marginalizedGroupPercentagesInput?: Array<{
-    marginalizedGroupId: string;
-    percentage: number;
-  }>;
+  // Special input formats for percentages in requests
+  disabilityPercentagesInput?: Array<{ disabilityId: string; percentage: number; }>;
+  marginalizedGroupPercentagesInput?: Array<{ marginalizedGroupId: string; percentage: number; }>;
 }
