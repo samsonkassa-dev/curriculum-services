@@ -1,10 +1,11 @@
 import { z } from "zod"
 import { Training } from "./training"
 
-// Step 1: Title & Rationale
+// Step 1: Title, Rationale & Tags
 export const titleRationaleSchema = z.object({
   title: z.string().min(1, "Title is required"),
-  rationale: z.string().min(1, "Rationale is required")
+  rationale: z.string().min(1, "Rationale is required"),
+  trainingTagIds: z.array(z.string()).optional()
 })
 
 export type TitleRationaleFormData = z.infer<typeof titleRationaleSchema>
@@ -74,8 +75,7 @@ export interface BaseItem {
 // Interface for preloaded data in form components
 export interface PreloadedFormData extends Partial<TrainingFormData> {
   // Step 1
-  preloadedTrainingType?: BaseItem
-  preloadedTrainingTypes?: BaseItem[]
+  preloadedTrainingTags?: BaseItem[]
   
   // Step 2
   preloadedCountries?: BaseItem[]
@@ -86,7 +86,9 @@ export interface PreloadedFormData extends Partial<TrainingFormData> {
     country: BaseItem
   }[]
   
-  // Step 3 (reuses preloadedTrainingType and preloadedTrainingTypes)
+  // Step 3
+  preloadedTrainingType?: BaseItem
+  preloadedTrainingTypes?: BaseItem[]
   
   // Step 4
   preloadedAgeGroups?: BaseItem[]
@@ -142,12 +144,20 @@ export function apiToFormData(training: Training): PreloadedFormData {
     ? training.marginalizedGroupPercentages.map(item => item.marginalizedGroup).filter(Boolean)
     : []
   
+  // Extract unique tags if they exist on the training object
+  const extractedTrainingTags = Array.isArray(training.trainingTags) 
+    ? training.trainingTags.filter(Boolean) 
+    : []
+    
+  // Extract tag IDs
+  const extractedTrainingTagIds = extractedTrainingTags.map(tag => tag.id)
+  
   return {
     // Step 1
     title: training.title,
     rationale: training.rationale,
-    preloadedTrainingType: training.trainingType,
-    preloadedTrainingTypes: [training.trainingType],
+    trainingTagIds: extractedTrainingTagIds,
+    preloadedTrainingTags: extractedTrainingTags,
     
     // Step 2
     countryIds: extractedCountryIds,
@@ -159,6 +169,8 @@ export function apiToFormData(training: Training): PreloadedFormData {
     duration: training.duration,
     durationType: training.durationType as "DAYS" | "WEEKS" | "MONTHS" | "HOURS",
     trainingTypeId: training.trainingType?.id || "",
+    preloadedTrainingType: training.trainingType,
+    preloadedTrainingTypes: training.trainingType ? [training.trainingType] : [],
     
     // Step 4
     ageGroupIds: training.ageGroups.map(ag => ag.id),
@@ -242,6 +254,10 @@ export function formToApiData(formData: Partial<TrainingFormData>): Partial<Trai
       marginalizedGroupId: mgp.marginalizedGroupId, 
       percentage: mgp.percentage
     }))
+  }
+  
+  if (formData.trainingTagIds !== undefined) {
+    apiData.trainingTagIds = formData.trainingTagIds
   }
   
   if (formData.trainingPurposeIds !== undefined) {

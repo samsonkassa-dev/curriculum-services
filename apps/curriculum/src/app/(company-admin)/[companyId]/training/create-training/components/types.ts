@@ -6,6 +6,7 @@ export interface StepProps {
   initialData?: {
     title?: string;
     rationale?: string;
+    trainingTagIds?: string[];
     countryIds?: string[];
     cityIds?: string[];
     duration?: number;
@@ -28,16 +29,17 @@ export interface StepProps {
     economicBackgroundIds?: string[];
     academicQualificationIds?: string[];
     // Preloaded reference data to avoid unnecessary API calls
-    preloadedTrainingType?: any;
-    preloadedTrainingTypes?: any[];
-    preloadedTrainingPurposes?: any[];
+    preloadedTrainingTags?: any[];
     preloadedCountries?: any[];
     preloadedCities?: any[];
+    preloadedTrainingType?: any;
+    preloadedTrainingTypes?: any[];
     preloadedAgeGroups?: any[];
     preloadedDisabilities?: any[];
     preloadedMarginalizedGroups?: any[];
     preloadedEconomicBackgrounds?: any[];
     preloadedAcademicQualifications?: any[];
+    preloadedTrainingPurposes?: any[];
   };
   isSubmitting?: boolean;
   isEditing?: boolean;

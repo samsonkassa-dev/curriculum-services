@@ -1,65 +1,35 @@
+import { BaseItem } from "./training-form"; // Assuming BaseItem is suitable or defined/imported here
+
 export interface Training {
   id: string;
   title: string;
   rationale: string;
-  trainingType: {
-    id: string;
-    name: string;
-    description: string;
-  };
+  trainingType: BaseItem;
   cities: {
     id: string;
     name: string;
     description: string;
-    country: {
-      id: string;
-      name: string;
-      description: string;
-    };
+    country: BaseItem;
   }[];
   duration: number;
-  durationType: string;
-  ageGroups: {
-    id: string;
-    name: string;
-    range: string;
-    description: string;
-  }[];
+  durationType: "HOURS" | "DAYS" | "WEEKS" | "MONTHS";
+  ageGroups: BaseItem[];
   genderPercentages: {
     gender: "MALE" | "FEMALE";
     percentage: number;
   }[];
-  disabilityPercentages: {
-    disability: {
-      id: string;
-      name: string;
-      description: string;
-    };
+  disabilityPercentages?: {
+    disability: BaseItem;
     percentage: number;
   }[];
-  marginalizedGroupPercentages: {
-    marginalizedGroup: {
-      id: string;
-      name: string;
-      description: string;
-    };
+  marginalizedGroupPercentages?: {
+    marginalizedGroup: BaseItem;
     percentage: number;
   }[];
-  economicBackgrounds: {
-    id: string;
-    name: string;
-    description: string;
-  }[];
-  academicQualifications: {
-    id: string;
-    name: string;
-    description: string;
-  }[];
-  trainingPurposes: {
-    id: string;
-    name: string;
-    description: string;
-  }[];
+  economicBackgrounds: BaseItem[];
+  academicQualifications: BaseItem[];
+  trainingPurposes: BaseItem[];
+  trainingTags?: BaseItem[]; // Added trainingTags as optional array of BaseItem
   companyProfile: {
     id: string;
     name: string;

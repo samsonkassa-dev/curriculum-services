@@ -6,18 +6,21 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { StepProps } from '../types'
 import { titleRationaleSchema, TitleRationaleFormData, BaseItem } from '@/types/training-form'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useBaseData } from '@/lib/hooks/useBaseData'
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Check, ChevronsUpDown } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { cn } from '@/lib/utils'
+import { useState } from 'react'
 
-interface ExtendedTitleRationaleFormData extends TitleRationaleFormData {
-  trainingTypeId?: string;
+interface Step1FormData extends TitleRationaleFormData {
+  trainingTagIds?: string[]; 
 }
 
 export function CreateTrainingStep1({ onNext, onBack, onCancel, initialData, isEditing = false }: StepProps) {
-  // Fetch training types if not provided in initialData
-  const { data: trainingTypes, isLoading } = useBaseData(
-    'training-type', 
-    { enabled: !initialData?.preloadedTrainingTypes?.length }
+  const { data: trainingTags, isLoading } = useBaseData(
+    'training-tag', 
+    { enabled: !initialData?.preloadedTrainingTags?.length }
   )
 
   const {
@@ -26,35 +29,42 @@ export function CreateTrainingStep1({ onNext, onBack, onCancel, initialData, isE
     watch,
     setValue,
     formState: { errors }
-  } = useForm<ExtendedTitleRationaleFormData>({
+  } = useForm<Step1FormData>({
     resolver: zodResolver(titleRationaleSchema),
     defaultValues: {
       title: initialData?.title || '',
       rationale: initialData?.rationale || '',
-      trainingTypeId: initialData?.trainingTypeId || ''
+      trainingTagIds: initialData?.trainingTagIds || []
     }
   })
 
-  // Use preloaded or fetched training types
-  const allTrainingTypes = initialData?.preloadedTrainingTypes || trainingTypes || []
-  const trainingTypeId = watch('trainingTypeId')
+  const [openTrainingTags, setOpenTrainingTags] = useState(false)
 
+  const allTrainingTags = initialData?.preloadedTrainingTags || trainingTags || []
+  
   const title = watch('title')
   const rationale = watch('rationale')
-  
-  const handleTrainingTypeChange = (value: string) => {
-    setValue('trainingTypeId', value)
+  const trainingTagIds = watch('trainingTagIds') || []
+
+  const handleSelectTrainingTag = (tagId: string) => {
+    let newTagIds: string[];
+    if (trainingTagIds.includes(tagId)) {
+      newTagIds = trainingTagIds.filter(id => id !== tagId);
+    } else {
+      newTagIds = [...trainingTagIds, tagId];
+    }
+    setValue('trainingTagIds', newTagIds, { shouldValidate: true });
   }
 
-  const onSubmit = (data: ExtendedTitleRationaleFormData) => {
-    onNext(data)
+  const onSubmit = (data: Step1FormData) => {
+    onNext({ ...data, trainingTagIds: data.trainingTagIds || [] });
   }
 
   return (
     <div className="space-y-8">
       <div>
         <h2 className="lg:text-2xl md:text-xl text-lg font-semibold mb-2 text-center">
-          What is the title and rationale of the training?
+          What is the title, rationale and tags of the training?
         </h2>
         <p className="lg:text-sm md:text-xs text-xs text-gray-500 text-center">
           Enter brief description about this question here
@@ -87,23 +97,71 @@ export function CreateTrainingStep1({ onNext, onBack, onCancel, initialData, isE
         </div>
 
         <div className="space-y-2">
-          <label className="text-sm font-medium">Training Type</label>
-          <Select 
-            value={trainingTypeId} 
-            onValueChange={handleTrainingTypeChange}
-            disabled={isLoading && !allTrainingTypes.length}
+          <label className="text-sm font-medium">Training Tags (Optional)</label>
+          <Popover
+            open={openTrainingTags}
+            onOpenChange={setOpenTrainingTags}
           >
-            <SelectTrigger>
-              <SelectValue placeholder="Select training type" />
-            </SelectTrigger>
-            <SelectContent>
-              {allTrainingTypes.map((type: BaseItem) => (
-                <SelectItem key={type.id} value={type.id}>
-                  {type.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className="w-full justify-between py-6"
+                type="button"
+                disabled={isLoading && !initialData?.preloadedTrainingTags?.length}
+              >
+                <div className="flex flex-wrap gap-1 items-center">
+                  {trainingTagIds && trainingTagIds.length > 0 ? (
+                    <>
+                      {trainingTagIds.slice(0, 3).map((id) => {
+                        const tag = allTrainingTags.find((item: BaseItem) => item.id === id)
+                        return tag ? (
+                          <Badge key={id} variant="pending" className="rounded-sm text-xs">
+                            {tag.name}
+                          </Badge>
+                        ) : null
+                      })}
+                      {trainingTagIds.length > 3 && (
+                        <span className="text-sm text-gray-500 ml-1">
+                          + {trainingTagIds.length - 3} more
+                        </span>
+                      )}
+                    </>
+                  ) : (
+                    "Select training tags..."
+                  )}
+                </div>
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-full p-0">
+              <div className="max-h-[300px] overflow-auto">
+                {allTrainingTags.length > 0 ? (
+                  allTrainingTags.map((tag: BaseItem) => (
+                    <div
+                      key={tag.id}
+                      className={cn(
+                        "flex items-center px-4 py-2 text-sm cursor-pointer hover:bg-gray-100",
+                        trainingTagIds.includes(tag.id) && "bg-gray-100"
+                      )}
+                      onClick={() => handleSelectTrainingTag(tag.id)}
+                    >
+                      <Check
+                        className={cn(
+                          "mr-2 h-4 w-4",
+                          trainingTagIds.includes(tag.id) ? "opacity-100" : "opacity-0"
+                        )}
+                      />
+                      {tag.name}
+                    </div>
+                  ))
+                ) : (
+                  <div className="px-4 py-2 text-sm text-gray-500">
+                    {isLoading ? "Loading tags..." : "No training tags available"}
+                  </div>
+                )}
+              </div>
+            </PopoverContent>
+          </Popover>
         </div>
 
         {isEditing ? (
@@ -133,7 +191,7 @@ export function CreateTrainingStep1({ onNext, onBack, onCancel, initialData, isE
                 onClick={handleSubmit(onSubmit)}
                 className="bg-blue-500 text-white px-8"
                 type="button"
-                disabled={!title?.trim() || !rationale?.trim() || !trainingTypeId}
+                disabled={!title?.trim() || !rationale?.trim()}
               >
                 Continue
               </Button>
@@ -144,7 +202,7 @@ export function CreateTrainingStep1({ onNext, onBack, onCancel, initialData, isE
             onClick={handleSubmit(onSubmit)}
             className="bg-blue-500 text-white px-8 w-[25%] mx-auto"
             type="button"
-            disabled={!title?.trim() || !rationale?.trim() || !trainingTypeId}
+            disabled={!title?.trim() || !rationale?.trim()}
           >
             Continue
           </Button>

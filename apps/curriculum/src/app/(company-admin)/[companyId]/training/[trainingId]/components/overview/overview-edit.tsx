@@ -3,14 +3,12 @@
 
 import { useState, useEffect, useRef, useCallback } from "react"
 import { Training } from "@/types/training"
-import {
-  CreateTrainingStep1,
-  CreateTrainingStep2,
-  CreateTrainingStep3,
-  CreateTrainingStep4,
-} from "@/app/(company-admin)/[companyId]/training/create-training/components/create-training-forms"
+import { CreateTrainingStep1 } from "@/app/(company-admin)/[companyId]/training/create-training/components/steps/step-1"
+import { CreateTrainingStep2 } from "@/app/(company-admin)/[companyId]/training/create-training/components/steps/step-2"
+import { CreateTrainingStep3 } from "@/app/(company-admin)/[companyId]/training/create-training/components/steps/step-3"
+import { CreateTrainingStep4 } from "@/app/(company-admin)/[companyId]/training/create-training/components/steps/step-4"
 import { CreateTrainingStep5 } from "@/app/(company-admin)/[companyId]/training/create-training/components/steps/step-5"
-import { Button } from "@/components/ui/button"
+
 import { apiToFormData, formToApiData, PreloadedFormData, BaseItem, TrainingFormData } from "@/types/training-form"
 import { useBaseData } from "@/lib/hooks/useBaseData"
 
@@ -25,16 +23,12 @@ export function OverviewEdit({ training, initialStep = 1, onSave, onCancel }: Ov
   const [currentStep, setCurrentStep] = useState(initialStep)
   const [formData, setFormData] = useState<PreloadedFormData>(() => apiToFormData(training))
   const [dirtyFields, setDirtyFields] = useState<Set<keyof PreloadedFormData>>(() => {
-    // Initialize with fields from the current step 
-    // This ensures we track the fields the user is directly editing
     const initialDirtyFields = new Set<keyof PreloadedFormData>()
-    
-    // Add fields based on which step we're starting with
     switch (initialStep) {
       case 1:
         initialDirtyFields.add('title')
         initialDirtyFields.add('rationale')
-        initialDirtyFields.add('trainingTypeId')
+        initialDirtyFields.add('trainingTagIds')
         break
       case 2:
         initialDirtyFields.add('countryIds')
@@ -57,23 +51,19 @@ export function OverviewEdit({ training, initialStep = 1, onSave, onCancel }: Ov
         initialDirtyFields.add('trainingPurposeIds')
         break
     }
-    
     return initialDirtyFields
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   
-  // Use refs to track parts of formData needed in the effect
   const formDataRef = useRef(formData)
   formDataRef.current = formData
   
-  // Helper function to merge reference data arrays, preserving existing items
   const mergeReferenceData = useCallback(
     (existing: BaseItem[] | undefined, fetched: BaseItem[]): BaseItem[] => {
       if (!existing || existing.length === 0) return fetched
       
       const merged = [...fetched]
       
-      // Add any existing items that aren't in the fetched data
       existing.forEach(item => {
         if (!merged.some(m => m.id === item.id)) {
           merged.push(item)
@@ -85,16 +75,17 @@ export function OverviewEdit({ training, initialStep = 1, onSave, onCancel }: Ov
     []
   )
 
-  // For fetching additional data when users change their selections
-  // Base data should be enabled when the step is visible, regardless of preloaded data
+  const { data: trainingTags } = useBaseData('training-tag', {
+    enabled: currentStep === 1
+  })
   const { data: countries } = useBaseData('country', { 
-    enabled: currentStep === 2  // Always fetch when on step 2
+    enabled: currentStep === 2
   })
   const { data: trainingTypes } = useBaseData('training-type', { 
-    enabled: currentStep === 1 || currentStep === 3  // Always fetch when on step 1 or 3
+    enabled: currentStep === 3
   })
   const { data: ageGroups } = useBaseData('age-group', { 
-    enabled: currentStep === 4 // Always fetch when on step 4
+    enabled: currentStep === 4
   })
   const { data: disabilities } = useBaseData('disability', { 
     enabled: currentStep === 4
@@ -112,10 +103,8 @@ export function OverviewEdit({ training, initialStep = 1, onSave, onCancel }: Ov
     enabled: currentStep === 5
   })
 
-  // Merge preloaded data with fetched data to ensure complete datasets
   useEffect(() => {
-    // Skip processing if data is still loading
-    if (!countries && !trainingTypes && !ageGroups && !disabilities && 
+    if (!trainingTags && !countries && !trainingTypes && !ageGroups && !disabilities && 
         !marginalizedGroups && !economicBackgrounds && !academicQualifications && 
         !trainingPurposes) {
       return;
@@ -123,7 +112,9 @@ export function OverviewEdit({ training, initialStep = 1, onSave, onCancel }: Ov
 
     const currentFormData = formDataRef.current;
     
-    // Compare incoming data with what we already have to avoid unnecessary updates
+    const shouldUpdateTrainingTags = trainingTags?.length && 
+      JSON.stringify(trainingTags) !== JSON.stringify(currentFormData.preloadedTrainingTags);
+      
     const shouldUpdateCountries = countries?.length && 
       JSON.stringify(countries) !== JSON.stringify(currentFormData.preloadedCountries);
     
@@ -148,43 +139,39 @@ export function OverviewEdit({ training, initialStep = 1, onSave, onCancel }: Ov
     const shouldUpdateTrainingPurposes = trainingPurposes?.length && 
       JSON.stringify(trainingPurposes) !== JSON.stringify(currentFormData.preloadedTrainingPurposes);
     
-    // If no updates are needed, skip the state update entirely
-    if (!shouldUpdateCountries && !shouldUpdateTrainingTypes && !shouldUpdateAgeGroups && 
+    if (!shouldUpdateTrainingTags && !shouldUpdateCountries && !shouldUpdateTrainingTypes && !shouldUpdateAgeGroups && 
         !shouldUpdateDisabilities && !shouldUpdateMarginalizedGroups && 
         !shouldUpdateEconomicBackgrounds && !shouldUpdateAcademicQualifications && 
         !shouldUpdateTrainingPurposes) {
       return;
     }
 
-    // Use a timeout to debounce updates and batch changes
     const timeoutId = setTimeout(() => {
       const updates: Partial<PreloadedFormData> = {}
       const currentFormData = formDataRef.current
       
+      if (trainingTags?.length && shouldUpdateTrainingTags) {
+        updates.preloadedTrainingTags = mergeReferenceData(currentFormData.preloadedTrainingTags, trainingTags)
+      }
+      
       if (countries?.length && shouldUpdateCountries) {
-        // Always use fetched countries if available, but keep any preloaded ones that aren't in the fetched data
         const existingCountries = currentFormData.preloadedCountries || []
         const combinedCountries = [...countries]
-        
-        // Add any preloaded countries that aren't in the fetched data
         existingCountries.forEach(country => {
           if (!combinedCountries.some(c => c.id === country.id)) {
             combinedCountries.push(country)
           }
         })
-        
         updates.preloadedCountries = combinedCountries
       }
       
       if (trainingTypes?.length && shouldUpdateTrainingTypes) {
-        // Find selected training type in fetched data if it exists
         if (currentFormData.trainingTypeId) {
           const foundType = trainingTypes.find((t: any) => t.id === currentFormData.trainingTypeId)
           if (foundType) {
             updates.preloadedTrainingType = foundType
           }
         }
-        // Store all available training types for selection
         updates.preloadedTrainingTypes = trainingTypes
       }
       
@@ -212,15 +199,14 @@ export function OverviewEdit({ training, initialStep = 1, onSave, onCancel }: Ov
         updates.preloadedTrainingPurposes = mergeReferenceData(currentFormData.preloadedTrainingPurposes, trainingPurposes)
       }
       
-      // Only update state if we have actual changes
       if (Object.keys(updates).length > 0) {
         setFormData(prev => ({ ...prev, ...updates }))
       }
-    }, 100); // 100ms debounce
+    }, 100);
     
-    // Cleanup timeout on dependency changes
     return () => clearTimeout(timeoutId);
   }, [
+    trainingTags, 
     countries, 
     trainingTypes, 
     ageGroups, 
@@ -229,45 +215,30 @@ export function OverviewEdit({ training, initialStep = 1, onSave, onCancel }: Ov
     economicBackgrounds, 
     academicQualifications, 
     trainingPurposes,
-    mergeReferenceData // include the memoized function
+    mergeReferenceData
   ])
 
-  // Track which fields have been changed
   const trackChanges = (newData: Partial<PreloadedFormData>) => {
     console.log("Tracking changes for:", Object.keys(newData));
     
     Object.keys(newData).forEach(key => {
       const typedKey = key as keyof PreloadedFormData
-      // Skip reference data fields
       if (typedKey.startsWith('preloaded')) return
-      
-      // Make sure we're properly comparing the values
       const newValue = newData[typedKey];
       const oldValue = formData[typedKey];
-
-      // Skip undefined values
       if (newValue === undefined) return;
-      
-      // For arrays, we need to compare lengths and content
       if (Array.isArray(newValue) && Array.isArray(oldValue)) {
-        const isDifferent = 
-          newValue.length !== oldValue.length || 
-          JSON.stringify(newValue) !== JSON.stringify(oldValue);
-        
+        const isDifferent = newValue.length !== oldValue.length || JSON.stringify(newValue) !== JSON.stringify(oldValue);
         if (isDifferent) {
           console.log(`Field ${typedKey} changed from`, oldValue, "to", newValue);
           setDirtyFields(prev => new Set([...prev, typedKey]));
         }
-      } 
-      // For objects, use JSON.stringify
-      else if (typeof newValue === 'object' && newValue !== null) {
+      } else if (typeof newValue === 'object' && newValue !== null) {
         if (JSON.stringify(newValue) !== JSON.stringify(oldValue)) {
           console.log(`Field ${typedKey} changed from`, oldValue, "to", newValue);
           setDirtyFields(prev => new Set([...prev, typedKey]));
         }
-      } 
-      // For primitives
-      else if (newValue !== oldValue) {
+      } else if (newValue !== oldValue) {
         console.log(`Field ${typedKey} changed from`, oldValue, "to", newValue);
         setDirtyFields(prev => new Set([...prev, typedKey]));
       }
@@ -281,26 +252,20 @@ export function OverviewEdit({ training, initialStep = 1, onSave, onCancel }: Ov
     setFormData(updatedData)
     trackChanges(stepData)
     
-    // Log the current dirty fields
     console.log("Current dirty fields:", Array.from(dirtyFields));
     
-    // Automatically move to the next step
     if (currentStep < 5) {
       setCurrentStep(currentStep + 1)
     } else {
-      // If we're on the last step, trigger the save
-      // Instead of sending only changed fields, transform the entire form data
-      // This ensures all required fields are included in the PATCH request
-      
-      // First, create a complete form data object without preloaded data
       const completeFormData: Partial<TrainingFormData> = {
         title: updatedData.title,
         rationale: updatedData.rationale,
-        trainingTypeId: updatedData.trainingTypeId,
+        trainingTagIds: updatedData.trainingTagIds || [],
         cityIds: updatedData.cityIds,
         countryIds: updatedData.countryIds,
         duration: updatedData.duration,
         durationType: updatedData.durationType,
+        trainingTypeId: updatedData.trainingTypeId,
         ageGroupIds: updatedData.ageGroupIds,
         economicBackgroundIds: updatedData.economicBackgroundIds,
         academicQualificationIds: updatedData.academicQualificationIds,
@@ -335,10 +300,8 @@ export function OverviewEdit({ training, initialStep = 1, onSave, onCancel }: Ov
             initialData={{
               title: formData.title || '',
               rationale: formData.rationale || '',
-              trainingTypeId: formData.trainingTypeId || '',
-              // Include reference data - both preloaded and fetched
-              preloadedTrainingType: formData.preloadedTrainingType,
-              preloadedTrainingTypes: formData.preloadedTrainingTypes
+              trainingTagIds: formData.trainingTagIds || [], 
+              preloadedTrainingTags: formData.preloadedTrainingTags 
             }}
             onNext={handleStepSave}
             onBack={onCancel}
@@ -351,7 +314,6 @@ export function OverviewEdit({ training, initialStep = 1, onSave, onCancel }: Ov
             initialData={{
               countryIds: formData.countryIds || [],
               cityIds: formData.cityIds || [],
-              // Include reference data
               preloadedCountries: formData.preloadedCountries,
               preloadedCities: formData.preloadedCities
             }}
@@ -368,9 +330,8 @@ export function OverviewEdit({ training, initialStep = 1, onSave, onCancel }: Ov
               duration: formData.duration,
               durationType: formData.durationType,
               trainingTypeId: formData.trainingTypeId || '',
-              // Include reference data
-              preloadedTrainingType: formData.preloadedTrainingType,
-              preloadedTrainingTypes: formData.preloadedTrainingTypes
+              preloadedTrainingType: formData.preloadedTrainingType, 
+              preloadedTrainingTypes: formData.preloadedTrainingTypes 
             }}
             onNext={handleStepSave}
             onBack={handleBack}
@@ -381,7 +342,7 @@ export function OverviewEdit({ training, initialStep = 1, onSave, onCancel }: Ov
       case 4:
         return (
           <CreateTrainingStep4
-            initialData={{
+             initialData={{
               ageGroupIds: formData.ageGroupIds || [],
               genderPercentages: formData.genderPercentages || [
                 { gender: "MALE", percentage: 50 },
@@ -391,7 +352,6 @@ export function OverviewEdit({ training, initialStep = 1, onSave, onCancel }: Ov
               marginalizedGroupPercentages: formData.marginalizedGroupPercentages || [],
               economicBackgroundIds: formData.economicBackgroundIds || [],
               academicQualificationIds: formData.academicQualificationIds || [],
-              // Include reference data
               preloadedAgeGroups: formData.preloadedAgeGroups,
               preloadedDisabilities: formData.preloadedDisabilities,
               preloadedMarginalizedGroups: formData.preloadedMarginalizedGroups,
@@ -409,7 +369,6 @@ export function OverviewEdit({ training, initialStep = 1, onSave, onCancel }: Ov
           <CreateTrainingStep5
             initialData={{
               trainingPurposeIds: formData.trainingPurposeIds || [],
-              // Include reference data
               preloadedTrainingPurposes: formData.preloadedTrainingPurposes
             }}
             onNext={handleStepSave}
@@ -427,7 +386,6 @@ export function OverviewEdit({ training, initialStep = 1, onSave, onCancel }: Ov
   return (
     <div className="min-h-screen">
       <div className="w-full mx-auto py-8">
-        {/* Step Content */}
         <div className="w-full mx-auto px-5">
           {renderCurrentStep()}
         </div>

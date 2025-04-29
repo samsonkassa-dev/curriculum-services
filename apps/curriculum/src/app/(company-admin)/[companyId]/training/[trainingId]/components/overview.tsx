@@ -96,6 +96,79 @@ export function Overview({ training }: { training: Training }) {
             </AccordionContent>
           </AccordionItem>
 
+          {/* Rationale Section - Moved next to Title */}
+          <AccordionItem value="rationale" className="border-[0.5px] border-[#CED4DA] rounded-md">
+            <AccordionTrigger className="bg-white data-[state=open]:bg-[#f7fbff] rounded-lg p-6 flex items-center justify-between hover:no-underline group">
+              <div className="flex items-center gap-3">
+                <span className="font-semibold text-md md:text-xl">
+                  Rationale
+                </span>
+              </div>
+              <div className="text-gray-400 flex gap-2 ">
+                {isCompanyAdmin && (
+                  <img 
+                    src="/edit.svg" 
+                    alt="" 
+                    className="w-5 h-5 cursor-pointer" 
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleEdit("rationale") // Points to step 1
+                    }}
+                  />
+                )}
+                <ChevronRight className="h-5 w-5 transition-transform group-data-[state=open]:hidden text-black" />
+                <ChevronDown className="h-5 w-5 transition-transform hidden group-data-[state=open]:block text-black" />
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="bg-white p-6">
+                <p className="text-gray-600 text-sm md:text-lg">
+                  {training.rationale || "N/A"}
+                </p>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+          
+          {/* Training Tags Section - Added */}
+          <AccordionItem value="tags" className="border-[0.5px] border-[#CED4DA] rounded-md">
+            <AccordionTrigger className="bg-white data-[state=open]:bg-[#f7fbff] rounded-lg p-6 flex items-center justify-between hover:no-underline group">
+              <div className="flex items-center gap-3">
+                <span className="font-semibold text-md md:text-xl">Training Tags</span>
+              </div>
+              <div className="text-gray-400 flex gap-2">
+                {isCompanyAdmin && (
+                  <img 
+                    src="/edit.svg" 
+                    alt="" 
+                    className="w-5 h-5 cursor-pointer" 
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleEdit("title") // Points to step 1 (same as title/rationale)
+                    }}
+                  />
+                )}
+                <ChevronRight className="h-5 w-5 transition-transform group-data-[state=open]:hidden text-black" />
+                <ChevronDown className="h-5 w-5 transition-transform hidden group-data-[state=open]:block text-black" />
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="bg-white p-6">
+                {/* Display tags, potentially using Badges */}
+                {training.trainingTags && training.trainingTags.length > 0 ? (
+                   <div className="flex flex-wrap gap-2">
+                    {training.trainingTags.map(tag => (
+                      <span key={tag.id} className="inline-block bg-gray-100 text-gray-700 text-sm px-3 py-1 rounded-full">
+                        {tag.name}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-600 text-sm md:text-lg">N/A</p>
+                )}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
           {/* Location Section */}
           <AccordionItem value="location" className="border-[0.5px] border-[#CED4DA] rounded-md">
             <AccordionTrigger className="bg-white data-[state=open]:bg-[#f7fbff] rounded-lg p-6 flex items-center justify-between hover:no-underline group">
@@ -156,6 +229,46 @@ export function Overview({ training }: { training: Training }) {
                 <p className="text-gray-600 text-sm md:text-lg">{`${
                   training.duration
                 } ${training.durationType.toLowerCase()}`}</p>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* Training Type Section - Moved next to Duration */} 
+          <AccordionItem value="type" className="border-[0.5px] border-[#CED4DA] rounded-md">
+            <AccordionTrigger className="bg-white data-[state=open]:bg-[#f7fbff] rounded-lg p-6 flex items-center justify-between hover:no-underline group">
+              <div className="flex items-center gap-3">
+                <span className="font-semibold text-md md:text-xl">
+                  Training Type
+                </span>
+              </div>
+              <div className="text-gray-400 flex gap-2 ">
+                {isCompanyAdmin && (
+                  <img 
+                    src="/edit.svg" 
+                    alt="" 
+                    className="w-5 h-5 cursor-pointer" 
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      handleEdit("duration") // Points to Step 3 (duration/type)
+                    }}
+                  />
+                )}
+                <ChevronRight className="h-5 w-5 transition-transform group-data-[state=open]:hidden text-black" />
+                <ChevronDown className="h-5 w-5 transition-transform hidden group-data-[state=open]:block text-black" />
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="bg-white p-6">
+                <div className="space-y-2">
+                  <p className="text-gray-600 text-sm md:text-lg font-medium">
+                    {training.trainingType?.name || "N/A"}
+                  </p>
+                  {training.trainingType?.description && (
+                    <p className="text-gray-500 text-sm md:text-base">
+                      {training.trainingType.description}
+                    </p>
+                  )}
+                </div>
               </div>
             </AccordionContent>
           </AccordionItem>
@@ -223,22 +336,22 @@ export function Overview({ training }: { training: Training }) {
                 )}
 
                 {/* Disability Information */}
-                {training.disabilityPercentages?.length > 0 && (
+                {training.disabilityPercentages && training.disabilityPercentages.length > 0 && (
                   <div>
                     <h3 className="text-gray-700 font-medium mb-1">Disability Distribution:</h3>
                     <p className="text-gray-600 text-sm md:text-lg">
-                      {training.disabilityPercentages.map(d => 
+                      {training.disabilityPercentages?.map(d => 
                         `${d.disability.name} (${d.percentage}%)`).join(", ")}
                     </p>
                   </div>
                 )}
 
                 {/* Marginalized Groups */}
-                {training.marginalizedGroupPercentages?.length > 0 && (
+                {training.marginalizedGroupPercentages && training.marginalizedGroupPercentages.length > 0 && (
                   <div>
                     <h3 className="text-gray-700 font-medium mb-1">Marginalized Groups:</h3>
                     <p className="text-gray-600 text-sm md:text-lg">
-                      {training.marginalizedGroupPercentages.map(mg => 
+                      {training.marginalizedGroupPercentages?.map(mg => 
                         `${mg.marginalizedGroup.name} (${mg.percentage}%)`).join(", ")}
                     </p>
                   </div>
@@ -277,79 +390,6 @@ export function Overview({ training }: { training: Training }) {
                   {training.trainingPurposes.length > 0 
                     ? training.trainingPurposes.map(purpose => purpose.name).join(", ")
                     : "N/A"}
-                </p>
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-
-          {/* Training Type Section */}
-          <AccordionItem value="type" className="border-[0.5px] border-[#CED4DA] rounded-md">
-            <AccordionTrigger className="bg-white data-[state=open]:bg-[#f7fbff] rounded-lg p-6 flex items-center justify-between hover:no-underline group">
-              <div className="flex items-center gap-3">
-                <span className="font-semibold text-md md:text-xl">
-                  Training Type
-                </span>
-              </div>
-              <div className="text-gray-400 flex gap-2 ">
-                {isCompanyAdmin && (
-                  <img 
-                    src="/edit.svg" 
-                    alt="" 
-                    className="w-5 h-5 cursor-pointer" 
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleEdit("type")
-                    }}
-                  />
-                )}
-                <ChevronRight className="h-5 w-5 transition-transform group-data-[state=open]:hidden text-black" />
-                <ChevronDown className="h-5 w-5 transition-transform hidden group-data-[state=open]:block text-black" />
-              </div>
-            </AccordionTrigger>
-            <AccordionContent>
-              <div className="bg-white p-6">
-                <div className="space-y-2">
-                  <p className="text-gray-600 text-sm md:text-lg font-medium">
-                    {training.trainingType?.name || "N/A"}
-                  </p>
-                  {training.trainingType?.description && (
-                    <p className="text-gray-500 text-sm md:text-base">
-                      {training.trainingType.description}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </AccordionContent>
-          </AccordionItem>
-
-          {/* Rationale Section */}
-          <AccordionItem value="rationale" className="border-[0.5px] border-[#CED4DA] rounded-md">
-            <AccordionTrigger className="bg-white data-[state=open]:bg-[#f7fbff] rounded-lg p-6 flex items-center justify-between hover:no-underline group">
-              <div className="flex items-center gap-3">
-                <span className="font-semibold text-md md:text-xl">
-                  Rationale
-                </span>
-              </div>
-              <div className="text-gray-400 flex gap-2 ">
-                {isCompanyAdmin && (
-                  <img 
-                    src="/edit.svg" 
-                    alt="" 
-                    className="w-5 h-5 cursor-pointer" 
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      handleEdit("rationale")
-                    }}
-                  />
-                )}
-                <ChevronRight className="h-5 w-5 transition-transform group-data-[state=open]:hidden text-black" />
-                <ChevronDown className="h-5 w-5 transition-transform hidden group-data-[state=open]:block text-black" />
-              </div>
-            </AccordionTrigger>
-            <AccordionContent>
-              <div className="bg-white p-6">
-                <p className="text-gray-600 text-sm md:text-lg">
-                  {training.rationale || "N/A"}
                 </p>
               </div>
             </AccordionContent>
