@@ -39,12 +39,12 @@ export function SessionCard({ session }: SessionCardProps) {
 
   return (
     <div className="bg-[#FBFBFB] p-5 rounded-lg border-[0.1px] border-gray-200">
-      <div className="flex flex-wrap justify-between items-center gap-4">
-        <div className="flex flex-col gap-1">
-          <h3 className="text-[#525252] font-bold text-sm">{session.name}</h3>
+      <div className="grid grid-cols-6 items-center gap-4">
+        <div className="flex flex-col gap-1 col-span-1">
+          <h3 className="text-[#525252] font-bold text-sm break-words">{session.name}</h3>
         </div>
 
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-1 col-span-1">
           <span className="text-[#525252] font-bold text-xs">Date</span>
           <div className="flex items-center gap-1">
             <Calendar className="h-3 w-3 text-[#565555]" />
@@ -54,14 +54,14 @@ export function SessionCard({ session }: SessionCardProps) {
           </div>
         </div>
 
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-1 col-span-1">
           <span className="text-[#525252] font-bold text-xs">Time</span>
           <span className="text-[#555252] font-light text-sm">
             {formatTimeToDisplay(session.startDate)} - {formatTimeToDisplay(session.endDate)}
           </span>
         </div>
 
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-1 col-span-1">
           <span className="text-[#525252] font-bold text-xs">Delivery Method</span>
           <span
             className={`text-sm font-semibold ${
@@ -80,7 +80,7 @@ export function SessionCard({ session }: SessionCardProps) {
           </span>
         </div>
 
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-1 col-span-1">
           <span className="text-[#525252] font-bold text-xs">Status</span>
           <div className="flex items-center">
             <div 
@@ -94,7 +94,7 @@ export function SessionCard({ session }: SessionCardProps) {
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center justify-end gap-2 col-span-1">
           <Button 
             variant="outline" 
             size="sm" 

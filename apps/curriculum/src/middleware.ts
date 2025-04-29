@@ -79,7 +79,9 @@ export function middleware(req: NextRequest) {
         `/${baseRoute}/job`,
         `/${baseRoute}/jobs/applications`,
         `/${baseRoute}/jobs/applicants`,
-        
+        `/${baseRoute}/venue`,
+        `/${baseRoute}/venues`,
+        `/${baseRoute}/venue/add`,
       ];
 
       // Allow access to training routes and their nested routes

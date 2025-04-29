@@ -1,4 +1,4 @@
-import { BaseItem } from "./training-form"; // Assuming BaseItem is suitable or defined/imported here
+import { BaseItem } from "./training-form"; 
 
 export interface Training {
   id: string;
