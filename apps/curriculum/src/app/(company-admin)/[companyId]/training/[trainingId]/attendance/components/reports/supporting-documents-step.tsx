@@ -14,19 +14,11 @@ import {
   SelectValue 
 } from "@/components/ui/select"
 import { X, Eye } from "lucide-react"
+import { useBaseData } from "@/lib/hooks/useBaseData"
 
 interface SupportingDocumentsStepProps {
   form: UseFormReturn<SessionReportFormValues>
 }
-
-// Dummy report file types for demonstration
-const REPORT_FILE_TYPES = [
-  { id: "attendance", name: "Attendance" },
-  { id: "classroom", name: "Class Room Picture" },
-  { id: "materials", name: "Learning Materials" },
-  { id: "activities", name: "Activity Photos" },
-  { id: "certificates", name: "Certificates" },
-]
 
 export function SupportingDocumentsStep({ form }: SupportingDocumentsStepProps) {
   const { formState: { errors }, watch, setValue } = form
@@ -34,6 +26,9 @@ export function SupportingDocumentsStep({ form }: SupportingDocumentsStepProps) 
   const [error, setError] = useState<string | null>(null)
   
   const sessionReportFiles = watch("sessionReportFiles") || []
+  
+  // Fetch report file types from API
+  const { data: reportFileTypes, isLoading } = useBaseData('report-file-type')
 
   const handleFileChange = (file: File | null) => {
     setError(null)
@@ -92,6 +87,12 @@ export function SupportingDocumentsStep({ form }: SupportingDocumentsStepProps) 
     })
   }
 
+  // Get file type name by ID
+  const getFileTypeName = (id: string) => {
+    const fileType = reportFileTypes?.find((type: { id: string; name: string }) => type.id === id)
+    return fileType?.name || "File"
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex gap-4 mb-4">
@@ -99,16 +100,23 @@ export function SupportingDocumentsStep({ form }: SupportingDocumentsStepProps) 
           <Select 
             onValueChange={(value) => setSelectedFileType(value)}
             value={selectedFileType}
+            disabled={isLoading}
           >
             <SelectTrigger className="w-full border border-[#E4E4E4]">
               <SelectValue placeholder="Select file type" />
             </SelectTrigger>
             <SelectContent>
-              {REPORT_FILE_TYPES.map((type) => (
-                <SelectItem key={type.id} value={type.id}>
-                  {type.name}
-                </SelectItem>
-              ))}
+              {isLoading ? (
+                <SelectItem value="loading" disabled>Loading...</SelectItem>
+              ) : reportFileTypes && reportFileTypes.length > 0 ? (
+                reportFileTypes.map((type: { id: string; name: string }) => (
+                  <SelectItem key={type.id} value={type.id}>
+                    {type.name}
+                  </SelectItem>
+                ))
+              ) : (
+                <SelectItem value="none" disabled>No file types available</SelectItem>
+              )}
             </SelectContent>
           </Select>
         </div>
@@ -116,7 +124,6 @@ export function SupportingDocumentsStep({ form }: SupportingDocumentsStepProps) 
         <FileUpload
           accept="image/*,.pdf"
           onChange={handleFileChange}
-
         />
       </div>
 
@@ -134,9 +141,7 @@ export function SupportingDocumentsStep({ form }: SupportingDocumentsStepProps) 
       <div className="space-y-4 mt-6">
         {sessionReportFiles.length > 0 ? (
           sessionReportFiles.map((fileInfo, index) => {
-            const fileType = REPORT_FILE_TYPES.find(
-              type => type.id === fileInfo.reportFileTypeId
-            )?.name || "File"
+            const fileTypeName = getFileTypeName(fileInfo.reportFileTypeId)
             
             return (
               <div 
@@ -159,6 +164,9 @@ export function SupportingDocumentsStep({ form }: SupportingDocumentsStepProps) 
                     </div>
                     <div className="text-xs text-[#5F5F5F]">
                       {formatFileSize(fileInfo.file.size)}
+                    </div>
+                    <div className="text-xs text-[#0B75FF]">
+                      {fileTypeName}
                     </div>
                   </div>
                 </div>

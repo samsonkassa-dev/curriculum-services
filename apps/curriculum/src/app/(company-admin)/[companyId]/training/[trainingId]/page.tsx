@@ -16,6 +16,7 @@ import { StudentsComponent } from "./components/students"
 import { SessionsComponent } from "./components/sessions"
 import { AttendanceComponent } from "./components/attendance"
 import { CertificateComponent } from "./components/certificate"
+import { useUserRole } from "@/lib/hooks/useUserRole"
 
 type TabType = 'overview' | 'profile' | 'audience' | 'module' | 'evaluation' | 'students' | 'sessions' | 'attendance' | 'certificate'
 
@@ -25,6 +26,7 @@ export default function TrainingDetail() {
   const searchParams = useSearchParams()
   const trainingId = params.trainingId as string
   const companyId = params.companyId as string
+  const { isTrainer } = useUserRole()
   
   // Get tab from URL query or default to 'overview'
   const tabParam = searchParams.get('tab')
@@ -59,6 +61,29 @@ export default function TrainingDetail() {
 
   if (isLoading) {
     return <Loading />
+  }
+
+  // Special UI for trainers when no training is assigned
+  if (!training && isTrainer) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[70vh] px-4">
+        <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mb-6">
+          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-blue-500">
+            <path d="M18 6H5a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h13l4-3.5L18 6Z"></path>
+            <path d="M12 13v8"></path>
+            <path d="M12 3v3"></path>
+          </svg>
+        </div>
+        <h2 className="text-2xl font-bold text-gray-800 mb-3">No Training Assigned Yet</h2>
+        <p className="text-gray-500 text-center max-w-md mb-6">
+          You haven&apos;t been assigned to any training sessions at the moment. 
+          Once assigned, your training content will appear here.
+        </p>
+        <div className="text-sm text-brand">
+          Please remain patient or contact your administrator for more information.
+        </div>
+      </div>
+    )
   }
 
   return (

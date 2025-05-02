@@ -1,9 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import axios from "axios"
 import { toast } from "sonner"
-import { useMutation, useQuery, UseQueryOptions } from "@tanstack/react-query"
+import { useMutation, useQuery, UseQueryOptions, useQueryClient } from "@tanstack/react-query"
 import { getCookie } from "@curriculum-services/auth"
 
-interface Certificate {
+// Update interface for creating a certificate
+interface CertificateInput {
   issuingOrganization: string
   issueDate: string
   completionDate: string
@@ -14,15 +16,44 @@ interface Certificate {
   traineeId: string
 }
 
+// Full certificate interface including received data
+export interface Certificate {
+  id: string
+  issuingOrganization: string
+  issueDate: string
+  completionDate: string
+  description: string
+  creditHours: number
+  grade: number
+  fileUrl?: string
+  trainee?: {
+    id: string
+    firstName: string
+    lastName: string
+    email: string
+    contactPhone?: string
+  }
+}
+
 interface CertificateResponse {
   code: string
   certificates: Certificate[]
   message: string
+  totalElements?: number
+  totalPages?: number
+  currentPage?: number
+}
+
+interface CertificateQueryParams {
+  page?: number
+  pageSize?: number
 }
 
 export function useSubmitCertificate() {
+  const queryClient = useQueryClient();
+  
   return useMutation({
-    mutationFn: async (data: Certificate) => {
+    mutationFn: async (data: CertificateInput) => {
       const token = getCookie('token')
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_API}/certificate`,
@@ -33,8 +64,12 @@ export function useSubmitCertificate() {
       )
       return response.data
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       toast.success('Certificate saved successfully')
+      // Invalidate certificates query to trigger refetch
+      queryClient.invalidateQueries({
+        queryKey: ['certificates', variables.trainingId]
+      })
     },
     onError: (error) => {
       if (axios.isAxiosError(error)) {
@@ -46,10 +81,11 @@ export function useSubmitCertificate() {
 
 export function useGetCertificates(
   trainingId: string,
-  options?: Omit<UseQueryOptions<CertificateResponse, Error, CertificateResponse, string[]>, 'queryKey' | 'queryFn'>
+  params?: CertificateQueryParams,
+  options?: UseQueryOptions<CertificateResponse, Error>
 ) {
-  return useQuery({
-    queryKey: ['certificates', trainingId],
+  return useQuery<CertificateResponse, Error>({
+    queryKey: ['certificates', trainingId, params],
     queryFn: async () => {
       try {
         const token = getCookie('token')
@@ -58,9 +94,20 @@ export function useGetCertificates(
           throw new Error("Authentication required");
         }
         
-        console.log(`Fetching certificates for training: ${trainingId}`);
+        // Build query parameters for pagination
+        const queryParams = new URLSearchParams();
+        if (params?.page !== undefined) {
+          queryParams.append('page', params.page.toString());
+        }
+        if (params?.pageSize !== undefined) {
+          queryParams.append('page-size', params.pageSize.toString());
+        }
+        
+        const queryString = queryParams.toString() ? `?${queryParams.toString()}` : '';
+        
+        console.log(`Fetching certificates for training: ${trainingId} with params: ${queryString}`);
         const response = await axios.get<CertificateResponse>(
-          `${process.env.NEXT_PUBLIC_API}/certificate/training/${trainingId}`,
+          `${process.env.NEXT_PUBLIC_API}/certificate/training/${trainingId}${queryString}`,
           {
             headers: { Authorization: `Bearer ${token}` }
           }
