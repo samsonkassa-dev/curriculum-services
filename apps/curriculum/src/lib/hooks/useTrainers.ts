@@ -104,7 +104,7 @@ export function useTrainers(
         // Return the whole response data including potential pagination info
         return response.data
       } catch (error: any) {
-        console.error("Error fetching trainers:", error)
+        console.log("Error fetching trainers:", error)
         throw new Error(error?.response?.data?.message || 'Failed to load trainers')
       }
     },
@@ -136,30 +136,144 @@ export function useAddTrainer() {
           headers: { Authorization: `Bearer ${token}` }
         }
       )
-      return response.data // Return response data
+      return response.data
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast.success('Trainer added successfully')
-      // Invalidate all queries starting with 'trainers' to refetch lists on different pages
+      // Invalidate all trainer-related queries
       queryClient.invalidateQueries({ queryKey: ['trainers'] })
+      // Add the new trainer to the cache
+      queryClient.setQueryData(['trainer', data.trainer.id], data)
     },
     onError: (error: any) => {
-      console.error("Error adding trainer:", error);
+      console.log("Error adding trainer:", error)
       toast.error(error.response?.data?.message || 'Failed to add trainer')
     }
   })
 
   return {
-    // Data needed for the form
     languages,
     academicLevels,
     trainingTags,
-    // Mutation function and state
     addTrainer: addTrainerMutation.mutate,
-    addTrainerAsync: addTrainerMutation.mutateAsync, // Expose async version if needed
+    addTrainerAsync: addTrainerMutation.mutateAsync,
     isLoading: addTrainerMutation.isPending,
     isSuccess: addTrainerMutation.isSuccess,
     isError: addTrainerMutation.isError,
     error: addTrainerMutation.error,
+  }
+}
+
+// --- Hook for Fetching a Single Trainer by ID ---
+export function useTrainerById(id: string) {
+  return useQuery({
+    queryKey: ['trainer', id],
+    queryFn: async () => {
+      try {
+        const token = getCookie('token')
+        if (!token) {
+          throw new Error('No authentication token found')
+        }
+
+        const response = await axios.get<{ code: string; message: string; trainer: Trainer }>(
+          `${process.env.NEXT_PUBLIC_API}/trainer/${id}`,
+          {
+            headers: { Authorization: `Bearer ${token}` }
+          }
+        )
+
+        return response.data
+      } catch (error: any) {
+        console.log("Error fetching trainer:", error)
+        throw new Error(error?.response?.data?.message || 'Failed to load trainer')
+      }
+    },
+  })
+}
+
+// --- Hook for Updating a Trainer ---
+export function useUpdateTrainer() {
+  const queryClient = useQueryClient()
+
+  const updateTrainerMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: CreateTrainerData }) => {
+      const token = getCookie('token')
+      if (!token) {
+        throw new Error('No authentication token found')
+      }
+      const response = await axios.patch(
+        `${process.env.NEXT_PUBLIC_API}/trainer/${id}`,
+        data,
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      )
+      return response.data
+    },
+    onSuccess: (data, variables) => {
+      toast.success('Trainer updated successfully')
+      // Invalidate all trainer list queries
+      queryClient.invalidateQueries({ queryKey: ['trainers'] })
+      // Update the individual trainer in the cache
+      queryClient.setQueryData(['trainer', variables.id], data)
+      // Invalidate any queries that might depend on this trainer
+      queryClient.invalidateQueries({ queryKey: ['trainer', variables.id], exact: false })
+    },
+    onError: (error: any) => {
+      console.log("Error updating trainer:", error)
+      toast.error(error.response?.data?.message || 'Failed to update trainer')
+    }
+  })
+
+  return {
+    updateTrainer: updateTrainerMutation.mutate,
+    updateTrainerAsync: updateTrainerMutation.mutateAsync,
+    isLoading: updateTrainerMutation.isPending,
+    isSuccess: updateTrainerMutation.isSuccess,
+    isError: updateTrainerMutation.isError,
+    error: updateTrainerMutation.error,
+  }
+}
+
+// --- Hook for Deleting a Trainer ---
+export function useDeleteTrainer() {
+  const queryClient = useQueryClient()
+
+  const deleteTrainerMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const token = getCookie('token')
+      if (!token) {
+        throw new Error('No authentication token found')
+      }
+      const response = await axios.delete(
+        `${process.env.NEXT_PUBLIC_API}/trainer/${id}`,
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      )
+      return response.data
+    },
+    onSuccess: (_, id) => {
+      toast.success('Trainer deleted successfully')
+      // Remove the trainer from individual cache
+      queryClient.removeQueries({ queryKey: ['trainer', id] })
+      // Invalidate all trainer list queries to refetch
+      queryClient.invalidateQueries({ queryKey: ['trainers'] })
+      // Invalidate any queries that might depend on this trainer
+      queryClient.invalidateQueries({ queryKey: ['trainer'], exact: false })
+    },
+    onError: (error: any) => {
+      console.log("Error deleting trainer:", error)
+      toast.error(error.response?.data?.message || 'Failed to delete trainer')
+    }
+  })
+
+  return {
+    deleteTrainer: deleteTrainerMutation.mutate,
+    deleteTrainerAsync: deleteTrainerMutation.mutateAsync,
+    isLoading: deleteTrainerMutation.isPending,
+    isSuccess: deleteTrainerMutation.isSuccess,
+    isError: deleteTrainerMutation.isError,
+    error: deleteTrainerMutation.error,
   }
 }

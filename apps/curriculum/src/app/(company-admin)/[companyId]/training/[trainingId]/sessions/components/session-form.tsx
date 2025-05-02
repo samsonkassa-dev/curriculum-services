@@ -25,11 +25,12 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { Badge } from "@/components/ui/badge"
 
 import { Module } from "@/types/module"
 import { useAddSession } from "@/lib/hooks/useSession"
 import { useModulesByTrainingId } from "@/lib/hooks/useModule"
-import { useTrainingLessons } from "@/lib/hooks/useTrainingLessons"
+import { useGetLessons } from "@/lib/hooks/useLesson"
 import { useTrainingVenues } from "@/lib/hooks/useTrainingVenue"
 import { sessionSchema, SessionFormValues, timeOptions, CustomCreateSessionData } from "./session-schema"
 import { toast } from "sonner"
@@ -68,13 +69,16 @@ interface ModuleWithRelationship extends Module {
 export function SessionForm({ trainingId, companyId, onSuccess, onCancel }: SessionFormProps) {
   // Fetch required data
   const { addSession, isLoading: isAddingSession } = useAddSession()
-  const { data: modulesData, isLoading: isLoadingModules } = useModulesByTrainingId(trainingId)
-  const { lessons, isLoading: isLoadingLessons } = useTrainingLessons(trainingId)
+  const { data: modulesData, isLoading: isLoadingModules } = useModulesByTrainingId(trainingId, true)
   const { data: venuesData, isLoading: isLoadingVenues } = useTrainingVenues()
   
   // State for selected module to filter lessons
   const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null)
   const [selectedSubModuleId, setSelectedSubModuleId] = useState<string | null>(null)
+
+  // Fetch lessons for the selected module or submodule
+  const moduleIdToFetch = selectedSubModuleId || selectedModuleId
+  const { data: lessonsByModule, isLoading: isLoadingLessons } = useGetLessons(moduleIdToFetch || '')
   
   // Form setup
   const form = useForm<SessionFormValues>({
@@ -106,17 +110,6 @@ export function SessionForm({ trainingId, companyId, onSuccess, onCancel }: Sess
   const subModules = selectedModuleId 
     ? modules.filter(module => module.parentModule?.id === selectedModuleId)
     : []
-  
-  // Filter lessons by module
-  const filteredLessons = lessons.filter(lesson => {
-    if (selectedSubModuleId) {
-      return lesson.moduleId === selectedSubModuleId
-    }
-    if (selectedModuleId) {
-      return lesson.moduleId === selectedModuleId
-    }
-    return true
-  })
   
   // Handler for form submission
   const onSubmit = (values: SessionFormValues) => {
@@ -275,47 +268,117 @@ export function SessionForm({ trainingId, companyId, onSuccess, onCancel }: Sess
                 </div>
               )}
               
-              {/* Lesson Selection */}
+              {/* Lesson Selection - Replaced with enhanced checkbox list */}
               <FormField
                 control={form.control}
                 name="lessonIds"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="relative">
                     <FormLabel>Select Lessons</FormLabel>
-                    <div className="space-y-2">
-                      {filteredLessons.length === 0 ? (
+                    <div className="border rounded-md p-3">
+                      {!moduleIdToFetch ? (
                         <div className="flex flex-col items-center justify-center p-4 border border-dashed border-gray-300 rounded-md bg-gray-50">
-                          <p className="text-sm text-gray-600 mb-1 text-center">
-                            {isLoadingLessons 
-                              ? "Loading lessons..." 
-                              : selectedModuleId 
-                                ? "No lessons available for the selected module." 
-                                : "Please select a module to view available lessons."}
+                          <p className="text-sm text-gray-600 text-center">
+                            Please select a module first to view available lessons
                           </p>
-                          {!isLoadingLessons && selectedModuleId && (
-                            <p className="text-xs text-gray-500 text-center">
-                              You may need to create lessons for this module first.
+                        </div>
+                      ) : isLoadingLessons ? (
+                        <div className="py-3 text-sm text-gray-500 text-center">
+                          Loading lessons...
+                        </div>
+                      ) : lessonsByModule && lessonsByModule.length > 0 ? (
+                        <div>
+                          <div className="flex items-center justify-between mb-3">
+                            <p className="text-xs text-muted-foreground">
+                              {field.value?.length || 0} of {lessonsByModule.length} selected
                             </p>
-                          )}
+                            {field.value?.length > 0 && (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => field.onChange([])}
+                                className="text-xs h-6 px-2 text-muted-foreground hover:text-foreground"
+                              >
+                                Clear all
+                              </Button>
+                            )}
+                          </div>
+                          <div className="space-y-1 max-h-[200px] overflow-y-auto pr-2">
+                            {lessonsByModule.map((lesson) => (
+                              <div 
+                                key={lesson.id} 
+                                className={cn(
+                                  "flex items-center space-x-2 p-2 rounded transition-colors",
+                                  field.value?.includes(lesson.id) 
+                                    ? "bg-muted/50" 
+                                    : "hover:bg-muted/30"
+                                )}
+                              >
+                                <Checkbox
+                                  id={`lesson-${lesson.id}`}
+                                  checked={field.value?.includes(lesson.id)}
+                                  onCheckedChange={(checked) => {
+                                    const newValue = checked
+                                      ? [...(field.value || []), lesson.id]
+                                      : (field.value || []).filter((id) => id !== lesson.id)
+                                    field.onChange(newValue)
+                                  }}
+                                  className="data-[state=checked]:bg-brand data-[state=checked]:border-brand"
+                                />
+                                <Label 
+                                  htmlFor={`lesson-${lesson.id}`}
+                                  className="cursor-pointer flex-1 text-sm"
+                                >
+                                  {lesson.name}
+                                </Label>
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       ) : (
-                        filteredLessons.map((lesson) => (
-                          <div key={lesson.id} className="flex items-center space-x-2">
-                            <Checkbox
-                              id={lesson.id}
-                              checked={field.value?.includes(lesson.id)}
-                              onCheckedChange={(checked) => {
-                                const newValue = checked
-                                  ? [...field.value, lesson.id]
-                                  : field.value.filter((id) => id !== lesson.id)
-                                field.onChange(newValue)
-                              }}
-                            />
-                            <Label htmlFor={lesson.id}>{lesson.name}</Label>
-                          </div>
-                        ))
+                        <div className="flex flex-col items-center justify-center p-4 border border-dashed border-gray-300 rounded-md bg-gray-50">
+                          <p className="text-sm text-gray-600 text-center">
+                            No lessons available for this module
+                          </p>
+                        </div>
                       )}
                     </div>
+                    {field.value?.length > 0 && (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {field.value.map((id) => {
+                          const lesson = lessonsByModule?.find(l => l.id === id);
+                          return (
+                            <Badge 
+                              key={id} 
+                              variant="pending"
+                              className="px-3 py-1.5 text-sm flex items-center"
+                            >
+                              <span className="mr-1">{lesson?.name || id}</span>
+                              <button
+                                type="button"
+                                className="ml-1 ring-offset-background rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 hover:bg-secondary/20 p-0.5"
+                                onClick={() => {
+                                  field.onChange(field.value.filter(val => val !== id))
+                                }}
+                              >
+                                <span className="sr-only">Remove</span>
+                                <svg 
+                                  width="15" 
+                                  height="15" 
+                                  viewBox="0 0 15 15" 
+                                  fill="none" 
+                                  xmlns="http://www.w3.org/2000/svg" 
+                                  className="h-3.5 w-3.5"
+                                >
+                                  <path d="M11.7816 4.03157C12.0062 3.80702 12.0062 3.44295 11.7816 3.2184C11.5571 2.99385 11.193 2.99385 10.9685 3.2184L7.50005 6.68682L4.03164 3.2184C3.80708 2.99385 3.44301 2.99385 3.21846 3.2184C2.99391 3.44295 2.99391 3.80702 3.21846 4.03157L6.68688 7.49999L3.21846 10.9684C2.99391 11.193 2.99391 11.557 3.21846 11.7816C3.44301 12.0061 3.80708 12.0061 4.03164 11.7816L7.50005 8.31316L10.9685 11.7816C11.193 12.0061 11.5571 12.0061 11.7816 11.7816C12.0062 11.557 12.0062 11.193 11.7816 10.9684L8.31322 7.49999L11.7816 4.03157Z" fill="currentColor" fillRule="evenodd" clipRule="evenodd"></path>
+                                </svg>
+                              </button>
+                            </Badge>
+                          )
+                        })}
+                      </div>
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}

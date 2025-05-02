@@ -39,3 +39,4 @@ export type BaseDataType =
 | "marginalized-group"
 | "training-type"
 | "training-tag"
+| "report-file-type"

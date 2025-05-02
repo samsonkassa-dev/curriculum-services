@@ -28,7 +28,6 @@ const trainerFormSchema = z.object({
   languageId: z.string().optional(),
 
   // Professional Info
-  expertiseAreaId: z.string().optional(),
   academicLevelId: z.string().min(1, "Academic level is required"),
   experienceYears: z.number().min(0, "Experience years must be non-negative").int(),
   trainingTagIds: z.array(z.string()).optional(),
@@ -63,7 +62,6 @@ export default function AddTrainerPage() {
       email: "",
       phoneNumber: "",
       location: "",
-      expertiseAreaId: "",
       academicLevelId: "",
       experienceYears: 0,
       trainingTagIds: [],

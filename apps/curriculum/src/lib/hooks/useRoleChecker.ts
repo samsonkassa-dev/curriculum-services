@@ -40,7 +40,7 @@ export function useRoleChecker() {
           }
         }
       } catch (error) {
-        console.error("Failed to parse token:", error);
+        console.log("Failed to parse token:", error);
       }
     } else {
       console.warn('useRoleChecker: No token found in cookies');
@@ -62,7 +62,7 @@ export function useRoleChecker() {
         }
       }
     } catch (error) {
-      console.error('useRoleChecker: Error checking cookies directly:', error);
+      console.log('useRoleChecker: Error checking cookies directly:', error);
     }
   }, [user]);
 

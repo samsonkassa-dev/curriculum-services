@@ -191,7 +191,7 @@ export function useUpdateCompanyProfile() {
             .join('\n');
             
           if (validationErrors) {
-            console.error("Validation errors:", validationErrors);
+            console.log("Validation errors:", validationErrors);
           }
         }
       }

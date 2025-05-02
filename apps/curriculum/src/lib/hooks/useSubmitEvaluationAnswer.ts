@@ -31,7 +31,7 @@ async function submitEvaluationAnswer({ monitoringFormEntryId, answer }: SubmitA
     return response.data; 
 
   } catch (error: any) {
-    console.error("Error submitting evaluation answer:", error);
+    console.log("Error submitting evaluation answer:", error);
     throw new Error(
       error?.response?.data?.message || "Failed to submit answer"
     );

@@ -16,9 +16,10 @@ import { Language } from "@/lib/hooks/useTrainers" // Import Language type if ne
 interface TrainerPersonalInfoFormProps {
   form: UseFormReturn<TrainerFormValues>
   languages: Language[] // Assuming languages are passed from the main page
+  disabled?: boolean
 }
 
-export function TrainerPersonalInfoForm({ form, languages }: TrainerPersonalInfoFormProps) {
+export function TrainerPersonalInfoForm({ form, languages, disabled = false }: TrainerPersonalInfoFormProps) {
   return (
     <div className="space-y-8">
       {/* First Section - First Name and Last Name */}
@@ -37,6 +38,7 @@ export function TrainerPersonalInfoForm({ form, languages }: TrainerPersonalInfo
                       placeholder="Enter first name" 
                       {...field} 
                       className="h-12 border-[#E4E4E4] rounded-md"
+                      disabled={disabled}
                     />
                   </FormControl>
                   <FormMessage />
@@ -58,6 +60,7 @@ export function TrainerPersonalInfoForm({ form, languages }: TrainerPersonalInfo
                       placeholder="Enter last name" 
                       {...field} 
                       className="h-12 border-[#E4E4E4] rounded-md"
+                      disabled={disabled}
                     />
                   </FormControl>
                   <FormMessage />
@@ -80,13 +83,14 @@ export function TrainerPersonalInfoForm({ form, languages }: TrainerPersonalInfo
                 <FormItem className="space-y-1">
                   <FormLabel className="text-[16px] font-medium text-gray-700">Date of Birth</FormLabel>
                   <Popover>
-                    <PopoverTrigger asChild>
+                    <PopoverTrigger asChild disabled={disabled}>
                       <FormControl>
                         <Button
                           variant="outline"
                           className={cn(
                             "h-12 w-full border-[#E4E4E4] rounded-md justify-start text-left font-normal",
-                            !field.value && "text-muted-foreground"
+                            !field.value && "text-muted-foreground",
+                            disabled && "opacity-50 cursor-not-allowed"
                           )}
                         >
                           {field.value ? (
@@ -124,7 +128,7 @@ export function TrainerPersonalInfoForm({ form, languages }: TrainerPersonalInfo
               render={({ field }) => (
                 <FormItem className="space-y-1">
                   <FormLabel className="text-[16px] font-medium text-gray-700">Gender</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
+                  <Select onValueChange={field.onChange} value={field.value} disabled={disabled}>
                     <FormControl>
                       <SelectTrigger className="h-12 border-[#E4E4E4] rounded-md">
                         <SelectValue placeholder="Select gender" />
@@ -160,6 +164,7 @@ export function TrainerPersonalInfoForm({ form, languages }: TrainerPersonalInfo
                       placeholder="Enter email address" 
                       {...field} 
                       className="h-12 border-[#E4E4E4] rounded-md"
+                      disabled={disabled}
                     />
                   </FormControl>
                   <FormMessage />
@@ -193,6 +198,7 @@ export function TrainerPersonalInfoForm({ form, languages }: TrainerPersonalInfo
                         placeholder="Enter phone number" 
                         {...field} 
                         className="h-12 border-[#E4E4E4] rounded-md"
+                        disabled={disabled}
                       />
                     </FormControl>
                   </div>

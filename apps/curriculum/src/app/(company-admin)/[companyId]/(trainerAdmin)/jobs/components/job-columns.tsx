@@ -58,24 +58,16 @@ export const jobColumns: ColumnDef<Application>[] = [
     cell: ({ row }) => formatDate(row.original.job.deadlineDate)
   },
   {
-    accessorKey: "job.status",
+    accessorKey: "status",
     header: "Status",
     cell: ({ row }) => {
-      const status = row.original.job.status
-      
-      // Set color based on status
-      let color = "bg-green-100 text-green-800"
-      if (status === "CLOSED") {
-        color = "bg-gray-100 text-gray-800"
-      } else if (status === "DRAFT") {
-        color = "bg-blue-100 text-blue-800"
-      }
+      const status = row.original.status
       
       return (
         <Badge 
-          className={`${color} border-0 font-medium capitalize`}
+          variant={status.toLowerCase() as "pending" | "accepted" | "rejected"}
+          className="capitalize"
         >
-          <span className={`mr-1.5 h-2 w-2 rounded-full ${status === "ACTIVE" ? "bg-green-600" : status === "CLOSED" ? "bg-gray-500" : "bg-blue-600"}`} />
           {status.toLowerCase()}
         </Badge>
       )

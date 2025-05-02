@@ -28,6 +28,7 @@ const tabs: Tab[] = [
   { id: "learner-level", name: "Learner Level" },
   { id: "learner-style-preference", name: "Learning Style Preference" },
   { id: "learning-resource-type", name: "Learning Resource Type" },
+  { id: "report-file-type", name: "Report File Type" },
   { id: "technological-requirement", name: "Technological Requirement" },
   { id: "technology-integration", name: "Technology Integration" },
   { id: "training-purpose", name: "Training Purpose" },

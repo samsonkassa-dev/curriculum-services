@@ -188,8 +188,13 @@ export function useAcceptApplication() {
       )
       return response.data
     },
-    onSuccess: () => {
+    onSuccess: (data, applicationId) => {
       toast.success('Application accepted successfully')
+      // Invalidate the specific application to refetch
+      queryClient.invalidateQueries({ queryKey: ['application', applicationId] })
+      // Update the specific application in the cache immediately
+      queryClient.setQueryData(['application', applicationId], data)
+      // Invalidate all applications list queries
       queryClient.invalidateQueries({ queryKey: ['applications'] })
     },
     onError: (error: any) => {
@@ -199,7 +204,11 @@ export function useAcceptApplication() {
 
   return {
     acceptApplication: acceptMutation.mutate,
-    isLoading: acceptMutation.isPending
+    acceptApplicationAsync: acceptMutation.mutateAsync,
+    isLoading: acceptMutation.isPending,
+    isSuccess: acceptMutation.isSuccess,
+    isError: acceptMutation.isError,
+    error: acceptMutation.error
   }
 }
 
@@ -224,8 +233,13 @@ export function useRejectApplication() {
       )
       return response.data
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
       toast.success('Application rejected successfully')
+      // Invalidate the specific application to refetch
+      queryClient.invalidateQueries({ queryKey: ['application', variables.applicationId] })
+      // Update the specific application in the cache immediately
+      queryClient.setQueryData(['application', variables.applicationId], data)
+      // Invalidate all applications list queries
       queryClient.invalidateQueries({ queryKey: ['applications'] })
     },
     onError: (error: any) => {
@@ -235,6 +249,10 @@ export function useRejectApplication() {
 
   return {
     rejectApplication: rejectMutation.mutate,
-    isLoading: rejectMutation.isPending
+    rejectApplicationAsync: rejectMutation.mutateAsync,
+    isLoading: rejectMutation.isPending,
+    isSuccess: rejectMutation.isSuccess,
+    isError: rejectMutation.isError,
+    error: rejectMutation.error
   }
 }

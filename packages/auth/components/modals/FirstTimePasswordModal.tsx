@@ -55,7 +55,7 @@ export function FirstTimePasswordModal({
   const onSubmit = async (data: PasswordFormValues) => {
     const result = await changePassword({ 
       oldPassword: data.oldPassword,
-      password: data.password 
+      newPassword: data.password 
     })
     
     if (result.success) {

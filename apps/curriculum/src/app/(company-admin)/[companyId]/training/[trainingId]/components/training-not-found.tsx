@@ -1,5 +1,5 @@
 interface TrainingNotFoundProps {
-  type: 'overview' | 'profile' | 'audience' | 'curriculum' | 'module' | 'evaluation' | 'students' | 'sessions'
+  type: 'overview' | 'profile' | 'audience' | 'curriculum' | 'module' | 'evaluation' | 'students' | 'sessions' | 'attendance' | 'certificate'
 }
 
 const messages = {
@@ -34,6 +34,14 @@ const messages = {
   sessions: {
     title: 'Sessions Not Found',
     description: 'We couldn\'t find any sessions for this training.'
+  },
+  attendance: {
+    title: 'Attendance Records Not Found',
+    description: 'We couldn\'t find any attendance records for this training.'
+  },
+  certificate: {
+    title: 'Certificates Not Found',
+    description: 'We couldn\'t find any certificates for this training.'
   }
 }
 

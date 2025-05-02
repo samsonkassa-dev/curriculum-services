@@ -1,7 +1,7 @@
 "use client"
 
 import { useApplication, useAcceptApplication, useRejectApplication } from "@/lib/hooks/useApplication"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
 import { Input } from "@/components/ui/input"
 import { Filter } from "@/components/ui/filter"
 import Image from "next/image"
@@ -27,8 +27,10 @@ import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 
 export default function ApplicationDetailPage() {
-  const params = useParams<{ applicationId: string }>()
+  const params = useParams<{ applicationId: string, companyId: string }>()
+  const router = useRouter()
   const applicationId = params.applicationId
+  const companyId = params.companyId
   
   const [searchQuery, setSearchQuery] = useState("")
   const [isUpdating, setIsUpdating] = useState(false)
@@ -39,6 +41,10 @@ export default function ApplicationDetailPage() {
   const { data, isLoading } = useApplication(applicationId)
   const { acceptApplication, isLoading: isAccepting } = useAcceptApplication()
   const { rejectApplication, isLoading: isRejecting } = useRejectApplication()
+  
+  const handleBack = () => {
+    router.push(`/${companyId}/jobs`)
+  }
   
   const handleUpdateStatus = (newStatus: "ACCEPTED" | "REJECTED") => {
     if (!applicationId) return
@@ -150,9 +156,20 @@ export default function ApplicationDetailPage() {
 
   return (
     <div className="flex lg:px-16 md:px-14 px-4 w-full">
-      <div className="flex-1 py-4 md:pl-12 min-w-0">
+      <div className="flex-1 py-10 md:pl-12 min-w-0">
+      
+        <div className="flex items-center gap-2 mb-8">
+          <Button 
+            onClick={handleBack}
+            variant="ghost" 
+            className="p-0 hover:bg-transparent"
+          >
+            <ChevronLeftIcon className="h-5 w-5 text-blue-500" />
+          </Button>
+          <h1 className="text-xl font-semibold">Application Details</h1>
+        </div>
     
-        <div className="flex flex-col py-28 gap-9">
+        <div className="flex flex-col py-4 gap-9">
           {/* Job Details Card - Updated to match session UI tab-like structure */}
           <div className="bg-[#FBFBFB] p-5 rounded-lg border border-[#EAECF0]">
             <div className="flex flex-wrap justify-between items-center gap-x-10 gap-y-4">

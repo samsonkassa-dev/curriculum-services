@@ -91,12 +91,14 @@ export function ModuleView({
     setShowLessonModal(true)
   }, [])
 
-  const handleCreateSubModule = async (data: { name: string; description: string }) => {
+  const handleCreateSubModule = async (data: { name: string; description: string; trainingTagId: string }) => {
     if (!selectedModule) return
 
     try {
       await createModule({
-        ...data,
+        name: data.name,
+        description: data.description,
+        trainingTagId: data.trainingTagId,
         trainingId: params.trainingId as string,
         moduleId: selectedModule.id
       })

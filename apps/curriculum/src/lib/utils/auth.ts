@@ -62,7 +62,7 @@ export const clearAuthData = async () => {
     // Return success status
     return { success: true };
   } catch (error) {
-    console.error('Error during logout:', error);
+    console.log('Error during logout:', error);
     return { success: false };
   } finally {
     // Always redirect, regardless of the outcome

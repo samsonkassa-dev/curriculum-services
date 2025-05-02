@@ -19,7 +19,7 @@ interface DecodedToken {
       );
       return JSON.parse(jsonPayload);
     } catch (e) {
-      console.error('Error decoding JWT:', e);
+      console.log('Error decoding JWT:', e);
       return null;
     }
   }

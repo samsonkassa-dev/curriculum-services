@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import axios from "axios"
 import { getCookie } from "@curriculum-services/auth"
 import { toast } from "sonner"
+import { Student } from "./useStudents"
 
 export type DeliveryMethod = "OFFLINE" | "ONLINE" | "SELF_PACED"
 export type CompensationType = "PER_HOUR" | "PER_TRAINEES" 
@@ -104,6 +105,16 @@ interface SessionsResponse {
   code: string
   totalPages: number
   message: string
+  totalElements: number
+}
+
+interface StudentsResponse {
+  code: string
+  trainees: Student[]
+  totalPages: number
+  pageSize: number
+  message: string
+  currentPage: number
   totalElements: number
 }
 
@@ -219,7 +230,7 @@ export function useSessions(params: SessionQueryParams) {
       } catch (error: any) {
         // Improve error handling
         const errorMessage = error?.response?.data?.message || error?.message || 'Failed to load sessions';
-        console.error("Error fetching sessions:", error);
+        console.log("Error fetching sessions:", error);
         throw new Error(errorMessage);
       }
     },
@@ -316,4 +327,45 @@ export function useAddTraineesToSession() {
   }
 }
 
+
+// fetch students for session 
+export function useAssignedStudentsForSession(
+  sessionId: string, 
+  page?: number, 
+  pageSize?: number,
+) {
+  return useQuery({
+    queryKey: ['students', page, pageSize, sessionId],
+    queryFn: async () => {
+      try {
+        const token = getCookie('token')
+        
+        // Build URL with query parameters
+        let url = `${process.env.NEXT_PUBLIC_API}/session/${sessionId}/trainees`
+        
+        // Add pagination parameters if provided
+        const params = new URLSearchParams()
+        if (page !== undefined) params.append('page', page.toString())
+        if (pageSize !== undefined) params.append('page-size', pageSize.toString())
+        
+        // Append query parameters if any exist
+        if (params.toString()) {
+          url += `?${params.toString()}`
+        }
+        
+        const response = await axios.get<StudentsResponse>(
+          url,
+          {
+            headers: { Authorization: `Bearer ${token}` }
+          }
+        )
+        
+        return response.data
+      } catch (error: any) {
+        throw new Error(error?.response?.data?.message || 'Failed to load students')
+      }
+    },
+    enabled: !!sessionId
+  })
+}
 

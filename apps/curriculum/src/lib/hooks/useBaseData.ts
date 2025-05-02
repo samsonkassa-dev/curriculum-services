@@ -42,6 +42,7 @@ const getResponseKey = (type: BaseDataType) => {
   if (type === 'marginalized-group') return 'marginalizedGroups';
   if (type === 'training-type') return 'trainingTypes';
   if (type === 'training-tag') return 'trainingTags';
+  if (type === 'report-file-type') return 'reportFileTypes';
   // Default case for other types (fallback to the old pattern just in case)
   const typeStr = type as string;
   return typeStr

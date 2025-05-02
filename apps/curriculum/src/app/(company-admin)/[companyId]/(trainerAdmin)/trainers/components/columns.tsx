@@ -16,13 +16,17 @@ import {
 import Link from "next/link"
 import { useParams } from "next/navigation"
 
-// Component for the Actions Cell
-const ActionsCell = ({ row }: { row: Row<Trainer> }) => {
-  const trainer = row.original as Trainer;
-  const params = useParams(); // Hook called inside a component
+interface ActionsProps {
+  row: Row<Trainer>
+  onView: (trainer: Trainer) => void
+  onEdit: (trainer: Trainer) => void
+  onDelete: (trainer: Trainer) => void
+}
 
-  // Adjust the href based on your actual routing structure
-  const detailHref = `/${params.companyId}/trainers/${trainer.id}`; 
+// Component for the Actions Cell
+const ActionsCell = ({ row, onView, onEdit, onDelete }: ActionsProps) => {
+  const trainer = row.original
+  const params = useParams()
 
   return (
     <DropdownMenu>
@@ -38,19 +42,30 @@ const ActionsCell = ({ row }: { row: Row<Trainer> }) => {
           Copy email
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem asChild>
-           <Link href={detailHref}>View details</Link> 
+        <DropdownMenuItem onClick={() => onView(trainer)}>
+          View details
         </DropdownMenuItem>
-         {/* Add Edit/Delete actions here */}
-        {/* <DropdownMenuItem>Edit Trainer</DropdownMenuItem> */}
-        {/* <DropdownMenuItem className="text-red-600">Delete Trainer</DropdownMenuItem> */}
+        <DropdownMenuItem onClick={() => onEdit(trainer)}>
+          Edit trainer
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem 
+          onClick={() => onDelete(trainer)}
+          className="text-red-600"
+        >
+          Delete trainer
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   )
-};
+}
 
 // You might want to add more columns based on the Figma design or requirements
-export const columns: ColumnDef<Trainer>[] = [
+export const createColumns = (
+  onView: (trainer: Trainer) => void,
+  onEdit: (trainer: Trainer) => void,
+  onDelete: (trainer: Trainer) => void
+): ColumnDef<Trainer>[] => [
   {
     accessorKey: "firstName",
     header: "First Name",
@@ -76,11 +91,16 @@ export const columns: ColumnDef<Trainer>[] = [
     header: "Experience (Yrs)",
     cell: ({ row }) => <div className="text-center">{row.getValue("experienceYears")}</div>,
   },
-  /* Commented out actions column with three-dot menu
-   {
+  {
     id: "actions",
     enableHiding: false,
-    cell: ({ row }) => <ActionsCell row={row} />
+    cell: ({ row }) => (
+      <ActionsCell 
+        row={row} 
+        onView={onView}
+        onEdit={onEdit}
+        onDelete={onDelete}
+      />
+    ),
   },
-  */
 ] 

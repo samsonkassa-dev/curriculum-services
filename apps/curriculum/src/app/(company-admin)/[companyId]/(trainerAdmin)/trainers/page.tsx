@@ -9,10 +9,11 @@ import { Button } from "@/components/ui/button"
 import { Plus, Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { useDebounce } from "@/lib/hooks/useDebounce"
-// Import the new specific data table
 import { TrainerDataTable } from "./components/trainer-data-table" 
-import { columns } from "./components/columns"
+import { createColumns } from "./components/columns"
 import { useUserRole } from "@/lib/hooks/useUserRole"
+import { useBaseData } from "@/lib/hooks/useBaseData"
+import Image from 'next/image'
 
 const DEFAULT_PAGE = 1
 const DEFAULT_PAGE_SIZE = 10
@@ -21,8 +22,11 @@ export default function TrainersPage() {
   const params = useParams()
   const companyId = params.companyId as string
   const { isTrainerAdmin } = useUserRole()
+  const { data: languages } = useBaseData('language')
+  const { data: academicLevels } = useBaseData('academic-level')
+  const { data: trainingTags } = useBaseData('training-tag')
 
-  const [page, setPage] = useState<number>(DEFAULT_PAGE) // Renamed for clarity with pagination component
+  const [page, setPage] = useState<number>(DEFAULT_PAGE)
   const [pageSize, setPageSize] = useState<number>(DEFAULT_PAGE_SIZE)
   const [searchQuery, setSearchQuery] = useState("")
   const debouncedSearch = useDebounce(searchQuery, 500)
@@ -77,6 +81,20 @@ export default function TrainersPage() {
   // Construct the add trainer link - change /create to /add
   const addTrainerHref = `/${companyId}/trainers/add`
 
+  const handleViewTrainer = (trainer: Trainer) => {
+    // Will be implemented with modal
+  }
+
+  const handleEditTrainer = (trainer: Trainer) => {
+    // Will be implemented with modal
+  }
+
+  const handleDeleteTrainer = (trainer: Trainer) => {
+    // Will be implemented with modal
+  }
+
+  const columns = createColumns(handleViewTrainer, handleEditTrainer, handleDeleteTrainer)
+
   if (isLoading && !trainersData) { // Show loading only on initial load
     return <Loading />
   }
@@ -89,73 +107,80 @@ export default function TrainersPage() {
   // Empty State (Figma Node: 121-4235) - Check based on *all* fetched trainers before filtering
   if (!isLoading && allFetchedTrainers.length === 0 && debouncedSearch === "") {
     return (
-      <div className="px-[7%] py-10">
-        <div className="flex justify-between items-center mb-6">
-           <h1 className="text-xl font-semibold">Trainers</h1>
-           {/* Add button only shown to trainer admins */}
-           {isTrainerAdmin && (
-             <Button asChild className="bg-[#0B75FF] hover:bg-[#0B75FF]/90 text-white flex items-center gap-2">
-               <Link href={addTrainerHref}>
-                 <Plus className="h-4 w-4" />
-                 <span>Add Trainer</span>
-               </Link>
-             </Button>
-           )}
-        </div>
-        <div className="text-center py-40 bg-[#fbfbfb] rounded-lg border-[0.1px]">
-          <h3 className="text-lg font-medium mb-2">No Trainers Added Yet</h3>
-          <p className="text-gray-500 text-sm mb-6 max-w-xs mx-auto">
-            Add trainers to manage their details and assign them to training programs.
-          </p>
+      <div className="flex lg:px-16 md:px-14 px-4 w-full">
+        <div className="flex-1 py-4 md:pl-12 min-w-0">
+          <h1 className="text-lg font-normal mb-6">Trainers</h1>
           {isTrainerAdmin && (
-            <Button asChild className="mt-4 bg-[#0B75FF] hover:bg-[#0B75FF]/90 text-white">
+            <Button asChild className="bg-[#0B75FF] hover:bg-[#0B75FF]/90 text-white flex items-center gap-2 mb-6">
               <Link href={addTrainerHref}>
-                Add Trainer
+                <Plus className="h-4 w-4" />
+                <span>Add Trainer</span>
               </Link>
             </Button>
           )}
+          <div className="text-center py-40 bg-[#fbfbfb] rounded-lg border-[0.1px]">
+            <h3 className="text-lg font-medium mb-2">No Trainers Added Yet</h3>
+            <p className="text-gray-500 text-sm mb-6 max-w-xs mx-auto">
+              Add trainers to manage their details and assign them to training programs.
+            </p>
+            {isTrainerAdmin && (
+              <Button asChild className="mt-4 bg-[#0B75FF] hover:bg-[#0B75FF]/90 text-white">
+                <Link href={addTrainerHref}>
+                  Add Trainer
+                </Link>
+              </Button>
+            )}
+          </div>
         </div>
       </div>
     )
   }
 
-  // Data Present State (Figma Node: 108-27468)
+  // Data Present State - Matching the jobs page layout
   return (
-    <div className="px-[8%] md:pr-14 py-10">
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-xl font-semibold">Trainers</h1>
-        {isTrainerAdmin && (
-          <Button asChild className="bg-[#0B75FF] hover:bg-[#0B75FF]/90 text-white flex items-center gap-2">
-            <Link href={addTrainerHref}>
-              <Plus className="h-4 w-4" />
-              <span>Add Trainer</span>
-            </Link>
-          </Button>
-        )}
-      </div>
-      
-      <div className="flex items-center justify-between mb-6">
-        <div className="relative md:w-[300px]">
-          <Search className="absolute text-sm left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-          <Input
-            placeholder="Search trainers..."
-            className="pl-10 h-10 text-sm bg-white border-gray-200"
-            value={searchQuery}
-            onChange={(e) => {
-              setSearchQuery(e.target.value);
-              setPage(1); // Reset to page 1 when search query changes
-            }}
-          />
+    <div className="flex lg:px-16 md:px-14 px-4 w-full">
+      <div className="flex-1 py-4 md:pl-12 min-w-0">
+        <h1 className="text-lg font-normal mb-6">Trainers</h1>
+
+        <div className="flex items-center lg:justify-end gap-3 mb-6">
+          <div className="relative md:w-[300px]">
+            <Image
+              src="/search.svg"
+              alt="Search"
+              width={19}
+              height={19}
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black h-5 w-5 z-10"
+            />
+            <Input
+              placeholder="Search trainers..."
+              className="pl-10 h-10 bg-white border-gray-200 rounded-lg"
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                setPage(1); // Reset to page 1 when search query changes
+              }}
+            />
+          </div>
+          {isTrainerAdmin && (
+            <Button asChild className="bg-[#0B75FF] hover:bg-[#0B75FF]/90 text-white flex items-center gap-2">
+              <Link href={addTrainerHref}>
+                <Plus className="h-4 w-4" />
+                <span>Add Trainer</span>
+              </Link>
+            </Button>
+          )}
         </div>
+        
+        {/* Use the TrainerDataTable */}
+        <TrainerDataTable
+          data={paginatedTrainers}
+          isLoading={isLoading}
+          pagination={paginationProps}
+          languages={languages || []}
+          academicLevels={academicLevels || []}
+          trainingTags={trainingTags || []}
+        />
       </div>
-      
-      {/* Use the new TrainerDataTable */}
-      <TrainerDataTable
-        columns={columns}
-        data={paginatedTrainers} // Pass paginated *filtered* data
-        isLoading={isLoading} // Pass loading state
-        pagination={paginationProps} // Pass pagination props object
-      />
     </div>
   )
 }

@@ -19,24 +19,27 @@ interface TrainerProfessionalInfoFormProps {
   trainingTags: TrainingTag[]
   academicLevels: AcademicLevel[]
   languages: Language[]
+  disabled?: boolean
 }
 
 export function TrainerProfessionalInfoForm({ 
   form, 
   trainingTags,
   academicLevels,
-  languages
+  languages,
+  disabled = false
 }: TrainerProfessionalInfoFormProps) {
-  // State for the training tags popover
   const [openTagsPopover, setOpenTagsPopover] = useState(false);
   
   const handleSelectTrainingTag = (tagId: string) => {
+    if (disabled) return;
     const currentTags = form.getValues("trainingTagIds") || [];
     const newTags = currentTags.includes(tagId)
       ? currentTags.filter(id => id !== tagId)
       : [...currentTags, tagId];
     
     form.setValue("trainingTagIds", newTags, { shouldValidate: true });
+    // Don't close the popover to allow multiple selections
   };
 
   return (
@@ -49,7 +52,7 @@ export function TrainerProfessionalInfoForm({
           render={({ field }) => (
             <FormItem>
               <FormLabel className="text-[16px] font-medium text-gray-800">Primary Language</FormLabel>
-              <Select onValueChange={field.onChange} value={field.value}>
+              <Select onValueChange={field.onChange} value={field.value || ""} disabled={disabled}>
                 <FormControl>
                   <SelectTrigger className="h-12 border-[#E4E4E4] rounded-md">
                     <SelectValue placeholder="Select language" />
@@ -82,39 +85,9 @@ export function TrainerProfessionalInfoForm({
                   placeholder="Enter your location" 
                   {...field} 
                   className="h-12 border-[#E4E4E4] rounded-md"
+                  disabled={disabled}
                 />
               </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-      </div>
-
-      {/* Expertise Areas (Single Select) */}
-      <div className="space-y-2">
-        <div>
-          <FormLabel className="text-[16px] font-medium text-gray-800">Expertise Area</FormLabel>
-          <p className="text-sm text-gray-500 mt-1">Please select your primary area of expertise relevant to training.</p>
-        </div>
-        <FormField
-          control={form.control}
-          name="expertiseAreaId"
-          render={({ field }) => (
-            <FormItem>
-              <Select onValueChange={field.onChange} value={field.value}>
-                <FormControl>
-                  <SelectTrigger className="h-12 border-[#E4E4E4] rounded-md">
-                    <SelectValue placeholder="Select" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {/* This should be replaced with actual expertise area options */}
-                  <SelectItem value="tech">Technology</SelectItem>
-                  <SelectItem value="business">Business</SelectItem>
-                  <SelectItem value="health">Healthcare</SelectItem>
-                  <SelectItem value="education">Education</SelectItem>
-                </SelectContent>
-              </Select>
               <FormMessage />
             </FormItem>
           )}
@@ -132,17 +105,31 @@ export function TrainerProfessionalInfoForm({
           name="trainingTagIds"
           render={({ field }) => (
             <FormItem>
-              <Popover open={openTagsPopover} onOpenChange={setOpenTagsPopover}>
+              <Popover 
+                open={openTagsPopover && !disabled} 
+                onOpenChange={setOpenTagsPopover}
+              >
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
-                    className="w-full justify-between py-6 border-[#E4E4E4] rounded-md"
+                    role="combobox"
                     type="button"
+                    disabled={disabled}
+                    className={cn(
+                      "w-full justify-between py-6 border-[#E4E4E4] rounded-md",
+                      disabled && "opacity-50 cursor-not-allowed"
+                    )}
+                    onClick={(e) => {
+                      if (!disabled) {
+                        e.preventDefault();
+                        setOpenTagsPopover(!openTagsPopover);
+                      }
+                    }}
                   >
                     <div className="flex flex-wrap gap-1 items-center">
                       {field.value && field.value.length > 0 ? (
                         <>
-                          {field.value.slice(0, 1).map((id) => {
+                          {field.value.map((id) => {
                             const tag = trainingTags?.find((tag) => tag.id === id);
                             return (
                               <Badge key={`tag-${id}`} variant="secondary">
@@ -150,11 +137,6 @@ export function TrainerProfessionalInfoForm({
                               </Badge>
                             );
                           })}
-                          {field.value.length > 1 && (
-                            <span className="text-sm text-gray-500 ml-1">
-                              + {field.value.length - 1} more
-                            </span>
-                          )}
                         </>
                       ) : (
                         "Select training tags..."
@@ -163,7 +145,7 @@ export function TrainerProfessionalInfoForm({
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-full p-0">
+                <PopoverContent className="w-full p-0" align="start">
                   <div className="max-h-[300px] overflow-auto">
                     {trainingTags && trainingTags.length > 0 ? (
                       trainingTags.map((tag) => (
@@ -214,7 +196,8 @@ export function TrainerProfessionalInfoForm({
                   min={0}
                   {...field}
                   onChange={e => field.onChange(parseInt(e.target.value) || 0)}
-                  className="h-12 border-[#E4E4E4] rounded-md" 
+                  className="h-12 border-[#E4E4E4] rounded-md"
+                  disabled={disabled}
                 />
               </FormControl>
               <FormMessage />
@@ -240,6 +223,7 @@ export function TrainerProfessionalInfoForm({
                     const courses = e.target.value.split(",").map(item => item.trim()).filter(Boolean);
                     field.onChange(courses);
                   }}
+                  disabled={disabled}
                 />
               </FormControl>
               <FormMessage />
@@ -259,7 +243,7 @@ export function TrainerProfessionalInfoForm({
           name="academicLevelId"
           render={({ field }) => (
             <FormItem>
-              <Select onValueChange={field.onChange} value={field.value}>
+              <Select onValueChange={field.onChange} value={field.value || ""} disabled={disabled}>
                 <FormControl>
                   <SelectTrigger className="h-12 border-[#E4E4E4] rounded-md">
                     <SelectValue placeholder="Select" />
@@ -299,6 +283,7 @@ export function TrainerProfessionalInfoForm({
                     const certifications = e.target.value.split(",").map(item => item.trim()).filter(Boolean);
                     field.onChange(certifications);
                   }}
+                  disabled={disabled}
                 />
               </FormControl>
               <FormMessage />

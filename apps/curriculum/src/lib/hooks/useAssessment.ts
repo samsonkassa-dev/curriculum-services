@@ -61,7 +61,7 @@ export function useGetAssessment(
       try {
         const token = getCookie('token')
         if (!token) {
-          console.error("No auth token found for assessment methods fetch");
+          console.log("No auth token found for assessment methods fetch");
           throw new Error("Authentication required");
         }
         

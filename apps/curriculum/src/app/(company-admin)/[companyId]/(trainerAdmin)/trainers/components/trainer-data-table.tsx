@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 
 import * as React from "react"
@@ -20,10 +21,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react"
+import { Trainer, useDeleteTrainer, Language, AcademicLevel, TrainingTag } from "@/lib/hooks/useTrainers"
+import { createColumns } from "./columns"
+import { TrainerDetailsModal } from "./trainer-details-modal"
 
-interface DataTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[]
-  data: TData[]
+interface DataTableProps {
+  data: Trainer[]
   isLoading?: boolean
   pagination?: {
     totalPages: number
@@ -33,18 +36,55 @@ interface DataTableProps<TData, TValue> {
     setPageSize: (size: number) => void
     totalElements: number
   }
+  languages: Language[]
+  academicLevels: AcademicLevel[]
+  trainingTags: TrainingTag[]
 }
 
-export function TrainerDataTable<TData, TValue>({
-  columns,
+export function TrainerDataTable({
   data,
   isLoading,
   pagination,
-}: DataTableProps<TData, TValue>) {
+  languages,
+  academicLevels,
+  trainingTags,
+}: DataTableProps) {
   const [rowSelection, setRowSelection] = React.useState({})
   const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({})
   const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([])
   const [sorting, setSorting] = React.useState<SortingState>([])
+  const [selectedTrainer, setSelectedTrainer] = React.useState<Trainer | null>(null)
+  const [modalMode, setModalMode] = React.useState<"view" | "edit">("view")
+  const [isModalOpen, setIsModalOpen] = React.useState(false)
+
+  const { deleteTrainer, isLoading: isDeleting } = useDeleteTrainer()
+
+  const handleViewTrainer = (trainer: Trainer) => {
+    setSelectedTrainer(trainer)
+    setModalMode("view")
+    setIsModalOpen(true)
+  }
+
+  const handleEditTrainer = (trainer: Trainer) => {
+    setSelectedTrainer(trainer)
+    setModalMode("edit")
+    setIsModalOpen(true)
+  }
+
+  const handleDeleteTrainer = async (trainer: Trainer) => {
+    if (window.confirm(`Are you sure you want to delete ${trainer.firstName} ${trainer.lastName}?`)) {
+      try {
+        await deleteTrainer(trainer.id)
+      } catch (error) {
+        console.error("Error deleting trainer:", error)
+      }
+    }
+  }
+
+  const columns = React.useMemo(
+    () => createColumns(handleViewTrainer, handleEditTrainer, handleDeleteTrainer),
+    [handleViewTrainer, handleEditTrainer, handleDeleteTrainer]
+  )
 
   const table = useReactTable({
     data,
@@ -66,8 +106,8 @@ export function TrainerDataTable<TData, TValue>({
     getSortedRowModel: getSortedRowModel(),
     getFacetedRowModel: getFacetedRowModel(),
     getFacetedUniqueValues: getFacetedUniqueValues(),
-    manualPagination: true, // Set to true since we handle pagination outside
-    pageCount: pagination?.totalPages ?? -1, // Use totalPages from props
+    manualPagination: true,
+    pageCount: pagination?.totalPages ?? -1,
   })
 
   React.useEffect(() => {
@@ -76,7 +116,6 @@ export function TrainerDataTable<TData, TValue>({
     }
   }, [pagination?.pageSize, table])
 
-  // Calculate showing text (using the same logic as student table)
   const startRecord = pagination?.totalElements ?? 0 > 0
     ? ((pagination?.currentPage ?? 1) - 1) * (pagination?.pageSize ?? 10) + 1
     : 0;
@@ -147,10 +186,10 @@ export function TrainerDataTable<TData, TValue>({
           </TableBody>
         </Table>
       </div>
+
       {pagination && pagination.totalPages > 0 && (
          <div className="flex items-center justify-between py-4">
            <div className="flex items-center justify-between w-full">
-              {/* Left side - Page Size Selector (from student table) */}
               <div className="flex items-center gap-2">
                 <span className="md:text-sm text-xs text-gray-500">Showing</span>
                 <Select
@@ -163,7 +202,7 @@ export function TrainerDataTable<TData, TValue>({
                     <SelectValue placeholder={pagination.pageSize} />
                   </SelectTrigger>
                   <SelectContent side="top">
-                    {[10, 20, 30, 50].map((size) => ( // Use same options as student table
+                    {[10, 20, 30, 50].map((size) => (
                       <SelectItem key={size} value={`${size}`}>
                         {size}
                       </SelectItem>
@@ -172,15 +211,13 @@ export function TrainerDataTable<TData, TValue>({
                 </Select>
               </div>
 
-              {/* Center - Showing Text (from student table) */}
               <div className="text-xs md:text-sm pl-2 text-gray-500">
                 {showingText}
               </div>
 
-              {/* Right side - Pagination Controls (from student table) */}
               <div className="flex gap-1">
                 <Button
-                  variant="pagination" // Assuming 'pagination' variant exists or use 'outline'
+                  variant="pagination"
                   size="sm"
                   onClick={() =>
                     pagination.setPage(Math.max(1, pagination.currentPage - 1))
@@ -190,21 +227,17 @@ export function TrainerDataTable<TData, TValue>({
                   <ChevronLeftIcon className="w-4 h-4" />
                 </Button>
                 {Array.from(
-                  { length: Math.min(5, pagination.totalPages) }, // Show up to 5 page numbers
+                  { length: Math.min(5, pagination.totalPages) },
                   (_, i) => {
-                    // Logic to show pagination numbers centered around current page
                     let pageNumber;
                     if (pagination.totalPages <= 5) {
-                      // If we have 5 or fewer pages, show all
                       pageNumber = i + 1;
                     } else {
-                      // For more pages, center around current page
-                      const middle = 2; // Show 2 pages before and 2 after current (total 5)
+                      const middle = 2;
                       const currentPage = pagination.currentPage;
                       const start = Math.max(1, currentPage - middle);
                       const end = Math.min(pagination.totalPages, start + 4);
                       
-                      // Adjust start if we're near the end to maintain 5 buttons
                       const adjustedStart = end === pagination.totalPages 
                         ? Math.max(1, end - 4) 
                         : start;
@@ -212,14 +245,13 @@ export function TrainerDataTable<TData, TValue>({
                       pageNumber = adjustedStart + i;
                     }
                     
-                    // Don't render if the page number exceeds total pages
                     if (pageNumber > pagination.totalPages) return null;
                     
                     return (
                       <Button
                         key={pageNumber}
                         variant="outline"
-                        className={pagination.currentPage === pageNumber ? "border-brand text-brand" : ""} // Highlight current page
+                        className={pagination.currentPage === pageNumber ? "border-brand text-brand" : ""} 
                         size="sm"
                         onClick={() => pagination.setPage(pageNumber)}
                       >
@@ -227,9 +259,9 @@ export function TrainerDataTable<TData, TValue>({
                       </Button>
                     );
                   }
-                ).filter(Boolean) /* Remove null entries */} 
+                ).filter(Boolean)}
                 <Button
-                  variant="pagination" // Assuming 'pagination' variant exists or use 'outline'
+                  variant="pagination"
                   size="sm"
                   onClick={() => pagination.setPage(pagination.currentPage + 1)}
                   disabled={pagination.currentPage >= pagination.totalPages}
@@ -239,6 +271,21 @@ export function TrainerDataTable<TData, TValue>({
               </div>
            </div>
          </div>
+      )}
+
+      {selectedTrainer && (
+        <TrainerDetailsModal
+          trainer={selectedTrainer}
+          isOpen={isModalOpen}
+          onClose={() => {
+            setIsModalOpen(false)
+            setSelectedTrainer(null)
+          }}
+          mode={modalMode}
+          languages={languages}
+          academicLevels={academicLevels}
+          trainingTags={trainingTags}
+        />
       )}
     </div>
   )

@@ -13,6 +13,7 @@ interface ModuleResponse {
     name: string
     description: string
     trainingId: string
+    trainingTagId: string
   }
 }
 
@@ -23,15 +24,30 @@ interface ModuleDetailsResponse {
     id: string
     name: string
     description: string
+    trainingTag: {
+      id: string
+      name: string
+      description: string
+    } | null
     parentModule: null | {
       id: string
       name: string
       description: string
+      trainingTag: {
+        id: string
+        name: string
+        description: string
+      } | null
     }
     childModules: Array<{
       id: string
       name: string
       description: string
+      trainingTag: {
+        id: string
+        name: string
+        description: string
+      } | null
     }>
   }
 }
@@ -72,6 +88,8 @@ export function useCreateModule() {
     onError: (error) => {
       if (axios.isAxiosError(error)) {
         toast.error(error.response?.data?.message || "Failed to create module");
+      } else {
+        toast.error("An unexpected error occurred");
       }
     },
   });
@@ -95,16 +113,16 @@ export function useModules(moduleId: string) {
   });
 }
 
-//hook to fetch module by trainingId
-export function useModulesByTrainingId(trainingId: string) {
+export function useModulesByTrainingId(trainingId: string, includeAll: boolean = false) {
   return useQuery<ModulesResponse>({
-    queryKey: ["modules", trainingId],
+    queryKey: ["modules", trainingId, includeAll],
     queryFn: async () => {
       const token = getCookie('token')
       const response = await axios.get<ModulesResponse>(
         `${process.env.NEXT_PUBLIC_API}/module/training/${trainingId}`,
         {
-          headers: { Authorization: `Bearer ${token}` }
+          headers: { Authorization: `Bearer ${token}` },
+          params: { 'include-all': includeAll }
         }
       )
       return response.data
@@ -114,14 +132,19 @@ export function useModulesByTrainingId(trainingId: string) {
 
 interface UpdateModuleData {
   moduleId: string;
-  data: CreateModuleData;  // Reuse CreateModuleData type
+  data: {
+    name: string;
+    description: string;
+    trainingTagId: string;
+  };
+  trainingId: string;
 }
 
 export function useUpdateModule() {
   const queryClient = useQueryClient()
 
   return useMutation<ModuleResponse, Error, UpdateModuleData>({
-    mutationFn: async ({ moduleId, data }: UpdateModuleData) => {
+    mutationFn: async ({ moduleId, data, trainingId }: UpdateModuleData) => {
       const token = getCookie('token')
       const response = await axios.patch<ModuleResponse>(
         `${process.env.NEXT_PUBLIC_API}/module/${moduleId}`,
@@ -133,14 +156,20 @@ export function useUpdateModule() {
       return response.data
     },
     onSuccess: (_, variables) => {
+      // Invalidate both the modules list and the specific module details
       queryClient.invalidateQueries({ 
-        queryKey: ['modules', variables.data.trainingId] 
+        queryKey: ['modules', variables.trainingId] 
+      })
+      queryClient.invalidateQueries({ 
+        queryKey: ['module-details', variables.moduleId] 
       })
       toast.success('Module updated successfully')
     },
     onError: (error) => {
       if (axios.isAxiosError(error)) {
         toast.error(error.response?.data?.message || 'Failed to update module')
+      } else {
+         toast.error("An unexpected error occurred");
       }
     }
   })

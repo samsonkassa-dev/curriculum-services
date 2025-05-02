@@ -11,6 +11,13 @@ import { Module, CreateModuleData } from "@/types/module"
 import { Button } from "@/components/ui/button"
 import Image from "next/image"
 import { useUserRole } from "@/lib/hooks/useUserRole"
+
+interface ModuleData {
+  name: string;
+  description: string;
+  trainingTagId: string;
+}
+
 interface ModuleProps {
   trainingId: string
 }
@@ -32,16 +39,23 @@ export function ModuleComponent({ trainingId }: ModuleProps) {
     setEditingModule(null)
   }, [])
 
-  const handleCreateModule = async (moduleData: { name: string; description: string }) => {
+  const handleSubmit = async (moduleData: ModuleData) => {
     try {
       if (editingModule) {
         await updateModule({
           moduleId: editingModule.id,
-          data: { ...moduleData, trainingId }
+          data: { 
+            name: moduleData.name,
+            description: moduleData.description,
+            trainingTagId: moduleData.trainingTagId
+          },
+          trainingId
         })
       } else {
         await createModule({
-          ...moduleData,
+          name: moduleData.name,
+          description: moduleData.description,
+          trainingTagId: moduleData.trainingTagId,
           trainingId
         })
       }
@@ -94,7 +108,7 @@ export function ModuleComponent({ trainingId }: ModuleProps) {
           <ModuleAddModal
             isOpen={showModal}
             onClose={handleCloseModal}
-            onSubmit={handleCreateModule}
+            onSubmit={handleSubmit}
             isLoading={isCreating || isUpdating}
             editData={editingModule}
           />
@@ -120,7 +134,7 @@ export function ModuleComponent({ trainingId }: ModuleProps) {
       <ModuleAddModal
         isOpen={showModal}
         onClose={handleCloseModal}
-        onSubmit={handleCreateModule}
+        onSubmit={handleSubmit}
         isLoading={isCreating || isUpdating}
         editData={editingModule}
       />

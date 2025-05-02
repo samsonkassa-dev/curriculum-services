@@ -55,7 +55,7 @@ export const useAuth = () => {
         isAuthenticated: true
       });
     } catch (error) {
-      console.error('Failed to decode token:', error);
+      console.log('Failed to decode token:', error);
       setState({
         user: null,
         isLoading: false,

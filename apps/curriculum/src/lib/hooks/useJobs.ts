@@ -121,7 +121,7 @@ export function useJobs(params: JobQueryParams) {
       } catch (error: any) {
          // Improve error handling to return a proper Error object
          const errorMessage = error?.response?.data?.message || error?.message || 'Failed to load jobs';
-         console.error("Error fetching jobs:", error); // Log the actual error
+         console.log("Error fetching jobs:", error); // Log the actual error
          throw new Error(errorMessage);
       }
     },
@@ -302,7 +302,7 @@ export function useMyApplications() {
         return response.data
       } catch (error: any) {
         const errorMessage = error?.response?.data?.message || error?.message || 'Failed to load applications'
-        console.error("Error fetching applications:", error)
+        console.log("Error fetching applications:", error)
         throw new Error(errorMessage)
       }
     },

@@ -2,6 +2,11 @@ export interface Module {
   id: string
   name: string
   description: string
+  trainingTag?: {
+    id: string
+    name: string
+    description: string
+  } | null
 }
 
 export interface ModulesResponse {
@@ -15,6 +20,7 @@ export interface CreateModuleData {
   description: string
   trainingId: string
   moduleId?: string
+  trainingTagId: string
 } 
 
 

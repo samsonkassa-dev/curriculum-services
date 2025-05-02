@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { useDebounce } from "@/lib/hooks/useDebounce"
 import { useUserRole } from "@/lib/hooks/useUserRole"
 import { useStudents, Student } from "@/lib/hooks/useStudents"
-import { Session } from "@/lib/hooks/useSession" // Keep Session base type if needed
+import { Session, useAssignedStudentsForSession } from "@/lib/hooks/useSession" // Keep Session base type if needed
 
 // Import Student Table components (Corrected paths again)
 import { studentColumns } from "../../../components/students/student-columns"
@@ -38,7 +38,7 @@ export function StudentsTab({ session, isLoading: isSessionLoading, sessionId, t
     data: studentData, 
     isLoading: isLoadingStudents, 
     error: studentError 
-  } = useStudents(trainingId, studentPage, studentPageSize, sessionId);
+  } = useAssignedStudentsForSession(sessionId, studentPage, studentPageSize);
 
   // Function to open the modal
   const handleOpenAddStudentModal = () => {

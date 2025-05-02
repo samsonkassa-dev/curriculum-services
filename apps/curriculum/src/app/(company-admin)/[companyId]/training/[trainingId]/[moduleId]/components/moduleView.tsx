@@ -175,7 +175,11 @@ export function ModuleView({
     setShowLessonModal(true)
   }, [])
 
-  const handleCreateSubModule = async (data: { name: string; description: string }) => {
+  const handleCreateSubModule = async (data: { 
+    name: string; 
+    description: string; 
+    trainingTagId: string;
+  }) => {
     if (!selectedModule) return
 
     try {
@@ -184,14 +188,18 @@ export function ModuleView({
         await updateModule({
           moduleId: selectedModule.id,
           data: {
-            ...data,
-            trainingId: params.trainingId as string,
-          }
+            name: data.name,
+            description: data.description,
+            trainingTagId: data.trainingTagId,
+          },
+          trainingId: params.trainingId as string,
         })
       } else {
         // Create new sub-module
         await createModule({
-          ...data,
+          name: data.name,
+          description: data.description,
+          trainingTagId: data.trainingTagId,
           trainingId: params.trainingId as string,
           moduleId: selectedModule.id
         })
@@ -201,7 +209,7 @@ export function ModuleView({
       setSelectedModule(null)
       setIsEditingSubModule(false)
     } catch (error) {
-      // console.error("Failed to manage sub-module:", error)
+      console.error("Failed to manage sub-module:", error)
     }
   }
 
@@ -573,7 +581,12 @@ export function ModuleView({
         onSubmit={handleCreateSubModule}
         isLoading={isCreating || isUpdating}
         mode="submodule"
-        editData={isEditingSubModule ? selectedModule : null}
+        editData={isEditingSubModule ? {
+          id: selectedModule?.id || "",
+          name: selectedModule?.name || "",
+          description: selectedModule?.description || "",
+          trainingTag: selectedModule?.trainingTag || null
+        } : null}
       />
 
       {selectedModule && (

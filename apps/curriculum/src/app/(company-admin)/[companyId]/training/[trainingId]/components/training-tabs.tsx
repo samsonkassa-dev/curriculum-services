@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils"
 import { useUserRole } from "@/lib/hooks/useUserRole"
 import { Loading } from "@/components/ui/loading"
 
-type TabType = 'overview' | 'profile' | 'audience' | 'module' | 'evaluation' | 'students' | 'sessions'
+type TabType = 'overview' | 'profile' | 'audience' | 'module' | 'evaluation' | 'students' | 'sessions' | 'attendance' | 'certificate'
 
 interface TabConfig {
   id: TabType
@@ -23,6 +23,8 @@ const allTabs: TabConfig[] = [
   { id: 'students', label: 'Students', icon: '/student.svg', activeIcon: '/stuedntActive.svg' },
   { id: 'sessions', label: 'Sessions', icon: '/Schedule.svg', activeIcon: '/scheduleActive.svg' },
   { id: 'evaluation', label: 'Evaluation', icon: '/Evaluation.svg', activeIcon: '/EvaluationActive.svg' },
+  { id: 'attendance', label: 'Attendance', icon: '/Schedule.svg', activeIcon: '/scheduleActive.svg' },
+  { id: 'certificate', label: 'Certificates', icon: '/certificate.svg', activeIcon: '/certificateActive.svg' },
 ]
 
 interface TrainingTabsProps {
@@ -55,13 +57,21 @@ export function TrainingTabs({ activeTab, onTabChange }: TrainingTabsProps) {
   } else if (isMeExpert) {
     visibleTabs = allTabs.filter(tab => ['overview', 'evaluation',].includes(tab.id))
   } else if (isCurriculumAdmin || isSubCurriculumAdmin || isContentDeveloper || isCompanyAdmin)  {
-    visibleTabs = allTabs.filter(tab => !['students', 'evaluation', 'sessions'].includes(tab.id))
+    visibleTabs = allTabs.filter(tab => !['students', 'evaluation', 'sessions', 'attendance', 'certificate'].includes(tab.id))
   } else if (isTrainingAdmin || isTrainerAdmin) {
-    visibleTabs = allTabs.filter(tab => tab.id !== 'evaluation')
+    visibleTabs = allTabs.filter(tab => !['evaluation', 'attendance'].includes(tab.id))
   } else if (isTrainer) {
-    visibleTabs = allTabs.filter(tab => ['overview', 'profile', 'module'].includes(tab.id))
+    visibleTabs = allTabs.filter(tab => ['overview', 'attendance'].includes(tab.id))
   }else {
     visibleTabs = allTabs.filter(tab => tab.id === 'overview') 
+  }
+
+  // Add certificate tab only for project manager and training admin
+  if (isTrainingAdmin || isProjectManager) {
+    const certificateTab = allTabs.find(tab => tab.id === 'certificate')
+    if (certificateTab && !visibleTabs.some(tab => tab.id === 'certificate')) {
+      visibleTabs = [...visibleTabs, certificateTab]
+    }
   }
 
   if (!visibleTabs.some(tab => tab.id === activeTab)) {

@@ -260,7 +260,9 @@ export default function CompanyAdminLayout({
       '/[companyId]/trainers/add',
       '/[companyId]/training/[trainingId]/sessions/add',
       '/[companyId]/training/[trainingId]/sessions/[sessionId]',
-      '/[companyId]/jobs/applications/[applicationId]'
+      '/[companyId]/jobs/applications/[applicationId]',
+      '/[companyId]/venue/add',
+      '/[companyId]/venue/[venueId]',
  
     ];
     

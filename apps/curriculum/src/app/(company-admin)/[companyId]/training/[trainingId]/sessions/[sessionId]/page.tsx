@@ -7,12 +7,14 @@ import { Button } from "@/components/ui/button"
 import { Loading } from "@/components/ui/loading"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { formatDateToDisplay, formatTimeToDisplay } from "@/lib/utils"
-import { useSession, Session } from "@/lib/hooks/useSession"
+import { useSession } from "@/lib/hooks/useSession"
 import React from "react"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { StudentsTab } from "./components/students-tab";
 import { TrainerDetailsTab } from "./components/TrainerDetailsTab";
+import PreTrainingAssessment from "./components/pre-training-assessment";
+
 
 export default function SessionDetailPage() {
   const router = useRouter()
@@ -188,6 +190,12 @@ export default function SessionDetailPage() {
           >
             Assistant Trainer Details
           </TabsTrigger>
+
+          <TabsTrigger 
+            value="pre-training-assessment"
+          >
+            Pre Training Assessment
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="session-details" className="pt-0">
@@ -334,7 +342,11 @@ export default function SessionDetailPage() {
         <TabsContent value="assistant-trainer-details">
           <TrainerDetailsTab sessionId={sessionId} trainerType="ASSISTANT" />
         </TabsContent>
+      <TabsContent value="pre-training-assessment">
+        <PreTrainingAssessment sessionId={sessionId}/>
+      </TabsContent>
       </Tabs>
+
     </div>
   )
 } 
