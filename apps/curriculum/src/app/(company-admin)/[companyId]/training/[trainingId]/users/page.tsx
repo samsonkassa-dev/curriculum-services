@@ -59,7 +59,8 @@ export default function TrainingUsersPage({
     } else if (isProjectManager) {
       return [
         { value: RoleType.TRAINING_ADMIN, label: "Training Admin" },
-        { value: RoleType.TRAINER_ADMIN, label: "Trainer Admin" }
+        { value: RoleType.TRAINER_ADMIN, label: "Trainer Admin" },
+        { value: RoleType.ME_EXPERT, label: "ME Expert" }
       ];
     }
     // Default roles if none of the above

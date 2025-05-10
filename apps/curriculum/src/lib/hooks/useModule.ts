@@ -174,3 +174,42 @@ export function useUpdateModule() {
     }
   })
 }
+
+interface DeleteModuleData {
+  moduleId: string;
+  trainingId: string; // Include trainingId to invalidate the modules list
+}
+
+export function useDeleteModule() {
+  const queryClient = useQueryClient()
+
+  return useMutation<ModuleResponse, Error, DeleteModuleData>({
+    mutationFn: async ({ moduleId }: DeleteModuleData) => {
+      const token = getCookie('token')
+      const response = await axios.delete<ModuleResponse>(
+        `${process.env.NEXT_PUBLIC_API}/module/${moduleId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      )
+      return response.data
+    },
+    onSuccess: (_, variables) => {
+      // Invalidate both the modules list and the specific module details
+      queryClient.invalidateQueries({ 
+        queryKey: ['modules', variables.trainingId] 
+      })
+      queryClient.invalidateQueries({ 
+        queryKey: ['module-details', variables.moduleId] 
+      })
+      toast.success('Module deleted successfully')
+    },
+    onError: (error) => {
+      if (axios.isAxiosError(error)) {
+        toast.error(error.response?.data?.message || 'Failed to delete module')
+      } else {
+        toast.error("An unexpected error occurred")
+      }
+    }
+  })
+}

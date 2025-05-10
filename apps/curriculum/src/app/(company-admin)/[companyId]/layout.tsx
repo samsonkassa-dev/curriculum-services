@@ -263,6 +263,7 @@ export default function CompanyAdminLayout({
       '/[companyId]/jobs/applications/[applicationId]',
       '/[companyId]/venue/add',
       '/[companyId]/venue/[venueId]',
+      '/[companyId]/analytics-chat',
  
     ];
     
@@ -286,7 +287,7 @@ export default function CompanyAdminLayout({
   // Don't render anything until we've checked the role
   if (isRoleLoading) {
     return <Loading />;
-  }
+  }    
 
   // Only show loading for company admin verification check
   if (isCompanyAdmin && verificationLoading) {

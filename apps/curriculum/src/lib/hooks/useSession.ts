@@ -287,10 +287,12 @@ export function useAddTraineesToSession() {
   const addTraineeseMutation = useMutation({
     mutationFn: async ({ 
       sessionId, 
-      traineeIds 
+      traineeIds,
+      trainingId 
     }: { 
       sessionId: string, 
-      traineeIds: string[] 
+      traineeIds: string[],
+      trainingId?: string 
     }) => {
       const token = getCookie('token')
       const response = await axios.patch(
@@ -300,11 +302,12 @@ export function useAddTraineesToSession() {
           headers: { Authorization: `Bearer ${token}` }
         }
       )
-      return { responseData: response.data, sessionId }
+      return { responseData: response.data, sessionId, trainingId }
     },
-    onSuccess: ({ sessionId }) => {
+    onSuccess: ({ sessionId, trainingId }) => {
       toast.success('Students added to session successfully')
-      // Use a simpler, more robust approach to invalidate all queries related to this session
+      
+      // Invalidate session-specific student queries
       queryClient.invalidateQueries({ 
         predicate: (query) => {
           const queryKey = query.queryKey;
@@ -315,6 +318,13 @@ export function useAddTraineesToSession() {
           );
         }
       });
+      
+      // Also invalidate training-level student queries if trainingId is provided
+      if (trainingId) {
+        queryClient.invalidateQueries({
+          queryKey: ['students', trainingId]
+        });
+      }
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || 'Failed to add students to session')

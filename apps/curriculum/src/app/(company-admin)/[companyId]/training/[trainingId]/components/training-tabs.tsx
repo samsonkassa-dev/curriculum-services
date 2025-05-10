@@ -58,18 +58,23 @@ export function TrainingTabs({ activeTab, onTabChange }: TrainingTabsProps) {
     visibleTabs = allTabs.filter(tab => ['overview', 'evaluation',].includes(tab.id))
   } else if (isCurriculumAdmin || isSubCurriculumAdmin || isContentDeveloper || isCompanyAdmin)  {
     visibleTabs = allTabs.filter(tab => !['students', 'evaluation', 'sessions', 'attendance', 'certificate'].includes(tab.id))
-  } else if (isTrainingAdmin || isTrainerAdmin) {
-    visibleTabs = allTabs.filter(tab => !['evaluation', 'attendance'].includes(tab.id))
-  } else if (isTrainer) {
-    visibleTabs = allTabs.filter(tab => ['overview', 'attendance'].includes(tab.id))
-  }else {
+  } else if (isTrainingAdmin) {
+    visibleTabs = allTabs.filter(tab => !['evaluation'].includes(tab.id))
+  }
+  else if (isTrainerAdmin) {
+    visibleTabs = allTabs.filter(tab => !['evaluation', 'attendance', 'certificate'].includes(tab.id))
+  } 
+  else if (isTrainer) {
+    visibleTabs = allTabs.filter(tab => ['overview','profile', 'audience', 'module', 'attendance','students', 'sessions'].includes(tab.id))
+  }
+  else {
     visibleTabs = allTabs.filter(tab => tab.id === 'overview') 
   }
 
-  // Add certificate tab only for project manager and training admin
+  // Add certificate tab only for project manager and training admin 
   if (isTrainingAdmin || isProjectManager) {
     const certificateTab = allTabs.find(tab => tab.id === 'certificate')
-    if (certificateTab && !visibleTabs.some(tab => tab.id === 'certificate')) {
+    if (certificateTab && !visibleTabs.some( tab => tab.id === 'certificate')) {
       visibleTabs = [...visibleTabs, certificateTab]
     }
   }

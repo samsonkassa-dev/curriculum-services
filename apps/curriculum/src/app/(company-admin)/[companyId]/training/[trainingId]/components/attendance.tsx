@@ -29,6 +29,7 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
   const router = useRouter()
   const params = useParams()
   const { isProjectManager, isTrainingAdmin, isTrainer } = useUserRole()
+  const canEditAssessment = isProjectManager || isTrainingAdmin
   const [activeSessionId, setActiveSessionId] = useState<string>("")
   const [studentPage, setStudentPage] = useState(1)
   const [studentPageSize, setStudentPageSize] = useState(10)
@@ -332,8 +333,8 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
 
   // Memoize the attendance columns to prevent recreation on each render
   const memoizedColumns = useMemo(() => 
-    createAttendanceColumns(activeSessionId),
-    [activeSessionId]
+    createAttendanceColumns(activeSessionId, canEditAssessment),
+    [activeSessionId, canEditAssessment]
   );
 
   const isLoading = isLoadingSessions || isLoadingStudents;

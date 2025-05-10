@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label"
 import { StudentsTab } from "./components/students-tab";
 import { TrainerDetailsTab } from "./components/TrainerDetailsTab";
 import PreTrainingAssessment from "./components/pre-training-assessment";
+import { useUserRole } from "@/lib/hooks/useUserRole";
 
 
 export default function SessionDetailPage() {
@@ -23,7 +24,9 @@ export default function SessionDetailPage() {
   const trainingId = params.trainingId as string
   const sessionId = params.sessionId as string
   const [activeTab, setActiveTab] = useState("session-details")
-  
+  const { isProjectManager, isTrainingAdmin, isTrainerAdmin, isTrainer } = useUserRole()
+
+
   const { data: session, isLoading, error } = useSession(sessionId);
 
   const handleBack = () => {
@@ -180,22 +183,29 @@ export default function SessionDetailPage() {
           >
             Students List
           </TabsTrigger>
-          <TabsTrigger 
-            value="trainer-details"
-          >
-            Trainer Details
-          </TabsTrigger>
-          <TabsTrigger 
-            value="assistant-trainer-details"
-          >
-            Assistant Trainer Details
-          </TabsTrigger>
+          {!isTrainer && (
+            <TabsTrigger 
+              value="trainer-details"
+            >
+              Trainer Details
+            </TabsTrigger>
+          )}
+          {!isTrainer && (
+            <TabsTrigger 
+              value="assistant-trainer-details"
+            >
+              Assistant Trainer Details
+            </TabsTrigger>
+          )}
 
-          <TabsTrigger 
-            value="pre-training-assessment"
-          >
-            Pre Training Assessment
-          </TabsTrigger>
+          {(!isTrainerAdmin && !isTrainer) && (
+            <TabsTrigger 
+              value="pre-training-assessment"
+            >
+              Pre Training Assessment
+            </TabsTrigger>
+          )}
+
         </TabsList>
 
         <TabsContent value="session-details" className="pt-0">
@@ -342,9 +352,13 @@ export default function SessionDetailPage() {
         <TabsContent value="assistant-trainer-details">
           <TrainerDetailsTab sessionId={sessionId} trainerType="ASSISTANT" />
         </TabsContent>
-      <TabsContent value="pre-training-assessment">
-        <PreTrainingAssessment sessionId={sessionId}/>
-      </TabsContent>
+
+        {!isTrainerAdmin && (
+          <TabsContent value="pre-training-assessment">
+            <PreTrainingAssessment sessionId={sessionId}/>
+          </TabsContent>
+        )}
+
       </Tabs>
 
     </div>

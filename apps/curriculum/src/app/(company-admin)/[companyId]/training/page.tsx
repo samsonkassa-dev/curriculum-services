@@ -15,7 +15,7 @@ import { useUserRole } from "@/lib/hooks/useUserRole"
 export default function CompanyAdminTraining() {
   const router = useRouter()
   const params = useParams()
-  const { data, isLoading, error, refetch } = useTrainings()
+  const { data, isLoading, error, refetch, } = useTrainings()
   const { isPending: isArchiving } = useArchiveTraining()
   const { isCompanyAdmin } = useUserRole()
 
@@ -38,7 +38,7 @@ export default function CompanyAdminTraining() {
   }
 
   // Show error UI when there's an error
-  if (error) {
+  if (error && data?.trainings?.length === 0) {
     const errorMessage = axios.isAxiosError(error)
       ? error.response?.data?.message || "Failed to fetch trainings. Please try again later."
       : "Failed to fetch trainings. Please try again later."
@@ -76,7 +76,7 @@ export default function CompanyAdminTraining() {
   }
 
   // Show empty state with create button only for company admin
-  if (!data?.trainings?.length) {
+  if (!data?.trainings?.length && isCompanyAdmin) {
     return (
       <div className="lg:px-16 md:px-14 px-4">
         <div className="rounded-lg p-12">
@@ -94,14 +94,14 @@ export default function CompanyAdminTraining() {
             training content effortlessly, keeping your organization at the forefront of industry standards.
           </p>
 
-          {isCompanyAdmin && (
+     
             <Button 
               onClick={handleCreateTraining}
               className="bg-[#0B75FF] hover:bg-[#0052CC] text-white px-6 py-5"
             >
               Create Training
             </Button>
-          )}
+      
         </div>
       </div>
     )
@@ -111,7 +111,7 @@ export default function CompanyAdminTraining() {
     <div className="flex min-h-screen w-full lg:px-16 md:px-14 px-4">
       <div className="flex-1 py-12 sm:pl-12">
         <div className="grid lg:grid-cols-3 md:grid-cols-2 grid-cols-1 gap-6">
-          {data.trainings.map((training) => (
+          {data?.trainings?.map((training) => (
             <TrainingCard
               key={training.id}
               id={training.id}

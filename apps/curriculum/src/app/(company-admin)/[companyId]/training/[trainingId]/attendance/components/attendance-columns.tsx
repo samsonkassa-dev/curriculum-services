@@ -97,7 +97,7 @@ function CommentDialog({
   )
 }
 
-export const createAttendanceColumns = (sessionId: string) => {
+export const createAttendanceColumns = (sessionId: string, canEditAssessment: boolean = false) => {
   const columns: ColumnDef<AttendanceStudent>[] = [
     {
       accessorKey: "name",
@@ -214,11 +214,14 @@ export const createAttendanceColumns = (sessionId: string) => {
         const student = row.original;
         const fullName = `${student.firstName} ${student.lastName}`;
         
-        // We now get the sessionId from the column factory function
         if (!sessionId) {
           return (
             <span className="text-xs text-gray-400">Session not available</span>
           );
+        }
+        
+        if (!canEditAssessment) {
+          return null; // Don't show anything for non-authorized roles
         }
         
         return (

@@ -15,13 +15,23 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { Module } from "@/types/module"
 import Image from "next/image"
 import { useRouter } from "next/navigation"
 import { useParams } from "next/navigation"
 import { ModuleAddModal } from "./moduleAddModal"
 import { LessonAddModal } from "./lessonAddModal"
-import { useCreateModule, useModules, useUpdateModule } from "@/lib/hooks/useModule"
+import { useCreateModule, useModules, useUpdateModule, useDeleteModule } from "@/lib/hooks/useModule"
 import { useGetLessons, useUpdateLesson, Lesson as APILesson, InstructionalMethod, TechnologyIntegration } from "@/lib/hooks/useLesson"
 import { useQueryClient } from "@tanstack/react-query"
 import { useUserRole } from "@/lib/hooks/useUserRole"
@@ -66,6 +76,8 @@ export function ModuleView({
   const { mutateAsync: updateModule, isPending: isUpdating } = useUpdateModule()
   const queryClient = useQueryClient()
   const [isEditingSubModule, setIsEditingSubModule] = useState(false)
+  const [moduleToDelete, setModuleToDelete] = useState<Module | null>(null);
+  const { mutateAsync: deleteModule, isPending: isDeleting } = useDeleteModule();
   
   // permission check
   const effectiveCanEdit = canEdit
@@ -213,12 +225,23 @@ export function ModuleView({
     }
   }
 
+  const handleDeleteModule = async (module: Module) => {
+    try {
+      await deleteModule({
+        moduleId: module.id,
+        trainingId: params.trainingId as string,
+      });
+      setModuleToDelete(null);
+    } catch (error) {
+      console.error("Failed to delete module:", error);
+    }
+  };
+
   const renderHeader = useCallback((title: string, module: Module) => (
     <div className="bg-white data-[state=open]:bg-[#f7fbff] rounded-lg m-6 flex items-center justify-between hover:no-underline group">
       <div 
         className="flex items-center gap-3 flex-1 cursor-pointer" 
         onClick={(e) => {
-          // Prevent this click from affecting the accordion state
           e.preventDefault();
           e.stopPropagation();
           router.push(`/${params.companyId}/training/${params.trainingId}/${module.id}?tab=information`);
@@ -245,13 +268,18 @@ export function ModuleView({
               <DropdownMenuItem onClick={() => onEditClick(module)}>
                 Edit
               </DropdownMenuItem>
+              <DropdownMenuItem 
+                className="text-red-600"
+                onClick={() => setModuleToDelete(module)}
+              >
+                Delete
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         )}
         <AccordionTrigger 
           className="p-1 hover:bg-gray-100 rounded-md data-[state=open]:rotate-180 transition-transform"
           onClick={(e) => {
-            // Explicitly handle the accordion state change
             e.stopPropagation();
           }}
         >
@@ -259,7 +287,7 @@ export function ModuleView({
         </AccordionTrigger>
       </div>
     </div>
-  ), [onEditClick, router, params.companyId, params.trainingId, effectiveCanEdit])
+  ), [onEditClick, router, params.companyId, params.trainingId, effectiveCanEdit]);
 
   const renderLessons = useCallback((moduleId: string, isSubModule: boolean = false) => {
     // Log for debugging
@@ -419,6 +447,12 @@ export function ModuleView({
                       handleSubModuleClick(subModule, e, true)
                     }}>
                       Edit
+                    </DropdownMenuItem>
+                    <DropdownMenuItem 
+                      className="text-red-600"
+                      onClick={() => setModuleToDelete(subModule)}
+                    >
+                      Delete
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -603,6 +637,28 @@ export function ModuleView({
           readOnly={!canEdit}
         />
       )}
+
+      <AlertDialog open={!!moduleToDelete} onOpenChange={() => setModuleToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you want to delete this module?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the module
+              and all its associated data including lessons and assessments.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              onClick={() => moduleToDelete && handleDeleteModule(moduleToDelete)}
+              disabled={isDeleting}
+            >
+              {isDeleting ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

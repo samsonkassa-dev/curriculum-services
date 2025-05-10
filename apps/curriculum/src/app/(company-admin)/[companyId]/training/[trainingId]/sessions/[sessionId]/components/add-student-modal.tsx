@@ -102,7 +102,8 @@ export function AddStudentModal({
       // Call the API to add trainees to the session
       addTrainees({
         sessionId,
-        traineeIds: selectedStudentIds
+        traineeIds: selectedStudentIds,
+        trainingId // Pass the trainingId to ensure training-level student queries are invalidated
       }, {
         onSuccess: () => {
           setRowSelection({}); // Clear selection

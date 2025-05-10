@@ -24,6 +24,7 @@ import { AttendanceStudent } from "./attendance-columns"
 import { cn } from "@/lib/utils"
 import { Input } from "@/components/ui/input"
 import { AddReportButton } from "./add-report-button"
+import { useUserRole } from "@/lib/hooks/useUserRole"
 
 interface AttendanceDataTableProps<TData> {
   columns: ColumnDef<TData, unknown>[]
@@ -60,6 +61,10 @@ export function AttendanceDataTable({
   unsavedStudentId = null,
 }: AttendanceDataTableProps<AttendanceStudent>) {
   const [sorting, setSorting] = useState<SortingState>([])
+  const { isTrainer, isProjectManager, isTrainingAdmin } = useUserRole()
+
+  // Only project managers and training admins can edit attendance
+  const canEditAttendance = isProjectManager || isTrainingAdmin
 
   const table = useReactTable({
     data: Array.isArray(data) ? data : [],
@@ -94,7 +99,7 @@ export function AttendanceDataTable({
       <div className="rounded-md border border-gray-200 bg-white overflow-hidden relative">
         <div className="flex items-center justify-between p-4 bg-[#FBFBFB]">
           <div className="flex items-center gap-2">
-            {onSaveAttendance && (
+            {onSaveAttendance && canEditAttendance && (
               <Button 
                 variant="default" 
                 className="bg-[#0B75FF] hover:bg-blue-700 text-white"
@@ -124,11 +129,15 @@ export function AttendanceDataTable({
                 onChange={(e) => onSearchChange(e.target.value)}
               />
             </div>
-            <button className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-[#344054] h-9 whitespace-nowrap">
-              <Filter className="h-4 w-4" />
-              <span>Filters</span>
-            </button>
-            <AddReportButton sessionId={sessionId} />
+            {canEditAttendance && (
+              <>
+                <button className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-[#344054] h-9 whitespace-nowrap">
+                  <Filter className="h-4 w-4" />
+                  <span>Filters</span>
+                </button>
+                <AddReportButton sessionId={sessionId} />
+              </>
+            )}
           </div>
         </div>
         

@@ -32,10 +32,11 @@ export default function CompanyAdminUsers({
   })
 
   const roleOptions = [
-    { id: 'ROLE_COMPANY_ADMIN', label: 'Company Admin' },
-    { id: 'ROLE_CURRICULUM_ADMIN', label: 'Curriculum Admin' },
-    { id: 'ROLE_CONTENT_DEVELOPER', label: 'Content Developer' },
-    {id: 'ROLE_PROJECT_MANAGER', label: 'Project Manager'}
+    { id: "ROLE_COMPANY_ADMIN", label: "Company Admin" },
+    { id: "ROLE_CURRICULUM_ADMIN", label: "Curriculum Admin" },
+    { id: "ROLE_CONTENT_DEVELOPER", label: "Content Developer" },
+    { id: "ROLE_PROJECT_MANAGER", label: "Project Manager" },
+    // { id: "ROLE_ME_EXPERT", label: "ME Expert" },
   ];
 
   const handleFilterApply = ({
