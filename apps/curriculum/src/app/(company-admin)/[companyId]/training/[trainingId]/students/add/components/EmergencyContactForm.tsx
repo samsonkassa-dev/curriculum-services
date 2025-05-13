@@ -9,6 +9,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { UseFormReturn } from "react-hook-form"
 import { StudentFormValues } from "./formSchemas"
+import { useEffect } from "react"
 
 interface EmergencyContactFormProps {
   form: UseFormReturn<StudentFormValues>
@@ -17,6 +18,28 @@ interface EmergencyContactFormProps {
 export function EmergencyContactForm({
   form,
 }: EmergencyContactFormProps) {
+  // Format emergency phone number to include country code on form submission
+  useEffect(() => {
+    const subscription = form.watch((values, { name }) => {
+      // Check if the field being changed is the emergency phone number
+      if (name === 'emergencyContactPhone') {
+        const phoneValue = values.emergencyContactPhone;
+        if (phoneValue && typeof phoneValue === 'string') {
+          // If the phone number already includes +251, leave it as is
+          if (!phoneValue.startsWith('+251')) {
+            // Remove any existing '+251' prefix to avoid duplicates
+            const cleanedNumber = phoneValue.replace(/^\+251/, '');
+            
+            // Save the full number with country code in form data
+            form.setValue('emergencyContactPhone', `+251${cleanedNumber}`);
+          }
+        }
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [form]);
+
   return (
     <div className="pb-8 space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -59,7 +82,18 @@ export function EmergencyContactForm({
                   </div>
                 </div>
                 <FormControl>
-                  <Input {...field} className="h-12 text-sm md:text-md" placeholder="911436785" />
+                  <Input 
+                    {...field} 
+                    className="h-12 text-sm md:text-md" 
+                    placeholder="911436785"
+                    // Display only the local part without the +251 prefix
+                    value={field.value?.toString().replace(/^\+251/, '') || ''}
+                    onChange={(e) => {
+                      // Only allow numeric input
+                      const onlyNums = e.target.value.replace(/[^0-9]/g, '');
+                      field.onChange(onlyNums);
+                    }}
+                  />
                 </FormControl>
               </div>
               <FormMessage />
