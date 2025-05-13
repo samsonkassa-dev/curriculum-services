@@ -19,9 +19,10 @@ interface SessionReportModalProps {
   onClose: () => void
   sessionId: string
   onReportStatusChange?: (hasReport: boolean) => void
+  onSubmitStart?: () => void
 }
 
-export function SessionReportModal({ isOpen, onClose, sessionId, onReportStatusChange }: SessionReportModalProps) {
+export function SessionReportModal({ isOpen, onClose, sessionId, onReportStatusChange, onSubmitStart }: SessionReportModalProps) {
   const [step, setStep] = useState<number>(1)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const formInitialized = useRef(false)
@@ -145,6 +146,9 @@ export function SessionReportModal({ isOpen, onClose, sessionId, onReportStatusC
   const handleSubmit = async () => {
     try {
       setIsSubmitting(true)
+      if (onSubmitStart) {
+        onSubmitStart();
+      }
       const values = form.getValues()
       
       // Ensure required fields are proper types

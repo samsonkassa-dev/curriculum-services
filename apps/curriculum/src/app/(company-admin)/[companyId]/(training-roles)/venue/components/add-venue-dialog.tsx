@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect, memo } from "react"
 import { useRouter } from "next/navigation"
 import { X } from "lucide-react"
 import {
@@ -9,20 +9,44 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { VenueWizard } from "./venue-wizard" // Import wizard
+import { VenueWizard } from "./venue-wizard"
+import { Venue } from "@/lib/hooks/useVenue"
 
-interface AddVenueDialogProps {
+interface VenueDialogProps {
   companyId: string
   trigger?: React.ReactNode
-  onSuccess?: () => void // Optional success callback
+  onSuccess?: () => void
+  venue?: Venue | null
+  onClose?: () => void
 }
 
-export function AddVenueDialog({ companyId, trigger, onSuccess }: AddVenueDialogProps) {
+export const AddVenueDialog = memo(function AddVenueDialog({ 
+  companyId, 
+  trigger, 
+  onSuccess, 
+  venue, 
+  onClose 
+}: VenueDialogProps) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
+  const isEditMode = !!venue
+
+  // Open dialog when venue is provided (for edit mode)
+  useEffect(() => {
+    if (venue) {
+      setOpen(true)
+    }
+  }, [venue])
+
+  const handleOpenChange = (newOpen: boolean) => {
+    setOpen(newOpen)
+    if (!newOpen && onClose) {
+      onClose()
+    }
+  }
 
   const handleSuccess = () => {
-    setOpen(false)
+    handleOpenChange(false)
     if (onSuccess) {
       onSuccess()
     } else {
@@ -31,30 +55,29 @@ export function AddVenueDialog({ companyId, trigger, onSuccess }: AddVenueDialog
   }
 
   const handleCancel = () => {
-    setOpen(false)
+    handleOpenChange(false)
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         {trigger || <Button>Add Venue</Button>}
       </DialogTrigger>
-      {/* Increased width for multi-step form */}
-      <DialogContent className="sm:max-w-[800px]  p-5"> 
+      <DialogContent className="sm:max-w-[800px] p-5">
         <DialogHeader className="px-6 py-4 border-b">
           <div className="flex items-center justify-between w-full">
-            {/* Title might change based on step later */}
-            <DialogTitle className="text-xl font-semibold">Add New Venue</DialogTitle> 
-            
+            <DialogTitle className="text-xl font-semibold">
+              {isEditMode ? 'Edit Venue' : 'Add New Venue'}
+            </DialogTitle>
           </div>
         </DialogHeader>
-        {/* Replace placeholder with the actual wizard component */}
         <VenueWizard 
           companyId={companyId}
           onSuccess={handleSuccess}
           onCancel={handleCancel}
+          venue={venue}
         />
       </DialogContent>
     </Dialog>
   )
-} 
+}) 

@@ -35,6 +35,7 @@ import { useCreateModule, useModules, useUpdateModule, useDeleteModule } from "@
 import { useGetLessons, useUpdateLesson, Lesson as APILesson, InstructionalMethod, TechnologyIntegration } from "@/lib/hooks/useLesson"
 import { useQueryClient } from "@tanstack/react-query"
 import { useUserRole } from "@/lib/hooks/useUserRole"
+
 // Type for the form data
 interface LessonFormData {
   id?: string
@@ -368,7 +369,6 @@ export function ModuleView({
   }, [mainModuleLessons, subModuleLessons, isMainModuleLessonsLoading, isSubModuleLessonsLoading, effectiveCanEdit, handleEditLesson])
 
   const renderSubModules = useCallback((module: Module) => {
-    // If we're still loading module details, show a loading indicator
     if (isModuleDetailsLoading) {
       return (
         <div className="ml-8 pl-4 mb-4">

@@ -29,7 +29,7 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
   const router = useRouter()
   const params = useParams()
   const { isProjectManager, isTrainingAdmin, isTrainer } = useUserRole()
-  const canEditAssessment = isProjectManager || isTrainingAdmin
+  const canEditAssessment = isTrainer  // Only trainers can edit assessments
   const [activeSessionId, setActiveSessionId] = useState<string>("")
   const [studentPage, setStudentPage] = useState(1)
   const [studentPageSize, setStudentPageSize] = useState(10)

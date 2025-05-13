@@ -2,11 +2,11 @@ import * as z from "zod";
 
 // Schema for a single venue requirement, linked to an equipment item
 const venueRequirementSchema = z.object({
-  equipmentItemId: z.string(), // Hidden field, populated automatically
-  numericValue: z.number().optional(),
-  remark: z.string().optional().default(''), // Default to empty string if optional
-  available: z.boolean().optional(),
-}).optional();
+  equipmentItemId: z.string(),
+  numericValue: z.number().optional().default(0),
+  remark: z.string().optional().default(''),
+  available: z.boolean().optional().default(false),
+});
 
 // Step 3: Venue Capacity Schema
 const venueCapacitySchema = z.object({
@@ -20,16 +20,7 @@ const venueCapacitySchema = z.object({
   parkingCapacity: z.number().min(0, "Parking capacity cannot be negative").optional(),
 });
 
-// Step 4: Contact Information Schema
-const contactInfoSchema = z.object({
-  contactPerson: z.string().min(1, "Contact person name is required"),
-  contactPhone: z.string().min(1, "Contact phone is required"),
-  contactEmail: z.string().email("Invalid email format").optional(),
-  availabilityNotes: z.string().optional(),
-  additionalInformation: z.string().optional(),
-  isActive: z.boolean().default(true),
-});
-
+// Main venue schema that matches the API structure
 export const venueSchema = z.object({
   name: z.string().min(1, "Venue name is required"),
   location: z.string().min(1, "Location is required"),
@@ -38,34 +29,28 @@ export const venueSchema = z.object({
   woreda: z.string().min(1, "Woreda is required"),
   latitude: z.number().optional(),
   longitude: z.number().optional(),
-  // Add the array for venue requirements with more lenient validation
-  venueRequirements: z.array(z.object({
-    equipmentItemId: z.string(),
-    numericValue: z.number().optional(),
-    remark: z.string().optional().default(''),
-    available: z.boolean().optional(),
-  }).optional()).optional(),
+  venueRequirements: z.array(venueRequirementSchema).optional(),
+  
   // Step 3: Venue Capacity fields
   seatingCapacity: z.number().min(1, "Seating capacity must be at least 1"),
   standingCapacity: z.number().min(0, "Standing capacity cannot be negative").optional(),
   roomCount: z.number().min(1, "Room count must be at least 1"),
   totalArea: z.number().min(1, "Total area must be at least 1 square meter"),
-  hasAccessibility: z.boolean().optional(),
-  accessibilityFeatures: z.string().optional(),
-  hasParkingSpace: z.boolean().optional(),
+  hasAccessibility: z.boolean().optional().default(false),
+  accessibilityFeatures: z.string().optional().default(''),
+  hasParkingSpace: z.boolean().optional().default(false),
   parkingCapacity: z.number().min(0, "Parking capacity cannot be negative").optional(),
-  // Step 4: Contact Information fields
-  contactPerson: z.string().min(1, "Contact person name is required"),
-  contactPhone: z.string().min(1, "Contact phone is required"),
-  contactEmail: z.string().email("Invalid email format").optional(),
-  availabilityNotes: z.string().optional(),
-  additionalInformation: z.string().optional(),
+  
+  // No longer include contact information fields
   isActive: z.boolean().default(true),
 });
 
-export type VenueSchema = z.infer<typeof venueSchema>;
+// Schema for edit mode that includes the venue ID
+export const editVenueSchema = venueSchema.extend({
+  id: z.string(),
+});
 
-// Type specifically for the requirement sub-schema if needed elsewhere
+export type VenueSchema = z.infer<typeof venueSchema>;
+export type EditVenueSchema = z.infer<typeof editVenueSchema>;
 export type VenueRequirementSchema = z.infer<typeof venueRequirementSchema>;
-export type VenueCapacitySchema = z.infer<typeof venueCapacitySchema>;
-export type ContactInfoSchema = z.infer<typeof contactInfoSchema>; 
+export type VenueCapacitySchema = z.infer<typeof venueCapacitySchema>; 

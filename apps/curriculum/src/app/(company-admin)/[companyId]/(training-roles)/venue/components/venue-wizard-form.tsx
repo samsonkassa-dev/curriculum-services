@@ -40,6 +40,7 @@ interface VenueWizardFormProps {
   onCancel: () => void;
   isLoading: boolean;
   companyId: string;
+  isEditMode?: boolean;
 }
 
 export function VenueWizardForm({
@@ -52,6 +53,7 @@ export function VenueWizardForm({
   onCancel,
   isLoading,
   companyId,
+  isEditMode = false,
 }: VenueWizardFormProps) {
   const { data: cities, isLoading: citiesLoading } = useBaseData("city");
   const { data: equipmentItems, isLoading: equipmentLoading } =
@@ -62,22 +64,19 @@ export function VenueWizardForm({
     name: "venueRequirements",
   });
 
+  // Initialize venue requirements based on equipment items
   useEffect(() => {
     if (equipmentItems && fields.length === 0 && !isLoading) {
       const initialRequirements = equipmentItems.map((item) => ({
         equipmentItemId: item.id,
-        numericValue: undefined,
+        numericValue: 0,
         remark: "",
-        available: undefined,
+        available: false,
       }));
       
-      // Replace field array and mark as not dirty to avoid validation errors
       replace(initialRequirements);
-      
-      // Clear any validation errors for venueRequirements
-      form.clearErrors('venueRequirements');
     }
-  }, [equipmentItems, replace, fields.length, isLoading, form]);
+  }, [equipmentItems, fields.length, isLoading, replace]);
 
   const handleFormSubmit = form.handleSubmit(onSubmit);
 
@@ -88,7 +87,6 @@ export function VenueWizardForm({
   const isStep1 = currentStep === 1;
   const isStep2 = currentStep === 2;
   const isStep3 = currentStep === 3;
-  const isStep4 = currentStep === 4;
   const isLastStep = currentStep === steps.length;
 
   // Function to validate and go to next step
@@ -105,9 +103,7 @@ export function VenueWizardForm({
       nextStep();
       return;
     } else if (currentStep === 3) {
-      fieldsToValidate = ['seatingCapacity', 'roomCount', 'totalArea'];
-    } else if (currentStep === 4) {
-      fieldsToValidate = ['contactPerson', 'contactPhone'];
+      fieldsToValidate = ['seatingCapacity', 'roomCount', 'totalArea', 'isActive'];
     }
 
     const isValid = await form.trigger(fieldsToValidate);
@@ -446,7 +442,7 @@ export function VenueWizardForm({
                                         if (boolValue !== true) {
                                           form.setValue(
                                             `venueRequirements.${index}.numericValue`,
-                                            undefined,
+                                            0,
                                             { shouldValidate: true }
                                           );
                                         }
@@ -504,7 +500,7 @@ export function VenueWizardForm({
                                         const val = e.target.value;
                                         numField.onChange(
                                           val === ""
-                                            ? undefined
+                                            ? 0
                                             : parseInt(val, 10)
                                         );
                                       }}
@@ -536,7 +532,7 @@ export function VenueWizardForm({
                     name="seatingCapacity"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Seating Capacity</FormLabel>
+                        <FormLabel>Seating Capacity <span className="text-red-500">*</span></FormLabel>
                         <FormControl>
                           <Input
                             type="number"
@@ -592,7 +588,7 @@ export function VenueWizardForm({
                     name="roomCount"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Number of Rooms</FormLabel>
+                        <FormLabel>Number of Rooms <span className="text-red-500">*</span></FormLabel>
                         <FormControl>
                           <Input
                             type="number"
@@ -620,7 +616,7 @@ export function VenueWizardForm({
                     name="totalArea"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Total Area (m²)</FormLabel>
+                        <FormLabel>Total Area (m²) <span className="text-red-500">*</span></FormLabel>
                         <FormControl>
                           <Input
                             type="number"
@@ -742,70 +738,6 @@ export function VenueWizardForm({
                       )}
                     />
                   </div>
-                </div>
-              </div>
-            )}
-
-            {/* Step 4: Additional Information & Contact Details */}
-            {isStep4 && (
-              <div className="space-y-6 p-4 border rounded-md bg-white">
-                <h3 className="text-lg font-semibold">Additional Information & Contact Details</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <FormField
-                    control={form.control}
-                    name="contactPerson"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Contact Person</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            placeholder="Full name of contact person"
-                            disabled={isLoading}
-                            className="focus:ring-2 focus:ring-offset-1 focus:ring-blue-500 focus:border-blue-500"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="contactPhone"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Contact Phone</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            placeholder="Phone number"
-                            disabled={isLoading}
-                            className="focus:ring-2 focus:ring-offset-1 focus:ring-blue-500 focus:border-blue-500"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="contactEmail"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Contact Email (Optional)</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            type="email"
-                            placeholder="Email address"
-                            disabled={isLoading}
-                            className="focus:ring-2 focus:ring-offset-1 focus:ring-blue-500 focus:border-blue-500"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
                   <FormField
                     control={form.control}
                     name="isActive"
@@ -830,46 +762,6 @@ export function VenueWizardForm({
                       </FormItem>
                     )}
                   />
-                  <div className="md:col-span-2">
-                    <FormField
-                      control={form.control}
-                      name="availabilityNotes"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Availability Notes (Optional)</FormLabel>
-                          <FormControl>
-                            <Textarea
-                              {...field}
-                              placeholder="Special notes about venue availability, e.g., 'Available weekdays 9am-5pm'"
-                              disabled={isLoading}
-                              className="min-h-[80px] focus:ring-2 focus:ring-offset-1 focus:ring-blue-500 focus:border-blue-500"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-                  <div className="md:col-span-2">
-                    <FormField
-                      control={form.control}
-                      name="additionalInformation"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Additional Information (Optional)</FormLabel>
-                          <FormControl>
-                            <Textarea
-                              {...field}
-                              placeholder="Any other relevant details about the venue"
-                              disabled={isLoading}
-                              className="min-h-[120px] focus:ring-2 focus:ring-offset-1 focus:ring-blue-500 focus:border-blue-500"
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
                 </div>
               </div>
             )}
@@ -902,7 +794,7 @@ export function VenueWizardForm({
               type="button"
               onClick={handleNextStep}
               disabled={isLoading}
-              className="bg-blue-600 hover:bg-blue-700"
+              className="bg-brand hover:bg-blue-700 text-white"
             >
               Continue
             </Button>
@@ -911,9 +803,9 @@ export function VenueWizardForm({
               type="button"
               onClick={handleFormSubmit}
               disabled={isLoading}
-              className="bg-green-600 hover:bg-green-700"
+              className="bg-brand hover:bg-blue-700 text-white"
             >
-              {isLoading ? "Submitting..." : "Submit Venue"}
+              {isLoading ? "Submitting..." : isEditMode ? "Update Venue" : "Submit Venue"}
             </Button>
           )}
         </div>

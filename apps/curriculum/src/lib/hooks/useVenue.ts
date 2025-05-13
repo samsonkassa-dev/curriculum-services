@@ -34,6 +34,24 @@ export interface Venue {
   latitude: number;
   longitude: number;
   venueRequirementList?: VenueRequirementDetail[]; // Optional for list view
+  
+  // Step 3: Venue Capacity fields
+  seatingCapacity?: number;
+  standingCapacity?: number;
+  roomCount?: number;
+  totalArea?: number;
+  hasAccessibility?: boolean;
+  accessibilityFeatures?: string;
+  hasParkingSpace?: boolean;
+  parkingCapacity?: number;
+  
+  // Step 4: Contact Information fields
+  contactPerson?: string;
+  contactPhone?: string;
+  contactEmail?: string;
+  availabilityNotes?: string;
+  additionalInformation?: string;
+  isActive?: boolean;
 }
 
 interface VenuesResponse {
@@ -65,9 +83,9 @@ interface EquipmentItemsResponse {
 
 export interface VenueRequirementInput {
   equipmentItemId: string;
-  numericValue: number;
-  remark: string;
-  available: boolean;
+  numericValue?: number;
+  remark?: string;
+  available?: boolean;
 }
 
 export interface CreateVenueData {
@@ -99,7 +117,7 @@ export interface CreateVenueData {
   isActive?: boolean;
 }
 
-export type UpdateVenueData = Partial<CreateVenueData>;
+export type UpdateVenueData = CreateVenueData;
 
 
 const venueQueryKey = "venues";
@@ -116,14 +134,13 @@ export function useVenues(page?: number, pageSize?: number) {
 
         const params = new URLSearchParams();
         if (page !== undefined) {
-           const apiPage = page >= 0 ? page + 1 : 1;
-           params.append("page", apiPage.toString());
+          const apiPage = page >= 0 ? page + 1 : 1;
+          params.append("page", apiPage.toString());
         }
-        if (pageSize !== undefined && pageSize > 0) { 
-            params.append("page-size", pageSize.toString());
+        if (pageSize !== undefined && pageSize > 0) {
+          params.append("page-size", pageSize.toString());
         }
 
- 
         if (params.toString()) {
           url += `?${params.toString()}`;
         }
@@ -132,10 +149,16 @@ export function useVenues(page?: number, pageSize?: number) {
           headers: { Authorization: `Bearer ${token}` },
         });
 
-
+        // Ensure venues array exists
         if (!response.data.venues) {
-            response.data.venues = [];
+          response.data.venues = [];
         }
+
+        // Ensure pagination data exists
+        response.data.totalPages = response.data.totalPages || 1;
+        response.data.pageSize = response.data.pageSize || pageSize || 10;
+        response.data.currentPage = response.data.currentPage || 1;
+        response.data.totalElements = response.data.totalElements || response.data.venues.length;
 
         return response.data;
       } catch (error: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -146,7 +169,7 @@ export function useVenues(page?: number, pageSize?: number) {
 }
 
 // Hook to fetch a single venue by its ID.
-export function useVenue(venueId: string) {
+export function useVenue(venueId?: string) {
   return useQuery({
     queryKey: [venueQueryKey, venueId],
     queryFn: async (): Promise<VenueResponse> => {
@@ -191,18 +214,17 @@ export function useEquipmentItems() {
         throw new Error(error?.response?.data?.message || "Failed to load equipment items");
       }
     },
-     // Optional: Add staleTime if this data doesn't change often
-     // staleTime: 1000 * 60 * 5, // 5 minutes
+    staleTime: 1000 * 60 * 5, // 5 minutes cache
   });
 }
 
 // Hook for adding a new venue.
-export function useAddVenue() {
+export function useVenueOperations() {
   const queryClient = useQueryClient();
   const { data: cities } = useBaseData("city");
-  // Fetch equipment items for use in the venue creation form/process
-  const { data: equipmentItems } = useEquipmentItems(); 
+  const { data: equipmentItems } = useEquipmentItems();
   
+  // Add venue mutation
   const addVenueMutation = useMutation({
     mutationFn: async (venueData: CreateVenueData) => {
       const token = getCookie("token");
@@ -224,22 +246,7 @@ export function useAddVenue() {
     },
   });
 
-  return {
-    cities,
-    equipmentItems, // Expose equipment items
-    addVenue: addVenueMutation.mutate,
-    isLoading: addVenueMutation.isPending,
-    isSuccess: addVenueMutation.isSuccess,
-    isError: addVenueMutation.isError,
-    error: addVenueMutation.error,
-  };
-}
-
-//Hook for updating an existing venue.
- 
-export function useUpdateVenue() {
-  const queryClient = useQueryClient();
-
+  // Update venue mutation
   const updateVenueMutation = useMutation({
     mutationFn: async ({
       venueId,
@@ -260,7 +267,6 @@ export function useUpdateVenue() {
     },
     onSuccess: ({ venueId }) => {
       toast.success("Venue updated successfully");
-      // Invalidate both the list and the specific venue query
       queryClient.invalidateQueries({ queryKey: [venueQueryKey] });
       queryClient.invalidateQueries({ queryKey: [venueQueryKey, venueId] });
     },
@@ -269,34 +275,18 @@ export function useUpdateVenue() {
     },
   });
 
-  return {
-    updateVenue: updateVenueMutation.mutate,
-    isLoading: updateVenueMutation.isPending,
-    isSuccess: updateVenueMutation.isSuccess,
-     isError: updateVenueMutation.isError,
-    error: updateVenueMutation.error,
-  };
-}
-
-// Hook for deleting a venue.
- 
-export function useDeleteVenue() {
-  const queryClient = useQueryClient();
-
+  // Delete venue mutation
   const deleteVenueMutation = useMutation({
     mutationFn: async (venueId: string) => {
       const token = getCookie("token");
       await axios.delete(`${process.env.NEXT_PUBLIC_API}/venue/${venueId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      // Return the deleted venueId for potential use in onSuccess/onError
       return venueId;
     },
     onSuccess: (venueId) => {
       toast.success("Venue deleted successfully");
-      // Invalidate the list query
       queryClient.invalidateQueries({ queryKey: [venueQueryKey] });
-      // Optional: Remove the specific venue query if it exists
       queryClient.removeQueries({ queryKey: [venueQueryKey, venueId] });
     },
     onError: (error: any) => { // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -305,10 +295,56 @@ export function useDeleteVenue() {
   });
 
   return {
+    cities,
+    equipmentItems,
+    addVenue: addVenueMutation.mutate,
+    updateVenue: updateVenueMutation.mutate,
     deleteVenue: deleteVenueMutation.mutate,
-    isLoading: deleteVenueMutation.isPending,
-    isSuccess: deleteVenueMutation.isSuccess,
-     isError: deleteVenueMutation.isError,
-    error: deleteVenueMutation.error,
+    isAddingVenue: addVenueMutation.isPending,
+    isUpdatingVenue: updateVenueMutation.isPending,
+    isDeletingVenue: deleteVenueMutation.isPending,
+    isLoading: addVenueMutation.isPending || updateVenueMutation.isPending,
+    isSuccess: addVenueMutation.isSuccess || updateVenueMutation.isSuccess,
+    isError: addVenueMutation.isError || updateVenueMutation.isError,
+    error: addVenueMutation.error || updateVenueMutation.error,
+  };
+}
+
+// Legacy hooks for backward compatibility
+export function useAddVenue() {
+  const venueOps = useVenueOperations();
+  
+  return {
+    cities: venueOps.cities,
+    equipmentItems: venueOps.equipmentItems,
+    addVenue: venueOps.addVenue,
+    isLoading: venueOps.isAddingVenue,
+    isSuccess: venueOps.isSuccess,
+    isError: venueOps.isError,
+    error: venueOps.error,
+  };
+}
+
+export function useUpdateVenue() {
+  const venueOps = useVenueOperations();
+  
+  return {
+    updateVenue: venueOps.updateVenue,
+    isLoading: venueOps.isUpdatingVenue,
+    isSuccess: venueOps.isSuccess,
+    isError: venueOps.isError,
+    error: venueOps.error,
+  };
+}
+
+export function useDeleteVenue() {
+  const venueOps = useVenueOperations();
+  
+  return {
+    deleteVenue: venueOps.deleteVenue,
+    isLoading: venueOps.isDeletingVenue,
+    isSuccess: venueOps.isSuccess,
+    isError: venueOps.isError,
+    error: venueOps.error,
   };
 }

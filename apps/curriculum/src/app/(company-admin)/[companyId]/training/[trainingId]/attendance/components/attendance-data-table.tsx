@@ -63,8 +63,11 @@ export function AttendanceDataTable({
   const [sorting, setSorting] = useState<SortingState>([])
   const { isTrainer, isProjectManager, isTrainingAdmin } = useUserRole()
 
-  // Only project managers and training admins can edit attendance
-  const canEditAttendance = isProjectManager || isTrainingAdmin
+  // Only trainers can edit attendance
+  const canEditAttendance = isTrainer
+  
+  // All other roles are view-only
+  const isViewOnly = !canEditAttendance
 
   const table = useReactTable({
     data: Array.isArray(data) ? data : [],
@@ -116,6 +119,13 @@ export function AttendanceDataTable({
                 )}
               </Button>
             )}
+            
+            {isViewOnly && (
+              <div className="bg-blue-50 text-blue-700 px-3 py-1.5 rounded-md text-xs flex items-center gap-1.5">
+                <AlertCircle className="h-3.5 w-3.5" />
+                View Only Mode
+              </div>
+            )}
           </div>
           
           <div className="flex items-center gap-4">
@@ -127,17 +137,23 @@ export function AttendanceDataTable({
                 className="pl-9 h-9 border border-[#D0D5DD] rounded-md text-sm"
                 value={searchQuery}
                 onChange={(e) => onSearchChange(e.target.value)}
+                disabled={isViewOnly}
               />
             </div>
+            
+            {/* Filter button only visible to trainers who can edit */}
             {canEditAttendance && (
-              <>
-                <button className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-[#344054] h-9 whitespace-nowrap">
-                  <Filter className="h-4 w-4" />
-                  <span>Filters</span>
-                </button>
-                <AddReportButton sessionId={sessionId} />
-              </>
+              <button className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-[#344054] h-9 whitespace-nowrap">
+                <Filter className="h-4 w-4" />
+                <span>Filters</span>
+              </button>
             )}
+            
+            {/* Report button visible to all, but enabled only for trainers */}
+            <AddReportButton 
+              sessionId={sessionId} 
+              disabled={!isTrainer}
+            />
           </div>
         </div>
         
@@ -172,18 +188,25 @@ export function AttendanceDataTable({
                 </TableCell>
               </TableRow>
             ) : data && data.length > 0 ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id} className="border-b border-[#EAECF0]">
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className="p-3">
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
+              table.getRowModel().rows.map((row) => {
+                // For view-only mode, mark all rows as disabled
+                if (isViewOnly && row.original) {
+                  (row.original as AttendanceStudent)._isDisabled = true;
+                }
+                
+                return (
+                  <TableRow key={row.id} className="border-b border-[#EAECF0]">
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id} className="p-3">
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext()
+                        )}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                );
+              })
             ) : (
               <TableRow>
                 <TableCell
@@ -207,6 +230,7 @@ export function AttendanceDataTable({
             onChange={(e) => pagination.setPageSize(Number(e.target.value))}
             className="border rounded-md md:text-sm text-xs md:px-2 px-2 py-1 bg-white"
             title="Page Size"
+            disabled={isViewOnly}
           >
             <option value={10}>10</option>
             <option value={20}>20</option>
@@ -224,7 +248,7 @@ export function AttendanceDataTable({
             variant="pagination"
             size="sm"
             onClick={() => pagination.setPage(Math.max(1, pagination.currentPage - 1))}
-            disabled={pagination.currentPage <= 1}
+            disabled={pagination.currentPage <= 1 || isViewOnly}
             className="px-2 h-8"
           >
             <ChevronLeft className="w-4 h-4" />
@@ -261,6 +285,7 @@ export function AttendanceDataTable({
                   variant={pagination.currentPage === pageNumber ? "outline" : "ghost"}
                   size="sm"
                   onClick={() => pagination.setPage(pageNumber)}
+                  disabled={isViewOnly}
                   className={cn(
                     "px-3 h-8",
                     pagination.currentPage === pageNumber 
@@ -278,7 +303,7 @@ export function AttendanceDataTable({
             variant="pagination"
             size="sm"
             onClick={() => pagination.setPage(pagination.currentPage + 1)}
-            disabled={pagination.currentPage >= pagination.totalPages}
+            disabled={pagination.currentPage >= pagination.totalPages || isViewOnly}
             className="px-2 h-8"
           >
             <ChevronRight className="w-4 h-4" />

@@ -213,6 +213,7 @@ export const createAttendanceColumns = (sessionId: string, canEditAssessment: bo
       cell: ({ row }) => {
         const student = row.original;
         const fullName = `${student.firstName} ${student.lastName}`;
+        const isDisabled = student._isDisabled === true;
         
         if (!sessionId) {
           return (
@@ -232,7 +233,8 @@ export const createAttendanceColumns = (sessionId: string, canEditAssessment: bo
             trigger={
               <Button 
                 variant="outline" 
-                className="text-blue-600 border-blue-600 text-xs h-7 px-2 hover:bg-blue-50"
+                className={`text-blue-600 border-blue-600 text-xs h-7 px-2 hover:bg-blue-50 ${isDisabled ? 'opacity-50 pointer-events-none' : ''}`}
+                disabled={isDisabled}
               >
                 Add Pre Assessment
               </Button>
