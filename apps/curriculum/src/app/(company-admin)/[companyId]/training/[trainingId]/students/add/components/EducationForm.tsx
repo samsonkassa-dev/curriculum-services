@@ -46,10 +46,11 @@ export function EducationForm({
               </FormDescription>
               <Select
                 onValueChange={field.onChange}
-                defaultValue={field.value}
+                value={field.value || ''}
+                key={`academic-level-select-${field.value || 'empty'}`}
               >
                 <FormControl>
-                  <SelectTrigger className="h-12 text-sm md:text-md">
+                  <SelectTrigger className="h-12 text-sm md:text-md select-trigger">
                     <SelectValue placeholder="Select" />
                   </SelectTrigger>
                 </FormControl>
@@ -101,7 +102,7 @@ export function EducationForm({
             <FormControl>
               <RadioGroup
                 onValueChange={(value) => field.onChange(value === "true")}
-                defaultValue={field.value ? "true" : "false"}
+                value={field.value ? "true" : "false"}
                 className="flex flex-row gap-4 pt-2"
               >
                 <FormItem className="flex items-center space-x-3 space-y-0">

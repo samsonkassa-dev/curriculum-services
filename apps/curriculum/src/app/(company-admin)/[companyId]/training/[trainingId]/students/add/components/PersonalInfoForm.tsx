@@ -99,10 +99,11 @@ export function PersonalInfoForm({ form, languages }: PersonalInfoFormProps) {
               <FormLabel className="text-sm font-medium">Gender</FormLabel>
               <Select 
                 onValueChange={field.onChange} 
-                defaultValue={field.value}
+                value={field.value || undefined}
+                key={`gender-select-${field.value || 'empty'}`}
               >
                 <FormControl>
-                  <SelectTrigger className="h-12 text-sm md:text-md">
+                  <SelectTrigger className="h-12 text-sm md:text-md select-trigger">
                     <SelectValue placeholder="Select" />
                   </SelectTrigger>
                 </FormControl>
@@ -127,10 +128,11 @@ export function PersonalInfoForm({ form, languages }: PersonalInfoFormProps) {
               </FormDescription>
               <Select 
                 onValueChange={field.onChange} 
-                defaultValue={field.value}
+                value={field.value || ''}
+                key={`language-select-${field.value || 'empty'}`}
               >
                 <FormControl>
-                  <SelectTrigger className="h-12 text-sm md:text-md">
+                  <SelectTrigger className="h-12 text-sm md:text-md select-trigger">
                     <SelectValue placeholder="Select" />
                   </SelectTrigger>
                 </FormControl>
@@ -158,7 +160,7 @@ export function PersonalInfoForm({ form, languages }: PersonalInfoFormProps) {
               <FormControl>
                 <RadioGroup
                   onValueChange={(value) => field.onChange(value === "true")}
-                  defaultValue={field.value ? "true" : "false"}
+                  value={field.value ? "true" : "false"}
                   className="flex flex-row gap-4"
                 >
                   <FormItem className="flex items-center space-x-3 space-y-0">

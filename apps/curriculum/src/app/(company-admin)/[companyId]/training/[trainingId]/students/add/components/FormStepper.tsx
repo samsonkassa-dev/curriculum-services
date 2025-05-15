@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils"
+import { useEffect, useState } from "react"
 
 interface FormStepperProps {
   currentStep: number
@@ -6,8 +7,16 @@ interface FormStepperProps {
 }
 
 export function FormStepper({ currentStep, totalSteps = 4 }: FormStepperProps) {
+  // Add a unique key to force re-render when needed
+  const [renderKey, setRenderKey] = useState(Date.now())
+
+  // Force re-render when step changes
+  useEffect(() => {
+    setRenderKey(Date.now())
+  }, [currentStep])
+
   return (
-    <div className="flex items-center justify-center gap-4 mb-8">
+    <div key={renderKey} className="flex items-center justify-center gap-4 mb-8">
       {Array.from({ length: totalSteps }, (_, index) => {
         const stepNumber = index + 1;
         const isActive = currentStep === stepNumber;

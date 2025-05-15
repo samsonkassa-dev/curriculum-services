@@ -67,7 +67,7 @@ export interface CreateStudentData {
   email: string
   contactPhone: string
   dateOfBirth: string
-  gender: "MALE" | "FEMALE" | "OTHER"
+  gender: "MALE" | "FEMALE" 
   cityId: string
   subCity: string
   woreda: string
@@ -93,6 +93,12 @@ interface StudentsResponse {
   message: string
   currentPage: number
   totalElements: number
+}
+
+interface StudentResponse {
+  code: string
+  trainee: Student
+  message: string
 }
 
 export function useStudents(
@@ -185,3 +191,83 @@ export function useAddStudent() {
     isLoading: addStudentMutation.isPending
   }
 }
+
+export function useStudentById(id: string) {
+  return useQuery({
+    queryKey: ['student', id],
+    queryFn: async () => {
+      try {
+        const token = getCookie('token')
+        const response = await axios.get<StudentResponse>(
+          `${process.env.NEXT_PUBLIC_API}/trainee/${id}`,
+          {
+            headers: { Authorization: `Bearer ${token}` }
+          }
+        )
+        return response.data
+      } catch (error: any) {
+        throw new Error(error?.response?.data?.message || 'Failed to load student')
+      }
+    },
+    enabled: !!id
+  })
+}
+
+export function useDeleteStudent() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const token = getCookie('token')
+      const response = await axios.delete(
+        `${process.env.NEXT_PUBLIC_API}/trainee/${id}`,
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      )
+      return response.data
+    },
+    onSuccess: () => {
+      toast.success('Student deleted successfully')
+      queryClient.invalidateQueries({ queryKey: ['students'] })
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to delete student')
+    }
+  })
+}
+
+export function useUpdateStudent() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ 
+      id, 
+      studentData 
+    }: { 
+      id: string, 
+      studentData: Partial<CreateStudentData> 
+    }) => {
+      const token = getCookie('token')
+      const response = await axios.patch(
+        `${process.env.NEXT_PUBLIC_API}/trainee/${id}`,
+        studentData,
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      )
+      return { responseData: response.data, id }
+    },
+    onSuccess: ({ id }) => {
+      toast.success('Student updated successfully')
+      queryClient.invalidateQueries({ queryKey: ['student', id] })
+      queryClient.invalidateQueries({ queryKey: ['students'] })
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to update student')
+    }
+  })
+}
+
+
+

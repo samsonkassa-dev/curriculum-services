@@ -108,10 +108,11 @@ export function ContactInfoForm({ form, cities }: ContactInfoFormProps) {
                 </FormDescription>
                 <Select 
                   onValueChange={field.onChange} 
-                  defaultValue={field.value}
+                  value={field.value || ''}
+                  key={`city-select-${field.value || 'empty'}`}
                 >
                   <FormControl>
-                    <SelectTrigger className="h-12 text-sm md:text-md">
+                    <SelectTrigger className="h-12 text-sm md:text-md select-trigger">
                       <SelectValue placeholder="Select" />
                     </SelectTrigger>
                   </FormControl>

@@ -5,7 +5,7 @@ export const personalInfoSchema = z.object({
   firstName: z.string().min(2, "First name must be at least 2 characters"),
   lastName: z.string().min(2, "Last name must be at least 2 characters"),
   dateOfBirth: z.date(),
-  gender: z.enum(["MALE", "FEMALE", "OTHER"]),
+  gender: z.enum(["MALE", "FEMALE"]),
   languageId: z.string().min(1, "Please select a language"),
   hasSmartphone: z.boolean(),
   smartphoneOwner: z.string().optional(),

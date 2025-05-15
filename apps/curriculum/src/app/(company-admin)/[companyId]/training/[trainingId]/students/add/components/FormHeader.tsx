@@ -4,9 +4,10 @@ import { cn } from "@/lib/utils"
 
 interface FormHeaderProps {
   onCancel: () => void
+  isEditing?: boolean
 }
 
-export function FormHeader({ onCancel }: FormHeaderProps) {
+export function FormHeader({ onCancel, isEditing = false }: FormHeaderProps) {
   return (
     <div className="flex flex-col mb-6">
       <div className="self-end">
@@ -19,6 +20,10 @@ export function FormHeader({ onCancel }: FormHeaderProps) {
           <X className="h-5 w-5" />
         </Button>
       </div>
+      
+      <h2 className="text-xl font-semibold pb-3">
+        {isEditing ? "Edit Student" : "Add New Student"}
+      </h2>
       
       {/* Tabs */}
       <div className="w-full border-b border-gray-200 mb-4">
