@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Check, ChevronsUpDown } from 'lucide-react'
 import { GenderSlider } from '@/components/ui/gender-slider'
+import { Input } from '@/components/ui/input'
 
 interface BaseItem {
   id: string
@@ -49,6 +50,7 @@ export function CreateTrainingStep4({ onNext, onBack, onCancel, initialData, isE
     handleSubmit,
     setValue,
     watch,
+    register,
     formState: { errors }
   } = useForm<TargetAudienceFormData>({
     resolver: zodResolver(targetAudienceSchema),
@@ -56,6 +58,7 @@ export function CreateTrainingStep4({ onNext, onBack, onCancel, initialData, isE
       economicBackgroundIds: initialData?.economicBackgroundIds || [],
       academicQualificationIds: initialData?.academicQualificationIds || [],
       ageGroupIds: initialData?.ageGroupIds || [],
+      totalParticipants: initialData?.totalParticipants || 0,
       genderPercentages: initialData?.genderPercentages || [
         { gender: "MALE", percentage: 50 },
         { gender: "FEMALE", percentage: 50 }
@@ -71,6 +74,7 @@ export function CreateTrainingStep4({ onNext, onBack, onCancel, initialData, isE
   const genderPercentages = watch('genderPercentages')
   const disabilityPercentages = watch('disabilityPercentages')
   const marginalizedGroupPercentages = watch('marginalizedGroupPercentages')
+  const totalParticipants = watch('totalParticipants')
 
   // Extract IDs for easier handling in UI
   const disabilityIds = disabilityPercentages?.map(d => d.disabilityId) || []
@@ -225,6 +229,21 @@ export function CreateTrainingStep4({ onNext, onBack, onCancel, initialData, isE
       </div>
 
       <div className="max-w-xl mx-auto space-y-6">
+        {/* Total Participants */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Total Participants</label>
+          <Input
+            type="number"
+            min={1}
+            {...register('totalParticipants', { valueAsNumber: true })}
+            placeholder="Enter total number of participants"
+            className="text-sm md:text-md"
+          />
+          {errors.totalParticipants && (
+            <p className="text-sm text-red-500">{errors.totalParticipants.message}</p>
+          )}
+        </div>
+
         {/* Age Group Selection - Popover Implementation */}
         <div className="space-y-2">
           <label className="text-sm font-medium">Age Group</label>

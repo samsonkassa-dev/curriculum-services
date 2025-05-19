@@ -19,6 +19,7 @@ interface StudentWithAttendance extends Student {
   isPresent: boolean | null;
   comment?: string;
   attendanceId?: string;
+  answerFileLink?: string | null;
 }
 
 interface AttendanceComponentProps {
@@ -232,6 +233,7 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
       attendance: effectiveAttendance,
       comment: effectiveComment,
       attendanceId: typedStudent.attendanceId,
+      answerFileLink: typedStudent.answerFileLink,
       _onAttendanceChange: handleAttendanceChange,
       _onCommentChange: handleCommentChange,
       _isProcessing: pendingSubmissions.includes(student.id),

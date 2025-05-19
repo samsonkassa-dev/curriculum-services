@@ -8,8 +8,8 @@ import {
   CreateTrainingStep2,
   CreateTrainingStep3,
   CreateTrainingStep4,
+  CreateTrainingStep5,
 } from "./components/create-training-forms";
-import { CreateTrainingStep5 } from "./components/steps/step-5";
 import { useCreateTraining } from "@/lib/hooks/useCreateTraining";
 import { SuccessModal } from "./components/modals/success-modal";
 import { InviteModal } from "./components/modals/invite-modal";

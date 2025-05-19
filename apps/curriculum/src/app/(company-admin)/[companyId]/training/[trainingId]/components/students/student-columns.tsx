@@ -3,6 +3,8 @@
 import { ColumnDef } from "@tanstack/react-table"
 import { Student } from "@/lib/hooks/useStudents"
 import { format } from "date-fns"
+import { Button } from "@/components/ui/button"
+import { Pencil, Trash2 } from "lucide-react"
 
 export const studentColumns: ColumnDef<Student>[] = [
   {
@@ -89,4 +91,45 @@ export const studentColumns: ColumnDef<Student>[] = [
       )
     }
   }
-] 
+]
+
+// Creates the actions column with passed-in handler functions
+export const createActionsColumn = (
+  handleEditStudent: (student: Student) => void,
+  handleDeleteStudent: (student: Student) => void,
+  hasEditPermission: boolean
+): ColumnDef<Student> => ({
+  id: "actions",
+  header: "Actions",
+  cell: ({ row }) => {
+    const student = row.original;
+    
+    if (!hasEditPermission) {
+      return null;
+    }
+    
+    return (
+      <div className="flex items-center gap-2">
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={() => handleEditStudent(student)}
+          className="h-8 w-8 p-0"
+          title="Edit"
+        >
+          <Pencil className="h-4 w-4 text-gray-500" />
+        </Button>
+        
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={() => handleDeleteStudent(student)}
+          className="h-8 w-8 p-0"
+          title="Delete"
+        >
+          <Trash2 className="h-4 w-4 text-red-500" />
+        </Button>
+      </div>
+    )
+  }
+}) 

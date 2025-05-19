@@ -14,7 +14,9 @@ import {
   DialogClose
 } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
-import PreAssessmentModal from "./pre-assessment/pre-assessmnet-modal"
+// import PreAssessmentModal from "./pre-assessment/pre-assessmnet-modal"
+import CatAssessmentModal from "./cat-assessment-modal"
+import { useSessionAssessments } from "@/lib/hooks/useTrainingAssessment"
 
 // Define the student type for attendance
 export interface AttendanceStudent {
@@ -26,11 +28,12 @@ export interface AttendanceStudent {
   comment?: string
   attendanceId?: string
   sessionDate: string
+  answerFileLink?: string | null
   _onAttendanceChange?: (id: string, status: 'present' | 'absent') => void
   _onCommentChange?: (id: string, comment: string) => void
   _isProcessing?: boolean
   _isDisabled?: boolean // Added to indicate if controls should be disabled
-  [key: string]: string | 'present' | 'absent' | undefined | ((id: string, value: string) => void) | ((id: string, status: 'present' | 'absent') => void) | boolean
+  [key: string]: string | 'present' | 'absent' | null | undefined | ((id: string, value: string) => void) | ((id: string, status: 'present' | 'absent') => void) | boolean
 }
 
 // CommentDialog component
@@ -215,38 +218,79 @@ export const createAttendanceColumns = (sessionId: string, canEditAssessment: bo
         const fullName = `${student.firstName} ${student.lastName}`;
         const isDisabled = student._isDisabled === true;
         
-        if (!sessionId) {
-          return (
-            <span className="text-xs text-gray-400">Session not available</span>
-          );
-        }
-        
-        if (!canEditAssessment) {
-          return null; // Don't show anything for non-authorized roles
-        }
-        
-        return (
-          <PreAssessmentModal 
-            sessionId={sessionId}
-            studentId={student.id}
-            studentName={fullName}
-            trigger={
-              <Button 
-                variant="outline" 
-                className={`text-blue-600 border-blue-600 text-xs h-7 px-2 hover:bg-blue-50 ${isDisabled ? 'opacity-50 pointer-events-none' : ''}`}
-                disabled={isDisabled}
-              >
-                Add Pre Assessment
-              </Button>
-            }
-          />
-        );
+        // Add a SessionAssessmentWrapper component to handle fetching assessments
+        return <SessionAssessmentCell 
+          sessionId={sessionId} 
+          student={student}
+          canEditAssessment={canEditAssessment}
+          isDisabled={isDisabled}
+        />;
       },
     },
   ];
   
   return columns;
 };
+
+// New component to handle assessment display with data fetching
+function SessionAssessmentCell({ 
+  sessionId, 
+  student, 
+  canEditAssessment,
+  isDisabled 
+}: { 
+  sessionId: string;
+  student: AttendanceStudent;
+  canEditAssessment: boolean;
+  isDisabled: boolean;
+}) {
+  // Fetch assessments for this session
+  const { data: assessmentsData, isLoading } = useSessionAssessments(sessionId);
+  const assessments = assessmentsData?.trainingAssessments || [];
+  const fullName = `${student.firstName} ${student.lastName}`;
+  
+  if (!sessionId) {
+    return <span className="text-xs text-gray-400">Session not available</span>;
+  }
+  
+  if (!canEditAssessment) {
+    return null; // Don't show anything for non-authorized roles
+  }
+  
+  if (isLoading) {
+    return <span className="text-xs text-gray-400">Loading assessments...</span>;
+  }
+  
+  // No assessments assigned to this session
+  if (assessments.length === 0) {
+    return (
+      <div className="flex items-center">
+        <span className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded-full">
+          No CAT assessments assigned
+        </span>
+      </div>
+    );
+  }
+  
+  // Assessments exist, show the modal
+  return (
+    <CatAssessmentModal
+      sessionId={sessionId}
+      studentId={student.id}
+      studentName={fullName}
+      currentAnswer={typeof student.answerFileLink === 'string' ? student.answerFileLink : ""}
+      trigger={
+        <Button
+          variant="outline"
+          className={`text-blue-600 border-blue-600 text-xs h-7 px-2 hover:bg-blue-50 ${isDisabled ? 'opacity-50 pointer-events-none' : ''}`}
+          disabled={isDisabled}
+        >
+          {typeof student.answerFileLink === 'string' && student.answerFileLink ? "Edit CAT Answer" : "Add CAT Answer"}
+        </Button>
+      }
+    />
+  );
+}
 
 // Export a static version for compatibility with existing code
 export const attendanceColumns = createAttendanceColumns(""); 

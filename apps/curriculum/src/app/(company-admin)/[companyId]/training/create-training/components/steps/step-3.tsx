@@ -36,12 +36,14 @@ export function CreateTrainingStep3({ onNext, onBack, onCancel, initialData, isE
       duration: initialData?.duration || undefined,
       durationType: initialData?.durationType || 'DAYS',
       trainingTypeId: initialData?.trainingTypeId || '',
+      deliveryMethod: initialData?.deliveryMethod || 'ONLINE',
     }
   })
 
   const duration = watch('duration')
   const durationType = watch('durationType')
   const trainingTypeId = watch('trainingTypeId')
+  const deliveryMethod = watch('deliveryMethod')
 
   const handleDurationTypeChange = (value: "DAYS" | "WEEKS" | "MONTHS" | "HOURS") => {
     setValue('durationType', value, { shouldValidate: true })
@@ -49,6 +51,10 @@ export function CreateTrainingStep3({ onNext, onBack, onCancel, initialData, isE
 
   const handleTrainingTypeChange = (value: string) => {
     setValue('trainingTypeId', value, { shouldValidate: true })
+  }
+  
+  const handleDeliveryMethodChange = (value: "BLENDED" | "ONLINE" | "VIRTUAL") => {
+    setValue('deliveryMethod', value, { shouldValidate: true })
   }
 
   const onSubmit = (data: DurationFormData) => {
@@ -100,6 +106,23 @@ export function CreateTrainingStep3({ onNext, onBack, onCancel, initialData, isE
             )}
           </div>
         </div>
+        
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Delivery Method</label>
+          <Select value={deliveryMethod} onValueChange={handleDeliveryMethodChange}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select delivery method" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="BLENDED">Blended</SelectItem>
+              <SelectItem value="ONLINE">Online</SelectItem>
+              <SelectItem value="VIRTUAL">Virtual</SelectItem>
+            </SelectContent>
+          </Select>
+          {errors.deliveryMethod && (
+            <p className="text-sm text-red-500">{errors.deliveryMethod.message}</p>
+          )}
+        </div>
 
         <div className="space-y-2">
           <label className="text-sm font-medium">Training Type</label>
@@ -140,7 +163,7 @@ export function CreateTrainingStep3({ onNext, onBack, onCancel, initialData, isE
                 <Button 
                   onClick={handleSubmit(onSubmit)}
                   className="bg-blue-500 text-white px-8"
-                  disabled={!duration || !durationType || !trainingTypeId}
+                  disabled={!duration || !durationType || !trainingTypeId || !deliveryMethod}
                   type="button"
                 >
                   Continue
@@ -155,7 +178,7 @@ export function CreateTrainingStep3({ onNext, onBack, onCancel, initialData, isE
               <Button 
                 onClick={handleSubmit(onSubmit)}
                 className="bg-blue-500 text-white px-8"
-                disabled={!duration || !durationType || !trainingTypeId}
+                disabled={!duration || !durationType || !trainingTypeId || !deliveryMethod}
                 type="button"
               >
                 Continue

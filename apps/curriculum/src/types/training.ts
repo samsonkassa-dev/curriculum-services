@@ -13,6 +13,8 @@ export interface Training {
   }[];
   duration: number;
   durationType: "HOURS" | "DAYS" | "WEEKS" | "MONTHS";
+  deliveryMethod?: "BLENDED" | "ONLINE" | "VIRTUAL";
+  totalParticipants?: number;
   ageGroups: BaseItem[];
   genderPercentages: {
     gender: "MALE" | "FEMALE";

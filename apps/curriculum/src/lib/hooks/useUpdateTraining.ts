@@ -20,9 +20,12 @@ interface UpdateTrainingData {
 export function useUpdateTraining() {
   const queryClient = useQueryClient()
 
-  return useMutation<UpdateTrainingResponse, Error, UpdateTrainingData>({
+  const mutation = useMutation<UpdateTrainingResponse, Error, UpdateTrainingData>({
     mutationFn: async ({ id, data }) => {
       try {
+        // Debug the data being sent
+        console.log("Training update - sending data:", JSON.stringify(data, null, 2))
+        
         const token = getCookie('token');
         if (!token) {
           throw new Error('No authentication token found');
@@ -41,16 +44,20 @@ export function useUpdateTraining() {
           }
         )
 
+        // Debug the response
+        console.log("Training update - received response:", JSON.stringify(response.data, null, 2))
+        
         return response.data
       } catch (error) {
         if (axios.isAxiosError(error)) {
           const message = error.response?.data?.message || "Failed to update training"
           toast.error("Error", { description: message })
+          console.log("Training update - error:", error.response?.data || error.message)
         }
         throw error
       }
     },
-    onSuccess: (_, variables) => {
+    onSuccess: (data, variables) => {
       // Invalidate and refetch
       queryClient.invalidateQueries({ queryKey: ["trainings"] })
       queryClient.invalidateQueries({ queryKey: ["training", variables.id] })
@@ -62,4 +69,13 @@ export function useUpdateTraining() {
       })
     }
   })
+  
+  return {
+    mutate: mutation.mutate,
+    mutateAsync: mutation.mutateAsync,
+    isPending: mutation.isPending,
+    isError: mutation.isError,
+    error: mutation.error,
+    isSuccess: mutation.isSuccess
+  }
 } 

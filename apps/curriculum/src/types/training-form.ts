@@ -23,12 +23,14 @@ export const durationSchema = z.object({
   duration: z.number().min(1, "Duration must be at least 1"),
   durationType: z.enum(["DAYS", "WEEKS", "MONTHS", "HOURS"]),
   trainingTypeId: z.string().min(1, "Training type is required"),
+  deliveryMethod: z.enum(["BLENDED", "ONLINE", "VIRTUAL"]),
 })
 
 export type DurationFormData = z.infer<typeof durationSchema>
 
 // Step 4: Target Audience
 export const targetAudienceSchema = z.object({
+  totalParticipants: z.number().min(0, "Total participants must be a positive number").default(0),
   ageGroupIds: z.array(z.string()).min(1, "At least one age group is required"),
   genderPercentages: z.array(z.object({
     gender: z.enum(["MALE", "FEMALE"]),
@@ -89,8 +91,10 @@ export interface PreloadedFormData extends Partial<TrainingFormData> {
   // Step 3
   preloadedTrainingType?: BaseItem
   preloadedTrainingTypes?: BaseItem[]
+  deliveryMethod?: "BLENDED" | "ONLINE" | "VIRTUAL"
   
   // Step 4
+  totalParticipants?: number
   preloadedAgeGroups?: BaseItem[]
   preloadedDisabilities?: BaseItem[]
   preloadedMarginalizedGroups?: BaseItem[]
@@ -99,6 +103,24 @@ export interface PreloadedFormData extends Partial<TrainingFormData> {
   
   // Step 5
   preloadedTrainingPurposes?: BaseItem[]
+}
+
+/**
+ * Helper function to normalize deliveryMethod values
+ */
+const normalizeDeliveryMethod = (value?: string): "BLENDED" | "ONLINE" | "VIRTUAL" | undefined => {
+  if (!value) return undefined;
+  
+  if (value === "BLENDED" || value === "ONLINE" || value === "VIRTUAL") {
+    return value;
+  }
+  
+  // Map old values to new values
+  if (value === "OFFLINE") return "BLENDED";
+  if (value === "SELF_PACED") return "VIRTUAL";
+  
+  // Default fallback
+  return "ONLINE";
 }
 
 /**
@@ -168,11 +190,13 @@ export function apiToFormData(training: Training): PreloadedFormData {
     // Step 3
     duration: training.duration,
     durationType: training.durationType as "DAYS" | "WEEKS" | "MONTHS" | "HOURS",
+    deliveryMethod: normalizeDeliveryMethod(training.deliveryMethod) || "ONLINE", // Default to ONLINE if not set
     trainingTypeId: training.trainingType?.id || "",
     preloadedTrainingType: training.trainingType,
     preloadedTrainingTypes: training.trainingType ? [training.trainingType] : [],
     
     // Step 4
+    totalParticipants: training.totalParticipants || 0,
     ageGroupIds: training.ageGroups.map(ag => ag.id),
     genderPercentages: training.genderPercentages,
     disabilityPercentages: transformedDisabilityPercentages,
@@ -224,6 +248,14 @@ export function formToApiData(formData: Partial<TrainingFormData>): Partial<Trai
     apiData.durationType = formData.durationType
   }
   
+  if (formData.deliveryMethod !== undefined) {
+    apiData.deliveryMethod = normalizeDeliveryMethod(formData.deliveryMethod)
+  }
+  
+  if (formData.totalParticipants !== undefined) {
+    apiData.totalParticipants = formData.totalParticipants
+  }
+  
   if (formData.ageGroupIds !== undefined) {
     apiData.ageGroupIds = formData.ageGroupIds
   }
@@ -251,19 +283,18 @@ export function formToApiData(formData: Partial<TrainingFormData>): Partial<Trai
   // Map the marginalized group percentages to the format expected by the API
   if (formData.marginalizedGroupPercentages !== undefined) {
     apiData.marginalizedGroupPercentagesInput = formData.marginalizedGroupPercentages.map(mgp => ({
-      marginalizedGroupId: mgp.marginalizedGroupId, 
+      marginalizedGroupId: mgp.marginalizedGroupId,
       percentage: mgp.percentage
     }))
+  }
+  
+  if (formData.trainingPurposeIds !== undefined) {
+    apiData.trainingPurposeIds = formData.trainingPurposeIds
   }
   
   if (formData.trainingTagIds !== undefined) {
     apiData.trainingTagIds = formData.trainingTagIds
   }
   
-  if (formData.trainingPurposeIds !== undefined) {
-    apiData.trainingPurposeIds = formData.trainingPurposeIds
-  }
-
-  console.log("Final API data:", apiData)
   return apiData
 } 

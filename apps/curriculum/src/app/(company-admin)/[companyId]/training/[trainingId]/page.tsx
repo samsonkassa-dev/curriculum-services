@@ -16,9 +16,10 @@ import { StudentsComponent } from "./components/students"
 import { SessionsComponent } from "./components/sessions"
 import { AttendanceComponent } from "./components/attendance"
 import { CertificateComponent } from "./components/certificate"
+import { CatComponent } from "./components/cat"
 import { useUserRole } from "@/lib/hooks/useUserRole"
 
-type TabType = 'overview' | 'profile' | 'audience' | 'module' | 'evaluation' | 'students' | 'sessions' | 'attendance' | 'certificate'
+type TabType = 'overview' | 'profile' | 'audience' | 'module' | 'evaluation' | 'students' | 'sessions' | 'attendance' | 'certificate' | 'cat'
 
 export default function TrainingDetail() {
   const params = useParams()
@@ -30,7 +31,7 @@ export default function TrainingDetail() {
   
   // Get tab from URL query or default to 'overview'
   const tabParam = searchParams.get('tab')
-  const validTabs: TabType[] = ['overview', 'profile', 'audience', 'module', 'evaluation', 'students', 'sessions', 'attendance', 'certificate']
+  const validTabs: TabType[] = ['overview', 'profile', 'audience', 'module', 'evaluation', 'students', 'sessions', 'attendance', 'certificate', 'cat']
   const initialTab: TabType = validTabs.includes(tabParam as TabType) ? (tabParam as TabType) : 'overview'
   
   const [activeTab, setActiveTab] = useState<TabType>(initialTab)
@@ -104,6 +105,7 @@ export default function TrainingDetail() {
             {activeTab === 'sessions' && <SessionsComponent trainingId={training.id} />}
             {activeTab === 'attendance' && <AttendanceComponent trainingId={training.id} />}
             {activeTab === 'certificate' && <CertificateComponent trainingId={training.id} />}
+            {activeTab === 'cat' && <CatComponent trainingId={training.id} />}
           </>
         )}
       </div>

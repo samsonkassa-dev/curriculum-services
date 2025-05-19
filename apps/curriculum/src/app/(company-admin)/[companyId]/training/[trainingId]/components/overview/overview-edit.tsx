@@ -37,9 +37,11 @@ export function OverviewEdit({ training, initialStep = 1, onSave, onCancel }: Ov
       case 3:
         initialDirtyFields.add('duration')
         initialDirtyFields.add('durationType')
+        initialDirtyFields.add('deliveryMethod')
         initialDirtyFields.add('trainingTypeId')
         break
       case 4:
+        initialDirtyFields.add('totalParticipants')
         initialDirtyFields.add('ageGroupIds')
         initialDirtyFields.add('genderPercentages')
         initialDirtyFields.add('economicBackgroundIds')
@@ -257,7 +259,10 @@ export function OverviewEdit({ training, initialStep = 1, onSave, onCancel }: Ov
     if (currentStep < 5) {
       setCurrentStep(currentStep + 1)
     } else {
-      const completeFormData: Partial<TrainingFormData> = {
+      const completeFormData: Partial<TrainingFormData & { 
+        deliveryMethod?: "BLENDED" | "ONLINE" | "VIRTUAL"; 
+        totalParticipants?: number;
+      }> = {
         title: updatedData.title,
         rationale: updatedData.rationale,
         trainingTagIds: updatedData.trainingTagIds || [],
@@ -265,6 +270,8 @@ export function OverviewEdit({ training, initialStep = 1, onSave, onCancel }: Ov
         countryIds: updatedData.countryIds,
         duration: updatedData.duration,
         durationType: updatedData.durationType,
+        deliveryMethod: updatedData.deliveryMethod,
+        totalParticipants: updatedData.totalParticipants,
         trainingTypeId: updatedData.trainingTypeId,
         ageGroupIds: updatedData.ageGroupIds,
         economicBackgroundIds: updatedData.economicBackgroundIds,
@@ -280,7 +287,15 @@ export function OverviewEdit({ training, initialStep = 1, onSave, onCancel }: Ov
       console.log("Data to send to API:", apiData);
       
       setIsSubmitting(true)
-      onSave(apiData)
+      
+      // Save with error handling to reset the submitting state
+      try {
+        onSave(apiData)
+      } catch (error) {
+        // Reset submitting state on error
+        setIsSubmitting(false)
+        console.log("Error saving training:", error)
+      }
     }
   }
 
@@ -329,6 +344,7 @@ export function OverviewEdit({ training, initialStep = 1, onSave, onCancel }: Ov
             initialData={{
               duration: formData.duration,
               durationType: formData.durationType,
+              deliveryMethod: formData.deliveryMethod,
               trainingTypeId: formData.trainingTypeId || '',
               preloadedTrainingType: formData.preloadedTrainingType, 
               preloadedTrainingTypes: formData.preloadedTrainingTypes 
@@ -342,7 +358,8 @@ export function OverviewEdit({ training, initialStep = 1, onSave, onCancel }: Ov
       case 4:
         return (
           <CreateTrainingStep4
-             initialData={{
+            initialData={{
+              totalParticipants: formData.totalParticipants,
               ageGroupIds: formData.ageGroupIds || [],
               genderPercentages: formData.genderPercentages || [
                 { gender: "MALE", percentage: 50 },

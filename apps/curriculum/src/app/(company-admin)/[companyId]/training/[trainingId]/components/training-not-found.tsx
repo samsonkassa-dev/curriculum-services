@@ -1,5 +1,5 @@
 interface TrainingNotFoundProps {
-  type: 'overview' | 'profile' | 'audience' | 'curriculum' | 'module' | 'evaluation' | 'students' | 'sessions' | 'attendance' | 'certificate'
+  type: 'overview' | 'profile' | 'audience' | 'module' | 'evaluation' | 'students' | 'sessions' | 'attendance' | 'certificate' | 'cat'
 }
 
 const messages = {
@@ -14,10 +14,6 @@ const messages = {
   audience: {
     title: 'Audience Profile Not Found',
     description: 'We couldn\'t find the audience profile for this training.'
-  },
-  curriculum: {
-    title: 'Curriculum Not Found',
-    description: 'We couldn\'t find the curriculum for this training.'
   },
   module: {
     title: 'Module Not Found',
@@ -42,6 +38,10 @@ const messages = {
   certificate: {
     title: 'Certificates Not Found',
     description: 'We couldn\'t find any certificates for this training.'
+  },
+  cat: {
+    title: 'CAT Assessments Not Found',
+    description: 'We couldn\'t find any CAT assessments for this training.'
   }
 }
 

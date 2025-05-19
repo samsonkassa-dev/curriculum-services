@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils"
 import { useUserRole } from "@/lib/hooks/useUserRole"
 import { Loading } from "@/components/ui/loading"
 
-type TabType = 'overview' | 'profile' | 'audience' | 'module' | 'evaluation' | 'students' | 'sessions' | 'attendance' | 'certificate'
+type TabType = 'overview' | 'profile' | 'audience' | 'module' | 'evaluation' | 'students' | 'sessions' | 'attendance' | 'certificate' | 'cat'
 
 interface TabConfig {
   id: TabType
@@ -25,6 +25,7 @@ const allTabs: TabConfig[] = [
   { id: 'evaluation', label: 'Evaluation', icon: '/Evaluation.svg', activeIcon: '/EvaluationActive.svg' },
   { id: 'attendance', label: 'Attendance', icon: '/Schedule.svg', activeIcon: '/scheduleActive.svg' },
   { id: 'certificate', label: 'Certificates', icon: '/certificate.svg', activeIcon: '/certificateActive.svg' },
+  { id: 'cat', label: 'CAT', icon: '/Evaluation.svg', activeIcon: '/EvaluationActive.svg' },
 ]
 
 interface TrainingTabsProps {
@@ -52,11 +53,11 @@ export function TrainingTabs({ activeTab, onTabChange }: TrainingTabsProps) {
 
   let visibleTabs: TabConfig[] = []
 
-  if (isProjectManager) {
+  if (isProjectManager || isCompanyAdmin) {
     visibleTabs = allTabs
   } else if (isMeExpert) {
-    visibleTabs = allTabs.filter(tab => ['overview', 'evaluation',].includes(tab.id))
-  } else if (isCurriculumAdmin || isSubCurriculumAdmin || isContentDeveloper || isCompanyAdmin)  {
+    visibleTabs = allTabs.filter(tab => ['overview', 'evaluation'].includes(tab.id))
+  } else if (isCurriculumAdmin || isSubCurriculumAdmin || isContentDeveloper)  {
     visibleTabs = allTabs.filter(tab => !['students', 'evaluation', 'sessions', 'attendance', 'certificate'].includes(tab.id))
   } else if (isTrainingAdmin) {
     visibleTabs = allTabs.filter(tab => !['evaluation'].includes(tab.id))

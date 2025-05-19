@@ -11,7 +11,9 @@ export interface StepProps {
     cityIds?: string[];
     duration?: number;
     durationType?: 'DAYS' | 'WEEKS' | 'MONTHS' | 'HOURS';
+    deliveryMethod?: 'BLENDED' | 'ONLINE' | 'VIRTUAL';
     trainingTypeId?: string;
+    totalParticipants?: number;
     trainingPurposeIds?: string[];
     ageGroupIds?: string[];
     genderPercentages?: Array<{

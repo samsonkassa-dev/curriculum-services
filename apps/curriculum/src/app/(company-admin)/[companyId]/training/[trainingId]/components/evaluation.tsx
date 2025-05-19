@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Loading } from "@/components/ui/loading"
 import { useGetEvaluations } from "@/lib/hooks/useEvaluation"
 import { format } from "date-fns"
-import { Eye, FileText, MoreVertical } from "lucide-react"
+import { Eye, MoreVertical } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,

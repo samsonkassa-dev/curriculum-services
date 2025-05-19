@@ -72,9 +72,9 @@ function getStepFields(step: number, isEditing = false): (keyof TrainingFormData
     case 2:
       return ["countryIds", "cityIds"];
     case 3:
-      return ["duration", "durationType", "trainingTypeId"]; 
+      return ["duration", "durationType", "trainingTypeId", "deliveryMethod"]; 
     case 4:
-      return ["ageGroupIds", "economicBackgroundIds", "academicQualificationIds", "genderPercentages"];
+      return ["ageGroupIds", "economicBackgroundIds", "academicQualificationIds", "genderPercentages", "totalParticipants"];
     case 5:
       return isEditing 
         ? ["trainingPurposeIds", "economicBackgroundIds", "academicQualificationIds"] 

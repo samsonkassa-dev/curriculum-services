@@ -13,7 +13,7 @@ import { Training } from "@/types/training";
 import { useUpdateTraining } from "@/lib/hooks/useUpdateTraining";
 import { useUserRole } from "@/lib/hooks/useUserRole";
 
-type SectionName = "title" | "location" | "duration" | "target" | "purpose" | "type" | "rationale"
+type SectionName = "title" | "location" | "duration" | "target" | "purpose" | "type" | "rationale" | "delivery" | "participants"
 
 export function Overview({ training }: { training: Training }) {
   const [isEditing, setIsEditing] = useState(false)
@@ -22,14 +22,19 @@ export function Overview({ training }: { training: Training }) {
   const { mutate: updateTraining, isPending } = useUpdateTraining()
 
   const handleEdit = (section: SectionName) => {
+    // Prevent multiple edits
+    if (isPending) return
+    
     // Map section to step number
     const stepMap: Record<SectionName, number> = {
       title: 1,
       location: 2,
-      duration: 2,
-      target: 3,
+      duration: 3,
+      delivery: 3,
+      target: 4,
+      participants: 4,
       purpose: 5,
-      type: 1,
+      type: 3,
       rationale: 1
     }
     setInitialStep(stepMap[section])
@@ -45,7 +50,8 @@ export function Overview({ training }: { training: Training }) {
           updateTraining(
             { id: training.id, data },
             {
-              onSuccess: () => setIsEditing(false)
+              onSuccess: () => setIsEditing(false),
+              onError: () => setIsEditing(false) // Also reset editing state on error
             }
           )
         }}
@@ -76,10 +82,10 @@ export function Overview({ training }: { training: Training }) {
                   <img 
                     src="/edit.svg" 
                     alt="" 
-                    className="w-5 h-5 cursor-pointer" 
+                    className={`w-5 h-5 cursor-pointer ${isPending ? 'opacity-50 cursor-not-allowed' : ''}`}
                     onClick={(e) => {
                       e.stopPropagation()
-                      handleEdit("title")
+                      if (!isPending) handleEdit("title")
                     }}
                   />
                 )}
@@ -109,10 +115,10 @@ export function Overview({ training }: { training: Training }) {
                   <img 
                     src="/edit.svg" 
                     alt="" 
-                    className="w-5 h-5 cursor-pointer" 
+                    className={`w-5 h-5 cursor-pointer ${isPending ? 'opacity-50 cursor-not-allowed' : ''}`}
                     onClick={(e) => {
                       e.stopPropagation()
-                      handleEdit("rationale") // Points to step 1
+                      if (!isPending) handleEdit("rationale") // Points to step 1
                     }}
                   />
                 )}
@@ -140,10 +146,10 @@ export function Overview({ training }: { training: Training }) {
                   <img 
                     src="/edit.svg" 
                     alt="" 
-                    className="w-5 h-5 cursor-pointer" 
+                    className={`w-5 h-5 cursor-pointer ${isPending ? 'opacity-50 cursor-not-allowed' : ''}`}
                     onClick={(e) => {
                       e.stopPropagation()
-                      handleEdit("title") // Points to step 1 (same as title/rationale)
+                      if (!isPending) handleEdit("title") // Points to step 1 (same as title/rationale)
                     }}
                   />
                 )}
@@ -180,10 +186,10 @@ export function Overview({ training }: { training: Training }) {
                   <img 
                     src="/edit.svg" 
                     alt="" 
-                    className="w-5 h-5 cursor-pointer" 
+                    className={`w-5 h-5 cursor-pointer ${isPending ? 'opacity-50 cursor-not-allowed' : ''}`}
                     onClick={(e) => {
                       e.stopPropagation()
-                      handleEdit("location")
+                      if (!isPending) handleEdit("location")
                     }}
                   />
                 )}
@@ -213,10 +219,10 @@ export function Overview({ training }: { training: Training }) {
                   <img 
                     src="/edit.svg" 
                     alt="" 
-                    className="w-5 h-5 cursor-pointer" 
+                    className={`w-5 h-5 cursor-pointer ${isPending ? 'opacity-50 cursor-not-allowed' : ''}`}
                     onClick={(e) => {
                       e.stopPropagation()
-                      handleEdit("duration")
+                      if (!isPending) handleEdit("duration")
                     }}
                   />
                 )}
@@ -229,6 +235,40 @@ export function Overview({ training }: { training: Training }) {
                 <p className="text-gray-600 text-sm md:text-lg">{`${
                   training.duration
                 } ${training.durationType.toLowerCase()}`}</p>
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+
+          {/* Delivery Method Section - New */}
+          <AccordionItem value="delivery" className="border-[0.5px] border-[#CED4DA] rounded-md">
+            <AccordionTrigger className="bg-white data-[state=open]:bg-[#f7fbff] rounded-lg p-6 flex items-center justify-between hover:no-underline group">
+              <div className="flex items-center gap-3">
+                <span className="font-semibold text-md md:text-xl">Delivery Method</span>
+              </div>
+              <div className="text-gray-400 flex gap-2  ">
+                {isCompanyAdmin && (
+                  <img 
+                    src="/edit.svg" 
+                    alt="" 
+                    className={`w-5 h-5 cursor-pointer ${isPending ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      if (!isPending) handleEdit("delivery")
+                    }}
+                  />
+                )}
+                <ChevronRight className="h-5 w-5 transition-transform group-data-[state=open]:hidden text-black" />
+                <ChevronDown className="h-5 w-5 transition-transform hidden group-data-[state=open]:block text-black" />
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="bg-white p-6">
+                <p className="text-gray-600 text-sm md:text-lg">
+                  {training.deliveryMethod ? 
+                    training.deliveryMethod === 'ONLINE' ? 'Online' :
+                    training.deliveryMethod === 'BLENDED' ? 'Blended' : 
+                    'Virtual' : 'N/A'}
+                </p>
               </div>
             </AccordionContent>
           </AccordionItem>
@@ -246,10 +286,10 @@ export function Overview({ training }: { training: Training }) {
                   <img 
                     src="/edit.svg" 
                     alt="" 
-                    className="w-5 h-5 cursor-pointer" 
+                    className={`w-5 h-5 cursor-pointer ${isPending ? 'opacity-50 cursor-not-allowed' : ''}`}
                     onClick={(e) => {
                       e.stopPropagation()
-                      handleEdit("duration") // Points to Step 3 (duration/type)
+                      if (!isPending) handleEdit("duration") // Points to Step 3 (duration/type)
                     }}
                   />
                 )}
@@ -284,10 +324,10 @@ export function Overview({ training }: { training: Training }) {
                   <img 
                     src="/edit.svg" 
                     alt="" 
-                    className="w-5 h-5 cursor-pointer" 
+                    className={`w-5 h-5 cursor-pointer ${isPending ? 'opacity-50 cursor-not-allowed' : ''}`}
                     onClick={(e) => {
                       e.stopPropagation()
-                      handleEdit("target")
+                      if (!isPending) handleEdit("target")
                     }}
                   />
                 )}
@@ -297,6 +337,14 @@ export function Overview({ training }: { training: Training }) {
             </AccordionTrigger>
             <AccordionContent>
               <div className="bg-white p-6 space-y-4">
+                {/* Total Participants */}
+                <div>
+                  <h3 className="text-gray-700 font-medium mb-1">Total Participants:</h3>
+                  <p className="text-gray-600 text-sm md:text-lg">
+                    {training.totalParticipants || 'N/A'}
+                  </p>
+                </div>
+                
                 {/* Gender */}
                 <div>
                   <h3 className="text-gray-700 font-medium mb-1">Gender Distribution:</h3>
@@ -373,10 +421,10 @@ export function Overview({ training }: { training: Training }) {
                   <img 
                     src="/edit.svg" 
                     alt="" 
-                    className="w-5 h-5 cursor-pointer" 
+                    className={`w-5 h-5 cursor-pointer ${isPending ? 'opacity-50 cursor-not-allowed' : ''}`}
                     onClick={(e) => {
                       e.stopPropagation()
-                      handleEdit("purpose")
+                      if (!isPending) handleEdit("purpose")
                     }}
                   />
                 )}

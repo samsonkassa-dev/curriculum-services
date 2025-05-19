@@ -29,11 +29,46 @@ export function ContentModal({
     link: defaultValues?.link || "",
     referenceLink: defaultValues?.referenceLink || "",
   })
+  const [errors, setErrors] = useState<{
+    link?: string
+    referenceLink?: string
+  }>({})
+
+  const isValidUrl = (url: string) => {
+    if (!url.trim()) return true // Empty URLs are allowed
+    try {
+      // Add https:// protocol if missing
+      const urlToTest = url.match(/^https?:\/\//) ? url : `https://${url}`
+      new URL(urlToTest)
+      return true
+    } catch (error) {
+      return false
+    }
+  }
 
   const handleSubmit = () => {
-    onSave(formData)
-    setFormData({ link: "", referenceLink: "" }) // Reset form after submit
-    onClose()
+    const newErrors: {
+      link?: string
+      referenceLink?: string
+    } = {}
+
+    // Validate links if provided
+    if (formData.link && !isValidUrl(formData.link)) {
+      newErrors.link = "Please enter a valid URL"
+    }
+    
+    if (formData.referenceLink && !isValidUrl(formData.referenceLink)) {
+      newErrors.referenceLink = "Please enter a valid URL"
+    }
+
+    setErrors(newErrors)
+
+    // Only save if no errors
+    if (Object.keys(newErrors).length === 0) {
+      onSave(formData)
+      setFormData({ link: "", referenceLink: "" }) // Reset form after submit
+      onClose()
+    }
   }
 
   return (
@@ -53,7 +88,11 @@ export function ContentModal({
                 placeholder="Enter content link"
                 value={formData.link}
                 onChange={(e) => setFormData(prev => ({ ...prev, link: e.target.value }))}
+                className={errors.link ? "border-red-500" : ""}
               />
+              {errors.link && (
+                <p className="text-red-500 text-xs mt-1">{errors.link}</p>
+              )}
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Reference Link</label>
@@ -61,7 +100,11 @@ export function ContentModal({
                 placeholder="Enter reference link"
                 value={formData.referenceLink}
                 onChange={(e) => setFormData(prev => ({ ...prev, referenceLink: e.target.value }))}
+                className={errors.referenceLink ? "border-red-500" : ""}
               />
+              {errors.referenceLink && (
+                <p className="text-red-500 text-xs mt-1">{errors.referenceLink}</p>
+              )}
             </div>
           </div>
           <div className="flex justify-center gap-7 pt-6">
