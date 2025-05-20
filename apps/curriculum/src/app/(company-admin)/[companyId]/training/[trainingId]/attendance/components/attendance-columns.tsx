@@ -266,29 +266,40 @@ function SessionAssessmentCell({
     return (
       <div className="flex items-center">
         <span className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded-full">
-          No CAT assessments assigned
+          No assessment added
         </span>
       </div>
     );
   }
   
+  // Check if the student has filled any assessment
+  const hasFilledAssessment = typeof student.answerFileLink === 'string' && student.answerFileLink;
+  
   // Assessments exist, show the modal
   return (
-    <CatAssessmentModal
-      sessionId={sessionId}
-      studentId={student.id}
-      studentName={fullName}
-      currentAnswer={typeof student.answerFileLink === 'string' ? student.answerFileLink : ""}
-      trigger={
-        <Button
-          variant="outline"
-          className={`text-blue-600 border-blue-600 text-xs h-7 px-2 hover:bg-blue-50 ${isDisabled ? 'opacity-50 pointer-events-none' : ''}`}
-          disabled={isDisabled}
-        >
-          {typeof student.answerFileLink === 'string' && student.answerFileLink ? "Edit CAT Answer" : "Add CAT Answer"}
-        </Button>
-      }
-    />
+    <div className="flex items-center gap-2">
+      {hasFilledAssessment && (
+        <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full">
+          Assessment filled
+        </span>
+      )}
+      
+      <CatAssessmentModal
+        sessionId={sessionId}
+        studentId={student.id}
+        studentName={fullName}
+        currentAnswer={typeof student.answerFileLink === 'string' ? student.answerFileLink : ""}
+        trigger={
+          <Button
+            variant="outline"
+            className={`text-blue-600 border-blue-600 text-xs h-7 px-2 hover:bg-blue-50 ${isDisabled ? 'opacity-50 pointer-events-none' : ''}`}
+            disabled={isDisabled}
+          >
+            {hasFilledAssessment ? "View/Edit" : "Add Assessment"}
+          </Button>
+        }
+      />
+    </div>
   );
 }
 

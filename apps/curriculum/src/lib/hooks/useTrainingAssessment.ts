@@ -20,6 +20,12 @@ export interface TrainingAssessment {
   updatedAt?: string
 }
 
+// Add a new type for assessment with student-specific answer data
+export interface TrainingAssessmentWithAnswer extends TrainingAssessment {
+  answerFileLink: string | null
+  comment: string | null
+}
+
 export interface CreateTrainingAssessmentData {
   name: string
   description: string
@@ -105,16 +111,17 @@ export function useSessionAssessments(sessionId: string) {
 /**
  * Hook for fetching a single training assessment by ID
  */
-export function useTrainingAssessment(assessmentId: string) {
+export function useTrainingAssessment(assessmentId: string, traineeId?: string) {
   return useQuery({
-    queryKey: ['training-assessment', assessmentId],
+    queryKey: ['training-assessment', assessmentId, traineeId],
     queryFn: async () => {
       try {
         const token = getCookie('token')
         const response = await axios.get<TrainingAssessmentResponse>(
           `${process.env.NEXT_PUBLIC_API}/training-assessment/${assessmentId}`,
           {
-            headers: { Authorization: `Bearer ${token}` }
+            headers: { Authorization: `Bearer ${token}` },
+            params: traineeId ? { traineeId } : undefined
           }
         )
         return response.data

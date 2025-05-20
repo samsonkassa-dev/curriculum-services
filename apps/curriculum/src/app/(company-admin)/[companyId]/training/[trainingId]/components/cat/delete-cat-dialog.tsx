@@ -1,6 +1,6 @@
 "use client"
 
-import { TrainingAssessment } from "@/lib/hooks/useTrainingAssessment"
+import { Assessment } from "../cat"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,28 +12,28 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 
-interface DeleteCatAssessmentDialogProps {
+interface DeleteCatDialogProps {
   isOpen: boolean
   onOpenChange: (open: boolean) => void
-  assessment: TrainingAssessment | null
+  assessment: Assessment | null
   onConfirmDelete: () => Promise<void>
   isDeleting: boolean
 }
 
-export function DeleteCatAssessmentDialog({
+export function DeleteCatDialog({
   isOpen,
   onOpenChange,
   assessment,
   onConfirmDelete,
   isDeleting
-}: DeleteCatAssessmentDialogProps) {
+}: DeleteCatDialogProps) {
   return (
     <AlertDialog open={isOpen} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Delete Assessment</AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to delete &quot;{assessment?.name}&quot;? This action cannot be undone.
+            Are you sure you want to delete &ldquo;{assessment?.name}&rdquo;? This action cannot be undone.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -51,5 +51,5 @@ export function DeleteCatAssessmentDialog({
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
-  )
+  );
 } 

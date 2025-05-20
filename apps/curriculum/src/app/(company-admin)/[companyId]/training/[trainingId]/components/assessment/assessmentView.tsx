@@ -14,20 +14,21 @@ import {
   useCreateTrainingAssessment, 
   useUpdateTrainingAssessment, 
   useDeleteTrainingAssessment,
-  useAssignAssessmentToSession
 } from "@/lib/hooks/useTrainingAssessment"
 import { ColumnDef } from "@tanstack/react-table"
-import { catAssessmentColumns, createActionsColumn } from "./cat-columns"
-import { CatDataTable } from "./cat-data-table"
-import { CatFormModal } from "./cat-form-modal"
-import { CatAssignSessionModal } from "./cat-assign-session-modal"
-import { DeleteCatAssessmentDialog } from "./delete-cat-assessment-dialog"
+import { AssessmentColumns, createActionsColumn } from "./assessment-columns"
+import { AssessmentDataTable } from "./assessment-data-table"
+import { AssessmentFormModal } from "./assessment-form-modal"
+import { AssignSessionModal } from "./assign-session-modal"
+import { DeleteAssessmentDialog } from "./delete-assessment-dialog"
+import { Card } from "@/components/ui/card"
+import { ClipboardList } from "lucide-react"
 
 interface CatViewProps {
   trainingId: string
 }
 
-export function CatView({ trainingId }: CatViewProps) {
+export function AssessmentView({ trainingId }: CatViewProps) {
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
   const [searchQuery, setSearchQuery] = useState("")
@@ -51,11 +52,6 @@ export function CatView({ trainingId }: CatViewProps) {
   const createAssessmentMutation = useCreateTrainingAssessment()
   const updateAssessmentMutation = useUpdateTrainingAssessment()
   const deleteAssessmentMutation = useDeleteTrainingAssessment()
-
-  // Check if user has permissions to edit
-  const hasEditPermission = useMemo(() => {
-    return isCompanyAdmin || isProjectManager || isTrainingAdmin || isCurriculumAdmin
-  }, [isCompanyAdmin, isProjectManager, isTrainingAdmin, isCurriculumAdmin])
 
   // Check if user can add/edit assessments (everyone except Training Admin)
   const canAddEditAssessments = useMemo(() => {
@@ -96,7 +92,7 @@ export function CatView({ trainingId }: CatViewProps) {
         setDeleteDialogOpen(false)
         setAssessmentToDelete(null)
       } catch (error) {
-        console.error("Delete failed:", error)
+        console.log("Delete failed:", error)
       }
     }
   }, [deleteAssessmentMutation, assessmentToDelete])
@@ -120,7 +116,7 @@ export function CatView({ trainingId }: CatViewProps) {
       }
       setShowModal(false)
     } catch (error) {
-      console.error("Submission failed:", error)
+      console.log("Submission failed:", error)
     }
   }, [createAssessmentMutation, currentAssessmentId, isEditing, trainingId, updateAssessmentMutation])
 
@@ -161,7 +157,7 @@ export function CatView({ trainingId }: CatViewProps) {
   // Add the actions column to the existing columns
   const columnsWithActions = useMemo<ColumnDef<TrainingAssessment>[]>(() => {
     // Get the base columns
-    const columns = [...catAssessmentColumns]
+    const columns = [...AssessmentColumns]
     
     // Add the actions column only if user has appropriate permissions
     const hasEditPermission = isCompanyAdmin || isProjectManager || isTrainingAdmin || isCurriculumAdmin
@@ -189,20 +185,21 @@ export function CatView({ trainingId }: CatViewProps) {
   ])
 
   const emptyState = useMemo(() => (
-        <div className="text-center py-40 bg-[#fbfbfb] rounded-lg border-[0.1px]">
-          <h3 className="text-lg font-medium mb-2">No CAT Assessments Added Yet</h3>
-          <p className="text-gray-500 text-sm">
-            Add CAT assessments to help evaluate your training program.
-          </p>
-          {canAddEditAssessments && (
-            <Button
-              className="mt-4 bg-[#0B75FF] hover:bg-[#0B75FF]/90 text-white"
-              onClick={handleAddAssessment}
-            >
-              Add Assessment
-            </Button>
-          )}
-        </div>
+    <Card className="p-8 text-center">
+      <ClipboardList className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+      <h3 className="text-xl font-medium mb-2">No Assessments Available</h3>
+      <p className="text-gray-500 mb-6">
+        Assessments help evaluate training effectiveness and measure participant understanding. They provide valuable data for improving future training programs and tracking learning outcomes.
+      </p>
+      {canAddEditAssessments && (
+        <Button
+          onClick={handleAddAssessment}
+          className="bg-[#0B75FF] hover:bg-[#0B75FF]/90 text-white"
+        >
+          Add Assessment
+        </Button>
+      )}
+    </Card>
   ), [handleAddAssessment, canAddEditAssessments])
 
   if (isLoading) {
@@ -212,10 +209,12 @@ export function CatView({ trainingId }: CatViewProps) {
   return (
     <div className="flex lg:px-16 md:px-14 px-4 w-full">
       <div className="flex-1 py-4 md:pl-12 min-w-0">
-        <h1 className="text-lg font-semibold mb-6">CAT Assessments</h1>
+        <h1 className="text-lg font-semibold mb-6">Assessments</h1>
 
         {!data?.trainingAssessments?.length ? (
-          emptyState
+          <div className="px-[7%] py-8">
+            {emptyState}
+          </div>
         ) : (
           <>
             <div className="flex items-center lg:justify-end gap-3 mb-6">
@@ -245,7 +244,7 @@ export function CatView({ trainingId }: CatViewProps) {
               )}
             </div>
 
-            <CatDataTable
+            <AssessmentDataTable
               columns={columnsWithActions}
               data={paginatedAssessments}
               isLoading={isLoading}
@@ -263,7 +262,7 @@ export function CatView({ trainingId }: CatViewProps) {
 
         {/* Add/Edit Assessment Modal */}
         {showModal && canAddEditAssessments && (
-          <CatFormModal
+          <AssessmentFormModal
             isOpen={showModal}
             onClose={handleCloseModal}
             isEditing={isEditing}
@@ -275,7 +274,7 @@ export function CatView({ trainingId }: CatViewProps) {
 
         {/* Delete Assessment Dialog */}
         {deleteDialogOpen && canAddEditAssessments && (
-          <DeleteCatAssessmentDialog
+          <DeleteAssessmentDialog
             isOpen={deleteDialogOpen}
             onOpenChange={setDeleteDialogOpen}
             assessment={assessmentToDelete}
@@ -286,7 +285,7 @@ export function CatView({ trainingId }: CatViewProps) {
 
         {/* Assign Session Modal */}
         {assignSessionModalOpen && !isCurriculumAdmin && (
-          <CatAssignSessionModal
+          <AssignSessionModal
             isOpen={assignSessionModalOpen}
             onClose={() => setAssignSessionModalOpen(false)}
             assessment={assessmentToAssign}

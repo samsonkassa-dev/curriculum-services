@@ -13,7 +13,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { StudentsTab } from "./components/students-tab";
 import { TrainerDetailsTab } from "./components/TrainerDetailsTab";
-import PreTrainingAssessment from "./components/pre-training-assessment";
+//import PreTrainingAssessment from "./components/pre-training-assessment";
 import { useUserRole } from "@/lib/hooks/useUserRole";
 
 
@@ -198,13 +198,13 @@ export default function SessionDetailPage() {
             </TabsTrigger>
           )}
 
-          {(!isTrainerAdmin && !isTrainer) && (
+          {/* {(!isTrainerAdmin && !isTrainer) && (
             <TabsTrigger 
               value="pre-training-assessment"
             >
               Pre Training Assessment
             </TabsTrigger>
-          )}
+          )} */}
 
         </TabsList>
 
@@ -353,11 +353,11 @@ export default function SessionDetailPage() {
           <TrainerDetailsTab sessionId={sessionId} trainerType="ASSISTANT" />
         </TabsContent>
 
-        {!isTrainerAdmin && (
+        {/* {!isTrainerAdmin && (
           <TabsContent value="pre-training-assessment">
             <PreTrainingAssessment sessionId={sessionId}/>
           </TabsContent>
-        )}
+        )} */}
 
       </Tabs>
 

@@ -24,7 +24,7 @@ interface CatFormModalProps {
   onSubmit: (data: { name: string; description: string; fileLink: string }) => Promise<void>
 }
 
-export function CatFormModal({
+export function AssessmentFormModal({
   isOpen,
   onClose,
   isEditing,

@@ -1,5 +1,5 @@
 interface TrainingNotFoundProps {
-  type: 'overview' | 'profile' | 'audience' | 'module' | 'evaluation' | 'students' | 'sessions' | 'attendance' | 'certificate' | 'cat'
+  type: 'overview' | 'profile' | 'audience' | 'module' | 'evaluation' | 'students' | 'sessions' | 'attendance' | 'certificate' | 'assessment' | 'cat' | 'survey'
 }
 
 const messages = {
@@ -39,9 +39,17 @@ const messages = {
     title: 'Certificates Not Found',
     description: 'We couldn\'t find any certificates for this training.'
   },
+  assessment: {
+    title: 'Assessment Not Found',
+    description: 'We couldn\'t find any assessment for this training.'
+  },
   cat: {
-    title: 'CAT Assessments Not Found',
-    description: 'We couldn\'t find any CAT assessments for this training.'
+    title: 'CAT Not Found',
+    description: 'We couldn\'t find any Course Assessment Tool data for this training.'
+  },
+  survey: {
+    title: 'Survey Not Found',
+    description: 'We couldn\'t find any survey for this training.'
   }
 }
 

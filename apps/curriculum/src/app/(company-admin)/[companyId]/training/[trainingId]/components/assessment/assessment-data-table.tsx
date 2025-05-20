@@ -22,7 +22,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
 import { ChevronLeftIcon, ChevronRightIcon, Loader2 } from "lucide-react"
-import { Assessment } from "../cat"
+import { TrainingAssessment } from "@/lib/hooks/useTrainingAssessment"
 
 interface CatDataTableProps<TData> {
   columns: ColumnDef<TData, unknown>[]
@@ -40,14 +40,14 @@ interface CatDataTableProps<TData> {
   onRowSelectionChange?: OnChangeFn<RowSelectionState>
 }
 
-export function CatDataTable({
+export function AssessmentDataTable({
   columns,
   data,
   isLoading,
   pagination,
   rowSelection = {},
   onRowSelectionChange,
-}: CatDataTableProps<Assessment>) {
+}: CatDataTableProps<TrainingAssessment>) {
   const [sorting, setSorting] = useState<SortingState>([])
 
   const table = useReactTable({

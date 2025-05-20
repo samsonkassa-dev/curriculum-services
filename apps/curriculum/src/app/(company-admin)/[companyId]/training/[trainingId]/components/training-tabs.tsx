@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils"
 import { useUserRole } from "@/lib/hooks/useUserRole"
 import { Loading } from "@/components/ui/loading"
 
-type TabType = 'overview' | 'profile' | 'audience' | 'module' | 'evaluation' | 'students' | 'sessions' | 'attendance' | 'certificate' | 'cat'
+export type TabType = 'overview' | 'profile' | 'audience' | 'module' | 'evaluation' | 'students' | 'sessions' | 'attendance' | 'certificate' | 'assessment' | 'cat' | 'survey'
 
 interface TabConfig {
   id: TabType
@@ -25,7 +25,9 @@ const allTabs: TabConfig[] = [
   { id: 'evaluation', label: 'Evaluation', icon: '/Evaluation.svg', activeIcon: '/EvaluationActive.svg' },
   { id: 'attendance', label: 'Attendance', icon: '/Schedule.svg', activeIcon: '/scheduleActive.svg' },
   { id: 'certificate', label: 'Certificates', icon: '/certificate.svg', activeIcon: '/certificateActive.svg' },
-  { id: 'cat', label: 'CAT', icon: '/Evaluation.svg', activeIcon: '/EvaluationActive.svg' },
+  { id: 'assessment', label: 'Assessment', icon: '/curriculum.svg', activeIcon: '/curriculum_active.svg' },
+  { id: 'cat', label: 'CAT', icon: '/curriculum.svg', activeIcon: '/curriculum_active.svg' },
+  { id: 'survey', label: 'Survey', icon: '/Evaluation.svg', activeIcon: '/EvaluationActive.svg' },
 ]
 
 interface TrainingTabsProps {
@@ -39,7 +41,6 @@ export function TrainingTabs({ activeTab, onTabChange }: TrainingTabsProps) {
     isCompanyAdmin,
     isProjectManager,
     isCurriculumAdmin,
-    isSubCurriculumAdmin,
     isContentDeveloper,
     isTrainingAdmin,
     isTrainerAdmin,
@@ -57,16 +58,19 @@ export function TrainingTabs({ activeTab, onTabChange }: TrainingTabsProps) {
     visibleTabs = allTabs
   } else if (isMeExpert) {
     visibleTabs = allTabs.filter(tab => ['overview', 'evaluation'].includes(tab.id))
-  } else if (isCurriculumAdmin || isSubCurriculumAdmin || isContentDeveloper)  {
+  } else if (isCurriculumAdmin)  {
     visibleTabs = allTabs.filter(tab => !['students', 'evaluation', 'sessions', 'attendance', 'certificate'].includes(tab.id))
   } else if (isTrainingAdmin) {
-    visibleTabs = allTabs.filter(tab => !['evaluation'].includes(tab.id))
+    visibleTabs = allTabs.filter(tab => !['evaluation', 'survey', 'cat'].includes(tab.id))
   }
   else if (isTrainerAdmin) {
-    visibleTabs = allTabs.filter(tab => !['evaluation', 'attendance', 'certificate'].includes(tab.id))
+    visibleTabs = allTabs.filter(tab => !['evaluation', 'attendance', 'certificate', 'assessment', 'survey', 'cat'].includes(tab.id))
   } 
   else if (isTrainer) {
-    visibleTabs = allTabs.filter(tab => ['overview','profile', 'audience', 'module', 'attendance','students', 'sessions'].includes(tab.id))
+    visibleTabs = allTabs.filter(tab => ['overview','profile', 'audience', 'module', 'attendance','students'].includes(tab.id))
+  }
+  else if (isContentDeveloper) {
+    visibleTabs = allTabs.filter(tab => ['overview','profile', 'audience', 'module'].includes(tab.id))
   }
   else {
     visibleTabs = allTabs.filter(tab => tab.id === 'overview') 
@@ -80,6 +84,16 @@ export function TrainingTabs({ activeTab, onTabChange }: TrainingTabsProps) {
     }
   }
 
+  // Rename "Attendance" tab to "My Sessions" for trainers
+  if (isTrainer) {
+    visibleTabs = visibleTabs.map(tab => {
+      if (tab.id === 'attendance') {
+        return { ...tab, label: 'My Sessions' }
+      }
+      return tab
+    })
+  }
+
   if (!visibleTabs.some(tab => tab.id === activeTab)) {
     if (visibleTabs.length > 0) {
       onTabChange(visibleTabs[0].id)
@@ -87,14 +101,23 @@ export function TrainingTabs({ activeTab, onTabChange }: TrainingTabsProps) {
   }
 
   return (
-    <div className="w-full overflow-x-auto scrollbar-hide">
+    <div className="w-full overflow-x-auto no-scrollbar">
+      <style jsx global>{`
+        .no-scrollbar {
+          -ms-overflow-style: none;  /* IE and Edge */
+          scrollbar-width: none;     /* Firefox */
+        }
+        .no-scrollbar::-webkit-scrollbar {
+          display: none;             /* Chrome, Safari and Opera */
+        }
+      `}</style>
       <div className="flex my-14 min-w-max gap-8 border-b-[0.5px] border-[#CED4DA] mb-6 px-[7%]">
         {visibleTabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => onTabChange(tab.id)}
             className={cn(
-              "pb-4 text-sm font-medium flex items-center gap-2 relative",
+              "pb-4 text-sm font-medium flex items-center gap-2 relative whitespace-nowrap",
               activeTab === tab.id
                 ? "text-brand border-b-2 border-brand"
                 : "text-gray-500"

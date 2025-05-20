@@ -29,7 +29,7 @@ interface CatAssignSessionModalProps {
   assessment: TrainingAssessment | null
 }
 
-export function CatAssignSessionModal({
+export function AssignSessionModal({
   isOpen,
   onClose,
   assessment

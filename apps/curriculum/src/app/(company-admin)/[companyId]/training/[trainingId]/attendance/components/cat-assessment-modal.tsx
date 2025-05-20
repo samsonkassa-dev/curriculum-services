@@ -10,11 +10,13 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Loader2, CheckCircle, FileQuestion } from "lucide-react"
+import { Loader2, CheckCircle, FileQuestion, AlertCircle } from "lucide-react"
 import { 
   useSessionAssessments,
   useSubmitAssessmentAnswer,
-  TrainingAssessment
+  useTrainingAssessment,
+  TrainingAssessment,
+  TrainingAssessmentWithAnswer
 } from "@/lib/hooks/useTrainingAssessment"
 import { useProfile } from "@/lib/hooks/useProfile"
 import { 
@@ -26,6 +28,8 @@ import {
 } from "@/components/ui/select"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Badge } from "@/components/ui/badge"
 
 interface CatAssessmentModalProps {
   sessionId: string
@@ -49,10 +53,18 @@ export default function CatAssessmentModal({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+  const [filledAssessments, setFilledAssessments] = useState<string[]>([])
 
   // Fetch session assessments
   const { data: assessmentsData, isLoading: isLoadingAssessments } = useSessionAssessments(sessionId)
   const assessments = assessmentsData?.trainingAssessments || []
+
+  // Fetch individual assessment details when selected (with student-specific data)
+  const { data: assessmentDetailData, isLoading: isLoadingAssessmentDetail } = useTrainingAssessment(
+    selectedAssessmentId, 
+    selectedAssessmentId ? studentId : undefined
+  )
+  const assessmentDetail = assessmentDetailData?.trainingAssessment as TrainingAssessmentWithAnswer
 
   // Get trainer profile for ID
   const { profile } = useProfile()
@@ -61,19 +73,47 @@ export default function CatAssessmentModal({
   // Submit assessment answer mutation
   const { mutateAsync: submitAnswer } = useSubmitAssessmentAnswer()
 
-  // Reset state when modal opens
+  // Reset state when modal opens and load filled assessments
   useEffect(() => {
     if (isOpen) {
-      setFileLink(currentAnswer || "")
       setError(null)
       setSuccess(false)
 
-      // Set first assessment as default when loaded
-      if (assessments.length === 1) {
+      // Identify which assessments already have answers from this student
+      const filled: string[] = []
+      
+      // We'll initialize with empty arrays to avoid issues
+      setFilledAssessments([])
+      
+      // Set first assessment as default when loaded (if none are selected)
+      if (assessments.length === 1 && !selectedAssessmentId) {
         setSelectedAssessmentId(assessments[0].id)
       }
     }
-  }, [isOpen, currentAnswer, assessments])
+  }, [isOpen, assessments, selectedAssessmentId])
+
+  // When assessment details are loaded or changed, update form fields
+  useEffect(() => {
+    if (assessmentDetail) {
+      // Set file link and comment from the loaded assessment
+      setFileLink(assessmentDetail.answerFileLink || "")
+      setComment(assessmentDetail.comment || "")
+      
+      // Mark this assessment as filled if it has an answer
+      if (assessmentDetail.answerFileLink) {
+        setFilledAssessments(prev => 
+          prev.includes(assessmentDetail.id) ? prev : [...prev, assessmentDetail.id]
+        )
+      }
+    }
+  }, [assessmentDetail])
+
+  // Handle assessment selection change
+  const handleAssessmentChange = (assessmentId: string) => {
+    setSelectedAssessmentId(assessmentId)
+    setError(null)
+    setSuccess(false)
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -107,6 +147,12 @@ export default function CatAssessmentModal({
         }
       })
       setSuccess(true)
+      
+      // Add this assessment to the filled list
+      setFilledAssessments(prev => 
+        prev.includes(selectedAssessmentId) ? prev : [...prev, selectedAssessmentId]
+      )
+      
       setTimeout(() => setIsOpen(false), 1200)
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : "Failed to submit answer"
@@ -142,38 +188,77 @@ export default function CatAssessmentModal({
 
     // Form for submitting assessment answer
     return (
-      <form onSubmit={handleSubmit} className="space-y-4 py-2">
-        {/* Assessment selection if more than one */}
-        {assessments.length > 1 && (
-          <div className="space-y-2">
-            <Label htmlFor="assessment">Assessment</Label>
-            <Select 
-              value={selectedAssessmentId} 
-              onValueChange={setSelectedAssessmentId}
-            >
-              <SelectTrigger id="assessment">
-                <SelectValue placeholder="Select an assessment" />
-              </SelectTrigger>
-              <SelectContent>
-                {assessments.map((assessment: TrainingAssessment) => (
-                  <SelectItem key={assessment.id} value={assessment.id}>
+      <form onSubmit={handleSubmit} className="space-y-4 py-2 px-5">
+        {/* Assessment selection */}
+        <div className="space-y-2">
+          <Label htmlFor="assessment">Assessment</Label>
+          <Select 
+            value={selectedAssessmentId} 
+            onValueChange={handleAssessmentChange}
+          >
+            <SelectTrigger id="assessment" className="">
+              <SelectValue placeholder="Select an assessment" />
+            </SelectTrigger>
+            <SelectContent>
+              {assessments.map((assessment: TrainingAssessment) => (
+                <SelectItem key={assessment.id} value={assessment.id} className="flex items-center">
+                  <div className="flex items-center gap-2">
                     {assessment.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        )}
+                    {filledAssessments.includes(assessment.id) && (
+                      <Badge variant="secondary" className="ml-2 bg-green-50 text-green-700 text-[10px]">
+                        Filled
+                      </Badge>
+                    )}
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
-        {/* Show assessment details if only one assessment or one is selected */}
-        {(assessments.length === 1 || selectedAssessmentId) && (
+        {/* Show assessment details if one is selected */}
+        {selectedAssessmentId && (
           <div className="bg-gray-50 p-3 rounded-md border">
-            <h4 className="font-medium">{assessments.length === 1 
-              ? assessments[0].name 
-              : assessments.find(a => a.id === selectedAssessmentId)?.name}</h4>
-            <p className="text-xs text-gray-500 mt-1">{assessments.length === 1 
-              ? assessments[0].description 
-              : assessments.find(a => a.id === selectedAssessmentId)?.description}</p>
+            {isLoadingAssessmentDetail ? (
+              <div className="flex items-center justify-center py-3">
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                <span className="text-sm text-gray-500">Loading assessment details...</span>
+              </div>
+            ) : assessmentDetail ? (
+              <>
+                <h4 className="font-medium">{assessmentDetail.name}</h4>
+                <p className="text-xs text-gray-500 mt-1">{assessmentDetail.description}</p>
+                
+                {/* Show assessment file link if available */}
+                {assessmentDetail.fileLink && (
+                  <div className="mt-2 text-xs flex items-center">
+                    <span className="text-gray-600 mr-1">Assessment file:</span>
+                    <a 
+                      href={assessmentDetail.fileLink} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline truncate"
+                    >
+                      {assessmentDetail.fileLink}
+                    </a>
+                  </div>
+                )}
+                
+                {/* Show if this assessment already has an answer */}
+                {filledAssessments.includes(assessmentDetail.id) && (
+                  <div className="mt-2 text-xs flex items-center">
+                    <Badge variant="secondary" className="bg-green-50 text-green-700">
+                      Answer already submitted
+                    </Badge>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="flex items-center justify-center py-3">
+                <AlertCircle className="h-4 w-4 text-amber-500 mr-2" />
+                <span className="text-sm text-gray-500">Could not load assessment details</span>
+              </div>
+            )}
           </div>
         )}
 
@@ -185,7 +270,7 @@ export default function CatAssessmentModal({
             placeholder="Enter file link"
             value={fileLink}
             onChange={e => setFileLink(e.target.value)}
-            disabled={isSubmitting || success}
+            disabled={isSubmitting || success || isLoadingAssessmentDetail}
           />
         </div>
 
@@ -197,7 +282,7 @@ export default function CatAssessmentModal({
             placeholder="Add a comment about this student's assessment..."
             value={comment}
             onChange={e => setComment(e.target.value)}
-            disabled={isSubmitting || success}
+            disabled={isSubmitting || success || isLoadingAssessmentDetail}
             rows={3}
           />
         </div>
@@ -223,11 +308,11 @@ export default function CatAssessmentModal({
           <Button
             type="submit"
             className="bg-[#0B75FF] hover:bg-[#0B75FF]/90 text-white"
-            disabled={isSubmitting || !fileLink || (assessments.length > 1 && !selectedAssessmentId)}
+            disabled={isSubmitting || !fileLink || !selectedAssessmentId || isLoadingAssessmentDetail}
           >
             {isSubmitting ? (
               <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Submitting...</>
-            ) : currentAnswer ? "Update Answer" : "Submit Answer"}
+            ) : filledAssessments.includes(selectedAssessmentId) ? "Update Answer" : "Submit Answer"}
           </Button>
         </div>
       </form>
@@ -239,13 +324,15 @@ export default function CatAssessmentModal({
       <DialogTrigger asChild>
         {trigger}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>
             CAT Assessment for {studentName}
           </DialogTitle>
         </DialogHeader>
-        {renderContent()}
+        <ScrollArea className="max-h-[70vh]">
+          {renderContent()}
+        </ScrollArea>
       </DialogContent>
     </Dialog>
   )

@@ -1,14 +1,14 @@
 "use client"
 
 import { ColumnDef } from "@tanstack/react-table"
-import { TrainingAssessment } from "@/lib/hooks/useTrainingAssessment"
+import { Assessment } from "../cat"
 import { Button } from "@/components/ui/button"
-import { Pencil, Trash2, Link } from "lucide-react"
+import { Pencil, Trash2 } from "lucide-react"
 
-export const catAssessmentColumns: ColumnDef<TrainingAssessment>[] = [
+export const assessmentColumns: ColumnDef<Assessment>[] = [
   {
     id: "name",
-    header: "Assessment Name",
+    header: "Name",
     cell: ({ row }) => {
       const assessment = row.original
       return (
@@ -20,71 +20,88 @@ export const catAssessmentColumns: ColumnDef<TrainingAssessment>[] = [
     accessorKey: "description",
     header: "Description",
     cell: ({ row }) => {
-      const description = row.original.description || "No description"
-      // Truncate description if it's too long
-      const truncated = description.length > 100 ? `${description.substring(0, 100)}...` : description
-      return <span className="text-gray-500">{truncated}</span>
+      const description = row.original.description
+      // Truncate long descriptions
+      const truncatedDesc = description.length > 60 
+        ? description.substring(0, 60) + "..." 
+        : description
+        
+      return <span className="text-gray-500">{truncatedDesc}</span>
     }
   },
   {
-    id: "fileLink",
-    header: "File Link",
+    accessorKey: "assessmentType.name",
+    header: "Type",
     cell: ({ row }) => {
-      const fileLink = row.original.fileLink
+      const assessmentTypeName = row.original.assessmentType?.name || "N/A"
       
       return (
         <div className="flex items-center gap-2">
-          {fileLink ? (
-            <a 
-              href={fileLink} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:text-blue-800 flex items-center gap-1"
-            >
-              <Link className="h-4 w-4" />
-              View File
-            </a>
-          ) : (
-            <span className="text-gray-500">No file attached</span>
-          )}
+          <div className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1
+            bg-blue-50 text-blue-700`}>
+            <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+            <span>{assessmentTypeName}</span>
+          </div>
         </div>
       )
     }
   },
   {
-    id: "session",
-    header: "Assigned Session",
+    id: "level",
+    header: "Level",
     cell: ({ row }) => {
-      const sessionName = row.original.sessionName
+      const assessment = row.original
+      const level = assessment.assessmentLevel
+      
+      let bgColor = "bg-blue-50"
+      let textColor = "text-blue-700"
+      let dotColor = "bg-blue-500"
+      
+      if (level === "MODULE") {
+        bgColor = "bg-green-50"
+        textColor = "text-green-700"
+        dotColor = "bg-green-500"
+      } else if (level === "LESSON") {
+        bgColor = "bg-amber-50"
+        textColor = "text-amber-700"
+        dotColor = "bg-amber-500"
+      }
       
       return (
         <div className="flex items-center gap-2">
-          {sessionName ? (
-            <div className="px-2 py-1 rounded-full text-xs font-medium bg-green-50 text-green-700 flex items-center gap-1">
-              <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-              <span>{sessionName}</span>
-            </div>
-          ) : (
-            <div className="px-2 py-1 rounded-full text-xs font-medium bg-amber-50 text-amber-700 flex items-center gap-1">
-              <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-              <span>Not Assigned</span>
-            </div>
-          )}
+          <div className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1
+            ${bgColor} ${textColor}`}>
+            <div className={`w-1.5 h-1.5 rounded-full ${dotColor}`} />
+            <span>{level}</span>
+          </div>
         </div>
       )
+    }
+  },
+  {
+    id: "parent",
+    header: "Belongs To",
+    cell: ({ row }) => {
+      const assessment = row.original
+      let parentName = assessment.trainingTitle || "N/A"
+      
+      if (assessment.assessmentLevel === "MODULE" && assessment.moduleName) {
+        parentName = assessment.moduleName
+      } else if (assessment.assessmentLevel === "LESSON" && assessment.lessonName) {
+        parentName = assessment.lessonName
+      }
+      
+      return <span className="text-gray-500">{parentName}</span>
     }
   }
 ]
 
 // Creates the actions column with passed-in handler functions
 export const createActionsColumn = (
-  handleEditAssessment: (assessment: TrainingAssessment) => void,
-  handleDeleteAssessment: (assessment: TrainingAssessment) => void,
-  handleAssignSession: (assessment: TrainingAssessment) => void,
-  hasEditPermission: boolean,
-  isTrainingAdmin: boolean = false,
-  isCurriculumAdmin: boolean = false
-): ColumnDef<TrainingAssessment> => ({
+  handleEditAssessment: (assessment: Assessment) => void,
+  handleDeleteAssessment: (assessment: Assessment) => void,
+  hasEditPermission: boolean
+): ColumnDef<Assessment> => ({
   id: "actions",
   header: "Actions",
   cell: ({ row }) => {
@@ -96,44 +113,25 @@ export const createActionsColumn = (
     
     return (
       <div className="flex items-center gap-2">
-        {/* Edit button - hidden from Training Admin */}
-        {!isTrainingAdmin && (
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => handleEditAssessment(assessment)}
-            className="h-8 w-8 p-0"
-            title="Edit"
-          >
-            <Pencil className="h-4 w-4 text-gray-500" />
-          </Button>
-        )}
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={() => handleEditAssessment(assessment)}
+          className="h-8 w-8 p-0"
+          title="Edit"
+        >
+          <Pencil className="h-4 w-4 text-gray-500" />
+        </Button>
         
-        {/* Assign Session button - hidden from Curriculum Admin */}
-        {!isCurriculumAdmin && (
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => handleAssignSession(assessment)}
-            className="h-8 w-8 p-0"
-            title="Assign Session"
-          >
-            <Link className="h-4 w-4 text-blue-500" />
-          </Button>
-        )}
-        
-        {/* Delete button - hidden from Training Admin */}
-        {!isTrainingAdmin && (
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={() => handleDeleteAssessment(assessment)}
-            className="h-8 w-8 p-0"
-            title="Delete"
-          >
-            <Trash2 className="h-4 w-4 text-red-500" />
-          </Button>
-        )}
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          onClick={() => handleDeleteAssessment(assessment)}
+          className="h-8 w-8 p-0"
+          title="Delete"
+        >
+          <Trash2 className="h-4 w-4 text-red-500" />
+        </Button>
       </div>
     )
   }
