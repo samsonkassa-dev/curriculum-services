@@ -119,7 +119,7 @@ export function VenueWizardForm({
           <div className="space-y-6 p-4">
             {/* Step 1: General Details */}
             {isStep1 && (
-              <div className="space-y-8 p-4 border rounded-md bg-white">
+              <div className="space-y-8 p-4  rounded-md bg-white">
                 <h3 className="text-lg font-semibold">General Details</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <FormField
@@ -133,7 +133,7 @@ export function VenueWizardForm({
                             {...field}
                             placeholder="Enter venue name"
                             disabled={isLoading}
-                            className="focus:ring-2 focus:ring-offset-1 focus:ring-blue-500 focus:border-blue-500"
+                            className="focus:outline-none focus:ring-1 focus:ring-offset-1 "
                           />
                         </FormControl>
                         <FormMessage />
@@ -151,7 +151,7 @@ export function VenueWizardForm({
                             {...field}
                             placeholder="e.g., Building A, Room 101"
                             disabled={isLoading}
-                            className="focus:ring-2 focus:ring-offset-1 focus:ring-blue-500 focus:border-blue-500"
+                            className="focus:outline-none focus:ring-1 focus:ring-offset-1 "
                           />
                         </FormControl>
                         <FormMessage />
@@ -170,7 +170,7 @@ export function VenueWizardForm({
                           disabled={isLoading || citiesLoading}
                         >
                           <FormControl>
-                            <SelectTrigger className="focus:ring-2 focus:ring-offset-1 focus:ring-blue-500 focus:border-blue-500">
+                            <SelectTrigger className="focus:outline-none focus:ring-1 focus:ring-offset-1 ">
                               <SelectValue placeholder="Select a city" />
                             </SelectTrigger>
                           </FormControl>
@@ -207,7 +207,7 @@ export function VenueWizardForm({
                             {...field}
                             placeholder="Enter zone or sub-city"
                             disabled={isLoading}
-                            className="focus:ring-2 focus:ring-offset-1 focus:ring-blue-500 focus:border-blue-500"
+                            className="focus:outline-none focus:ring-1 focus:ring-offset-1 "
                           />
                         </FormControl>
                         <FormMessage />
@@ -225,7 +225,7 @@ export function VenueWizardForm({
                             {...field}
                             placeholder="Enter woreda or kebele"
                             disabled={isLoading}
-                            className="focus:ring-2 focus:ring-offset-1 focus:ring-blue-500 focus:border-blue-500"
+                            className="focus:outline-none focus:ring-1 focus:ring-offset-1 "
                           />
                         </FormControl>
                         <FormMessage />
@@ -253,7 +253,7 @@ export function VenueWizardForm({
                             }
                             placeholder="e.g., 9.005401"
                             disabled={isLoading}
-                            className="focus:ring-2 focus:ring-offset-1 focus:ring-blue-500 focus:border-blue-500"
+                            className="focus:outline-none focus:ring-1 focus:ring-offset-1 "
                           />
                         </FormControl>
                         <FormMessage />
@@ -281,7 +281,7 @@ export function VenueWizardForm({
                             }
                             placeholder="e.g., 38.763611"
                             disabled={isLoading}
-                            className="focus:ring-2 focus:ring-offset-1 focus:ring-blue-500 focus:border-blue-500"
+                            className="focus:outline-none focus:ring-1 focus:ring-offset-1 "
                           />
                         </FormControl>
                         <FormMessage />
@@ -410,7 +410,7 @@ export function VenueWizardForm({
                                           disabled={
                                             isLoading || !showRemarkInput
                                           }
-                                          className="mt-1 focus:ring-2 focus:ring-offset-1 focus:ring-blue-500 focus:border-blue-500"
+                                          className="mt-1 focus:outline-none focus:ring-1 focus:ring-offset-1 "
                                         />
                                       </FormControl>
                                       <FormMessage />
@@ -507,7 +507,7 @@ export function VenueWizardForm({
                                       value={numField.value ?? ""}
                                       placeholder="Enter quantity"
                                       disabled={isLoading || !showNumericInput}
-                                      className="mt-1 w-1/2 focus:ring-2 focus:ring-offset-1 focus:ring-blue-500 focus:border-blue-500"
+                                      className="mt-1 w-1/2 focus:outline-none focus:ring-1 focus:ring-offset-1 "
                                     />
                                   </FormControl>
                                   <FormMessage />
@@ -548,7 +548,7 @@ export function VenueWizardForm({
                             }
                             placeholder="e.g., 30"
                             disabled={isLoading}
-                            className="focus:ring-2 focus:ring-offset-1 focus:ring-blue-500 focus:border-blue-500"
+                            className="focus:outline-none focus:ring-1 focus:ring-offset-1 "
                           />
                         </FormControl>
                         <FormMessage />
@@ -576,7 +576,7 @@ export function VenueWizardForm({
                             }
                             placeholder="e.g., 50"
                             disabled={isLoading}
-                            className="focus:ring-2 focus:ring-offset-1 focus:ring-blue-500 focus:border-blue-500"
+                            className="focus:outline-none focus:ring-1 focus:ring-offset-1 "
                           />
                         </FormControl>
                         <FormMessage />
@@ -604,7 +604,7 @@ export function VenueWizardForm({
                             }
                             placeholder="e.g., 2"
                             disabled={isLoading}
-                            className="focus:ring-2 focus:ring-offset-1 focus:ring-blue-500 focus:border-blue-500"
+                            className="focus:outline-none focus:ring-1 focus:ring-offset-1 "
                           />
                         </FormControl>
                         <FormMessage />
@@ -633,7 +633,7 @@ export function VenueWizardForm({
                             }
                             placeholder="e.g., 100.5"
                             disabled={isLoading}
-                            className="focus:ring-2 focus:ring-offset-1 focus:ring-blue-500 focus:border-blue-500"
+                            className="focus:outline-none focus:ring-1 focus:ring-offset-1 "
                           />
                         </FormControl>
                         <FormMessage />
@@ -652,7 +652,7 @@ export function VenueWizardForm({
                                 checked={field.value}
                                 onCheckedChange={field.onChange}
                                 disabled={isLoading}
-                                className="focus:ring-2 focus:ring-blue-500"
+                                className="focus:outline-none focus:ring-1 focus:ring-blue-500"
                               />
                             </FormControl>
                             <div className="space-y-1 leading-none">
@@ -676,7 +676,7 @@ export function VenueWizardForm({
                                 checked={field.value}
                                 onCheckedChange={field.onChange}
                                 disabled={isLoading}
-                                className="focus:ring-2 focus:ring-blue-500"
+                                className="focus:outline-none focus:ring-1 focus:ring-blue-500"
                               />
                             </FormControl>
                             <div className="space-y-1 leading-none">
@@ -702,7 +702,7 @@ export function VenueWizardForm({
                               {...field}
                               placeholder="Describe accessibility features (ramps, elevators, etc.)"
                               disabled={isLoading || !form.watch("hasAccessibility")}
-                              className="min-h-[80px] focus:ring-2 focus:ring-offset-1 focus:ring-blue-500 focus:border-blue-500"
+                              className="min-h-[80px] focus:outline-none focus:ring-1 focus:ring-offset-1 "
                             />
                           </FormControl>
                           <FormMessage />
@@ -730,7 +730,7 @@ export function VenueWizardForm({
                               }
                               placeholder="Number of parking spaces"
                               disabled={isLoading || !form.watch("hasParkingSpace")}
-                              className="w-1/2 focus:ring-2 focus:ring-offset-1 focus:ring-blue-500 focus:border-blue-500"
+                              className="w-1/2 focus:outline-none focus:ring-1 focus:ring-offset-1 "
                             />
                           </FormControl>
                           <FormMessage />
@@ -748,7 +748,7 @@ export function VenueWizardForm({
                             checked={field.value}
                             onCheckedChange={field.onChange}
                             disabled={isLoading}
-                            className="focus:ring-2 focus:ring-blue-500"
+                            className="focus:outline-none focus:ring-1 focus:ring-blue-500"
                           />
                         </FormControl>
                         <div className="space-y-1 leading-none">

@@ -21,7 +21,7 @@ const DEFAULT_PAGE_SIZE = 10
 export default function TrainersPage() {
   const params = useParams()
   const companyId = params.companyId as string
-  const { isTrainerAdmin } = useUserRole()
+  const { isTrainerAdmin, isProjectManager } = useUserRole()
   const { data: languages } = useBaseData('language')
   const { data: academicLevels } = useBaseData('academic-level')
   const { data: trainingTags } = useBaseData('training-tag')
@@ -104,7 +104,7 @@ export default function TrainersPage() {
     return <div className="text-center text-red-500 p-4">Error loading trainers: {error.message}</div>
   }
 
-  // Empty State (Figma Node: 121-4235) - Check based on *all* fetched trainers before filtering
+  // Empty State 
   if (!isLoading && allFetchedTrainers.length === 0 && debouncedSearch === "") {
     return (
       <div className="flex lg:px-16 md:px-14 px-4 w-full">
@@ -161,7 +161,7 @@ export default function TrainersPage() {
               }}
             />
           </div>
-          {isTrainerAdmin && (
+          {isTrainerAdmin || isProjectManager && (
             <Button asChild className="bg-[#0B75FF] hover:bg-[#0B75FF]/90 text-white flex items-center gap-2">
               <Link href={addTrainerHref}>
                 <Plus className="h-4 w-4" />

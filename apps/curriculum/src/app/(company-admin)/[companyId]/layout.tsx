@@ -105,6 +105,11 @@ export default function CompanyAdminLayout({
           label: "Trainers",
         },
         {
+          icon: <img src="/venue.svg" alt="icon" width={19} height={19} />,
+          href: `/${roleForUrl}/venue`,
+          label: "Venue",
+        },
+        {
           icon: <img src="/job.svg" alt="icon" width={19} height={19} />,
           href: `/${roleForUrl}/create-jobs`,
           label: "Jobs",
