@@ -1,33 +1,33 @@
-"use client"
+"use client";
 
-import { useAssessmentForm } from "@/contexts/AssessmentFormContext"
-import { EditFormContainer } from "@/components/ui/edit-form-container"
-import { Checkbox } from "@/components/ui/checkbox"
+import { useAssessmentForm } from "@/contexts/AssessmentFormContext";
+import { EditFormContainer } from "@/components/ui/edit-form-container";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface AssessmentMethod {
-  id: string
-  name: string
-  description: string
+  id: string;
+  name: string;
+  description: string;
 }
 
 interface CheckboxAssessmentFormProps {
-  assessmentMethods: AssessmentMethod[]
-  title: string
-  formKey: "genericFormative" | "technologyFormative" | "alternativeFormative"
-  description?: string
+  assessmentMethods: AssessmentMethod[];
+  title: string;
+  formKey: "formative" | "summative" | "other";
+  description?: string;
 }
 
-export function CheckboxAssessmentForm({ 
-  assessmentMethods, 
-  title, 
+export function CheckboxAssessmentForm({
+  assessmentMethods,
+  title,
   formKey,
-  description = "This specifies the core teaching methods used to deliver content and facilitate learning."
+  description = "This specifies the core assessment methods used to assess the trainee's knowledge of the module.",
 }: CheckboxAssessmentFormProps) {
-  const { formData, updateFormData } = useAssessmentForm()
+  const { formData, updateFormData } = useAssessmentForm();
 
-  const midpoint = Math.ceil(assessmentMethods.length / 2)
-  const leftColumnMethods = assessmentMethods.slice(0, midpoint)
-  const rightColumnMethods = assessmentMethods.slice(midpoint)
+  const midpoint = Math.ceil(assessmentMethods.length / 2);
+  const leftColumnMethods = assessmentMethods.slice(0, midpoint);
+  const rightColumnMethods = assessmentMethods.slice(midpoint);
 
   return (
     <EditFormContainer title="" description="">
@@ -39,25 +39,20 @@ export function CheckboxAssessmentForm({
               (Mandatory)
             </span>
           </div>
-          <p className="text-[12px] text-[#99948E]">
-            {description}
-          </p>
+          <p className="text-[12px] text-[#99948E]">{description}</p>
 
           <div className="grid grid-cols-2 gap-x-8 gap-y-4 pt-4">
             <div className="space-y-4">
-              {leftColumnMethods.map(method => (
+              {leftColumnMethods.map((method) => (
                 <div key={method.id} className="flex items-center space-x-2">
-                  <Checkbox 
+                  <Checkbox
                     id={method.id}
                     checked={formData[formKey][method.id] || false}
-                    onCheckedChange={(checked) => 
+                    onCheckedChange={(checked) =>
                       updateFormData(formKey, method.id, checked as boolean)
                     }
                   />
-                  <label 
-                    htmlFor={method.id} 
-                    className="cursor-pointer text-sm"
-                  >
+                  <label htmlFor={method.id} className="cursor-pointer text-sm">
                     {method.name}
                   </label>
                 </div>
@@ -65,19 +60,16 @@ export function CheckboxAssessmentForm({
             </div>
 
             <div className="space-y-4">
-              {rightColumnMethods.map(method => (
+              {rightColumnMethods.map((method) => (
                 <div key={method.id} className="flex items-center space-x-2">
-                  <Checkbox 
+                  <Checkbox
                     id={method.id}
                     checked={formData[formKey][method.id] || false}
-                    onCheckedChange={(checked) => 
+                    onCheckedChange={(checked) =>
                       updateFormData(formKey, method.id, checked as boolean)
                     }
                   />
-                  <label 
-                    htmlFor={method.id} 
-                    className="cursor-pointer text-sm"
-                  >
+                  <label htmlFor={method.id} className="cursor-pointer text-sm">
                     {method.name}
                   </label>
                 </div>
@@ -93,5 +85,5 @@ export function CheckboxAssessmentForm({
         </div>
       </div>
     </EditFormContainer>
-  )
-} 
+  );
+}

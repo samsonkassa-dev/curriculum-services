@@ -6,11 +6,11 @@ export interface BaseDataItem {
 
 export interface BaseDataOptions {
   type?: 'INSTRUCTOR' | 'LEARNER';
-  subType?: 'GENERAL_FORMATIVE' | 'TECHNOLOGY_SPECIFIC_FORMATIVE' | 'ALTERNATIVE_FORMATIVE';
+  subType?: 'FORMATIVE' | 'SUMMATIVE' | 'OTHER';
   enabled?: boolean;
 }
 
-export type BaseDataType = 
+export type BaseDataType =
 | "academic-level"
 | "academic-qualification"
 | "age-group"
