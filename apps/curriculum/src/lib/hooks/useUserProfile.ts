@@ -33,7 +33,6 @@ export function useUserProfile({ enabled = false }) {
     queryFn: async () => {
       try {
         const token = getCookie('token')
-        // console.log("token", token)
         const response = await axios.get<ApiResponse>(
           `${process.env.NEXT_PUBLIC_API}/user/me`,
           {

@@ -101,6 +101,19 @@ interface StudentResponse {
   message: string
 }
 
+// Helper function to add +251 prefix to phone numbers if not already present
+const addPhonePrefix = (phone: string): string => {
+  if (!phone) return phone
+  // If phone already has a + prefix, return as is
+  if (phone.startsWith('+')) return phone
+  // If phone starts with 251, add the + prefix
+  if (phone.startsWith('251')) return `+${phone}`
+  // If phone starts with 0, replace 0 with +251
+  if (phone.startsWith('0')) return `+251${phone.substring(1)}`
+  // Otherwise add +251 prefix
+  return `+251${phone}`
+}
+
 export function useStudents(
   trainingId: string, 
   page?: number, 
@@ -163,9 +176,17 @@ export function useAddStudent() {
       studentData: CreateStudentData 
     }) => {
       const token = getCookie('token')
+      
+      // Add +251 prefix to phone numbers if not already present
+      const processedData = {
+        ...studentData,
+        contactPhone: addPhonePrefix(studentData.contactPhone),
+        emergencyContactPhone: addPhonePrefix(studentData.emergencyContactPhone)
+      }
+      
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_API}/trainee/training/${trainingId}`,
-        studentData,
+        processedData,
         {
           headers: { Authorization: `Bearer ${token}` }
         }
@@ -249,9 +270,19 @@ export function useUpdateStudent() {
       studentData: Partial<CreateStudentData> 
     }) => {
       const token = getCookie('token')
+      
+      // Process phone numbers if they exist in the update data
+      const processedData = { ...studentData }
+      if (processedData.contactPhone) {
+        processedData.contactPhone = addPhonePrefix(processedData.contactPhone)
+      }
+      if (processedData.emergencyContactPhone) {
+        processedData.emergencyContactPhone = addPhonePrefix(processedData.emergencyContactPhone)
+      }
+      
       const response = await axios.patch(
         `${process.env.NEXT_PUBLIC_API}/trainee/${id}`,
-        studentData,
+        processedData,
         {
           headers: { Authorization: `Bearer ${token}` }
         }
