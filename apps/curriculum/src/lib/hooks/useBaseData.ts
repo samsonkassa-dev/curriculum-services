@@ -47,7 +47,7 @@ const getResponseKey = (type: BaseDataType) => {
   const typeStr = type as string;
   return typeStr
     .split('-')
-    .map((word: string, index: number) => 
+    .map((word: string, index: number) =>
       index === 0 ? word : word.charAt(0).toUpperCase() + word.slice(1)
     )
     .join('') + 's';
@@ -55,7 +55,7 @@ const getResponseKey = (type: BaseDataType) => {
 
 interface BaseDataOptions {
   type?: 'INSTRUCTOR' | 'LEARNER';
-  subType?: 'GENERAL_FORMATIVE' | 'TECHNOLOGY_SPECIFIC_FORMATIVE' | 'ALTERNATIVE_FORMATIVE';
+  subType?: 'FORMATIVE' | 'SUMMATIVE' | 'OTHER';
   enabled?: boolean;
   page?: number;
   pageSize?: number;
@@ -85,7 +85,7 @@ export function useBaseData(type: BaseDataType, options?: BaseDataOptions) {
       try {
         const token = getCookie('token');
         let url = `/${type}`;
-        
+
         // Add query parameters if they exist
         const queryParams = [];
         if (options?.type) queryParams.push(`type=${options.type}`);
@@ -95,18 +95,18 @@ export function useBaseData(type: BaseDataType, options?: BaseDataOptions) {
         // Add pagination parameters
         queryParams.push(`page=${page}`);
         queryParams.push(`page-size=${pageSize}`);
-        
+
         if (queryParams.length > 0) {
           url += `?${queryParams.join('&')}`;
         }
-        
+
         const response = await api.get<ApiResponse>(url, {
           headers: { Authorization: `Bearer ${token}` }
         });
 
         // Get the data from the response using the dynamic key
         const data = response.data[responseKey] || [];
-        
+
         return {
           data,
           totalItems: response.data.totalElements || data.length,
@@ -117,7 +117,7 @@ export function useBaseData(type: BaseDataType, options?: BaseDataOptions) {
       } catch (error) {
         const axiosError = error as AxiosError;
         const statusCode = axiosError.response?.status;
-        
+
         if (statusCode === 401) {
           toast.error('Your session has expired. Please log in again.');
         } else if (statusCode === 403) {
@@ -127,7 +127,7 @@ export function useBaseData(type: BaseDataType, options?: BaseDataOptions) {
         } else {
           toast.error(`Error fetching ${type.replace('-', ' ')} data: ${axiosError.message}`);
         }
-        
+
         throw error;
       }
     },
@@ -141,9 +141,9 @@ export function useBaseData(type: BaseDataType, options?: BaseDataOptions) {
 
   // Mutation for adding new base data
   const addMutation = useMutation({
-    mutationFn: async (data: Omit<BaseDataItem, 'id'> & { 
-      countryId?: string; 
-      range?: string; 
+    mutationFn: async (data: Omit<BaseDataItem, 'id'> & {
+      countryId?: string;
+      range?: string;
       technologicalRequirementType?: string;
       assessmentSubType?: string;
     }) => {
@@ -171,11 +171,11 @@ export function useBaseData(type: BaseDataType, options?: BaseDataOptions) {
 
   // Mutation for updating base data
   const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { 
-      id: string; 
-      data: Partial<BaseDataItem> & { 
-        countryId?: string; 
-        range?: string; 
+    mutationFn: async ({ id, data }: {
+      id: string;
+      data: Partial<BaseDataItem> & {
+        countryId?: string;
+        range?: string;
         technologicalRequirementType?: string;
         assessmentSubType?: string;
       }
@@ -245,4 +245,4 @@ export function useBaseData(type: BaseDataType, options?: BaseDataOptions) {
     isUpdateLoading: updateMutation.isPending,
     isDeleteLoading: deleteMutation.isPending,
   };
-} 
+}

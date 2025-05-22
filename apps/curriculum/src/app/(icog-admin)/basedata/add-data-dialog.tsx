@@ -1,122 +1,141 @@
-"use client"
+"use client";
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Plus, Loader2 } from "lucide-react"
-import { useState } from "react"
-import { BaseDataItem, BaseDataType } from "@/types/base-data"
-import { Textarea } from "@/components/ui/textarea"
-import { useBaseData } from "@/lib/hooks/useBaseData"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { BaseDataOptions } from "@/types/base-data"
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Plus, Loader2 } from "lucide-react";
+import { useState } from "react";
+import { BaseDataItem, BaseDataType } from "@/types/base-data";
+import { Textarea } from "@/components/ui/textarea";
+import { useBaseData } from "@/lib/hooks/useBaseData";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { BaseDataOptions } from "@/types/base-data";
 
 // Constants
 const REQUIREMENT_TYPES = [
   { value: "LEARNER", label: "Learner" },
-  { value: "INSTRUCTOR", label: "Instructor" }
+  { value: "INSTRUCTOR", label: "Instructor" },
 ];
 
-const ASSESSMENT_SUB_TYPES=[
-  {value: "GENERAL_FORMATIVE", label: "General Formative"},
-  {value: "TECHNOLOGY_SPECIFIC_FORMATIVE", label: "Technology Specific Formative"},
-  {value: "ALTERNATIVE_FORMATIVE", label: "Alternative Formative"}
-]
+const ASSESSMENT_SUB_TYPES = [
+  { value: "FORMATIVE", label: "Formative" },
+  { value: "SUMMATIVE", label: "Summative" },
+  { value: "OTHER", label: "Other" },
+];
 
 interface AddDataDialogProps {
-  onAddData?: (data: { 
-    name: string; 
-    description: string; 
+  onAddData?: (data: {
+    name: string;
+    description: string;
     countryId?: string;
     range?: string;
     technologicalRequirementType?: string;
     assessmentSubType?: string;
   }) => void;
-  onUpdateData?: (data: { 
-    name: string; 
-    description: string; 
+  onUpdateData?: (data: {
+    name: string;
+    description: string;
     countryId?: string;
     range?: string;
     technologicalRequirementType?: string;
     assessmentSubType?: string;
   }) => void;
-  initialData?: BaseDataItem & { 
+  initialData?: BaseDataItem & {
     countryId?: string;
     range?: string;
     technologicalRequirementType?: string;
     assessmentSubType?: string;
   };
   isLoading?: boolean;
-  mode?: 'add' | 'edit';
+  mode?: "add" | "edit";
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   type?: BaseDataType;
 }
 
-export function AddDataDialog({ 
-  onAddData, 
+export function AddDataDialog({
+  onAddData,
   onUpdateData,
   initialData,
   isLoading,
-  mode = 'add',
+  mode = "add",
   open,
   onOpenChange,
-  type
+  type,
 }: AddDataDialogProps) {
-  const [name, setName] = useState(initialData?.name || "")
-  const [description, setDescription] = useState(initialData?.description || "")
-  const [countryId, setCountryId] = useState(initialData?.countryId || "")
-  const [range, setRange] = useState(initialData?.range || "")
-  const [requirementType, setRequirementType] = useState(initialData?.technologicalRequirementType || "LEARNER")
-  const [dialogOpen, setDialogOpen] = useState(false)
-  const [assessmentSubType, setAssessmentSubType] = useState(initialData?.assessmentSubType || "GENERAL_FORMATIVE")
+  const [name, setName] = useState(initialData?.name || "");
+  const [description, setDescription] = useState(
+    initialData?.description || ""
+  );
+  const [countryId, setCountryId] = useState(initialData?.countryId || "");
+  const [range, setRange] = useState(initialData?.range || "");
+  const [requirementType, setRequirementType] = useState(
+    initialData?.technologicalRequirementType || "LEARNER"
+  );
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [assessmentSubType, setAssessmentSubType] = useState(
+    initialData?.assessmentSubType || "FORMATIVE"
+  );
 
   // Fetch countries if we're adding/editing a city
-  const { data: countries } = useBaseData('country', { enabled: type === 'city' } as BaseDataOptions)
+  const { data: countries } = useBaseData("country", {
+    enabled: type === "city",
+  } as BaseDataOptions);
 
   const actualOpen = open ?? dialogOpen;
   const actualOnOpenChange = onOpenChange ?? setDialogOpen;
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     const data = {
       name,
       description,
-      ...(type === 'city' && { countryId }),
-      ...(type === 'age-group' && { range }),
-      ...(type === 'technological-requirement' && { technologicalRequirementType: requirementType }),
-      ...(type === 'assessment-type' && { assessmentSubType })
-    }
+      ...(type === "city" && { countryId }),
+      ...(type === "age-group" && { range }),
+      ...(type === "technological-requirement" && {
+        technologicalRequirementType: requirementType,
+      }),
+      ...(type === "assessment-type" && { assessmentSubType }),
+    };
 
-    if (mode === 'edit' && onUpdateData) {
-      onUpdateData(data)
+    if (mode === "edit" && onUpdateData) {
+      onUpdateData(data);
     } else if (onAddData) {
-      onAddData(data)
+      onAddData(data);
     }
-    actualOnOpenChange(false)
-  }
+    actualOnOpenChange(false);
+  };
 
   const isSubmitDisabled = () => {
     if (isLoading) return true;
-    if (type === 'city' && !countryId) return true;
-    if (type === 'age-group' && !range) return true;
-    if (type === 'assessment-type' && !assessmentSubType) return true;
+    if (type === "city" && !countryId) return true;
+    if (type === "age-group" && !range) return true;
+    if (type === "assessment-type" && !assessmentSubType) return true;
     if (!name || !description) return true;
     return false;
-  }
+  };
 
   return (
     <Dialog open={actualOpen} onOpenChange={actualOnOpenChange}>
-      {mode === 'add' && (
+      {mode === "add" && (
         <DialogTrigger asChild>
-          <Button variant="ghost" className="text-blue-500 hover:text-blue-600 hover:bg-blue-50">
+          <Button
+            variant="ghost"
+            className="text-blue-500 hover:text-blue-600 hover:bg-blue-50"
+          >
             <Plus className="h-4 w-4 mr-2" />
             Add Data
           </Button>
@@ -124,7 +143,7 @@ export function AddDataDialog({
       )}
       <DialogContent className="w-full max-w-2xl p-0">
         <DialogHeader className="px-6 pt-6 border-b-[0.3px] border-[#CED4DA] pb-4">
-          <DialogTitle>{mode === 'add' ? 'Add Row' : 'Edit Row'}</DialogTitle>
+          <DialogTitle>{mode === "add" ? "Add Row" : "Edit Row"}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="grid gap-4 p-10">
           <div className="grid gap-2 px-5">
@@ -138,7 +157,7 @@ export function AddDataDialog({
             />
           </div>
 
-          {type === 'city' && (
+          {type === "city" && (
             <div className="grid gap-2 px-5">
               <Label htmlFor="country">Country</Label>
               <Select value={countryId} onValueChange={setCountryId}>
@@ -156,7 +175,7 @@ export function AddDataDialog({
             </div>
           )}
 
-          {type === 'age-group' && (
+          {type === "age-group" && (
             <div className="grid gap-2 px-5">
               <Label htmlFor="range">Age Range</Label>
               <Input
@@ -169,10 +188,13 @@ export function AddDataDialog({
             </div>
           )}
 
-          {type === 'technological-requirement' && (
+          {type === "technological-requirement" && (
             <div className="grid gap-2 px-5">
               <Label htmlFor="requirementType">Requirement Type</Label>
-              <Select value={requirementType} onValueChange={setRequirementType}>
+              <Select
+                value={requirementType}
+                onValueChange={setRequirementType}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select requirement type" />
                 </SelectTrigger>
@@ -187,10 +209,13 @@ export function AddDataDialog({
             </div>
           )}
 
-          {type === 'assessment-type' && (
-            <div className="grid gap-2 px-5">
+          {type === "assessment-type" && (
+            <div className="grid gap-2 px-5 mt-2">
               <Label htmlFor="assessmentSubType">Assessment Sub Type</Label>
-              <Select value={assessmentSubType} onValueChange={setAssessmentSubType}>
+              <Select
+                value={assessmentSubType}
+                onValueChange={setAssessmentSubType}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select assessment sub type" />
                 </SelectTrigger>
@@ -205,7 +230,7 @@ export function AddDataDialog({
             </div>
           )}
 
-          <div className="grid gap-2 px-5 pt-5">
+          <div className="grid gap-2 px-5 pt-3">
             <Label htmlFor="description">Description</Label>
             <Textarea
               id="description"
@@ -217,22 +242,26 @@ export function AddDataDialog({
           </div>
 
           <div className="flex justify-center gap-5 mt-8">
-            <Button type="button" variant="outline" onClick={() => actualOnOpenChange(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => actualOnOpenChange(false)}
+            >
               Cancel
             </Button>
-            <Button 
-              type="submit" 
-              disabled={isSubmitDisabled()} 
+            <Button
+              type="submit"
+              disabled={isSubmitDisabled()}
               className="bg-brand text-white hover:bg-brand/90"
             >
               {isLoading ? (
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
               ) : null}
-              {mode === 'add' ? 'Save' : 'Update'}
+              {mode === "add" ? "Save" : "Update"}
             </Button>
           </div>
         </form>
       </DialogContent>
     </Dialog>
-  )
-} 
+  );
+}

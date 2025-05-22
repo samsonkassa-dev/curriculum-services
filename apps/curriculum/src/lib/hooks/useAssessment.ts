@@ -6,7 +6,7 @@ interface AssessmentMethod {
   id: string
   name: string
   description: string
-  assessmentSubType: 'GENERAL_FORMATIVE' | 'TECHNOLOGY_SPECIFIC_FORMATIVE' | 'ALTERNATIVE_FORMATIVE'
+  assessmentSubType: 'FORMATIVE' | 'SUMMATIVE' | 'OTHER'
 }
 
 // Common structure for assessment data
@@ -52,7 +52,7 @@ export function useSubmitAssessment(moduleId: string) {
 }
 
 export function useGetAssessment(
-  moduleId: string, 
+  moduleId: string,
   options?: Omit<UseQueryOptions<AssessmentResponse, Error, AssessmentResponse, string[]>, 'queryKey' | 'queryFn'>
 ) {
   return useQuery({
@@ -64,7 +64,7 @@ export function useGetAssessment(
           console.log("No auth token found for assessment methods fetch");
           throw new Error("Authentication required");
         }
-        
+
         console.log(`Fetching assessment methods for module: ${moduleId}`);
         const response = await axios.get<AssessmentResponse>(
           `${process.env.NEXT_PUBLIC_API}/module/assessment-method/${moduleId}`,
@@ -72,14 +72,14 @@ export function useGetAssessment(
             headers: { Authorization: `Bearer ${token}` }
           }
         )
-        
+
         console.log("Assessment API Response:", response.data);
-        
+
         // Add some validation to ensure expected data structure
         if (response.data.code !== "OK") {
           console.warn("Assessment API returned non-OK status:", response.data);
         }
-        
+
         return response.data;
       } catch (error) {
         console.log("Error fetching assessment methods:", error);
