@@ -41,6 +41,8 @@ interface AddDataDialogProps {
     name: string;
     description: string;
     countryId?: string;
+    zoneId?: string;
+    regionId?: string;
     range?: string;
     technologicalRequirementType?: string;
     assessmentSubType?: string;
@@ -49,12 +51,16 @@ interface AddDataDialogProps {
     name: string;
     description: string;
     countryId?: string;
+    zoneId?: string;
+    regionId?: string;
     range?: string;
     technologicalRequirementType?: string;
     assessmentSubType?: string;
   }) => void;
   initialData?: BaseDataItem & {
     countryId?: string;
+    zoneId?: string;
+    regionId?: string;
     range?: string;
     technologicalRequirementType?: string;
     assessmentSubType?: string;
@@ -81,6 +87,8 @@ export function AddDataDialog({
     initialData?.description || ""
   );
   const [countryId, setCountryId] = useState(initialData?.countryId || "");
+  const [zoneId, setZoneId] = useState(initialData?.zoneId || "");
+  const [regionId, setRegionId] = useState(initialData?.regionId || "");
   const [range, setRange] = useState(initialData?.range || "");
   const [requirementType, setRequirementType] = useState(
     initialData?.technologicalRequirementType || "LEARNER"
@@ -92,36 +100,56 @@ export function AddDataDialog({
 
   // Fetch countries if we're adding/editing a city
   const { data: countries } = useBaseData("country", {
+    enabled: type === "region",
+  } as BaseDataOptions);
+  const { data: zones } = useBaseData("zone", {
     enabled: type === "city",
+  } as BaseDataOptions);
+  const { data: regions } = useBaseData("region", {
+    enabled: type === "zone",
   } as BaseDataOptions);
 
   const actualOpen = open ?? dialogOpen;
   const actualOnOpenChange = onOpenChange ?? setDialogOpen;
 
+  const resetForm = () => {
+    setName("");
+    setDescription("");
+    setCountryId("");
+    setZoneId("");
+    setRegionId("");
+    setRange("");
+    setRequirementType("LEARNER");
+    setAssessmentSubType("FORMATIVE");
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const data = {
+    const baseData = {
       name,
       description,
-      ...(type === "city" && { countryId }),
+      ...(type === "region" && { countryId }),
+      ...(type === "city" && { zoneId }),
       ...(type === "age-group" && { range }),
-      ...(type === "technological-requirement" && {
-        technologicalRequirementType: requirementType,
-      }),
+      ...(type === "technological-requirement" && { technologicalRequirementType: requirementType }),
       ...(type === "assessment-type" && { assessmentSubType }),
+      ...(type === "zone" && { regionId }),
     };
 
     if (mode === "edit" && onUpdateData) {
-      onUpdateData(data);
+      onUpdateData(baseData);
     } else if (onAddData) {
-      onAddData(data);
+      onAddData(baseData);
     }
+    resetForm();
     actualOnOpenChange(false);
   };
 
   const isSubmitDisabled = () => {
     if (isLoading) return true;
-    if (type === "city" && !countryId) return true;
+    if (type === "city" && !zoneId) return true;
+    if (type === "region" && !countryId) return true;
+    if (type === "zone" && !regionId) return true;
     if (type === "age-group" && !range) return true;
     if (type === "assessment-type" && !assessmentSubType) return true;
     if (!name || !description) return true;
@@ -159,15 +187,51 @@ export function AddDataDialog({
 
           {type === "city" && (
             <div className="grid gap-2 px-5">
+              <Label htmlFor="zone">Zone</Label>
+              <Select value={zoneId} onValueChange={setZoneId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select zone">{zoneId && zones?.find((zone: BaseDataItem) => zone.id === zoneId)?.name}</SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {zones?.map((zone: BaseDataItem) => (
+                    <SelectItem key={zone.id} value={zone.id}>
+                      {zone.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {type === "region" && (
+            <div className="grid gap-2 px-5">
               <Label htmlFor="country">Country</Label>
               <Select value={countryId} onValueChange={setCountryId}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select country" />
+                  <SelectValue placeholder="Select country">{countryId && countries?.find((country: BaseDataItem) => country.id === countryId)?.name}</SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {countries?.map((country: BaseDataItem) => (
                     <SelectItem key={country.id} value={country.id}>
                       {country.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {type === "zone" && (
+            <div className="grid gap-2 px-5">
+              <Label htmlFor="region">Region</Label>
+              <Select value={regionId} onValueChange={setRegionId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select region">{regionId && regions?.find((region: BaseDataItem) => region.id === regionId)?.name}</SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {regions?.map((region: BaseDataItem) => (
+                    <SelectItem key={region.id} value={region.id}>
+                      {region.name}
                     </SelectItem>
                   ))}
                 </SelectContent>

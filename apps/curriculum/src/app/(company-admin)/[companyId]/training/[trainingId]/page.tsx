@@ -24,6 +24,9 @@ const AssessmentComponent = lazy(() => import("./components/assessment").then(mo
 const SurveyComponent = lazy(() => import("./components/survey").then(module => ({ default: module.SurveyComponent })))
 const CatComponent = lazy(() => import("./components/cat").then(module => ({ default: module.CatComponent })))
 
+// Insert new constant VALID_TABS above the component definition
+const VALID_TABS: Array<TabType> = ['overview', 'profile', 'audience', 'module', 'evaluation', 'students', 'sessions', 'attendance', 'certificate', 'assessment', 'cat', 'survey'];
+
 export default function TrainingDetail() {
   const params = useParams()
   const router = useRouter()
@@ -34,9 +37,8 @@ export default function TrainingDetail() {
   
   // Get tab from URL query or default to 'overview'
   const tabParam = searchParams.get('tab')
-  const validTabs: Array<TabType> = ['overview', 'profile', 'audience', 'module', 'evaluation', 'students', 'sessions', 'attendance', 'certificate', 'assessment', 'cat', 'survey']
-  const initialTab: TabType = validTabs.includes(tabParam as TabType) ? (tabParam as TabType) : 'overview'
-  
+  const initialTab: TabType = VALID_TABS.includes(tabParam as TabType) ? (tabParam as TabType) : 'overview'
+
   const [activeTab, setActiveTab] = useState<TabType>(initialTab)
   
   // Update the URL when tab changes

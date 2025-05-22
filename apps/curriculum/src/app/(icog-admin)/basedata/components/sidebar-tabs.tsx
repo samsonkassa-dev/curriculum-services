@@ -1,44 +1,15 @@
 "use client"
 
 import { cn } from "@/lib/utils"
-import { BaseDataType } from "@/types/base-data"
+import { BASE_DATA_CONFIG, BaseDataType } from "@/types/base-data"
 
 interface Tab {
   id: BaseDataType
   name: string
 }
 
-// Create a map from type to display name
-const tabs: Tab[] = [
-  { id: "academic-level", name: "Academic Level" },
-  { id: "academic-qualification", name: "Academic Qualification" },
-  { id: "age-group", name: "Age Group" },
-  { id: "alignment-standard", name: "Alignment Standard" },
-  { id: "assessment-type", name: "Assessment Type" },
-  { id: "business-type", name: "Business Type" },
-  { id: "city", name: "City" },
-  { id: "country", name: "Country" },
-  { id: "company-file-type", name: "Company File Type" },
-  { id: "delivery-tool", name: "Delivery Tool" },
-  { id: "economic-background", name: "Economic Background" },
-  { id: "education-level", name: "Education Level" },
-  { id: "industry-type", name: "Industry Type" },
-  { id: "instructional-method", name: "Instructional Method" },
-  { id: "language", name: "Language" },
-  { id: "learner-level", name: "Learner Level" },
-  { id: "learner-style-preference", name: "Learning Style Preference" },
-  { id: "learning-resource-type", name: "Learning Resource Type" },
-  { id: "report-file-type", name: "Report File Type" },
-  { id: "technological-requirement", name: "Technological Requirement" },
-  { id: "technology-integration", name: "Technology Integration" },
-  { id: "training-purpose", name: "Training Purpose" },
-  { id: "work-experience", name: "Work Experience" },
-  { id: "trainer-requirement", name: "Trainer Requirement" },
-  { id: "disability", name: "Disability" },
-  { id: "marginalized-group", name: "Marginalized Group" },
-  { id: "training-type", name: "Training Type" },
-  { id: "training-tag", name: "Training Tag" },
-]
+//basedata config from types/base-data.ts
+const tabs: Tab[] = Object.entries(BASE_DATA_CONFIG).map(([id, config]) => ({ id: id as BaseDataType, name: config.label }))
 
 interface SidebarTabsProps {
   activeTab: string

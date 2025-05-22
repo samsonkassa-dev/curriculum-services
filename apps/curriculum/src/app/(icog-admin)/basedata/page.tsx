@@ -16,7 +16,7 @@ const NEW_ITEM_HIGHLIGHT_DURATION = 2000; // milliseconds
 const DEFAULT_PAGE_SIZE = 10;
 
 export default function BaseData() {
-  const [activeTab, setActiveTab] = useState<BaseDataType>("education-level")
+  const [activeTab, setActiveTab] = useState<BaseDataType>("academic-level")
   const [newItemId, setNewItemId] = useState<string | undefined>()
   const [isMobile, setIsMobile] = useState(false)
   const [showSidebar, setShowSidebar] = useState(true)
