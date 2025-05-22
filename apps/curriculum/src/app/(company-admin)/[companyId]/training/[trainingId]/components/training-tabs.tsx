@@ -22,12 +22,12 @@ const allTabs: TabConfig[] = [
   { id: 'module', label: 'Module', icon: '/module.svg', activeIcon: '/module_active.svg' },
   { id: 'students', label: 'Students', icon: '/student.svg', activeIcon: '/stuedntActive.svg' },
   { id: 'sessions', label: 'Sessions', icon: '/Schedule.svg', activeIcon: '/scheduleActive.svg' },
-  { id: 'evaluation', label: 'Evaluation', icon: '/Evaluation.svg', activeIcon: '/EvaluationActive.svg' },
   { id: 'attendance', label: 'Attendance', icon: '/Schedule.svg', activeIcon: '/scheduleActive.svg' },
-  { id: 'certificate', label: 'Certificates', icon: '/certificate.svg', activeIcon: '/certificateActive.svg' },
   { id: 'assessment', label: 'Assessment', icon: '/curriculum.svg', activeIcon: '/curriculum_active.svg' },
   { id: 'cat', label: 'CAT', icon: '/curriculum.svg', activeIcon: '/curriculum_active.svg' },
   { id: 'survey', label: 'Survey', icon: '/Evaluation.svg', activeIcon: '/EvaluationActive.svg' },
+  { id: 'evaluation', label: 'Evaluation', icon: '/Evaluation.svg', activeIcon: '/EvaluationActive.svg' },
+  { id: 'certificate', label: 'Certificates', icon: '/certificate.svg', activeIcon: '/certificateActive.svg' },
 ]
 
 interface TrainingTabsProps {

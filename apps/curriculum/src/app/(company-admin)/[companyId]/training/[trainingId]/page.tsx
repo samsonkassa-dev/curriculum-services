@@ -1,27 +1,28 @@
 "use client"
 
-import { useState, useEffect } from "react"
+
+import { useState, useEffect, lazy, Suspense } from "react"
 import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { useTraining } from "@/lib/hooks/useTraining"
 import { Loading } from "@/components/ui/loading"
 import { TrainingTabs, type TabType } from "./components/training-tabs"
-import { Overview } from "./components/overview"
 import { toast } from "sonner"
 import { TrainingNotFound } from "./components/training-not-found"
-import { TrainingProfile } from "./components/trainingProfile"
-import { AudienceProfile } from "./components/audienceProfile"
-import { ModuleComponent } from "./components/module"
-import { EvaluationComponent } from "./components/evaluation"
-import { StudentsComponent } from "./components/students"
-import { SessionsComponent } from "./components/sessions"
-import { AttendanceComponent } from "./components/attendance"
-import { CertificateComponent } from "./components/certificate"
-import { AssessmentComponent } from "./components/assessment"
-import { SurveyComponent } from "./components/survey"
-import { CatComponent } from "./components/cat"
 import { useUserRole } from "@/lib/hooks/useUserRole"
 
-
+// Dynamically import components
+const Overview = lazy(() => import("./components/overview").then(module => ({ default: module.Overview })))
+const TrainingProfile = lazy(() => import("./components/trainingProfile").then(module => ({ default: module.TrainingProfile })))
+const AudienceProfile = lazy(() => import("./components/audienceProfile").then(module => ({ default: module.AudienceProfile })))
+const ModuleComponent = lazy(() => import("./components/module").then(module => ({ default: module.ModuleComponent })))
+const EvaluationComponent = lazy(() => import("./components/evaluation").then(module => ({ default: module.EvaluationComponent })))
+const StudentsComponent = lazy(() => import("./components/students").then(module => ({ default: module.StudentsComponent })))
+const SessionsComponent = lazy(() => import("./components/sessions").then(module => ({ default: module.SessionsComponent })))
+const AttendanceComponent = lazy(() => import("./components/attendance").then(module => ({ default: module.AttendanceComponent })))
+const CertificateComponent = lazy(() => import("./components/certificate").then(module => ({ default: module.CertificateComponent })))
+const AssessmentComponent = lazy(() => import("./components/assessment").then(module => ({ default: module.AssessmentComponent })))
+const SurveyComponent = lazy(() => import("./components/survey").then(module => ({ default: module.SurveyComponent })))
+const CatComponent = lazy(() => import("./components/cat").then(module => ({ default: module.CatComponent })))
 
 export default function TrainingDetail() {
   const params = useParams()
@@ -74,7 +75,7 @@ export default function TrainingDetail() {
         {!training ? (
           <TrainingNotFound type={activeTab} />
         ) : (
-          <>
+          <Suspense fallback={<Loading />}>
             {activeTab === 'overview' && <Overview training={training} />}
             {activeTab === 'profile' && <TrainingProfile trainingId={training.id} />}
             {activeTab === 'audience' && <AudienceProfile trainingId={training.id}  />}
@@ -83,13 +84,14 @@ export default function TrainingDetail() {
             {activeTab === 'students' && <StudentsComponent trainingId={training.id} />}
             {activeTab === 'sessions' && <SessionsComponent trainingId={training.id} />}
             {activeTab === 'attendance' && <AttendanceComponent trainingId={training.id} />}
-            {activeTab === 'certificate' && <CertificateComponent trainingId={training.id} />}
             {activeTab === 'assessment' && <AssessmentComponent trainingId={training.id} />}
             {activeTab === 'cat' && <CatComponent trainingId={training.id} />}
             {activeTab === 'survey' && <SurveyComponent trainingId={training.id} />}
-          </>
+            {activeTab === 'certificate' && <CertificateComponent trainingId={training.id} />}
+          </Suspense>
         )}
       </div>
     </div>
   )
 }
+
