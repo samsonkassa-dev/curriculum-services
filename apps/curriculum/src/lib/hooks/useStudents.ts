@@ -11,10 +11,20 @@ export interface City {
   id: string
   name: string
   description: string
-  country: {
+  zone?: {
     id: string
     name: string
     description: string
+    region: {
+      id: string
+      name: string
+      description: string
+      country: {
+        id: string
+        name: string
+        description: string
+      }
+    }
   }
 }
 
@@ -36,14 +46,32 @@ export interface Disability {
   description: string
 }
 
+export interface Zone {
+  id: string
+  name: string
+  description: string
+  region: {
+    id: string
+    name: string
+    description: string
+    country: {
+      id: string
+      name: string
+      description: string
+    }
+  }
+}
+
 export interface Student {
   id: string
   firstName: string
+  middleName: string | null
   lastName: string
   email: string
   contactPhone: string
   dateOfBirth: string
   gender: string
+  zone: Zone | null
   city: City
   subCity: string
   woreda: string
@@ -63,11 +91,13 @@ export interface Student {
 
 export interface CreateStudentData {
   firstName: string
+  middleName?: string
   lastName: string
   email: string
   contactPhone: string
   dateOfBirth: string
   gender: "MALE" | "FEMALE" 
+  zoneId: string
   cityId: string
   subCity: string
   woreda: string
@@ -157,6 +187,9 @@ export function useStudents(
 
 export function useAddStudent() {
   // Use baseData hook for required data for creating a student
+  const { data: countries } = useBaseData('country')
+  const { data: regions } = useBaseData('region')
+  const { data: zones } = useBaseData('zone')
   const { data: cities } = useBaseData('city')
   const { data: languages } = useBaseData('language')
   const { data: academicLevels } = useBaseData('academic-level')
@@ -203,6 +236,9 @@ export function useAddStudent() {
   })
 
   return {
+    countries,
+    regions,
+    zones,
     cities,
     languages,
     academicLevels,
@@ -296,6 +332,45 @@ export function useUpdateStudent() {
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || 'Failed to update student')
+    }
+  })
+}
+
+export function useBulkImportStudents() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ 
+      trainingId, 
+      studentsData 
+    }: { 
+      trainingId: string, 
+      studentsData: CreateStudentData[] 
+    }) => {
+      const token = getCookie('token')
+      
+      // Process phone numbers for all students
+      const processedData = studentsData.map(studentData => ({
+        ...studentData,
+        contactPhone: addPhonePrefix(studentData.contactPhone),
+        emergencyContactPhone: addPhonePrefix(studentData.emergencyContactPhone)
+      }))
+      
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_API}/trainee/bulk/training/${trainingId}`,
+        processedData,
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      )
+      return { responseData: response.data, trainingId }
+    },
+    onSuccess: ({ trainingId }) => {
+      toast.success('Students imported successfully')
+      queryClient.invalidateQueries({ queryKey: ['students', trainingId] })
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to import students')
     }
   })
 }

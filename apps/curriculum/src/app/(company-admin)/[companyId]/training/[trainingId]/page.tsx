@@ -84,8 +84,8 @@ export default function TrainingDetail() {
             {activeTab === 'module' && <ModuleComponent trainingId={training.id} />}
             {activeTab === 'evaluation' && <EvaluationComponent trainingId={training.id} />}
             {activeTab === 'students' && <StudentsComponent trainingId={training.id} />}
-            {activeTab === 'sessions' && <SessionsComponent trainingId={training.id} />}
-            {activeTab === 'attendance' && <AttendanceComponent trainingId={training.id} />}
+            {/* {activeTab === 'sessions' && <SessionsComponent trainingId={training.id} />}
+            {activeTab === 'attendance' && <AttendanceComponent trainingId={training.id} />} */}
             {activeTab === 'assessment' && <AssessmentComponent trainingId={training.id} />}
             {activeTab === 'cat' && <CatComponent trainingId={training.id} />}
             {activeTab === 'survey' && <SurveyComponent trainingId={training.id} />}
