@@ -20,7 +20,6 @@ export const contactInfoSchema = z.object({
   regionId: z.string().optional(),
   zoneId: z.string().optional(),
   cityId: z.string().optional(),
-  subCity: z.string().min(1, "Please enter a subcity"),
   woreda: z.string().min(1, "Please enter a woreda/kebele"),
   houseNumber: z.string().min(1, "Please enter your house number or building name"),
 })

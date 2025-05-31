@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useEffect, useMemo, useCallback, useRef } from "react"
-import { useRouter, useParams } from "next/navigation"
 import { useUserRole } from "@/lib/hooks/useUserRole"
 import { Button } from "@/components/ui/button"
 import { Loading } from "@/components/ui/loading"
@@ -74,7 +73,6 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
       regionId: "",
       zoneId: "",
       cityId: "",
-      subCity: "",
       woreda: "",
       houseNumber: "",
       languageId: "",
@@ -140,7 +138,6 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
       regionId: student.city?.zone?.region?.id || undefined,
       zoneId: student.city?.zone?.id || student.zone?.id || undefined,
       cityId: student.city?.id || undefined,
-      subCity: student.subCity || "",
       woreda: student.woreda || "",
       houseNumber: student.houseNumber || "",
       languageId: student.language?.id || undefined,
@@ -184,7 +181,6 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
         regionId: studentFormData.regionId,
         zoneId: studentFormData.zoneId,
         cityId: studentFormData.cityId,
-        subCity: studentFormData.subCity,
         woreda: studentFormData.woreda,
         houseNumber: studentFormData.houseNumber,
         languageId: studentFormData.languageId,
@@ -226,7 +222,6 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
       regionId: "",
       zoneId: "",
       cityId: "",
-      subCity: "",
       woreda: "",
       houseNumber: "",
       languageId: "",
@@ -281,7 +276,6 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
           "regionId",
           "zoneId",
           "cityId", 
-          "subCity", 
           "woreda",
           "houseNumber"
         ]);
@@ -344,7 +338,6 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
       gender: values.gender as "MALE" | "FEMALE",
       zoneId: values.zoneId || "",
       cityId: values.cityId || "",
-      subCity: values.subCity,
       woreda: values.woreda,
       houseNumber: values.houseNumber,
       languageId: values.languageId || "",
@@ -508,23 +501,6 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
         </div>
   ), [handleAddStudent, hasEditPermission, handleShowImport]);
 
-  // CSV Format Guide Component
-  const csvFormatGuide = useMemo(() => (
-    <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-      <h3 className="text-sm font-medium text-blue-900 mb-2">CSV Import Format</h3>
-      <p className="text-xs text-blue-700 mb-3">
-        Use the following column headers in your CSV file (all fields are required unless marked as optional):
-      </p>
-      <div className="bg-white p-3 rounded border text-xs font-mono text-gray-700 overflow-x-auto">
-        <div className="whitespace-nowrap">
-          firstName,middleName*,lastName,email,contactPhone,dateOfBirth,gender,countryId,regionId,zoneId,cityId,subCity,woreda,houseNumber,languageId,academicLevelId,fieldOfStudy,hasSmartphone,hasTrainingExperience,trainingExperienceDescription*,emergencyContactName,emergencyContactPhone,emergencyContactRelationship,hasDisability,disabilityIds*,belongsToMarginalizedGroup,marginalizedGroupIds*
-        </div>
-      </div>
-      <p className="text-xs text-blue-600 mt-2">
-        * Optional fields | Date format: YYYY-MM-DD | Boolean fields: true/false | ID fields should contain valid system IDs
-      </p>
-    </div>
-  ), []);
 
   if (isLoading) {
     return <Loading />
@@ -552,7 +528,6 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
             <CSVImportContent
               onImport={handleCSVImport}
               isSubmitting={bulkImportMutation.isPending}
-              showSampleDownload={true}
               languages={languages || []}
               countries={countries || []}
               regions={regions || []}

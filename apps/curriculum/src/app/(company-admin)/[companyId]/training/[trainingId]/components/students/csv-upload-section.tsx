@@ -2,10 +2,9 @@
 
 import { useState, useCallback, useRef } from "react"
 import { Button } from "@/components/ui/button"
-import { Upload, Download } from "lucide-react"
+import { Upload } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
-import Papa from "papaparse"
 
 interface CSVUploadSectionProps {
   onFileSelect: (file: File) => void
@@ -51,50 +50,6 @@ export function CSVUploadSection({ onFileSelect }: CSVUploadSectionProps) {
     }
   }, [onFileSelect])
 
-  const downloadSampleCSV = () => {
-    const sampleData = [
-      {
-        firstName: "John",
-        middleName: "K.",
-        lastName: "Doe",
-        email: "john@example.com",
-        contactPhone: "+251911223344",
-        dateOfBirth: "1990-01-01",
-        gender: "MALE",
-        countryId: "sample-country-id",
-        regionId: "sample-region-id", 
-        zoneId: "sample-zone-id",
-        cityId: "sample-city-id",
-        subCity: "Sample SubCity",
-        woreda: "Sample Woreda",
-        houseNumber: "123A",
-        languageId: "sample-language-id",
-        academicLevelId: "sample-academic-level-id",
-        fieldOfStudy: "Computer Science",
-        hasSmartphone: "TRUE",
-        smartphoneOwner: "Self",
-        hasTrainingExperience: "TRUE",
-        trainingExperienceDescription: "Taught at university",
-        emergencyContactName: "Jane Doe",
-        emergencyContactPhone: "+251912345678",
-        emergencyContactRelationship: "Sister",
-        hasDisability: "FALSE",
-        belongsToMarginalizedGroup: "FALSE",
-        disabilityIds: "",
-        marginalizedGroupIds: ""
-      }
-    ]
-    
-    const csv = Papa.unparse(sampleData)
-    const blob = new Blob([csv], { type: 'text/csv' })
-    const url = window.URL.createObjectURL(blob)
-    const a = document.createElement('a')
-    a.href = url
-    a.download = 'student_sample.csv'
-    a.click()
-    window.URL.revokeObjectURL(url)
-  }
-
   return (
     <div className="space-y-4">
       <div
@@ -112,15 +67,9 @@ export function CSVUploadSection({ onFileSelect }: CSVUploadSectionProps) {
         <p className="text-gray-500 mb-4">
           Drag and drop your CSV file here, or click to browse
         </p>
-        <div className="flex gap-3 justify-center">
-          <Button onClick={() => fileInputRef.current?.click()} className="text-white">
-            Choose File
-          </Button>
-          {/* <Button variant="outline" onClick={downloadSampleCSV} className="flex items-center gap-2">
-            <Download className="h-4 w-4" />
-            Download Sample
-          </Button> */}
-        </div>
+        <Button onClick={() => fileInputRef.current?.click()} className="text-white">
+          Choose File
+        </Button>
         <input
           ref={fileInputRef}
           type="file"

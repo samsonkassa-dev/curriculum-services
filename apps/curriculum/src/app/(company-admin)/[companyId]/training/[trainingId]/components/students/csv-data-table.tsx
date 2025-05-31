@@ -19,7 +19,6 @@ interface CSVStudentData {
   regionId: string
   zoneId: string
   cityId: string
-  subCity: string
   woreda: string
   houseNumber: string
   languageId: string

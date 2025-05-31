@@ -24,7 +24,6 @@ interface CSVStudentData {
   regionId: string
   zoneId: string
   cityId: string
-  subCity: string
   woreda: string
   houseNumber: string
   languageId: string
@@ -99,7 +98,6 @@ interface MarginalizedGroup {
 interface CSVImportContentProps {
   onImport: (students: StudentFormValues[]) => Promise<void>
   isSubmitting: boolean
-  showSampleDownload?: boolean
   languages: Language[]
   countries: Country[]
   regions: Region[]
@@ -113,7 +111,6 @@ interface CSVImportContentProps {
 export function CSVImportContent({
   onImport,
   isSubmitting,
-  showSampleDownload = true,
   languages,
   countries,
   regions,
@@ -161,7 +158,7 @@ export function CSVImportContent({
       errors.hasTrainingExperience = "Must be TRUE or FALSE"
     }
 
-    // Validate IDs against base data
+    // Validate IDs against base data and hierarchical relationships
     if (row.languageId && !languages.find(l => l.id === row.languageId)) {
       errors.languageId = "Invalid language ID"
     }
@@ -170,20 +167,31 @@ export function CSVImportContent({
       errors.academicLevelId = "Invalid academic level ID"
     }
     
-    if (row.countryId && !countries.find(c => c.id === row.countryId)) {
+    // Cascading location validation - exactly like venue form pattern
+    const selectedCountry = row.countryId ? countries.find(c => c.id === row.countryId) : null;
+    if (row.countryId && !selectedCountry) {
       errors.countryId = "Invalid country ID"
     }
     
-    if (row.regionId && !regions.find(r => r.id === row.regionId)) {
+    const selectedRegion = row.regionId ? regions.find(r => r.id === row.regionId) : null;
+    if (row.regionId && !selectedRegion) {
       errors.regionId = "Invalid region ID"
+    } else if (selectedRegion && selectedCountry && selectedRegion.country.id !== selectedCountry.id) {
+      errors.regionId = "Region does not belong to the selected country"
     }
     
-    if (row.zoneId && !zones.find(z => z.id === row.zoneId)) {
+    const selectedZone = row.zoneId ? zones.find(z => z.id === row.zoneId) : null;
+    if (row.zoneId && !selectedZone) {
       errors.zoneId = "Invalid zone ID"
+    } else if (selectedZone && selectedRegion && selectedZone.region.id !== selectedRegion.id) {
+      errors.zoneId = "Zone does not belong to the selected region"
     }
     
-    if (row.cityId && !cities.find(c => c.id === row.cityId)) {
+    const selectedCity = row.cityId ? cities.find(c => c.id === row.cityId) : null;
+    if (row.cityId && !selectedCity) {
       errors.cityId = "Invalid city ID"
+    } else if (selectedCity && selectedZone && selectedCity.zone && selectedCity.zone.id !== selectedZone.id) {
+      errors.cityId = "City does not belong to the selected zone"
     }
 
     // Validate disability IDs
@@ -216,7 +224,6 @@ export function CSVImportContent({
       regionId: row.regionId || "",
       zoneId: row.zoneId || "",
       cityId: row.cityId || "",
-      subCity: row.subCity || "",
       woreda: row.woreda || "",
       houseNumber: row.houseNumber || "",
       languageId: row.languageId || "",
@@ -269,7 +276,6 @@ export function CSVImportContent({
       regionId: csvRow.regionId,
       zoneId: csvRow.zoneId,
       cityId: csvRow.cityId,
-      subCity: csvRow.subCity,
       woreda: csvRow.woreda,
       houseNumber: csvRow.houseNumber,
       languageId: csvRow.languageId,
@@ -315,7 +321,6 @@ export function CSVImportContent({
         regionId: row.regionId,
         zoneId: row.zoneId,
         cityId: row.cityId,
-        subCity: row.subCity,
         woreda: row.woreda,
         houseNumber: row.houseNumber,
         languageId: row.languageId,

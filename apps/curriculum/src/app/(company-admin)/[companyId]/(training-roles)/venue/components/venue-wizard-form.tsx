@@ -30,7 +30,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Check, ChevronsUpDown } from "lucide-react";
+import { Check, ChevronsUpDown, Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 // Define interfaces for the location data
@@ -307,9 +307,9 @@ export function VenueWizardForm({
 
   return (
     <Form {...form}>
-      <div className="flex flex-col h-full">
-        <ScrollArea className="flex-grow mb-4 pr-4 max-h-[calc(100vh-280px)]">
-          <div className="space-y-6 p-4">
+      <div className="flex flex-col h-full min-h-0">
+        <ScrollArea className="flex-1 overflow-hidden">
+          <div className="space-y-6 p-4 pb-6">
             {/* Step 1: General Details */}
             {isStep1 && (
               <div className="space-y-8 p-4 rounded-md bg-white">
@@ -359,38 +359,61 @@ export function VenueWizardForm({
                       <PopoverTrigger asChild>
                         <Button
                           variant="outline"
-                          className="w-full justify-between py-6 border-[#E4E4E4] rounded-md"
+                          className="w-full justify-between py-6"
                           disabled={isLoading || countriesLoading}
                           type="button"
                         >
                           <span className="truncate">
-                            {getSelectedCountryName() || "Select a country"}
+                            {countriesLoading ? "Loading countries..." : (getSelectedCountryName() || "Select a country")}
                           </span>
                           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent 
-                        className="w-full p-0" 
-                        align="start"
+                        className="w-[var(--radix-popover-trigger-width)] p-0" 
+                        align="start" 
+                        side="bottom" 
+                        sideOffset={4}
+                        onInteractOutside={(e) => {
+                          // Only close if clicking outside the popover content
+                          const target = e.target as Element;
+                          if (!target.closest('[data-radix-popper-content-wrapper]')) {
+                            setOpenCountries(false);
+                          }
+                        }}
                       >
-                        <div className="p-2">
-                          <Input
-                            placeholder="Search countries..."
-                            value={countrySearch}
-                            onChange={(e) => setCountrySearch(e.target.value)}
-                            className="h-9"
-                          />
+                        {/* Search Input */}
+                        <div className="p-3 border-b" onClick={(e) => e.stopPropagation()}>
+                          <div className="relative">
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                            <Input
+                              placeholder="Search countries..."
+                              value={countrySearch}
+                              onChange={(e) => setCountrySearch(e.target.value)}
+                              className="pl-9"
+                              autoFocus={false}
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                          </div>
                         </div>
-                        <div className="max-h-[200px] overflow-auto">
-                          {filteredCountries.length > 0 ? (
+                        <div className="max-h-[200px] sm:max-h-[250px] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                          {countriesLoading ? (
+                            <div className="px-4 py-3 text-sm text-gray-500">
+                              Loading countries...
+                            </div>
+                          ) : filteredCountries.length > 0 ? (
                             filteredCountries.map((country) => (
                               <div
                                 key={country.id}
                                 className={cn(
-                                  "flex items-center px-4 py-2 cursor-pointer hover:bg-gray-100",
+                                  "flex items-center px-4 py-2 cursor-pointer hover:bg-gray-100 transition-colors",
                                   selectedCountryId === country.id && "bg-gray-100"
                                 )}
-                                onClick={() => handleCountryChange(country.id)}
+                                onMouseDown={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  handleCountryChange(country.id);
+                                }}
                               >
                                 <Check
                                   className={cn(
@@ -403,7 +426,7 @@ export function VenueWizardForm({
                             ))
                           ) : (
                             <div className="px-4 py-3 text-sm text-gray-500">
-                              {countrySearch ? "No countries found" : "No countries available"}
+                              {countrySearch ? "No countries found" : allCountries ? "No countries available" : "Loading countries..."}
                             </div>
                           )}
                         </div>
@@ -418,38 +441,61 @@ export function VenueWizardForm({
                       <PopoverTrigger asChild>
                         <Button
                           variant="outline"
-                          className="w-full justify-between py-6 border-[#E4E4E4] rounded-md"
+                          className="w-full justify-between py-6"
                           disabled={isLoading || regionsLoading || !selectedCountryId}
                           type="button"
                         >
                           <span className="truncate">
-                            {getSelectedRegionName() || (!selectedCountryId ? "Select country first" : "Select a region")}
+                            {regionsLoading ? "Loading regions..." : (getSelectedRegionName() || (!selectedCountryId ? "Select country first" : "Select a region"))}
                           </span>
                           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent 
-                        className="w-full p-0" 
-                        align="start"
+                        className="w-[var(--radix-popover-trigger-width)] p-0" 
+                        align="start" 
+                        side="bottom" 
+                        sideOffset={4}
+                        onInteractOutside={(e) => {
+                          // Only close if clicking outside the popover content
+                          const target = e.target as Element;
+                          if (!target.closest('[data-radix-popper-content-wrapper]')) {
+                            setOpenRegions(false);
+                          }
+                        }}
                       >
-                        <div className="p-2">
-                          <Input
-                            placeholder="Search regions..."
-                            value={regionSearch}
-                            onChange={(e) => setRegionSearch(e.target.value)}
-                            className="h-9"
-                          />
+                        {/* Search Input */}
+                        <div className="p-3 border-b" onClick={(e) => e.stopPropagation()}>
+                          <div className="relative">
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                            <Input
+                              placeholder="Search regions..."
+                              value={regionSearch}
+                              onChange={(e) => setRegionSearch(e.target.value)}
+                              className="pl-9"
+                              autoFocus={false}
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                          </div>
                         </div>
-                        <div className="max-h-[200px] overflow-auto">
-                          {filteredRegions.length > 0 ? (
+                        <div className="max-h-[200px] sm:max-h-[250px] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                          {regionsLoading ? (
+                            <div className="px-4 py-3 text-sm text-gray-500">
+                              Loading regions...
+                            </div>
+                          ) : filteredRegions.length > 0 ? (
                             filteredRegions.map((region) => (
                               <div
                                 key={region.id}
                                 className={cn(
-                                  "flex items-center px-4 py-2 cursor-pointer hover:bg-gray-100",
+                                  "flex items-center px-4 py-2 cursor-pointer hover:bg-gray-100 transition-colors",
                                   selectedRegionId === region.id && "bg-gray-100"
                                 )}
-                                onClick={() => handleRegionChange(region.id)}
+                                onMouseDown={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  handleRegionChange(region.id);
+                                }}
                               >
                                 <Check
                                   className={cn(
@@ -462,7 +508,7 @@ export function VenueWizardForm({
                             ))
                           ) : (
                             <div className="px-4 py-3 text-sm text-gray-500">
-                              {regionSearch ? "No regions found" : selectedCountryId ? "No regions available for selected country" : "Please select country first"}
+                              {regionSearch ? "No regions found" : selectedCountryId ? (availableRegions.length === 0 && !regionsLoading ? "No regions available for selected country" : "Loading regions...") : "Please select country first"}
                             </div>
                           )}
                         </div>
@@ -481,38 +527,61 @@ export function VenueWizardForm({
                           <PopoverTrigger asChild>
                             <Button
                               variant="outline"
-                              className="w-full justify-between py-6 border-[#E4E4E4] rounded-md"
+                              className="w-full justify-between py-6"
                               disabled={isLoading || zonesLoading || !selectedRegionId}
                               type="button"
                             >
                               <span className="truncate">
-                                {getSelectedZoneName() || (!selectedRegionId ? "Select region first" : "Select a zone")}
+                                {zonesLoading ? "Loading zones..." : (getSelectedZoneName() || (!selectedRegionId ? "Select region first" : "Select a zone"))}
                               </span>
                               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                             </Button>
                           </PopoverTrigger>
                           <PopoverContent 
-                            className="w-full p-0" 
-                            align="start"
+                            className="w-[var(--radix-popover-trigger-width)] p-0" 
+                            align="start" 
+                            side="bottom" 
+                            sideOffset={4}
+                            onInteractOutside={(e) => {
+                              // Only close if clicking outside the popover content
+                              const target = e.target as Element;
+                              if (!target.closest('[data-radix-popper-content-wrapper]')) {
+                                setOpenZones(false);
+                              }
+                            }}
                           >
-                            <div className="p-2">
-                              <Input
-                                placeholder="Search zones..."
-                                value={zoneSearch}
-                                onChange={(e) => setZoneSearch(e.target.value)}
-                                className="h-9"
-                              />
+                            {/* Search Input */}
+                            <div className="p-3 border-b" onClick={(e) => e.stopPropagation()}>
+                              <div className="relative">
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                <Input
+                                  placeholder="Search zones..."
+                                  value={zoneSearch}
+                                  onChange={(e) => setZoneSearch(e.target.value)}
+                                  className="pl-9"
+                                  autoFocus={false}
+                                  onClick={(e) => e.stopPropagation()}
+                                />
+                              </div>
                             </div>
-                            <div className="max-h-[200px] overflow-auto">
-                              {filteredZones.length > 0 ? (
+                            <div className="max-h-[200px] sm:max-h-[250px] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                              {zonesLoading ? (
+                                <div className="px-4 py-3 text-sm text-gray-500">
+                                  Loading zones...
+                                </div>
+                              ) : filteredZones.length > 0 ? (
                                 filteredZones.map((zone) => (
                                   <div
                                     key={zone.id}
                                     className={cn(
-                                      "flex items-center px-4 py-2 cursor-pointer hover:bg-gray-100",
+                                      "flex items-center px-4 py-2 cursor-pointer hover:bg-gray-100 transition-colors",
                                       selectedZoneId === zone.id && "bg-gray-100"
                                     )}
-                                    onClick={() => handleZoneChange(zone.id)}
+                                    onMouseDown={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      handleZoneChange(zone.id);
+                                    }}
                                   >
                                     <Check
                                       className={cn(
@@ -525,7 +594,7 @@ export function VenueWizardForm({
                                 ))
                               ) : (
                                 <div className="px-4 py-3 text-sm text-gray-500">
-                                  {zoneSearch ? "No zones found" : selectedRegionId ? "No zones available for selected region" : "Please select region first"}
+                                  {zoneSearch ? "No zones found" : selectedRegionId ? (availableZones.length === 0 && !zonesLoading ? "No zones available for selected region" : "Loading zones...") : "Please select region first"}
                                 </div>
                               )}
                             </div>
@@ -547,38 +616,61 @@ export function VenueWizardForm({
                           <PopoverTrigger asChild>
                             <Button
                               variant="outline"
-                              className="w-full justify-between py-6 border-[#E4E4E4] rounded-md"
+                              className="w-full justify-between py-6"
                               disabled={isLoading || citiesLoading || !selectedZoneId}
                               type="button"
                             >
                               <span className="truncate">
-                                {getSelectedCityName() || (!selectedZoneId ? "Select zone first" : "Select a city")}
+                                {citiesLoading ? "Loading cities..." : (getSelectedCityName() || (!selectedZoneId ? "Select zone first" : "Select a city"))}
                               </span>
                               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                             </Button>
                           </PopoverTrigger>
                           <PopoverContent 
-                            className="w-full p-0" 
-                            align="start"
+                            className="w-[var(--radix-popover-trigger-width)] p-0" 
+                            align="start" 
+                            side="bottom" 
+                            sideOffset={4}
+                            onInteractOutside={(e) => {
+                              // Only close if clicking outside the popover content
+                              const target = e.target as Element;
+                              if (!target.closest('[data-radix-popper-content-wrapper]')) {
+                                setOpenCities(false);
+                              }
+                            }}
                           >
-                            <div className="p-2">
-                              <Input
-                                placeholder="Search cities..."
-                                value={citySearch}
-                                onChange={(e) => setCitySearch(e.target.value)}
-                                className="h-9"
-                              />
+                            {/* Search Input */}
+                            <div className="p-3 border-b" onClick={(e) => e.stopPropagation()}>
+                              <div className="relative">
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                <Input
+                                  placeholder="Search cities..."
+                                  value={citySearch}
+                                  onChange={(e) => setCitySearch(e.target.value)}
+                                  className="pl-9"
+                                  autoFocus={false}
+                                  onClick={(e) => e.stopPropagation()}
+                                />
+                              </div>
                             </div>
-                            <div className="max-h-[200px] overflow-auto">
-                              {filteredCities.length > 0 ? (
+                            <div className="max-h-[200px] sm:max-h-[250px] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+                              {citiesLoading ? (
+                                <div className="px-4 py-3 text-sm text-gray-500">
+                                  Loading cities...
+                                </div>
+                              ) : filteredCities.length > 0 ? (
                                 filteredCities.map((city) => (
                                   <div
                                     key={city.id}
                                     className={cn(
-                                      "flex items-center px-4 py-2 cursor-pointer hover:bg-gray-100",
+                                      "flex items-center px-4 py-2 cursor-pointer hover:bg-gray-100 transition-colors",
                                       field.value === city.id && "bg-gray-100"
                                     )}
-                                    onClick={() => handleCityChange(city.id)}
+                                    onMouseDown={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      handleCityChange(city.id);
+                                    }}
                                   >
                                     <Check
                                       className={cn(
@@ -591,7 +683,7 @@ export function VenueWizardForm({
                                 ))
                               ) : (
                                 <div className="px-4 py-3 text-sm text-gray-500">
-                                  {citySearch ? "No cities found" : selectedZoneId ? "No cities available for selected zone" : "Please select zone first"}
+                                  {citySearch ? "No cities found" : selectedZoneId ? (availableCities.length === 0 && !citiesLoading ? "No cities available for selected zone" : "Loading cities...") : "Please select zone first"}
                                 </div>
                               )}
                             </div>
@@ -1156,7 +1248,7 @@ export function VenueWizardForm({
           </div>
         </ScrollArea>
 
-        <div className="mt-auto pt-4 border-t flex justify-between gap-4">
+        <div className="flex-shrink-0 mt-4 pt-4 border-t bg-white flex justify-between gap-4">
           {currentStep > 1 ? (
             <Button
               type="button"

@@ -73,7 +73,6 @@ export interface Student {
   gender: string
   zone: Zone | null
   city: City
-  subCity: string
   woreda: string
   houseNumber: string
   language: Language
@@ -99,7 +98,6 @@ export interface CreateStudentData {
   gender: "MALE" | "FEMALE" 
   zoneId: string
   cityId: string
-  subCity: string
   woreda: string
   houseNumber: string
   languageId: string
@@ -186,15 +184,48 @@ export function useStudents(
 }
 
 export function useAddStudent() {
-  // Use baseData hook for required data for creating a student
-  const { data: countries } = useBaseData('country')
-  const { data: regions } = useBaseData('region')
-  const { data: zones } = useBaseData('zone')
-  const { data: cities } = useBaseData('city')
-  const { data: languages } = useBaseData('language')
-  const { data: academicLevels } = useBaseData('academic-level')
-  const { data: disabilities } = useBaseData('disability')
-  const { data: marginalizedGroups } = useBaseData('marginalized-group')
+  // Always fetch countries first
+  const { data: countries } = useBaseData('country', {
+    enabled: true,
+    disablePagination: true
+  })
+  
+  // Fetch all regions, zones, and cities without pagination for client-side filtering
+  // This matches the venue form pattern exactly
+  const { data: regions } = useBaseData('region', {
+    enabled: true,
+    disablePagination: true
+  })
+  
+  const { data: zones } = useBaseData('zone', {
+    enabled: true,
+    disablePagination: true
+  })
+  
+  const { data: cities } = useBaseData('city', {
+    enabled: true,
+    disablePagination: true
+  })
+  
+  const { data: languages } = useBaseData('language', {
+    enabled: true,
+    disablePagination: true
+  })
+  
+  const { data: academicLevels } = useBaseData('academic-level', {
+    enabled: true,
+    disablePagination: true
+  })
+  
+  const { data: disabilities } = useBaseData('disability', {
+    enabled: true,
+    disablePagination: true
+  })
+  
+  const { data: marginalizedGroups } = useBaseData('marginalized-group', {
+    enabled: true,
+    disablePagination: true
+  })
 
   // Get query client instance
   const queryClient = useQueryClient()

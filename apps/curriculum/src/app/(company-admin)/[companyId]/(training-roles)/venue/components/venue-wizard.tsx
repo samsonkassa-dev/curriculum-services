@@ -186,20 +186,22 @@ export const VenueWizard = memo(function VenueWizard({
       </div>
 
       {/* Form Content Area */}
-      <VenueWizardForm
-        form={form} 
-        currentStep={currentStep}
-        steps={steps}
-        nextStep={nextStep}
-        prevStep={prevStep}
-        onSubmit={onSubmit}
-        onCancel={onCancel}
-        isLoading={isLoading}
-        companyId={companyId}
-        isEditMode={isEditMode}
-        initialCountryId={venue?.city?.zone?.region?.country?.id || ""}
-        initialRegionId={venue?.city?.zone?.region?.id || ""}
-      />
+      <div className="flex-1 min-h-0">
+        <VenueWizardForm
+          form={form} 
+          currentStep={currentStep}
+          steps={steps}
+          nextStep={nextStep}
+          prevStep={prevStep}
+          onSubmit={onSubmit}
+          onCancel={onCancel}
+          isLoading={isLoading}
+          companyId={companyId}
+          isEditMode={isEditMode}
+          initialCountryId={venue?.city?.zone?.region?.country?.id || ""}
+          initialRegionId={venue?.city?.zone?.region?.id || ""}
+        />
+      </div>
     </div>
   )
 }) 
