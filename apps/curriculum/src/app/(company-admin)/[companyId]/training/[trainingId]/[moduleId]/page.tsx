@@ -11,7 +11,6 @@ import { toast } from "sonner"
 
 // Dynamically import components
 const ModuleInformation = lazy(() => import("./components/module-information").then(module => ({ default: module.ModuleInformation })))
-const Content = lazy(() => import("./components/content").then(module => ({ default: module.Content })))
 const AssessmentMethod = lazy(() => import("./components/assesment-method").then(module => ({ default: module.AssessmentMethod })))
 
 // Define module tab type locally
@@ -107,7 +106,7 @@ export default function ModuleDetail() {
       <div>
         <Suspense fallback={<Loading />}>
           {activeTab === 'information' && <ModuleInformation moduleId={moduleId} />}
-          {activeTab === 'content' && <Content />}
+          
           {activeTab === 'assessment-method' && <AssessmentMethod moduleId={moduleId} />}
         </Suspense>
       </div>
