@@ -12,6 +12,7 @@ export interface TrainingAssessment {
   name: string
   description: string
   fileLink: string
+  trainingAssessmentType: 'PRE' | 'POST'
   answerFileLink?: string | null
   comment?: string | null
   sessionId: string | null
@@ -30,12 +31,14 @@ export interface CreateTrainingAssessmentData {
   name: string
   description: string
   fileLink: string
+  trainingAssessmentType: 'PRE' | 'POST'
 }
 
 export interface UpdateTrainingAssessmentData {
   name: string
   description: string
   fileLink: string
+  trainingAssessmentType: 'PRE' | 'POST'
 }
 
 export interface SubmitAssessmentAnswerData {
@@ -63,18 +66,24 @@ interface TrainingAssessmentResponse {
 /**
  * Hook for fetching training assessments for a specific training
  */
-export function useTrainingAssessments(trainingId: string) {
+export function useTrainingAssessments(trainingId: string, filters?: { type?: string }) {
   return useQuery({
-    queryKey: ['training-assessments', trainingId],
+    queryKey: ['training-assessments', trainingId, filters],
     queryFn: async () => {
       try {
         const token = getCookie('token')
-        const response = await axios.get<TrainingAssessmentsResponse>(
-          `${process.env.NEXT_PUBLIC_API}/training-assessment/training/${trainingId}`,
-          {
-            headers: { Authorization: `Bearer ${token}` }
-          }
-        )
+        const params = new URLSearchParams()
+        
+        if (filters?.type) {
+          params.append('type', filters.type)
+        }
+        
+        const queryString = params.toString()
+        const url = `${process.env.NEXT_PUBLIC_API}/training-assessment/training/${trainingId}${queryString ? `?${queryString}` : ''}`
+        
+        const response = await axios.get<TrainingAssessmentsResponse>(url, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
         return response.data
       } catch (error: any) {
         throw new Error(error?.response?.data?.message || 'Failed to load training assessments')

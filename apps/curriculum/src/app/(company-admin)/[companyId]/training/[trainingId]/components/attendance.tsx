@@ -6,10 +6,11 @@ import { useUserRole } from "@/lib/hooks/useUserRole"
 import { Button } from "@/components/ui/button"
 import { Loading } from "@/components/ui/loading"
 import { Filter } from "lucide-react"
-import { useSessions, useAssignedStudentsForSession } from "@/lib/hooks/useSession"
+import { useCohortSessions } from "@/lib/hooks/useSession"
+import { useCohorts, useCohortTrainees } from "@/lib/hooks/useCohorts"
 import { AttendanceStudent, createAttendanceColumns } from "../attendance/components/attendance-columns"
 import { AttendanceDataTable } from "../attendance/components/attendance-data-table"
-import { SessionTabs } from "../attendance/components/session-tabs"
+import { CohortSessionTabs } from "../attendance/components/cohort-session-tabs"
 import { useSubmitAttendance } from "@/lib/hooks/useAttendance"
 import { Student } from "@/lib/hooks/useStudents"
 import { toast } from "sonner"
@@ -30,7 +31,8 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
   const router = useRouter()
   const params = useParams()
   const { isProjectManager, isTrainingAdmin, isTrainer } = useUserRole()
-  const canEditAssessment = isTrainer  // Only trainers can edit assessments
+  const canEditAssessment = isTrainer || isTrainingAdmin || isProjectManager // Only trainers can edit assessments
+  const [activeCohortId, setActiveCohortId] = useState<string>("")
   const [activeSessionId, setActiveSessionId] = useState<string>("")
   const [studentPage, setStudentPage] = useState(1)
   const [studentPageSize, setStudentPageSize] = useState(10)
@@ -41,35 +43,87 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
   const [unsavedStudentId, setUnsavedStudentId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false)
   const [pendingSubmissions, setPendingSubmissions] = useState<string[]>([]);
+  const [isInitialized, setIsInitialized] = useState(false)
 
-  // Fetch sessions for this training
+  // Fetch cohorts for this training
+  const { 
+    data: cohortsData, 
+    isLoading: isLoadingCohorts, 
+    error: cohortsError 
+  } = useCohorts({
+    trainingId,
+    pageSize: 20,
+    page: 1
+  })
+  
+  const cohorts = cohortsData?.cohorts || []
+
+  // Fetch sessions for the active cohort
   const { 
     data: sessionsData, 
     isLoading: isLoadingSessions, 
     error: sessionsError 
-  } = useSessions({
-    trainingIds: [trainingId],
+  } = useCohortSessions({
+    cohortId: activeCohortId,
     pageSize: 20,
-    page: 0
+    page: 1
   })
   
   const sessions = sessionsData?.sessions || []
 
-  // Set the first session as active when sessions are loaded
+  // Initialize first cohort and session - only once when data is available
   useEffect(() => {
-    if (sessions.length > 0 && !activeSessionId) {
+    if (!isInitialized && cohorts.length > 0) {
+      setActiveCohortId(cohorts[0].id)
+      setIsInitialized(true)
+    }
+  }, [cohorts, isInitialized])
+
+  // Set first session when sessions load for the active cohort
+  useEffect(() => {
+    if (activeCohortId && sessions.length > 0 && !activeSessionId) {
       setActiveSessionId(sessions[0].id)
     }
-  }, [sessions, activeSessionId])
+  }, [activeCohortId, sessions, activeSessionId])
 
-  // Fetch students for the active session - this now includes attendance data with isPresent flag
+  // Handle cohort change - reset session and clear data
+  const handleCohortChange = useCallback((newCohortId: string) => {
+    if (newCohortId !== activeCohortId) {
+      setActiveCohortId(newCohortId)
+      setActiveSessionId("") // Reset session when cohort changes
+      setAttendanceData({})
+      setHasUnsavedChanges(false)
+      setUnsavedStudentId(null)
+    }
+  }, [activeCohortId])
+
+  // Handle session change
+  const handleSessionChange = useCallback((newSessionId: string) => {
+    if (newSessionId !== activeSessionId) {
+      if (hasUnsavedChanges) {
+        const confirmed = window.confirm("You have unsaved attendance changes for a student. Do you want to discard them?");
+        if (confirmed) {
+          setActiveSessionId(newSessionId)
+          setAttendanceData({})
+          setHasUnsavedChanges(false)
+          setUnsavedStudentId(null)
+        }
+      } else {
+        setActiveSessionId(newSessionId)
+        setAttendanceData({})
+        setUnsavedStudentId(null)
+      }
+    }
+  }, [activeSessionId, hasUnsavedChanges])
+
+  // Fetch students for the active cohort (not session)
   const { 
     data: studentData, 
     isLoading: isLoadingStudents, 
     error: studentError,
     refetch: refetchStudents
-  } = useAssignedStudentsForSession(
-    activeSessionId,
+  } = useCohortTrainees(
+    activeCohortId,
     studentPage,
     studentPageSize
   )
@@ -104,28 +158,6 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
       setUnsavedStudentId(null);
     }
   }, [studentData]); 
-
-  // Reset attendance data when changing sessions
-  useEffect(() => {
-    if (previousSessionIdRef.current && previousSessionIdRef.current !== activeSessionId) {
-      if (hasUnsavedChanges) {
-        const confirmed = window.confirm("You have unsaved attendance changes for a student. Do you want to discard them?");
-        if (confirmed) {
-          setAttendanceData({});
-          setHasUnsavedChanges(false);
-          setUnsavedStudentId(null);
-        } else {
-          setActiveSessionId(previousSessionIdRef.current);
-          return;
-        }
-      } else {
-        setAttendanceData({});
-        setUnsavedStudentId(null); // Also clear unsaved student when changing session without unsaved changes
-      }
-    }
-    
-    previousSessionIdRef.current = activeSessionId;
-  }, [activeSessionId, hasUnsavedChanges]);
 
   const students = studentData?.trainees || [];
   
@@ -339,17 +371,57 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
     [activeSessionId, canEditAssessment]
   );
 
-  const isLoading = isLoadingSessions || isLoadingStudents;
+  // Comprehensive loading states
+  const isInitialLoadingCohorts = isLoadingCohorts && cohorts.length === 0
+  const isInitialLoadingSessions = isLoadingSessions && sessions.length === 0 && activeCohortId
+  const isLoadingStudentsData = isLoadingStudents && !studentData
+  const isTableTransitioning = isLoadingStudents && studentData // When switching sessions/cohorts
 
-  // Header section with title, now without search
+  // Header section with title
   const headerSection = (
     <div className="flex items-center justify-between mb-8">
       <h1 className="text-xl font-semibold">Attendance</h1>
     </div>
   )
 
-  if (isLoading && !sessionsData) {
-    return <Loading />
+  // Show main loading during initial load
+  if (isInitialLoadingCohorts) {
+    return (
+      <div className="px-[7%] py-10">
+        {headerSection}
+        <Loading />
+      </div>
+    )
+  }
+
+  if (cohortsError) {
+    return (
+      <div className="px-[7%] py-10">
+        {headerSection}
+
+        <div className="text-center py-20 bg-[#fbfbfb] rounded-lg border-[0.1px]">
+          <h3 className="text-lg font-medium mb-2">Error Loading Cohorts</h3>
+          <p className="text-gray-500 text-sm">
+            There was a problem loading the cohorts. Please try again later.
+          </p>
+        </div>
+      </div>
+    )
+  }
+
+  if (cohorts.length === 0) {
+    return (
+      <div className="px-[7%] py-10">
+        {headerSection}
+
+        <div className="text-center py-40 bg-[#fbfbfb] rounded-lg border-[0.1px]">
+          <h3 className="text-lg font-medium mb-2">No Cohorts Available</h3>
+          <p className="text-gray-500 text-sm">
+            No cohorts are available for attendance tracking. Please add cohorts to the training program first.
+          </p>
+        </div>
+      </div>
+    )
   }
 
   if (sessionsError) {
@@ -357,26 +429,72 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
       <div className="px-[7%] py-10">
         {headerSection}
 
+        {/* Show cohort tabs even on session error */}
+        <CohortSessionTabs 
+          cohorts={cohorts}
+          sessions={[]}
+          activeCohortId={activeCohortId}
+          activeSessionId=""
+          setActiveCohortId={handleCohortChange}
+          setActiveSessionId={handleSessionChange}
+          trainingId={trainingId}
+        />
+
         <div className="text-center py-20 bg-[#fbfbfb] rounded-lg border-[0.1px]">
           <h3 className="text-lg font-medium mb-2">Error Loading Sessions</h3>
           <p className="text-gray-500 text-sm">
-            There was a problem loading the sessions. Please try again later.
+            There was a problem loading the sessions for this cohort. Please try again later.
           </p>
         </div>
       </div>
     )
   }
 
-  if (sessions.length === 0) {
+  if (activeCohortId && sessions.length === 0 && !isInitialLoadingSessions) {
     return (
       <div className="px-[7%] py-10">
         {headerSection}
+        
+        {/* Cohort tabs even when no sessions */}
+        <CohortSessionTabs 
+          cohorts={cohorts}
+          sessions={sessions}
+          activeCohortId={activeCohortId}
+          activeSessionId={activeSessionId}
+          setActiveCohortId={handleCohortChange}
+          setActiveSessionId={handleSessionChange}
+          trainingId={trainingId}
+        />
 
         <div className="text-center py-40 bg-[#fbfbfb] rounded-lg border-[0.1px]">
           <h3 className="text-lg font-medium mb-2">No Sessions Available</h3>
           <p className="text-gray-500 text-sm">
-            No sessions are available to take attendance. Please add sessions to the training program first.
+            No sessions are available in this cohort for attendance tracking. Please add sessions to this cohort first.
           </p>
+        </div>
+      </div>
+    )
+  }
+
+  // Show loading while sessions are loading for initial load
+  if (isInitialLoadingSessions) {
+    return (
+      <div className="px-[7%] py-10">
+        {headerSection}
+        
+        {/* Show cohort tabs */}
+        <CohortSessionTabs 
+          cohorts={cohorts}
+          sessions={[]}
+          activeCohortId={activeCohortId}
+          activeSessionId=""
+          setActiveCohortId={handleCohortChange}
+          setActiveSessionId={handleSessionChange}
+          trainingId={trainingId}
+        />
+        
+        <div className="mt-8">
+          <Loading />
         </div>
       </div>
     )
@@ -386,11 +504,14 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
     <div className="px-[7%] py-10">
       {headerSection}
       
-      {/* Session tabs component */}
-      <SessionTabs 
+      {/* Cohort and Session tabs component */}
+      <CohortSessionTabs 
+        cohorts={cohorts}
         sessions={sessions}
+        activeCohortId={activeCohortId}
         activeSessionId={activeSessionId}
-        setActiveSessionId={setActiveSessionId}
+        setActiveCohortId={handleCohortChange}
+        setActiveSessionId={handleSessionChange}
         trainingId={trainingId}
       />
       
@@ -402,18 +523,27 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
             There was a problem loading the required data. Please try again later.
           </p>
         </div>
-      ) : activeSessionId && !isLoadingStudents && students.length === 0 ? (
+      ) : !activeSessionId ? (
+        <div className="mt-8">
+          <Loading />
+        </div>
+      ) : students.length === 0 && !isLoadingStudentsData && !isTableTransitioning ? (
         <div className="text-center py-20 bg-[#fbfbfb] rounded-lg border border-[#EAECF0]">
           <h3 className="text-lg font-medium mb-2">No Students Assigned</h3>
           <p className="text-gray-500 text-sm">
-            No students are assigned to this session. Assign students to track attendance.
+            No students are available for this cohort. Add students to the cohort to track attendance.
           </p>
+        </div>
+      ) : isLoadingStudentsData && !studentData ? (
+        // Initial load of students
+        <div className="mt-8">
+          <Loading />
         </div>
       ) : (
         <AttendanceDataTable
           columns={memoizedColumns}
           data={filteredStudents}
-          isLoading={isLoadingStudents}
+          isLoading={isTableTransitioning}
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           pagination={{

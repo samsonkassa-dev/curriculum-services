@@ -64,7 +64,7 @@ export function AttendanceDataTable({
   const { isTrainer, isProjectManager, isTrainingAdmin } = useUserRole()
 
   // Only trainers can edit attendance
-  const canEditAttendance = isTrainer
+  const canEditAttendance = isTrainer || isProjectManager
   
   // All other roles are view-only
   const isViewOnly = !canEditAttendance
@@ -152,7 +152,7 @@ export function AttendanceDataTable({
             {/* Report button visible to all, but enabled only for trainers */}
             <AddReportButton 
               sessionId={sessionId} 
-              disabled={!isTrainer}
+              disabled={!canEditAttendance}
             />
           </div>
         </div>
