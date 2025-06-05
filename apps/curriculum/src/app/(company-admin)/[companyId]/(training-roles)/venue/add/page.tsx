@@ -83,7 +83,7 @@ export default function AddVenuePage() {
       name: values.name,
       location: values.location,
       zoneId: values.zoneId,
-      cityId: values.cityId,
+      cityId: values.cityId || undefined,
       woreda: values.woreda,
       latitude: values.latitude,
       longitude: values.longitude,

@@ -147,9 +147,10 @@ export function useCohortTrainees(
   cohortId: string, 
   page?: number, 
   pageSize?: number,
+  options?: { noCohorts?: boolean }
 ) {
   return useQuery({
-    queryKey: ['cohortTrainees', cohortId, page, pageSize],
+    queryKey: ['cohortTrainees', cohortId, page, pageSize, options?.noCohorts],
     queryFn: async () => {
       try {
         const token = getCookie('token')
@@ -159,6 +160,7 @@ export function useCohortTrainees(
         const params = new URLSearchParams()
         if (page !== undefined) params.append('page', Math.max(1, page).toString())
         if (pageSize !== undefined) params.append('pageSize', pageSize.toString())
+        if (options?.noCohorts) params.append('no-cohorts', 'true')
         
         if (params.toString()) {
           url += `?${params.toString()}`

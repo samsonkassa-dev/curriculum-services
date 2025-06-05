@@ -290,7 +290,7 @@ export function VenueWizardForm({
     let fieldsToValidate: (keyof VenueSchema)[] = [];
     
     if (currentStep === 1) {
-      fieldsToValidate = ['name', 'location', 'zoneId', 'cityId', 'woreda'];
+      fieldsToValidate = ['name', 'location', 'zoneId', 'woreda'];
     } else if (currentStep === 2) {
       // Step 2 validation is handled by the dynamic form fields
       nextStep();
@@ -611,7 +611,7 @@ export function VenueWizardForm({
                     name="cityId"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>City <span className="text-red-500">*</span></FormLabel>
+                        <FormLabel>City</FormLabel>
                         <Popover open={openCities} onOpenChange={handleCitiesOpenChange}>
                           <PopoverTrigger asChild>
                             <Button

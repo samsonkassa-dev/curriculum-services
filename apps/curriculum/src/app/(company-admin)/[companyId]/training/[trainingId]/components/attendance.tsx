@@ -1,11 +1,8 @@
 "use client"
 
 import { useState, useEffect, useCallback, useRef, useMemo } from "react"
-import { useRouter, useParams } from "next/navigation"
 import { useUserRole } from "@/lib/hooks/useUserRole"
-import { Button } from "@/components/ui/button"
 import { Loading } from "@/components/ui/loading"
-import { Filter } from "lucide-react"
 import { useCohortSessions } from "@/lib/hooks/useSession"
 import { useCohorts, useCohortTrainees } from "@/lib/hooks/useCohorts"
 import { AttendanceStudent, createAttendanceColumns } from "../attendance/components/attendance-columns"
@@ -28,10 +25,8 @@ interface AttendanceComponentProps {
 }
 
 export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
-  const router = useRouter()
-  const params = useParams()
-  const { isProjectManager, isTrainingAdmin, isTrainer } = useUserRole()
-  const canEditAssessment = isTrainer || isTrainingAdmin || isProjectManager // Only trainers can edit assessments
+  const { isProjectManager, isTrainingAdmin, isTrainer, isLoading: isLoadingAuth } = useUserRole()
+  const canEditAssessment = !isLoadingAuth && (isTrainer || isTrainingAdmin || isProjectManager) // Allow editing for these roles after auth loads
   const [activeCohortId, setActiveCohortId] = useState<string>("")
   const [activeSessionId, setActiveSessionId] = useState<string>("")
   const [studentPage, setStudentPage] = useState(1)
@@ -125,7 +120,8 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
   } = useCohortTrainees(
     activeCohortId,
     studentPage,
-    studentPageSize
+    studentPageSize,
+    { noCohorts: true }
   )
 
   // Initialize attendance data from student records
@@ -353,7 +349,7 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
           await refetchStudents(); // Refresh data after saving
         },
         onError: (error) => {
-          console.error("Error saving attendance:", error);
+          console.log("Error saving attendance:", error);
           toast.error("Error saving attendance", {
             description: `Could not save attendance for ${studentName}. Please try again.`
           });
@@ -365,10 +361,13 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
     );
   }, [activeSessionId, unsavedStudentId, hasUnsavedChanges, attendanceData, submitAttendance, refetchStudents, students]);
 
+  // Find the current session object
+  const currentSession = sessions.find(session => session.id === activeSessionId);
+
   // Memoize the attendance columns to prevent recreation on each render
   const memoizedColumns = useMemo(() => 
-    createAttendanceColumns(activeSessionId, canEditAssessment),
-    [activeSessionId, canEditAssessment]
+    createAttendanceColumns(activeSessionId, canEditAssessment, currentSession, trainingId),
+    [activeSessionId, canEditAssessment, currentSession, trainingId, isLoadingAuth]
   );
 
   // Comprehensive loading states

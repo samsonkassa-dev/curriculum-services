@@ -80,13 +80,43 @@ export function SessionForm({ trainingId, companyId, cohortId, sessionId, onSucc
   const { data: modulesData, isLoading: isLoadingModules } = useModulesByTrainingId(trainingId, true)
   const { data: venuesData, isLoading: isLoadingVenues } = useTrainingVenues()
   
-  // State for selected module to filter lessons
-  const [selectedModuleId, setSelectedModuleId] = useState<string | null>(null)
+  // State for selected modules to filter lessons
+  const [selectedModuleIds, setSelectedModuleIds] = useState<string[]>([])
   const [selectedSubModuleId, setSelectedSubModuleId] = useState<string | null>(null)
+  
+  // Track which module is currently active for UI display
+  const [activeModuleId, setActiveModuleId] = useState<string | null>(null)
 
-  // Fetch lessons for the selected module or submodule
-  const moduleIdToFetch = selectedSubModuleId || selectedModuleId
+  // Fetch lessons for the selected active module
+  const moduleIdToFetch = selectedSubModuleId || activeModuleId
   const { data: lessonsByModule, isLoading: isLoadingLessons } = useGetLessons(moduleIdToFetch || '')
+  
+  // Import Lesson type from useLesson hook for proper typing
+  interface Lesson {
+    id: string
+    name: string
+    description: string
+    objective: string
+    duration: number
+    durationType: "HOURS" | "DAYS" | "WEEKS" | "MONTHS"
+    moduleId: string
+  }
+
+  // State to track all fetched lessons across modules
+  const [allLessonsByModule, setAllLessonsByModule] = useState<Record<string, Lesson[]>>({})
+  
+  // Update lessons when a module is selected
+  useEffect(() => {
+    if (moduleIdToFetch) {
+      // When lessons are loaded for a module, store them
+      if (lessonsByModule && !isLoadingLessons) {
+        setAllLessonsByModule(prev => ({
+          ...prev,
+          [moduleIdToFetch]: lessonsByModule
+        }))
+      }
+    }
+  }, [moduleIdToFetch, lessonsByModule, isLoadingLessons])
   
   // Form setup
   const form = useForm<SessionFormValues>({
@@ -153,7 +183,7 @@ export function SessionForm({ trainingId, companyId, cohortId, sessionId, onSucc
     }
   }, [isEditing, existingSession, isLoadingSession, formatTime])
 
-  // Auto-detect module/submodule based on selected lessons when editing
+                // Auto-detect module/submodule based on selected lessons when editing
   useEffect(() => {
     if (isEditing && existingSession && modulesData?.modules && existingSession.lessons.length > 0) {
       // For edit mode, if we can't auto-detect the module from lessons,
@@ -163,19 +193,18 @@ export function SessionForm({ trainingId, companyId, cohortId, sessionId, onSucc
       
       if (mainModules.length > 0) {
         // Set the first main module as selected to enable lesson viewing
-        setSelectedModuleId(mainModules[0].id)
+        setSelectedModuleIds([mainModules[0].id])
+        setActiveModuleId(mainModules[0].id)
       }
     }
   }, [isEditing, existingSession, modulesData])
   
   // Get modules and submodules
   const modules = (modulesData?.modules || []) as ModuleWithRelationship[]
-  const mainModules = modules.filter(module => !module.parentModule)
+  const mainModules = modules.filter(m => !m.parentModule)
   
   // Get submodules for selected module
-  const subModules = selectedModuleId 
-    ? modules.filter(module => module.parentModule?.id === selectedModuleId)
-    : []
+  const subModules = modules.filter(m => m.parentModule !== null && m.parentModule !== undefined)
   
   // Handler for form submission
   const onSubmit = (values: SessionFormValues) => {
@@ -375,7 +404,7 @@ export function SessionForm({ trainingId, companyId, cohortId, sessionId, onSucc
               
               {/* Module Selection */}
               <div className="space-y-2">
-                <Label>Select Module</Label>
+                <Label>Select Modules</Label>
                 {isLoadingModules ? (
                   <div className="py-2 px-3 border rounded-md text-sm text-gray-500">Loading modules...</div>
                 ) : mainModules.length === 0 ? (
@@ -388,48 +417,104 @@ export function SessionForm({ trainingId, companyId, cohortId, sessionId, onSucc
                     </p>
                   </div>
                 ) : (
-                  <Select 
-                    value={selectedModuleId || ""}
-                    onValueChange={(value) => {
-                      setSelectedModuleId(value)
-                      setSelectedSubModuleId(null)
-                      form.setValue("lessonIds", [])
-                    }}
-                  >
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Select a module" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {mainModules.map((module) => (
-                        <SelectItem key={module.id} value={module.id}>
-                          {module.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="space-y-4">
+                    <div className="border rounded-md p-3">
+                      <p className="text-sm font-medium mb-2">Select one or more modules to include lessons from:</p>
+                      <div className="space-y-2">
+                        {mainModules.map((module) => (
+                          <div key={module.id} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`module-${module.id}`}
+                              checked={selectedModuleIds.includes(module.id)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  // Add module to selected modules
+                                  setSelectedModuleIds(prev => [...prev, module.id]);
+                                  setActiveModuleId(module.id);
+                                  // Reset submodule selection
+                                  setSelectedSubModuleId(null);
+                                } else {
+                                  // Remove module from selected modules
+                                  setSelectedModuleIds(prev => prev.filter(id => id !== module.id));
+                                  // Also remove any selected lessons from this module
+                                  const currentLessons = form.getValues("lessonIds");
+                                  const moduleLessons = allLessonsByModule[module.id] || [];
+                                  const lessonIdsToRemove = moduleLessons.map(lesson => lesson.id);
+                                  form.setValue(
+                                    "lessonIds", 
+                                    currentLessons.filter(id => !lessonIdsToRemove.includes(id))
+                                  );
+                                  // Update active module if needed
+                                  if (activeModuleId === module.id) {
+                                    setActiveModuleId(selectedModuleIds.filter(id => id !== module.id)[0] || null);
+                                  }
+                                }
+                              }}
+                            />
+                            <label
+                              htmlFor={`module-${module.id}`}
+                              className="text-sm font-medium leading-none cursor-pointer"
+                              onClick={() => {
+                                if (selectedModuleIds.includes(module.id)) {
+                                  setActiveModuleId(module.id);
+                                  setSelectedSubModuleId(null);
+                                }
+                              }}
+                            >
+                              {module.name}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Display selected modules */}
+                    {selectedModuleIds.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {selectedModuleIds.map((id) => {
+                          const foundModule = mainModules.find(m => m.id === id);
+                          return (
+                            <Badge 
+                              key={id} 
+                              variant={activeModuleId === id ? "pending" : "secondary"}
+                              className="px-3 py-1.5 text-sm flex items-center cursor-pointer"
+                              onClick={() => {
+                                setActiveModuleId(id);
+                                setSelectedSubModuleId(null);
+                              }}
+                            >
+                              {foundModule?.name || id}
+                            </Badge>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
               
               {/* Submodule Selection (Optional) */}
-              {selectedModuleId && subModules.length > 0 && (
+              {activeModuleId && subModules.filter(m => m.parentModule?.id === activeModuleId).length > 0 && (
                 <div className="space-y-2">
                   <Label>Select Submodule (Optional)</Label>
                   <Select 
                     value={selectedSubModuleId || ""}
                     onValueChange={(value) => {
-                      setSelectedSubModuleId(value)
-                      form.setValue("lessonIds", [])
+                      setSelectedSubModuleId(value);
                     }}
                   >
                     <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select a submodule" />
                     </SelectTrigger>
                     <SelectContent>
-                      {subModules.map((subModule) => (
-                        <SelectItem key={subModule.id} value={subModule.id}>
-                          {subModule.name}
-                        </SelectItem>
-                      ))}
+                      {subModules
+                        .filter(m => m.parentModule?.id === activeModuleId)
+                        .map((subModule) => (
+                          <SelectItem key={subModule.id} value={subModule.id}>
+                            {subModule.name}
+                          </SelectItem>
+                        ))
+                      }
                     </SelectContent>
                   </Select>
                 </div>
@@ -458,79 +543,136 @@ export function SessionForm({ trainingId, companyId, cohortId, sessionId, onSucc
                     )}
                     
                     <div className="border rounded-md p-3">
-                      {!moduleIdToFetch ? (
+                      {selectedModuleIds.length === 0 ? (
                         <div className="flex flex-col items-center justify-center p-4 border border-dashed border-gray-300 rounded-md bg-gray-50">
                           <p className="text-sm text-gray-600 text-center">
-                            Please select a module first to view available lessons
-                          </p>
-                        </div>
-                      ) : isLoadingLessons ? (
-                        <div className="py-3 text-sm text-gray-500 text-center">
-                          Loading lessons...
-                        </div>
-                      ) : !lessonsByModule || lessonsByModule.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center p-4 border border-dashed border-gray-300 rounded-md bg-gray-50">
-                          <p className="text-sm text-gray-600 text-center">
-                            No lessons available for this module
+                            Please select one or more modules first to view available lessons
                           </p>
                         </div>
                       ) : (
                         <div className="space-y-2">
-                          {lessonsByModule.map((lesson) => (
-                            <div key={lesson.id} className="flex items-center space-x-2">
-                              <Checkbox
-                                id={lesson.id}
-                                checked={field.value.includes(lesson.id)}
-                                onCheckedChange={(checked) => {
-                                  if (checked) {
-                                    field.onChange([...field.value, lesson.id])
-                                  } else {
-                                    field.onChange(field.value.filter((id) => id !== lesson.id))
-                                  }
-                                }}
-                              />
-                              <label
-                                htmlFor={lesson.id}
-                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                              >
-                                {lesson.name}
-                              </label>
+                          {/* Show all available lessons from selected modules in a single list */}
+                          {isLoadingLessons && moduleIdToFetch ? (
+                            <div className="py-3 text-sm text-gray-500 text-center">
+                              Loading lessons...
                             </div>
-                          ))}
+                          ) : (
+                            <div className="space-y-2">
+                              {/* Current module's lessons */}
+                              {moduleIdToFetch && lessonsByModule && lessonsByModule.length > 0 && (
+                                lessonsByModule.map((lesson) => (
+                                  <div key={lesson.id} className="flex items-center space-x-2">
+                                    <Checkbox
+                                      id={lesson.id}
+                                      checked={field.value.includes(lesson.id)}
+                                      onCheckedChange={(checked) => {
+                                        if (checked) {
+                                          field.onChange([...field.value, lesson.id])
+                                        } else {
+                                          field.onChange(field.value.filter((id) => id !== lesson.id))
+                                        }
+                                      }}
+                                    />
+                                    <label
+                                      htmlFor={lesson.id}
+                                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                                    >
+                                      {lesson.name}
+                                    </label>
+                                  </div>
+                                ))
+                              )}
+
+                              {/* Lessons from all other selected modules */}
+                              {Object.entries(allLessonsByModule)
+                                .filter(([id]) => id !== moduleIdToFetch && selectedModuleIds.includes(id))
+                                .flatMap(([moduleId, lessons]) => 
+                                  lessons.map((lesson) => (
+                                    <div key={lesson.id} className="flex items-center space-x-2">
+                                      <Checkbox
+                                        id={lesson.id}
+                                        checked={field.value.includes(lesson.id)}
+                                        onCheckedChange={(checked) => {
+                                          if (checked) {
+                                            field.onChange([...field.value, lesson.id])
+                                          } else {
+                                            field.onChange(field.value.filter((id) => id !== lesson.id))
+                                          }
+                                        }}
+                                      />
+                                      <label
+                                        htmlFor={lesson.id}
+                                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                                      >
+                                        {lesson.name}
+                                      </label>
+                                    </div>
+                                  ))
+                                )
+                              }
+
+                              {/* Show message when no lessons are available */}
+                              {(!lessonsByModule || lessonsByModule.length === 0) && 
+                               Object.entries(allLessonsByModule).filter(([id]) => selectedModuleIds.includes(id)).length === 0 && (
+                                <div className="flex flex-col items-center justify-center p-4 border border-dashed border-gray-300 rounded-md bg-gray-50">
+                                  <p className="text-sm text-gray-600 text-center">
+                                    No lessons available for the selected modules
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
+                    
                     {field.value?.length > 0 && (
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {field.value.map((id) => {
-                          const lesson = lessonsByModule?.find(l => l.id === id);
-                          // If lesson not found in current module and we're editing, try to find it in existing session
-                          const sessionLesson = !lesson && isEditing && existingSession 
-                            ? existingSession.lessons.find(l => l.id === id)
-                            : null;
-                          const displayLesson = lesson || sessionLesson;
-                          
-                          return (
-                            <Badge 
-                              key={id} 
-                              variant="pending"
-                              className="px-3 py-1.5 text-sm flex items-center"
-                            >
-                              <span className="mr-1">{displayLesson?.name || id}</span>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  field.onChange(field.value.filter(lessonId => lessonId !== id))
-                                }}
-                                className="ml-1 text-xs hover:text-red-500"
+                      <div className="mt-4">
+                        <div className="flex justify-between items-center mb-2">
+                          <p className="text-sm font-medium text-gray-700">
+                            Selected Lessons ({field.value.length})
+                          </p>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {field.value.map((id) => {
+                            // Try to find lesson in all available sources
+                            let displayLesson = null;
+                            
+                            // Check current active module's lessons
+                            if (lessonsByModule) {
+                              displayLesson = lessonsByModule.find(l => l.id === id);
+                            }
+                            
+                            // If not found, check all other modules' lessons
+                            if (!displayLesson) {
+                              for (const [moduleId, lessons] of Object.entries(allLessonsByModule)) {
+                                const lesson = lessons.find(l => l.id === id);
+                                if (lesson) {
+                                  displayLesson = lesson;
+                                  break;
+                                }
+                              }
+                            }
+                            
+                            // If still not found and we're editing, check existing session
+                            if (!displayLesson && isEditing && existingSession) {
+                              displayLesson = existingSession.lessons.find(l => l.id === id) || null;
+                            }
+                            
+                            return (
+                              <Badge 
+                                key={id} 
+                                variant="pending"
+                                className="px-3 py-1.5 text-sm"
                               >
-                                ×
-                              </button>
-                            </Badge>
-                          );
-                        })}
+                                {displayLesson?.name || id}
+                              </Badge>
+                            );
+                          })}
+                        </div>
                       </div>
                     )}
+                    
                     <FormMessage />
                   </FormItem>
                 )}

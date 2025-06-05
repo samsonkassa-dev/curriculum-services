@@ -86,7 +86,7 @@ export interface CreateVenueData {
   name: string;
   location: string;
   zoneId: string;
-  cityId: string;
+  cityId?: string;
   woreda: string;
   latitude?: number; 
   longitude?: number; 

@@ -121,7 +121,7 @@ export const VenueWizard = memo(function VenueWizard({
       name: values.name,
       location: values.location,
       zoneId: values.zoneId,
-      cityId: values.cityId,
+      cityId: values.cityId || undefined,
       woreda: values.woreda,
       latitude: values.latitude,
       longitude: values.longitude,

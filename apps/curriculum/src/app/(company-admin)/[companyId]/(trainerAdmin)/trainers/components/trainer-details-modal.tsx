@@ -39,7 +39,7 @@ const trainerFormSchema = z.object({
 });
 
 type TrainerFormValues = z.infer<typeof trainerFormSchema>;
-
+  
 interface TrainerDetailsModalProps {
   trainer: Trainer
   isOpen: boolean
