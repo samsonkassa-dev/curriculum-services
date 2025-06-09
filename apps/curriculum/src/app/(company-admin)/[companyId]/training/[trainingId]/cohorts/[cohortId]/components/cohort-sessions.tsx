@@ -13,7 +13,6 @@ import {
   Dialog,
   DialogHeader,
   DialogTitle,
-  DialogClose,
   DialogContent
 } from "@/components/ui/dialog"
 import Image from "next/image"
