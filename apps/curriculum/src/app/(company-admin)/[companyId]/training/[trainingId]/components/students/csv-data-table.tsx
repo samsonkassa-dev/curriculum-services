@@ -474,13 +474,13 @@ export function CSVDataTable({
                 <td className="p-3">{renderCell(row, 'email', row.email)}</td>
                 <td className="p-3">{renderCell(row, 'contactPhone', row.contactPhone)}</td>
                 <td className="p-3">{renderCell(row, 'dateOfBirth', row.dateOfBirth)}</td>
-                <td className="p-3">{renderCell(row, 'gender', row.gender || "")}</td>
                 <td className="p-3">{renderCell(row, 'fieldOfStudy', row.fieldOfStudy)}</td>
                 <td className="p-3">{renderCell(row, 'hasSmartphone', row.hasSmartphone)}</td>
                 <td className="p-3">{renderCell(row, 'hasTrainingExperience', row.hasTrainingExperience)}</td>
                 <td className="p-3">{renderCell(row, 'emergencyContactName', row.emergencyContactName)}</td>
                 <td className="p-3">{renderCell(row, 'emergencyContactPhone', row.emergencyContactPhone)}</td>
                 <td className="p-3">{renderCell(row, 'emergencyContactRelationship', row.emergencyContactRelationship)}</td>
+                <td className="p-3">{renderCell(row, 'gender', row.gender || "")}</td>
                 <td className="p-3">{renderCell(row, 'countryId', row.countryId)}</td>
                 <td className="p-3">{renderCell(row, 'regionId', row.regionId)}</td>
                 <td className="p-3">{renderCell(row, 'zoneId', row.zoneId)}</td>
