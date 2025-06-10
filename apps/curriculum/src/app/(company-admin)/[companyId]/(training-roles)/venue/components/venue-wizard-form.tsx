@@ -41,11 +41,11 @@ interface BaseItem {
 }
 
 interface Region extends BaseItem {
-  country: BaseItem;
+  country?: BaseItem;
 }
 
 interface Zone extends BaseItem {
-  region: BaseItem;
+  region?: BaseItem;
 }
 
 interface City extends BaseItem {
@@ -134,14 +134,14 @@ export function VenueWizardForm({
   const availableRegions = useMemo(() => {
     if (!selectedCountryId || !allRegions) return [];
     return (allRegions as Region[]).filter((region) => 
-      region.country.id === selectedCountryId
+      region.country?.id === selectedCountryId
     );
   }, [allRegions, selectedCountryId]);
 
   const availableZones = useMemo(() => {
     if (!selectedRegionId || !allZones) return [];
     return (allZones as Zone[]).filter((zone) => 
-      zone.region.id === selectedRegionId
+      zone.region?.id === selectedRegionId
     );
   }, [allZones, selectedRegionId]);
 
@@ -156,25 +156,25 @@ export function VenueWizardForm({
   const filteredCountries = useMemo(() => {
     if (!allCountries) return [];
     return (allCountries as BaseItem[]).filter((country) =>
-      country.name.toLowerCase().includes(debouncedCountrySearch.toLowerCase())
+      country?.name?.toLowerCase().includes(debouncedCountrySearch.toLowerCase())
     );
   }, [allCountries, debouncedCountrySearch]);
   
   const filteredRegions = useMemo(() => {
     return availableRegions.filter((region) =>
-      region.name.toLowerCase().includes(debouncedRegionSearch.toLowerCase())
+      region?.name?.toLowerCase().includes(debouncedRegionSearch.toLowerCase())
     );
   }, [availableRegions, debouncedRegionSearch]);
   
   const filteredZones = useMemo(() => {
     return availableZones.filter((zone) =>
-      zone.name.toLowerCase().includes(debouncedZoneSearch.toLowerCase())
+      zone?.name?.toLowerCase().includes(debouncedZoneSearch.toLowerCase())
     );
   }, [availableZones, debouncedZoneSearch]);
   
   const filteredCities = useMemo(() => {
     return availableCities.filter((city) =>
-      city.name.toLowerCase().includes(debouncedCitySearch.toLowerCase())
+      city?.name?.toLowerCase().includes(debouncedCitySearch.toLowerCase())
     );
   }, [availableCities, debouncedCitySearch]);
 
@@ -421,7 +421,7 @@ export function VenueWizardForm({
                                     selectedCountryId === country.id ? "opacity-100" : "opacity-0"
                                   )}
                                 />
-                                {country.name}
+                                {country?.name || 'Unknown Country'}
                               </div>
                             ))
                           ) : (
@@ -503,7 +503,7 @@ export function VenueWizardForm({
                                     selectedRegionId === region.id ? "opacity-100" : "opacity-0"
                                   )}
                                 />
-                                {region.name} ({region.country.name})
+                                {region?.name || 'Unknown Region'} ({region.country?.name || 'Unknown Country'})
                               </div>
                             ))
                           ) : (
@@ -589,7 +589,7 @@ export function VenueWizardForm({
                                         selectedZoneId === zone.id ? "opacity-100" : "opacity-0"
                                       )}
                                     />
-                                    {zone.name} ({zone.region.name})
+                                    {zone?.name || 'Unknown Zone'} ({zone.region?.name || 'Unknown Region'})
                                   </div>
                                 ))
                               ) : (
@@ -678,7 +678,7 @@ export function VenueWizardForm({
                                         field.value === city.id ? "opacity-100" : "opacity-0"
                                       )}
                                     />
-                                    {city.name}
+                                    {city?.name || 'Unknown City'}
                                   </div>
                                 ))
                               ) : (
