@@ -450,6 +450,7 @@ export function CSVDataTable({
               <th className="p-3 text-left font-medium text-gray-700">Field of Study</th>
               <th className="p-3 text-left font-medium text-gray-700">Has Smartphone</th>
               <th className="p-3 text-left font-medium text-gray-700">Training Experience</th>
+              <th className="p-3 text-left font-medium text-gray-700">Training Experience Description</th>
               <th className="p-3 text-left font-medium text-gray-700">Emergency Contact</th>
               <th className="p-3 text-left font-medium text-gray-700">Emergency Contact Phone</th>
               <th className="p-3 text-left font-medium text-gray-700">Emergency Contact Relationship</th>
@@ -477,6 +478,7 @@ export function CSVDataTable({
                 <td className="p-3">{renderCell(row, 'fieldOfStudy', row.fieldOfStudy)}</td>
                 <td className="p-3">{renderCell(row, 'hasSmartphone', row.hasSmartphone)}</td>
                 <td className="p-3">{renderCell(row, 'hasTrainingExperience', row.hasTrainingExperience)}</td>
+                <td className="p-3">{renderCell(row, 'trainingExperienceDescription', row.trainingExperienceDescription)}</td>
                 <td className="p-3">{renderCell(row, 'emergencyContactName', row.emergencyContactName)}</td>
                 <td className="p-3">{renderCell(row, 'emergencyContactPhone', row.emergencyContactPhone)}</td>
                 <td className="p-3">{renderCell(row, 'emergencyContactRelationship', row.emergencyContactRelationship)}</td>
