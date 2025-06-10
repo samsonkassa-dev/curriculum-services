@@ -48,10 +48,21 @@ export default function VenuePage() {
 
     // Filter venues based on search query
     const filteredVenues = useMemo(() => 
-        data?.venues.filter(venue =>
-            venue.name.toLowerCase().includes(debouncedSearch.toLowerCase()) &&
-            (!zone || venue.zone === zone)
-        ) || [], 
+        data?.venues.filter(venue => {
+            const matchesSearch = venue.name?.toLowerCase().includes(debouncedSearch.toLowerCase());
+            // Handle zone filtering safely - zone could be string or object
+            let matchesZone = !zone;
+            if (zone && venue.zone) {
+                if (typeof venue.zone === 'string') {
+                    matchesZone = venue.zone === zone;
+                } else {
+                    // If venue.zone is an object, try to match by id or name
+                    const zoneObj = venue.zone as { id?: string; name?: string };
+                    matchesZone = zoneObj.id === zone || zoneObj.name === zone;
+                }
+            }
+            return matchesSearch && matchesZone;
+        }) || [], 
     [data?.venues, debouncedSearch, zone]);
 
     // Handle venue edit

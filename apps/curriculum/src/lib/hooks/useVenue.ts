@@ -29,7 +29,7 @@ export interface Venue {
   name: string;
   location: string;
   city: City;
-  zone: string;
+  zone: string | { id?: string; name?: string }; // Zone can be string or object
   woreda: string;
   latitude: number;
   longitude: number;
