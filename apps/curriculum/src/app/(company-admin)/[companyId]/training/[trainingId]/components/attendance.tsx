@@ -5,7 +5,7 @@ import { useUserRole } from "@/lib/hooks/useUserRole"
 import { Loading } from "@/components/ui/loading"
 import { useCohortSessions } from "@/lib/hooks/useSession"
 import { useCohorts, useCohortTrainees } from "@/lib/hooks/useCohorts"
-import { AttendanceStudent, createAttendanceColumns } from "../attendance/components/attendance-columns"
+import { createAttendanceColumns } from "../attendance/components/attendance-columns"
 import { AttendanceDataTable } from "../attendance/components/attendance-data-table"
 import { CohortSessionTabs } from "../attendance/components/cohort-session-tabs"
 import { useSubmitAttendance } from "@/lib/hooks/useAttendance"
@@ -26,7 +26,8 @@ interface AttendanceComponentProps {
 
 export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
   const { isProjectManager, isTrainingAdmin, isTrainer, isLoading: isLoadingAuth } = useUserRole()
-  const canEditAssessment = !isLoadingAuth && (isTrainer || isTrainingAdmin || isProjectManager) // Allow editing for these roles after auth loads
+  const [isInitialLoadComplete, setIsInitialLoadComplete] = useState(false)
+  const canEditAssessment = !isLoadingAuth && (isTrainer || isTrainingAdmin || isProjectManager) && isInitialLoadComplete
   const [activeCohortId, setActiveCohortId] = useState<string>("")
   const [activeSessionId, setActiveSessionId] = useState<string>("")
   const [studentPage, setStudentPage] = useState(1)
@@ -78,6 +79,7 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
   useEffect(() => {
     if (activeCohortId && sessions.length > 0 && !activeSessionId) {
       setActiveSessionId(sessions[0].id)
+      setIsInitialLoadComplete(true)  // Mark initial load as complete
     }
   }, [activeCohortId, sessions, activeSessionId])
 
@@ -558,6 +560,8 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
           hasUnsavedChanges={hasUnsavedChanges}
           sessionId={activeSessionId}
           unsavedStudentId={unsavedStudentId}
+          isInitialLoadComplete={isInitialLoadComplete}
+          canEditAttendance={canEditAssessment}
         />
       )}
     </div>

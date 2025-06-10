@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Badge } from "@/components/ui/badge"
 import { X, Plus } from "lucide-react"
-import { useCreateCohort } from "@/lib/hooks/useCohorts"
+import { useCreateCohort, useUpdateCohort, Cohort } from "@/lib/hooks/useCohorts"
 import { toast } from "sonner"
 
 const cohortSchema = z.object({
@@ -33,20 +33,25 @@ interface CohortFormProps {
   trainingId: string
   companyId: string
   parentCohortId?: string | null
+  cohort?: Cohort | null // For edit mode
+  isEditing?: boolean
   onSuccess: () => void
   onCancel: () => void
 }
 
-export function CohortForm({ trainingId, companyId, parentCohortId, onSuccess, onCancel }: CohortFormProps) {
+export function CohortForm({ trainingId, companyId, parentCohortId, cohort, isEditing = false, onSuccess, onCancel }: CohortFormProps) {
   const [tagInput, setTagInput] = useState("")
-  const { createCohort, isLoading } = useCreateCohort()
+  const { createCohort, isLoading: isCreating } = useCreateCohort()
+  const { updateCohort, isLoading: isUpdating } = useUpdateCohort()
+  
+  const isLoading = isCreating || isUpdating
   
   const form = useForm<CohortFormValues>({
     resolver: zodResolver(cohortSchema),
     defaultValues: {
-      name: "",
-      description: "",
-      tags: [],
+      name: isEditing && cohort ? cohort.name : "",
+      description: isEditing && cohort ? cohort.description : "",
+      tags: isEditing && cohort ? cohort.tags : [],
     },
   })
   
@@ -71,24 +76,49 @@ export function CohortForm({ trainingId, companyId, parentCohortId, onSuccess, o
   }
   
   const onSubmit = (values: CohortFormValues) => {
-    const cohortData = {
-      name: values.name,
-      description: values.description,
-      tags: values.tags,
-      trainingId,
-      ...(parentCohortId && { cohortId: parentCohortId })
-    }
-    
-    createCohort(cohortData, {
-      onSuccess: () => {
-        toast.success(parentCohortId ? "Sub-cohort created successfully" : "Cohort created successfully")
-        onSuccess()
-      },
-      onError: (error) => {
-        toast.error("Failed to create cohort")
-        console.error(error)
+    if (isEditing && cohort) {
+      // Update existing cohort
+      const cohortData = {
+        name: values.name,
+        description: values.description,
+        tags: values.tags,
       }
-    })
+      
+      updateCohort({
+        cohortId: cohort.id,
+        cohortData,
+        trainingId
+      }, {
+        onSuccess: () => {
+          toast.success("Cohort updated successfully")
+          onSuccess()
+        },
+        onError: (error) => {
+          toast.error("Failed to update cohort")
+          console.error(error)
+        }
+      })
+    } else {
+      // Create new cohort
+      const cohortData = {
+        name: values.name,
+        description: values.description,
+        tags: values.tags,
+        trainingId,
+        ...(parentCohortId && { cohortId: parentCohortId })
+      }
+      
+      createCohort(cohortData, {
+        onSuccess: () => {
+          toast.success(parentCohortId ? "Sub-cohort created successfully" : "Cohort created successfully")
+          onSuccess()
+        },
+        onError: (error) => {
+          toast.error("Failed to create cohort")
+          console.error(error)
+        }
+      })
+    }
   }
   
   return (
@@ -221,7 +251,7 @@ export function CohortForm({ trainingId, companyId, parentCohortId, onSuccess, o
           disabled={isLoading}
           className="bg-[#0B75FF] hover:bg-[#0B75FF]/90 text-white"
         >
-          {isLoading ? "Creating..." : `Create ${parentCohortId ? "Sub-Cohort" : "Cohort"}`}
+          {isLoading ? (isEditing ? "Updating..." : "Creating...") : (isEditing ? "Update Cohort" : `Create ${parentCohortId ? "Sub-Cohort" : "Cohort"}`)}
         </Button>
       </div>
     </div>

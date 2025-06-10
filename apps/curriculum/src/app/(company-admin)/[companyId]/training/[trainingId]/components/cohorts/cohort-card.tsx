@@ -1,24 +1,58 @@
 "use client"
 
-import { memo } from "react"
+import { memo, useState, useCallback } from "react"
 import { useRouter, useParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Users, Tag } from "lucide-react"
-import { Cohort } from "@/lib/hooks/useCohorts"
+import { Users, Tag, Edit2 } from "lucide-react"
+import { Cohort, useDeleteCohort } from "@/lib/hooks/useCohorts"
+import { useUserRole } from "@/lib/hooks/useUserRole"
+import { DeleteCohortDialog } from "./delete-cohort-dialog"
 
 interface CohortCardProps {
   cohort: Cohort
+  onEditCohort?: (cohort: Cohort) => void
 }
 
-function CohortCardComponent({ cohort }: CohortCardProps) {
+function CohortCardComponent({ cohort, onEditCohort }: CohortCardProps) {
   const router = useRouter()
   const params = useParams()
   const companyId = params.companyId as string
   const trainingId = params.trainingId as string
+  
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [cohortToDelete, setCohortToDelete] = useState<Cohort | null>(null)
+  
+  const { isProjectManager, isTrainingAdmin } = useUserRole()
+  const { deleteCohort, isLoading: isDeleting } = useDeleteCohort()
 
   const handleViewDetails = () => {
     router.push(`/${companyId}/training/${trainingId}/cohorts/${cohort.id}`)
   }
+
+  const handleDeleteCohort = useCallback(() => {
+    setCohortToDelete(cohort)
+    setDeleteDialogOpen(true)
+  }, [cohort])
+
+  const handleEditCohort = useCallback(() => {
+    if (onEditCohort) {
+      onEditCohort(cohort)
+    }
+  }, [cohort, onEditCohort])
+
+  const confirmDelete = useCallback(() => {
+    if (cohortToDelete) {
+      deleteCohort({
+        cohortId: cohortToDelete.id,
+        trainingId
+      })
+      setDeleteDialogOpen(false)
+      setCohortToDelete(null)
+    }
+  }, [cohortToDelete, deleteCohort, trainingId])
+
+  // Check if user can edit/delete cohorts (only project manager and training admin)
+  const canEditCohorts = isProjectManager || isTrainingAdmin
 
   return (
     <div className="bg-[#FBFBFB] p-5 rounded-lg border-[0.1px] border-gray-200">
@@ -72,8 +106,28 @@ function CohortCardComponent({ cohort }: CohortCardProps) {
           >
             View Details
           </Button>
+          {canEditCohorts && onEditCohort && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="rounded-full border-blue-300 text-blue-600 hover:bg-blue-50 text-xs font-medium"
+              onClick={handleEditCohort}
+              disabled={isDeleting}
+            >
+              <Edit2 className="h-3 w-3" />
+            </Button>
+          )}
         </div>
       </div>
+
+      {/* Delete Cohort Dialog */}
+      <DeleteCohortDialog
+        isOpen={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        cohort={cohortToDelete}
+        onConfirmDelete={confirmDelete}
+        isDeleting={isDeleting}
+      />
     </div>
   )
 }

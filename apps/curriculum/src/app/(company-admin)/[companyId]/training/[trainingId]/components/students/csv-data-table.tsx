@@ -217,6 +217,8 @@ export function CSVDataTable({
         return groupNames.join(', ') || "Not found"
       case 'hasSmartphone':
       case 'hasTrainingExperience':
+      case 'hasDisability':
+      case 'belongsToMarginalizedGroup':
         return value === 'TRUE' ? 'Yes' : value === 'FALSE' ? 'No' : value
       case 'gender':
         return value === 'MALE' ? 'Male' : value === 'FEMALE' ? 'Female' : value
@@ -283,6 +285,20 @@ export function CSVDataTable({
         ]
         placeholder = "Has training experience?"
         break
+      case 'hasDisability':
+        options = [
+          { id: 'TRUE', name: 'Yes' },
+          { id: 'FALSE', name: 'No' }
+        ]
+        placeholder = "Has disability?"
+        break
+      case 'belongsToMarginalizedGroup':
+        options = [
+          { id: 'TRUE', name: 'Yes' },
+          { id: 'FALSE', name: 'No' }
+        ]
+        placeholder = "Belongs to marginalized group?"
+        break
       case 'disabilityIds':
         options = disabilities
         placeholder = "Select disabilities"
@@ -296,6 +312,7 @@ export function CSVDataTable({
         isMultiple = true
         break
       default:
+        // For text fields (including emergency contact fields)
         return (
           <Input
             value={editValue}
@@ -386,7 +403,7 @@ export function CSVDataTable({
     const isEditing = editingCell?.row === row.rowIndex && editingCell?.field === field
     const hasError = row.errors?.[field]
     const displayValue = getDisplayValue(field, value, row)
-    const isSelectField = ['languageId', 'academicLevelId', 'zoneId', 'cityId', 'countryId', 'regionId', 'gender', 'hasSmartphone', 'hasTrainingExperience', 'disabilityIds', 'marginalizedGroupIds'].includes(field)
+    const isSelectField = ['languageId', 'academicLevelId', 'zoneId', 'cityId', 'countryId', 'regionId', 'gender', 'hasSmartphone', 'hasTrainingExperience', 'hasDisability', 'belongsToMarginalizedGroup', 'disabilityIds', 'marginalizedGroupIds'].includes(field)
 
     if (isEditing) {
       return (
@@ -443,24 +460,30 @@ export function CSVDataTable({
             <tr>
               <th className="p-3 text-left font-medium text-gray-700">Row</th>
               <th className="p-3 text-left font-medium text-gray-700">First Name</th>
+              <th className="p-3 text-left font-medium text-gray-700">Middle Name</th>
               <th className="p-3 text-left font-medium text-gray-700">Last Name</th>
               <th className="p-3 text-left font-medium text-gray-700">Email</th>
               <th className="p-3 text-left font-medium text-gray-700">Phone</th>
               <th className="p-3 text-left font-medium text-gray-700">Date of Birth</th>
-              <th className="p-3 text-left font-medium text-gray-700">Field of Study</th>
-              <th className="p-3 text-left font-medium text-gray-700">Has Smartphone</th>
-              <th className="p-3 text-left font-medium text-gray-700">Training Experience</th>
-              <th className="p-3 text-left font-medium text-gray-700">Training Experience Description</th>
-              <th className="p-3 text-left font-medium text-gray-700">Emergency Contact</th>
-              <th className="p-3 text-left font-medium text-gray-700">Emergency Contact Phone</th>
-              <th className="p-3 text-left font-medium text-gray-700">Emergency Contact Relationship</th>
               <th className="p-3 text-left font-medium text-gray-700">Gender</th>
               <th className="p-3 text-left font-medium text-gray-700">Country</th>
               <th className="p-3 text-left font-medium text-gray-700">Region</th>
               <th className="p-3 text-left font-medium text-gray-700">Zone</th>
               <th className="p-3 text-left font-medium text-gray-700">City</th>
+              <th className="p-3 text-left font-medium text-gray-700">Woreda</th>
+              <th className="p-3 text-left font-medium text-gray-700">House Number</th>
               <th className="p-3 text-left font-medium text-gray-700">Language</th>
               <th className="p-3 text-left font-medium text-gray-700">Academic Level</th>
+              <th className="p-3 text-left font-medium text-gray-700">Field of Study</th>
+              <th className="p-3 text-left font-medium text-gray-700">Has Smartphone</th>
+              <th className="p-3 text-left font-medium text-gray-700">Smartphone Owner</th>
+              <th className="p-3 text-left font-medium text-gray-700">Training Experience</th>
+              <th className="p-3 text-left font-medium text-gray-700">Training Experience Description</th>
+              <th className="p-3 text-left font-medium text-gray-700">Emergency Contact</th>
+              <th className="p-3 text-left font-medium text-gray-700">Emergency Contact Phone</th>
+              <th className="p-3 text-left font-medium text-gray-700">Emergency Contact Relationship</th>
+              <th className="p-3 text-left font-medium text-gray-700">Has Disability</th>
+              <th className="p-3 text-left font-medium text-gray-700">Belongs to Marginalized Group</th>
               <th className="p-3 text-left font-medium text-gray-700">Disabilities</th>
               <th className="p-3 text-left font-medium text-gray-700">Marginalized Groups</th>
               <th className="p-3 text-left font-medium text-gray-700">Status</th>
@@ -471,24 +494,30 @@ export function CSVDataTable({
               <tr key={row.rowIndex} className="border-t hover:bg-gray-50/50 transition-colors">
                 <td className="p-3 font-medium text-gray-600">{row.rowIndex}</td>
                 <td className="p-3">{renderCell(row, 'firstName', row.firstName)}</td>
+                <td className="p-3">{renderCell(row, 'middleName', row.middleName)}</td>
                 <td className="p-3">{renderCell(row, 'lastName', row.lastName)}</td>
                 <td className="p-3">{renderCell(row, 'email', row.email)}</td>
                 <td className="p-3">{renderCell(row, 'contactPhone', row.contactPhone)}</td>
                 <td className="p-3">{renderCell(row, 'dateOfBirth', row.dateOfBirth)}</td>
-                <td className="p-3">{renderCell(row, 'fieldOfStudy', row.fieldOfStudy)}</td>
-                <td className="p-3">{renderCell(row, 'hasSmartphone', row.hasSmartphone)}</td>
-                <td className="p-3">{renderCell(row, 'hasTrainingExperience', row.hasTrainingExperience)}</td>
-                <td className="p-3">{renderCell(row, 'trainingExperienceDescription', row.trainingExperienceDescription)}</td>
-                <td className="p-3">{renderCell(row, 'emergencyContactName', row.emergencyContactName)}</td>
-                <td className="p-3">{renderCell(row, 'emergencyContactPhone', row.emergencyContactPhone)}</td>
-                <td className="p-3">{renderCell(row, 'emergencyContactRelationship', row.emergencyContactRelationship)}</td>
                 <td className="p-3">{renderCell(row, 'gender', row.gender || "")}</td>
                 <td className="p-3">{renderCell(row, 'countryId', row.countryId)}</td>
                 <td className="p-3">{renderCell(row, 'regionId', row.regionId)}</td>
                 <td className="p-3">{renderCell(row, 'zoneId', row.zoneId)}</td>
                 <td className="p-3">{renderCell(row, 'cityId', row.cityId)}</td>
+                <td className="p-3">{renderCell(row, 'woreda', row.woreda)}</td>
+                <td className="p-3">{renderCell(row, 'houseNumber', row.houseNumber)}</td>
                 <td className="p-3">{renderCell(row, 'languageId', row.languageId)}</td>
                 <td className="p-3">{renderCell(row, 'academicLevelId', row.academicLevelId)}</td>
+                <td className="p-3">{renderCell(row, 'fieldOfStudy', row.fieldOfStudy)}</td>
+                <td className="p-3">{renderCell(row, 'hasSmartphone', row.hasSmartphone)}</td>
+                <td className="p-3">{renderCell(row, 'smartphoneOwner', row.smartphoneOwner)}</td>
+                <td className="p-3">{renderCell(row, 'hasTrainingExperience', row.hasTrainingExperience)}</td>
+                <td className="p-3">{renderCell(row, 'trainingExperienceDescription', row.trainingExperienceDescription)}</td>
+                <td className="p-3">{renderCell(row, 'emergencyContactName', row.emergencyContactName)}</td>
+                <td className="p-3">{renderCell(row, 'emergencyContactPhone', row.emergencyContactPhone)}</td>
+                <td className="p-3">{renderCell(row, 'emergencyContactRelationship', row.emergencyContactRelationship)}</td>
+                <td className="p-3">{renderCell(row, 'hasDisability', row.hasDisability || "")}</td>
+                <td className="p-3">{renderCell(row, 'belongsToMarginalizedGroup', row.belongsToMarginalizedGroup || "")}</td>
                 <td className="p-3">{renderCell(row, 'disabilityIds', row.disabilityIds)}</td>
                 <td className="p-3">{renderCell(row, 'marginalizedGroupIds', row.marginalizedGroupIds)}</td>
                 <td className="p-3">

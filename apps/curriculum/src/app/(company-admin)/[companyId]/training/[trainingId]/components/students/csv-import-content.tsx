@@ -128,20 +128,46 @@ export function CSVImportContent({
     
     // Required field validations
     if (!row.firstName?.trim()) errors.firstName = "First name is required"
+    if (!row.middleName?.trim()) errors.middleName = "Middle name is required"
     if (!row.lastName?.trim()) errors.lastName = "Last name is required"
     if (!row.email?.trim()) errors.email = "Email is required"
     if (!row.contactPhone?.trim()) errors.contactPhone = "Contact phone is required"
     if (!row.dateOfBirth?.trim()) errors.dateOfBirth = "Date of birth is required"
     if (!row.gender?.trim()) errors.gender = "Gender is required"
+    if (!row.countryId?.trim()) errors.countryId = "Country is required"
+    if (!row.regionId?.trim()) errors.regionId = "Region is required"
+    if (!row.zoneId?.trim()) errors.zoneId = "Zone is required"
+    if (!row.woreda?.trim()) errors.woreda = "Woreda is required"
+    if (!row.houseNumber?.trim()) errors.houseNumber = "House number is required"
+    if (!row.languageId?.trim()) errors.languageId = "Language is required"
+    if (!row.academicLevelId?.trim()) errors.academicLevelId = "Academic level is required"
+    if (!row.fieldOfStudy?.trim()) errors.fieldOfStudy = "Field of study is required"
+    if (!row.hasSmartphone?.trim()) errors.hasSmartphone = "Has smartphone is required"
+    if (!row.smartphoneOwner?.trim()) errors.smartphoneOwner = "Smartphone owner is required"
+    if (!row.hasTrainingExperience?.trim()) errors.hasTrainingExperience = "Has training experience is required"
+    if (!row.trainingExperienceDescription?.trim()) errors.trainingExperienceDescription = "Training experience description is required"
+    if (!row.emergencyContactName?.trim()) errors.emergencyContactName = "Emergency contact name is required"
+    if (!row.emergencyContactPhone?.trim()) errors.emergencyContactPhone = "Emergency contact phone is required"
+    if (!row.emergencyContactRelationship?.trim()) errors.emergencyContactRelationship = "Emergency contact relationship is required"
     
     // Email validation
     if (row.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(row.email)) {
       errors.email = "Invalid email format"
     }
     
-    // Date validation
-    if (row.dateOfBirth && isNaN(Date.parse(row.dateOfBirth))) {
-      errors.dateOfBirth = "Invalid date format (use YYYY-MM-DD)"
+    // Date validation - strict YYYY-MM-DD format
+    if (row.dateOfBirth) {
+      const datePattern = /^\d{4}-\d{2}-\d{2}$/
+      if (!datePattern.test(row.dateOfBirth)) {
+        errors.dateOfBirth = "Invalid date format (must be YYYY-MM-DD)"
+      } else {
+        // Check if it's a valid date
+        const date = new Date(row.dateOfBirth)
+        const [year, month, day] = row.dateOfBirth.split('-').map(Number)
+        if (date.getFullYear() !== year || date.getMonth() + 1 !== month || date.getDate() !== day) {
+          errors.dateOfBirth = "Invalid date (must be a real date in YYYY-MM-DD format)"
+        }
+      }
     }
     
     // Gender validation

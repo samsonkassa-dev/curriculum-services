@@ -38,6 +38,8 @@ export function CohortsComponent({ trainingId }: CohortsComponentProps) {
 
   const [searchTerm, setSearchTerm] = useState("")
   const [isAddCohortModalOpen, setIsAddCohortModalOpen] = useState(false)
+  const [isEditCohortModalOpen, setIsEditCohortModalOpen] = useState(false)
+  const [cohortToEdit, setCohortToEdit] = useState<typeof cohorts[0] | null>(null)
 
   const handleAddCohort = () => {
     setIsAddCohortModalOpen(true)
@@ -50,6 +52,22 @@ export function CohortsComponent({ trainingId }: CohortsComponentProps) {
 
   const handleCohortCancel = () => {
     setIsAddCohortModalOpen(false)
+  }
+
+  const handleEditCohort = (cohort: typeof cohorts[0]) => {
+    setCohortToEdit(cohort)
+    setIsEditCohortModalOpen(true)
+  }
+
+  const handleEditCohortSuccess = () => {
+    setIsEditCohortModalOpen(false)
+    setCohortToEdit(null)
+    // The query will automatically refetch due to invalidation in the hook
+  }
+
+  const handleEditCohortCancel = () => {
+    setIsEditCohortModalOpen(false)
+    setCohortToEdit(null)
   }
 
   const filteredCohorts = cohorts.filter(cohort => 
@@ -124,7 +142,7 @@ export function CohortsComponent({ trainingId }: CohortsComponentProps) {
               )}
             </div>
           ) : (
-            <CohortList cohorts={filteredCohorts} />
+            <CohortList cohorts={filteredCohorts} onEditCohort={handleEditCohort} />
           )}
         </div>
       </div>
@@ -139,7 +157,7 @@ export function CohortsComponent({ trainingId }: CohortsComponentProps) {
           <DialogHeader className="px-6 py-4 border-b">
             <div className="flex items-center justify-between w-full">
               <DialogTitle className="text-xl font-semibold">New Cohort</DialogTitle>
-              <DialogClose asChild>
+              {/* <DialogClose asChild>
                 <Button 
                   variant="ghost" 
                   size="icon"
@@ -147,7 +165,7 @@ export function CohortsComponent({ trainingId }: CohortsComponentProps) {
                 >
                   <X className="h-4 w-4" />
                 </Button>
-              </DialogClose>
+              </DialogClose> */}
             </div>
           </DialogHeader>
           <CohortForm 
@@ -155,6 +173,38 @@ export function CohortsComponent({ trainingId }: CohortsComponentProps) {
             companyId={params.companyId as string}
             onSuccess={handleCohortSuccess}
             onCancel={handleCohortCancel}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Cohort Modal */}
+      <Dialog open={isEditCohortModalOpen} onOpenChange={setIsEditCohortModalOpen}>
+        <DialogContent 
+          className="sm:max-w-[600px] max-h-[90vh] p-0"
+          onInteractOutside={(e) => e.preventDefault()}
+          onEscapeKeyDown={(e) => e.preventDefault()}
+        >
+          <DialogHeader className="px-6 py-4 border-b">
+            <div className="flex items-center justify-between w-full">
+              <DialogTitle className="text-xl font-semibold">Edit Cohort</DialogTitle>
+              {/* <DialogClose asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon"
+                  className="h-8 w-8"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </DialogClose> */}
+            </div>
+          </DialogHeader>
+          <CohortForm 
+            trainingId={trainingId}
+            companyId={params.companyId as string}
+            cohort={cohortToEdit}
+            isEditing={true}
+            onSuccess={handleEditCohortSuccess}
+            onCancel={handleEditCohortCancel}
           />
         </DialogContent>
       </Dialog>

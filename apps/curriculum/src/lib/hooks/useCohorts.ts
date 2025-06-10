@@ -389,4 +389,57 @@ export function useRemoveTraineesFromCohort() {
   }
 }
 
+// Delete cohort
+export function useDeleteCohort() {
+  const queryClient = useQueryClient()
+
+  const deleteCohortMutation = useMutation({
+    mutationFn: async ({ 
+      cohortId, 
+      trainingId 
+    }: { 
+      cohortId: string, 
+      trainingId?: string 
+    }) => {
+      const token = getCookie('token')
+      const response = await axios.delete(
+        `${process.env.NEXT_PUBLIC_API}/cohort/${cohortId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      )
+      return { responseData: response.data, cohortId, trainingId }
+    },
+    onSuccess: ({ cohortId, trainingId }) => {
+      toast.success('Cohort deleted successfully')
+      
+      // Invalidate cohort queries
+      queryClient.invalidateQueries({ 
+        predicate: (query) => {
+          const queryKey = query.queryKey
+          return (
+            Array.isArray(queryKey) && 
+            (queryKey.includes('cohorts') || queryKey.includes(cohortId))
+          )
+        }
+      })
+      
+      // Also invalidate training-level cohort queries if trainingId is provided
+      if (trainingId) {
+        queryClient.invalidateQueries({
+          queryKey: ['cohorts', { trainingId }]
+        })
+      }
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to delete cohort')
+    }
+  })
+
+  return {
+    deleteCohort: deleteCohortMutation.mutate,
+    isLoading: deleteCohortMutation.isPending
+  }
+}
+
 
