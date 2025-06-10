@@ -59,7 +59,7 @@ interface VenuesResponse {
   totalElements?: number;
 }
 
-interface VenueResponse {
+export interface VenueResponse {
     code: string;
     venue: Venue;
     message: string;
@@ -282,11 +282,40 @@ export function useVenueOperations() {
     },
   });
 
+  // Helper functions that support custom callbacks
+  const addVenueWithCallbacks = async (
+    venueData: CreateVenueData, 
+    options?: { onSuccess?: () => void; onError?: (error: unknown) => void }
+  ) => {
+    try {
+      await addVenueMutation.mutateAsync(venueData);
+      // If we reach here, the mutation was successful
+      options?.onSuccess?.();
+    } catch (error) {
+      // If we reach here, the mutation failed
+      options?.onError?.(error);
+    }
+  };
+
+  const updateVenueWithCallbacks = async (
+    data: { venueId: string; venueData: UpdateVenueData },
+    options?: { onSuccess?: () => void; onError?: (error: unknown) => void }
+  ) => {
+    try {
+      await updateVenueMutation.mutateAsync(data);
+      // If we reach here, the mutation was successful
+      options?.onSuccess?.();
+    } catch (error) {
+      // If we reach here, the mutation failed
+      options?.onError?.(error);
+    }
+  };
+
   return {
     cities,
     equipmentItems,
-    addVenue: addVenueMutation.mutate,
-    updateVenue: updateVenueMutation.mutate,
+    addVenue: addVenueWithCallbacks,
+    updateVenue: updateVenueWithCallbacks,
     deleteVenue: deleteVenueMutation.mutate,
     isAddingVenue: addVenueMutation.isPending,
     isUpdatingVenue: updateVenueMutation.isPending,
