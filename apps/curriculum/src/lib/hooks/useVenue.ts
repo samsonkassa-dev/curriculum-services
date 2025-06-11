@@ -283,32 +283,40 @@ export function useVenueOperations() {
   });
 
   // Helper functions that support custom callbacks
-  const addVenueWithCallbacks = async (
+  const addVenueWithCallbacks = (
     venueData: CreateVenueData, 
     options?: { onSuccess?: () => void; onError?: (error: unknown) => void }
   ) => {
-    try {
-      await addVenueMutation.mutateAsync(venueData);
-      // If we reach here, the mutation was successful
-      options?.onSuccess?.();
-    } catch (error) {
-      // If we reach here, the mutation failed
-      options?.onError?.(error);
-    }
+    addVenueMutation.mutate(venueData, {
+      onSuccess: (data) => {
+        // Built-in success handling is already done by the mutation's onSuccess
+        // Call custom success handler
+        options?.onSuccess?.();
+      },
+      onError: (error) => {
+        // Built-in error handling is already done by the mutation's onError
+        // Call custom error handler
+        options?.onError?.(error);
+      }
+    });
   };
 
-  const updateVenueWithCallbacks = async (
+  const updateVenueWithCallbacks = (
     data: { venueId: string; venueData: UpdateVenueData },
     options?: { onSuccess?: () => void; onError?: (error: unknown) => void }
   ) => {
-    try {
-      await updateVenueMutation.mutateAsync(data);
-      // If we reach here, the mutation was successful
-      options?.onSuccess?.();
-    } catch (error) {
-      // If we reach here, the mutation failed
-      options?.onError?.(error);
-    }
+    updateVenueMutation.mutate(data, {
+      onSuccess: (result) => {
+        // Built-in success handling is already done by the mutation's onSuccess
+        // Call custom success handler
+        options?.onSuccess?.();
+      },
+      onError: (error) => {
+        // Built-in error handling is already done by the mutation's onError
+        // Call custom error handler
+        options?.onError?.(error);
+      }
+    });
   };
 
   return {
