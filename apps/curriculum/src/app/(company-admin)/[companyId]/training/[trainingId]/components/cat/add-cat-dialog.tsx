@@ -35,12 +35,12 @@ export function AddCatDialog({ trainingId, companyId, trigger }: AddCatDialogPro
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        {trigger || <Button>Add Assessment</Button>}
+        {trigger || <Button>Add CAT</Button>}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[600px] max-h-[95vh] p-0">
         <DialogHeader className="px-6 py-4 border-b">
           <div className="flex items-center justify-between w-full">
-            <DialogTitle className="text-xl font-semibold">New Assessment</DialogTitle>
+            <DialogTitle className="text-xl font-semibold">New CAT</DialogTitle>
           </div>
         </DialogHeader>
         <CatForm 

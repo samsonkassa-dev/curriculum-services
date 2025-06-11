@@ -161,7 +161,7 @@ export function CatComponent({ trainingId }: CatComponentProps) {
       <ClipboardList className="h-12 w-12 mx-auto text-gray-400 mb-4" />
       <h3 className="text-xl font-medium mb-2">No CAT Assessments Available</h3>
       <p className="text-gray-500 mb-6">
-        Course Assessment Tools (CAT) help assess training impact and learner progress. They enable trainers to evaluate effectiveness and make data-driven improvements to curriculum delivery.
+        Continuous Assessment Test (CAT) help assess training impact and learner progress. They enable trainers to evaluate effectiveness and make data-driven improvements to curriculum delivery.
       </p>
       {hasEditPermission && (
         <AddCatDialog
@@ -169,7 +169,7 @@ export function CatComponent({ trainingId }: CatComponentProps) {
           companyId={companyId}
           trigger={
             <Button className="bg-[#0B75FF] hover:bg-[#0B75FF]/90 text-white">
-              Add Assessment
+              Add CAT
             </Button>
           }
         />
@@ -184,7 +184,7 @@ export function CatComponent({ trainingId }: CatComponentProps) {
   return (
     <div className="flex lg:px-16 md:px-14 px-4 w-full">
       <div className="flex-1 py-4 md:pl-12 min-w-0">
-        <h1 className="text-lg font-semibold mb-6">Course Assessment Tool</h1>
+        <h1 className="text-lg font-semibold mb-6">Continuous Assessment Test (CAT)</h1>
 
         {!assessments.length ? (
           <div className="px-[7%] py-8">
@@ -215,7 +215,7 @@ export function CatComponent({ trainingId }: CatComponentProps) {
                   trigger={
                     <Button className="bg-[#0B75FF] hover:bg-[#0B75FF]/90 text-white flex items-center gap-2">
                       <Plus className="h-4 w-4" />
-                      <span>Add Assessment</span>
+                      <span>Add CAT</span>
                     </Button>
                   }
                 />

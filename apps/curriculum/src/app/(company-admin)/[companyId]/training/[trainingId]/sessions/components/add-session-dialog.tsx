@@ -1,5 +1,4 @@
-import { X } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { Suspense } from "react"
 import {
   Dialog,
   DialogContent,
@@ -10,6 +9,12 @@ import {
 import { Button } from "@/components/ui/button"
 import { SessionForm } from "./session-form"
 import { useState } from "react"
+import { Loading } from "@/components/ui/loading"
+
+// Loading fallback for the form
+const FormLoadingFallback = () => (
+  <Loading/>
+)
 
 interface AddSessionDialogProps {
   trainingId: string
@@ -18,12 +23,10 @@ interface AddSessionDialogProps {
 }
 
 export function AddSessionDialog({ trainingId, companyId, trigger }: AddSessionDialogProps) {
-  const router = useRouter()
   const [open, setOpen] = useState(false)
   
   const handleSuccess = () => {
     setOpen(false)
-    router.refresh()
   }
   
   const handleCancel = () => {
@@ -35,26 +38,23 @@ export function AddSessionDialog({ trainingId, companyId, trigger }: AddSessionD
       <DialogTrigger asChild>
         {trigger || <Button>Add Session</Button>}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[600px] max-h-[95vh] p-0">
-        <DialogHeader className="px-6 py-4 border-b">
-          <div className="flex items-center justify-between w-full">
-            <DialogTitle className="text-xl font-semibold">New Session</DialogTitle>
-            <Button 
-              variant="ghost" 
-              size="icon"
-              onClick={() => setOpen(false)}
-              className="h-8 w-8"
-            >
-              <X className="h-4 w-4" />
-            </Button>
-          </div>
+      <DialogContent className="max-w-4xl max-h-[90vh] p-0 rounded-lg">
+        <DialogHeader className="flex flex-row items-center justify-between p-6 pb-4 border-b">
+          <DialogTitle className="text-xl font-semibold">
+            Add Session
+          </DialogTitle>
         </DialogHeader>
-        <SessionForm 
-          trainingId={trainingId}
-          companyId={companyId}
-          onSuccess={handleSuccess}
-          onCancel={handleCancel}
-        />
+        
+        {open && (
+          <Suspense fallback={<FormLoadingFallback />}>
+            <SessionForm 
+              trainingId={trainingId}
+              companyId={companyId}
+              onSuccess={handleSuccess}
+              onCancel={handleCancel}
+            />
+          </Suspense>
+        )}
       </DialogContent>
     </Dialog>
   )

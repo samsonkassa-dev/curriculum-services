@@ -138,17 +138,17 @@ export default function AssessmentModal({
   }, [selectedAssessmentId, fileLink, comment, studentId, submitAnswer])
 
   // Debug logging
-  useEffect(() => {
-    console.log('Assessment Modal Debug:', {
-      assessmentData,
-      selectedAssessmentId,
-      fileLink,
-      comment,
-      isSubmitting,
-      error,
-      success
-    })
-  }, [assessmentData, selectedAssessmentId, fileLink, comment, isSubmitting, error, success])
+  // useEffect(() => {
+  //   console.log('Assessment Modal Debug:', {
+  //     assessmentData,
+  //     selectedAssessmentId,
+  //     fileLink,
+  //     comment,
+  //     isSubmitting,
+  //     error,
+  //     success
+  //   })
+  // }, [assessmentData, selectedAssessmentId, fileLink, comment, isSubmitting, error, success])
 
   // Memoized render content
   const renderContent = useMemo(() => {

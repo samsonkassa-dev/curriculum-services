@@ -99,7 +99,13 @@ function CommentDialog({
   )
 }
 
-export const createAttendanceColumns = (sessionId: string, canEditAssessment: boolean = false, session?: Session, trainingId?: string) => {
+export const createAttendanceColumns = (
+  sessionId: string,
+  canEditAssessment: boolean = false,
+  session?: Session,
+  trainingId?: string,
+  extras: ColumnDef<AttendanceStudent>[] = []
+) => {
   const columns: ColumnDef<AttendanceStudent>[] = [
     {
       accessorKey: "name",
@@ -232,6 +238,11 @@ export const createAttendanceColumns = (sessionId: string, canEditAssessment: bo
         />;
       },
     });
+  }
+  
+  // Append any extra columns provided (future-proofing for new inline forms)
+  if (extras.length) {
+    columns.push(...extras);
   }
   
   return columns;

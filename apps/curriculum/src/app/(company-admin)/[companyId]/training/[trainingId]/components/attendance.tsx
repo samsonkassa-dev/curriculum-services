@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback, useRef, useMemo } from "react"
+import { useState, useEffect, useCallback, useRef, useMemo, useReducer } from "react"
 import { useUserRole } from "@/lib/hooks/useUserRole"
 import { Loading } from "@/components/ui/loading"
 import { useCohortSessions } from "@/lib/hooks/useSession"
@@ -24,6 +24,50 @@ interface AttendanceComponentProps {
   trainingId: string
 }
 
+// -----------------------------
+// Attendance local state helper
+// -----------------------------
+
+type AttendanceRecord = {
+  status?: 'present' | 'absent'
+  comment: string
+  attendanceId?: string
+}
+
+interface AttendanceState {
+  data: Record<string, AttendanceRecord>
+  dirty: boolean
+  pendingId: string | null
+}
+
+type AttendanceAction =
+  | { type: 'load'; payload: Record<string, AttendanceRecord> }
+  | { type: 'edit'; studentId: string; data: Partial<AttendanceRecord> }
+  | { type: 'reset' }
+
+function attendanceReducer(state: AttendanceState, action: AttendanceAction): AttendanceState {
+  switch (action.type) {
+    case 'load':
+      return { data: action.payload, dirty: false, pendingId: null }
+    case 'edit': {
+      const prev = state.data[action.studentId] || { comment: '' }
+      const next = { ...prev, ...action.data }
+      const changed = prev.status !== next.status || prev.comment !== next.comment
+      if (!changed) return state
+
+      return {
+        data: { ...state.data, [action.studentId]: next },
+        dirty: true,
+        pendingId: action.studentId,
+      }
+    }
+    case 'reset':
+      return { data: {}, dirty: false, pendingId: null }
+    default:
+      return state
+  }
+}
+
 export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
   const { isProjectManager, isTrainingAdmin, isTrainer, isLoading: isLoadingAuth } = useUserRole()
   const [isInitialLoadComplete, setIsInitialLoadComplete] = useState(false)
@@ -33,13 +77,22 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
   const [studentPage, setStudentPage] = useState(1)
   const [studentPageSize, setStudentPageSize] = useState(10)
   const [searchQuery, setSearchQuery] = useState("")
-  const [attendanceData, setAttendanceData] = useState<Record<string, { status: 'present' | 'absent', comment: string, attendanceId?: string }>>({})
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
+  const [attendanceState, dispatchAttendance] = useReducer(attendanceReducer, {
+    data: {},
+    dirty: false,
+    pendingId: null,
+  })
+
+  const attendanceData = attendanceState.data
+  const hasUnsavedChanges = attendanceState.dirty
+  const unsavedStudentId = attendanceState.pendingId
+
   const previousSessionIdRef = useRef<string>("");
-  const [unsavedStudentId, setUnsavedStudentId] = useState<string | null>(null);
+  const isInitializedRef = useRef(false)
+
+  // Local helpers for network UI states
   const [isSaving, setIsSaving] = useState(false)
-  const [pendingSubmissions, setPendingSubmissions] = useState<string[]>([]);
-  const [isInitialized, setIsInitialized] = useState(false)
+  const [pendingSubmissions, setPendingSubmissions] = useState<string[]>([])
 
   // Fetch cohorts for this training
   const { 
@@ -69,11 +122,11 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
 
   // Initialize first cohort and session - only once when data is available
   useEffect(() => {
-    if (!isInitialized && cohorts.length > 0) {
+    if (!isInitializedRef.current && cohorts.length > 0) {
       setActiveCohortId(cohorts[0].id)
-      setIsInitialized(true)
+      isInitializedRef.current = true
     }
-  }, [cohorts, isInitialized])
+  }, [cohorts.length])
 
   // Set first session when sessions load for the active cohort
   useEffect(() => {
@@ -88,9 +141,7 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
     if (newCohortId !== activeCohortId) {
       setActiveCohortId(newCohortId)
       setActiveSessionId("") // Reset session when cohort changes
-      setAttendanceData({})
-      setHasUnsavedChanges(false)
-      setUnsavedStudentId(null)
+      dispatchAttendance({ type: 'reset' })
     }
   }, [activeCohortId])
 
@@ -101,14 +152,11 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
         const confirmed = window.confirm("You have unsaved attendance changes for a student. Do you want to discard them?");
         if (confirmed) {
           setActiveSessionId(newSessionId)
-          setAttendanceData({})
-          setHasUnsavedChanges(false)
-          setUnsavedStudentId(null)
+          dispatchAttendance({ type: 'reset' })
         }
       } else {
         setActiveSessionId(newSessionId)
-        setAttendanceData({})
-        setUnsavedStudentId(null)
+        dispatchAttendance({ type: 'reset' })
       }
     }
   }, [activeSessionId, hasUnsavedChanges])
@@ -129,7 +177,7 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
   // Initialize attendance data from student records
   useEffect(() => {
     if (studentData?.trainees && studentData.trainees.length > 0) {
-      const newAttendanceData: Record<string, { status: 'present' | 'absent', comment: string, attendanceId?: string }> = {};
+      const newAttendanceData: Record<string, AttendanceRecord> = {};
       
       studentData.trainees.forEach(student => {
         // Check if the student has attendance data
@@ -144,16 +192,9 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
         }
       });
       
-      // Set initial data without comparing, as we want to load fresh data
-      setAttendanceData(newAttendanceData);
-      
-      setHasUnsavedChanges(false); // Reset change tracking after loading data
-      setUnsavedStudentId(null); // Reset unsaved student on data load
+      dispatchAttendance({ type: 'load', payload: newAttendanceData })
     } else {
-      // Clear data if no trainees
-      setAttendanceData({});
-      setHasUnsavedChanges(false);
-      setUnsavedStudentId(null);
+      dispatchAttendance({ type: 'reset' })
     }
   }, [studentData]); 
 
@@ -169,32 +210,11 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
       return;
     }
     
-    let previousStatus: 'present' | 'absent' | undefined;
-    let statusChanged = false;
-    
-    setAttendanceData(prev => {
-      const existingRecord = prev[studentId];
-      previousStatus = existingRecord?.status;
-      
-      // Update only if status actually changed
-      if (existingRecord?.status === status) return prev;
-      
-      statusChanged = true;
-      return {
-        ...prev,
-        [studentId]: {
-          ...(existingRecord || { comment: '' }), // Ensure comment exists if creating new record
-          status: status
-        }
-      };
-    });
-    
-    // Mark changes and track the student if status changed
-    if (statusChanged) {
-      setHasUnsavedChanges(true);
-      setUnsavedStudentId(studentId);
-    }
-  }, [hasUnsavedChanges, unsavedStudentId]);
+    const existingRecord = attendanceData[studentId]
+    if (existingRecord?.status === status) return
+
+    dispatchAttendance({ type: 'edit', studentId, data: { status } })
+  }, [hasUnsavedChanges, unsavedStudentId, attendanceData]);
 
   // Handle comment change - modified for single student edits
   const handleCommentChange = useCallback((studentId: string, comment: string) => {
@@ -206,30 +226,11 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
       return;
     }
     
-    let commentChanged = false;
+    const existingRecord = attendanceData[studentId] || { status: undefined, comment: '' }
+    if (existingRecord.comment === comment) return
 
-    setAttendanceData(prev => {
-      const existingRecord = prev[studentId] || { status: undefined, comment: '' }; // Provide default status if needed
-      
-      // Only update if comment actually changed
-      if (existingRecord.comment === comment) return prev;
-
-      commentChanged = true;
-      return {
-        ...prev,
-        [studentId]: {
-          ...existingRecord,
-          comment
-        }
-      };
-    });
-    
-    // Mark changes and track the student if comment changed
-    if (commentChanged) {
-      setHasUnsavedChanges(true);
-      setUnsavedStudentId(studentId);
-    }
-  }, [hasUnsavedChanges, unsavedStudentId]);
+    dispatchAttendance({ type: 'edit', studentId, data: { comment } })
+  }, [hasUnsavedChanges, unsavedStudentId, attendanceData]);
   
   // Map the student data to AttendanceStudent format - memoized to prevent recalculation
   const attendanceStudents = useMemo(() => students.map(student => {
@@ -346,8 +347,7 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
       {
         onSuccess: async () => {
           toast.success(`Attendance saved for ${studentName}`);
-          setHasUnsavedChanges(false);
-          setUnsavedStudentId(null);
+          dispatchAttendance({ type: 'reset' });
           await refetchStudents(); // Refresh data after saving
         },
         onError: (error) => {
@@ -361,7 +361,7 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
         }
       }
     );
-  }, [activeSessionId, unsavedStudentId, hasUnsavedChanges, attendanceData, submitAttendance, refetchStudents, students]);
+  }, [activeSessionId, unsavedStudentId, hasUnsavedChanges, attendanceData, submitAttendance, refetchStudents, students, dispatchAttendance]);
 
   // Find the current session object
   const currentSession = sessions.find(session => session.id === activeSessionId);

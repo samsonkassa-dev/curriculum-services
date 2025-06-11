@@ -19,6 +19,7 @@ export interface Lesson {
   description: string
   duration: number
   durationType: DurationType
+  moduleId?: string
 }
 
 export interface City {

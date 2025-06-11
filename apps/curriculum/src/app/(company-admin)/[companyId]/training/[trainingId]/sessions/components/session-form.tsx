@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { cn } from "@/lib/utils"
@@ -19,21 +19,20 @@ import {
   SelectTrigger, 
   SelectValue 
 } from "@/components/ui/select"
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Badge } from "@/components/ui/badge"
 
 import { Module } from "@/types/module"
 import { useAddSession, useAddCohortSession, useUpdateSession, useSession } from "@/lib/hooks/useSession"
 import { useModulesByTrainingId } from "@/lib/hooks/useModule"
 import { useGetLessons } from "@/lib/hooks/useLesson"
 import { useTrainingVenues } from "@/lib/hooks/useTrainingVenue"
-import { sessionSchema, SessionFormValues, timeOptions, CustomCreateSessionData } from "./session-schema"
+import { sessionSchema, SessionFormValues, CustomCreateSessionData } from "./session-schema"
 import { toast } from "sonner"
+import { SessionCompensationSection } from "./session-compensation-section"
+import { Loading } from "@/components/ui/loading"
 
 // Helper function to format Date to YYYY-MM-DD string
 const formatDateForInput = (date: Date | null | undefined): string => {
@@ -117,6 +116,16 @@ export function SessionForm({ trainingId, companyId, cohortId, sessionId, onSucc
       }
     }
   }, [moduleIdToFetch, lessonsByModule, isLoadingLessons])
+
+  // Load lessons for all selected modules when editing
+  useEffect(() => {
+    if (isEditing && selectedModuleIds.length > 0) {
+      // Set the first selected module as active to trigger lesson loading
+      if (!activeModuleId && selectedModuleIds.length > 0) {
+        setActiveModuleId(selectedModuleIds[0])
+      }
+    }
+  }, [isEditing, selectedModuleIds, activeModuleId])
   
   // Form setup
   const form = useForm<SessionFormValues>({
@@ -126,9 +135,7 @@ export function SessionForm({ trainingId, companyId, cohortId, sessionId, onSucc
       lessonIds: [],
       deliveryMethod: "OFFLINE",
       startDate: new Date(),
-      startTime: "9:00 AM",
       endDate: new Date(),
-      endTime: "5:00 PM",
       numberOfStudents: 0,
       trainingVenueId: "",
       meetsRequirement: true,
@@ -142,62 +149,97 @@ export function SessionForm({ trainingId, companyId, cohortId, sessionId, onSucc
     },
   })
 
-  // Memoize the formatTime function to prevent unnecessary re-renders
-  const formatTime = useCallback((date: Date) => {
-    const hours = date.getHours()
-    const minutes = date.getMinutes()
-    const ampm = hours >= 12 ? 'PM' : 'AM'
-    const displayHours = hours % 12 || 12
-    const displayMinutes = minutes.toString().padStart(2, '0')
-    return `${displayHours}:${displayMinutes} ${ampm}`
-  }, [])
+  // Memoize form data calculation to prevent unnecessary re-renders
+  const formDataForEdit = useMemo(() => {
+    if (!isEditing || !existingSession) return null
+    
+    const startDateTime = new Date(existingSession.startDate)
+    const endDateTime = new Date(existingSession.endDate)
 
-  // Populate form with existing data when editing
-  useEffect(() => {
-    if (isEditing && existingSession && !isLoadingSession) {
-      // Extract time from datetime strings
-      const startDateTime = new Date(existingSession.startDate)
-      const endDateTime = new Date(existingSession.endDate)
-
-      form.reset({
-        name: existingSession.name,
-        lessonIds: existingSession.lessons.map(lesson => lesson.id),
-        deliveryMethod: existingSession.deliveryMethod,
-        startDate: startDateTime,
-        startTime: formatTime(startDateTime),
-        endDate: endDateTime,
-        endTime: formatTime(endDateTime),
-        numberOfStudents: existingSession.numberOfStudents,
-        trainingVenueId: existingSession.trainingVenue?.id || "",
-        meetsRequirement: existingSession.meetsRequirement,
-        requirementRemark: existingSession.requirementRemark || "",
-        trainerCompensationType: existingSession.trainerCompensationType,
-        trainerCompensationAmount: existingSession.trainerCompensationAmount,
-        numberOfAssistantTrainer: existingSession.numberOfAssistantTrainers,
-        assistantTrainerCompensationType: existingSession.assistantTrainerCompensationType,
-        assistantTrainerCompensationAmount: existingSession.assistantTrainerCompensationAmount,
-        trainingLink: existingSession.trainingLink || "",
-        isFirst: existingSession.first || false,
-        isLast: existingSession.last || false,
-      })
+    const formData = {
+      name: existingSession.name,
+      lessonIds: existingSession.lessons.map(lesson => lesson.id),
+      deliveryMethod: existingSession.deliveryMethod,
+      startDate: startDateTime,
+      endDate: endDateTime,
+      numberOfStudents: existingSession.numberOfStudents,
+      trainingVenueId: existingSession.trainingVenue?.id || "",
+      meetsRequirement: existingSession.meetsRequirement,
+      requirementRemark: existingSession.requirementRemark || "",
+      trainerCompensationType: existingSession.trainerCompensationType,
+      trainerCompensationAmount: existingSession.trainerCompensationAmount,
+      numberOfAssistantTrainer: existingSession.numberOfAssistantTrainers,
+      assistantTrainerCompensationType: existingSession.assistantTrainerCompensationType,
+      assistantTrainerCompensationAmount: existingSession.assistantTrainerCompensationAmount,
+      trainingLink: existingSession.trainingLink || "",
+      isFirst: existingSession.first || false,
+      isLast: existingSession.last || false,
     }
-  }, [isEditing, existingSession, isLoadingSession, formatTime])
+    
+    return formData
+  }, [isEditing, existingSession])
 
-                // Auto-detect module/submodule based on selected lessons when editing
+  // Watch form values to enable/disable certain fields
+  const deliveryMethod = form.watch("deliveryMethod")
+  
+  const isLoading = isAddingSession || isAddingCohortSession || isUpdatingSession || isLoadingSession
+
+  // Populate form with existing data when editing - using a ref to track if we've already populated
+  const [hasPopulatedForm, setHasPopulatedForm] = useState(false)
+  
   useEffect(() => {
-    if (isEditing && existingSession && modulesData?.modules && existingSession.lessons.length > 0) {
-      // For edit mode, if we can't auto-detect the module from lessons,
-      // we'll select the first main module as a fallback so users can see lessons
-      const allModules = modulesData.modules as ModuleWithRelationship[]
-      const mainModules = allModules.filter(moduleItem => !moduleItem.parentModule)
+    if (isEditing && formDataForEdit && !hasPopulatedForm && modulesData?.modules) {
+      // Reset form with all values
+      form.reset(formDataForEdit)
       
-      if (mainModules.length > 0) {
-        // Set the first main module as selected to enable lesson viewing
-        setSelectedModuleIds([mainModules[0].id])
-        setActiveModuleId(mainModules[0].id)
+      // Explicitly set delivery method to ensure it's recognized
+      if (formDataForEdit.deliveryMethod) {
+        form.setValue("deliveryMethod", formDataForEdit.deliveryMethod);
+      }
+      
+      setHasPopulatedForm(true)
+    }
+  }, [isEditing, formDataForEdit, hasPopulatedForm, modulesData?.modules, form])
+  
+  // Auto-detect selected modules based on the lessons of the session when editing
+  useEffect(() => {
+    if (isEditing && existingSession && modulesData?.modules && !isLoadingModules && selectedModuleIds.length === 0) {
+      const allModules = modulesData.modules as ModuleWithRelationship[]
+      const autoSelectedMainIds = new Set<string>();
+
+      // Check if lessons have moduleId, if so use them
+      const hasModuleIds = existingSession.lessons.some(lesson => 'moduleId' in lesson && lesson.moduleId)
+      
+      if (hasModuleIds) {
+        // Use moduleId approach
+        (existingSession.lessons as Array<{ moduleId?: string }>).forEach((lesson: { moduleId?: string }) => {
+          const moduleId = lesson.moduleId
+          if (!moduleId) return
+          const lessonModule = allModules.find((m) => m.id === moduleId)
+          if (lessonModule) {
+            if (lessonModule.parentModule?.id) {
+              autoSelectedMainIds.add(lessonModule.parentModule.id)
+            } else {
+              autoSelectedMainIds.add(lessonModule.id)
+            }
+          }
+        })
+      } else {
+        // Fallback: select all main modules so user can see all available lessons
+        // This allows the form to work even when moduleId is not provided
+        const mainModules = allModules.filter(m => !m.parentModule)
+        mainModules.forEach(module => {
+          autoSelectedMainIds.add(module.id)
+        })
+      }
+
+      if (autoSelectedMainIds.size > 0) {
+        const mainIds = Array.from(autoSelectedMainIds) as string[]
+        setSelectedModuleIds(mainIds)
+        setActiveModuleId(mainIds[0])
       }
     }
-  }, [isEditing, existingSession, modulesData])
+  }, [isEditing, existingSession, modulesData, isLoadingModules, selectedModuleIds.length])
   
   // Get modules and submodules
   const modules = (modulesData?.modules || []) as ModuleWithRelationship[]
@@ -208,42 +250,13 @@ export function SessionForm({ trainingId, companyId, cohortId, sessionId, onSucc
   
   // Handler for form submission
   const onSubmit = (values: SessionFormValues) => {
-    // Convert dates and times to ISO format
-    const startDateTime = new Date(values.startDate)
-    const startTimeParts = values.startTime.match(/(\d+):(\d+)\s?(AM|PM)/)
-    if (startTimeParts) {
-      let hours = parseInt(startTimeParts[1])
-      const minutes = parseInt(startTimeParts[2])
-      const period = startTimeParts[3]
-      
-      if (period === "PM" && hours < 12) hours += 12
-      if (period === "AM" && hours === 12) hours = 0
-      
-      startDateTime.setHours(hours, minutes)
-    }
-    
-    const endDateTime = new Date(values.endDate)
-    const endTimeParts = values.endTime.match(/(\d+):(\d+)\s?(AM|PM)/)
-    if (endTimeParts) {
-      let hours = parseInt(endTimeParts[1])
-      const minutes = parseInt(endTimeParts[2])
-      const period = endTimeParts[3]
-      
-      if (period === "PM" && hours < 12) hours += 12
-      if (period === "AM" && hours === 12) hours = 0
-      
-      endDateTime.setHours(hours, minutes)
-    }
-    
     // Create session data that matches CreateSessionData type
     const sessionData: CustomCreateSessionData = {
       name: values.name,
       lessonIds: values.lessonIds,
       deliveryMethod: values.deliveryMethod,
-      startDate: startDateTime.toISOString(),
-      endDate: endDateTime.toISOString(),
-      startTime: values.startTime,
-      endTime: values.endTime,
+      startDate: values.startDate.toISOString(),
+      endDate: values.endDate.toISOString(),
       numberOfStudents: values.numberOfStudents,
       trainingVenueId: values.trainingVenueId || "", // Provide default empty string
       meetsRequirement: values.meetsRequirement,
@@ -300,26 +313,34 @@ export function SessionForm({ trainingId, companyId, cohortId, sessionId, onSucc
           onSuccess()
         },
         onError: (error) => {
-          console.error(error)
+          console.log(error)
         }
       })
     }
   }
   
-  // Watch form values to enable/disable certain fields
-  const meetsRequirement = form.watch("meetsRequirement")
-  const deliveryMethod = form.watch("deliveryMethod")
-  const numberOfAssistantTrainer = form.watch("numberOfAssistantTrainer")
-  
-  const isLoading = isAddingSession || isAddingCohortSession || isUpdatingSession || isLoadingSession
-
   // Show loading if we're fetching session data for editing
-  if (isEditing && isLoadingSession) {
+  if (isEditing && (isLoadingSession || isLoadingModules)) {
+    return (
+      <div className="relative">
+      <ScrollArea className="h-[65vh] md:h-[65vh] pr-4">
+        <div className="px-4 py-2">
+            <Loading/>
+        </div>
+        </ScrollArea>
+      </div>
+    )
+  }
+
+  // Show error if session data failed to load in edit mode
+  if (isEditing && !existingSession && !isLoadingSession) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-500">Loading session data...</p>
+          <p className="text-red-500">Failed to load session data</p>
+          <Button onClick={onCancel} variant="outline" className="mt-4">
+            Close
+          </Button>
         </div>
       </div>
     )
@@ -330,7 +351,7 @@ export function SessionForm({ trainingId, companyId, cohortId, sessionId, onSucc
       <ScrollArea className="h-[65vh] md:h-[65vh] pr-4">
         <div className="px-4 py-2 pb-24">
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6" key={`session-form-${sessionId || 'new'}`}>
               {/* Session Name */}
               <FormField
                 control={form.control}
@@ -467,28 +488,6 @@ export function SessionForm({ trainingId, companyId, cohortId, sessionId, onSucc
                         ))}
                       </div>
                     </div>
-
-                    {/* Display selected modules */}
-                    {selectedModuleIds.length > 0 && (
-                      <div className="flex flex-wrap gap-2">
-                        {selectedModuleIds.map((id) => {
-                          const foundModule = mainModules.find(m => m.id === id);
-                          return (
-                            <Badge 
-                              key={id} 
-                              variant={activeModuleId === id ? "pending" : "secondary"}
-                              className="px-3 py-1.5 text-sm flex items-center cursor-pointer"
-                              onClick={() => {
-                                setActiveModuleId(id);
-                                setSelectedSubModuleId(null);
-                              }}
-                            >
-                              {foundModule?.name || id}
-                            </Badge>
-                          );
-                        })}
-                      </div>
-                    )}
                   </div>
                 )}
               </div>
@@ -527,20 +526,6 @@ export function SessionForm({ trainingId, companyId, cohortId, sessionId, onSucc
                 render={({ field }) => (
                   <FormItem className="relative">
                     <FormLabel>Select Lessons</FormLabel>
-                    
-                    {/* Show existing lessons in edit mode */}
-                    {isEditing && existingSession && existingSession.lessons.length > 0 && (
-                      <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-md">
-                        <p className="text-sm font-medium text-blue-800 mb-2">Current Session Lessons:</p>
-                        <div className="flex flex-wrap gap-2">
-                          {existingSession.lessons.map((lesson) => (
-                            <Badge key={lesson.id} variant="secondary" className="px-2 py-1">
-                              {lesson.name}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    )}
                     
                     <div className="border rounded-md p-3">
                       {selectedModuleIds.length === 0 ? (
@@ -625,55 +610,6 @@ export function SessionForm({ trainingId, companyId, cohortId, sessionId, onSucc
                         </div>
                       )}
                     </div>
-                    
-                    {field.value?.length > 0 && (
-                      <div className="mt-4">
-                        <div className="flex justify-between items-center mb-2">
-                          <p className="text-sm font-medium text-gray-700">
-                            Selected Lessons ({field.value.length})
-                          </p>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          {field.value.map((id) => {
-                            // Try to find lesson in all available sources
-                            let displayLesson = null;
-                            
-                            // Check current active module's lessons
-                            if (lessonsByModule) {
-                              displayLesson = lessonsByModule.find(l => l.id === id);
-                            }
-                            
-                            // If not found, check all other modules' lessons
-                            if (!displayLesson) {
-                              for (const [moduleId, lessons] of Object.entries(allLessonsByModule)) {
-                                const lesson = lessons.find(l => l.id === id);
-                                if (lesson) {
-                                  displayLesson = lesson;
-                                  break;
-                                }
-                              }
-                            }
-                            
-                            // If still not found and we're editing, check existing session
-                            if (!displayLesson && isEditing && existingSession) {
-                              displayLesson = existingSession.lessons.find(l => l.id === id) || null;
-                            }
-                            
-                            return (
-                              <Badge 
-                                key={id} 
-                                variant="pending"
-                                className="px-3 py-1.5 text-sm"
-                              >
-                                {displayLesson?.name || id}
-                              </Badge>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-                    
-                    <FormMessage />
                   </FormItem>
                 )}
               />
@@ -686,9 +622,14 @@ export function SessionForm({ trainingId, companyId, cohortId, sessionId, onSucc
                   <FormItem>
                     <FormLabel>Delivery Method</FormLabel>
                     <FormControl>
-                      <Select 
-                        value={field.value} 
-                        onValueChange={field.onChange}
+                      <Select
+                        value={field.value}
+                        onValueChange={(value) => {
+                          // Only set if it's one of our valid options
+                          if (value === "OFFLINE" || value === "ONLINE" || value === "SELF_PACED") {
+                            field.onChange(value);
+                          }
+                        }}
                       >
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder="Select delivery method" />
@@ -705,7 +646,7 @@ export function SessionForm({ trainingId, companyId, cohortId, sessionId, onSucc
                 )}
               />
               
-              {/* Start Date and Time */}
+              {/* Start Date and End Date in one row */}
               <div className="grid grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
@@ -727,38 +668,7 @@ export function SessionForm({ trainingId, companyId, cohortId, sessionId, onSucc
                     </FormItem>
                   )}
                 />
-                
-                <FormField
-                  control={form.control}
-                  name="startTime"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Start Time</FormLabel>
-                      <FormControl>
-                        <Select 
-                          value={field.value} 
-                          onValueChange={field.onChange}
-                        >
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select time" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {timeOptions.map((time) => (
-                              <SelectItem key={time} value={time}>
-                                {time}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-              
-              {/* End Date and Time */}
-              <div className="grid grid-cols-2 gap-4">
+
                 <FormField
                   control={form.control}
                   name="endDate"
@@ -774,34 +684,6 @@ export function SessionForm({ trainingId, companyId, cohortId, sessionId, onSucc
                             field.onChange(newDate)
                           }}
                         />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="endTime"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>End Time</FormLabel>
-                      <FormControl>
-                        <Select 
-                          value={field.value} 
-                          onValueChange={field.onChange}
-                        >
-                          <SelectTrigger className="w-full">
-                            <SelectValue placeholder="Select time" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {timeOptions.map((time) => (
-                              <SelectItem key={time} value={time}>
-                                {time}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -842,29 +724,34 @@ export function SessionForm({ trainingId, companyId, cohortId, sessionId, onSucc
                     deliveryMethod !== "OFFLINE" && "hidden"
                   )}>
                     <FormLabel>Training Venue</FormLabel>
-                    <FormControl>
-                      <Select 
-                        value={field.value} 
-                        onValueChange={field.onChange}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Select a venue" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {isLoadingVenues ? (
-                            <div className="py-2 px-3 text-sm text-gray-500">Loading venues...</div>
-                          ) : venuesData?.venues && venuesData.venues.length > 0 ? (
-                            venuesData.venues.map((venue) => (
-                              <SelectItem key={venue.id} value={venue.id}>
-                                {venue.name} - {venue.location}
-                              </SelectItem>
-                            ))
-                          ) : (
-                            <div className="py-2 px-3 text-sm text-gray-500">No venues available</div>
-                          )}
-                        </SelectContent>
-                      </Select>
-                    </FormControl>
+                    <Select 
+                      value={field.value}
+                      onValueChange={(value) => {
+                        if (value) {
+                          field.onChange(value)
+                        }
+                      }}
+                      disabled={isLoadingVenues}
+                    >
+                      <SelectTrigger className="w-full">
+                        <SelectValue>
+                          {venuesData?.venues?.find(v => v.id === field.value)?.name || "Select a venue"}
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        {isLoadingVenues ? (
+                          <div className="py-2 px-3 text-sm text-gray-500">Loading venues...</div>
+                        ) : venuesData?.venues && venuesData.venues.length > 0 ? (
+                          venuesData.venues.map((venue) => (
+                            <SelectItem key={venue.id} value={venue.id}>
+                              {venue.name} - {venue.location}
+                            </SelectItem>
+                          ))
+                        ) : (
+                          <div className="py-2 px-3 text-sm text-gray-500">No venues available</div>
+                        )}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -891,193 +778,8 @@ export function SessionForm({ trainingId, companyId, cohortId, sessionId, onSucc
                 )}
               />
               
-              {/* Venue Requirements */}
-              <div className="space-y-4">
-                <div className="flex items-center space-x-2">
-                  <FormField
-                    control={form.control}
-                    name="meetsRequirement"
-                    render={({ field }) => (
-                      <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                        <FormControl>
-                          <Checkbox
-                            checked={Boolean(field.value)}
-                            onCheckedChange={(checked) => {
-                              field.onChange(checked === true)
-                            }}
-                          />
-                        </FormControl>
-                        <div className="space-y-1 leading-none">
-                          <FormLabel>
-                            Meets venue requirements
-                          </FormLabel>
-                          <p className="text-xs text-muted-foreground">
-                            Check if the venue meets all training requirements
-                          </p>
-                        </div>
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                {!meetsRequirement && (
-                  <FormField
-                    control={form.control}
-                    name="requirementRemark"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Requirement Remarks</FormLabel>
-                        <FormControl>
-                          <Textarea 
-                            {...field} 
-                            value={field.value || ''} 
-                            placeholder="Describe what requirements are not met..."
-                            className="min-h-[80px]"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                )}
-              </div>
-              
-              {/* Trainer Compensation */}
-              <div className="space-y-4">
-                <Label className="text-base font-medium">Trainer Compensation</Label>
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField
-                    control={form.control}
-                    name="trainerCompensationType"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Compensation Type</FormLabel>
-                        <FormControl>
-                          <Select 
-                            value={field.value} 
-                            onValueChange={field.onChange}
-                          >
-                            <SelectTrigger className="w-full">
-                              <SelectValue placeholder="Select type" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="PER_HOUR">Per Hour</SelectItem>
-                              <SelectItem value="PER_TRAINEES">Per Trainee</SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  
-                  <FormField
-                    control={form.control}
-                    name="trainerCompensationAmount"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Amount</FormLabel>
-                        <FormControl>
-                          <Input 
-                            type="number" 
-                            min={0}
-                            {...field} 
-                            onChange={e => {
-                              const value = e.target.value === "" ? 0 : Number(e.target.value);
-                              field.onChange(isNaN(value) ? 0 : value);
-                            }}
-                            placeholder="Enter amount" 
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </div>
-              
-              {/* Assistant Trainer */}
-              <div className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="numberOfAssistantTrainer"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Number of Assistant Trainers</FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="number" 
-                          min={0}
-                          {...field} 
-                          onChange={e => {
-                            const value = e.target.value === "" ? 0 : Number(e.target.value);
-                            field.onChange(isNaN(value) ? 0 : value);
-                          }}
-                          placeholder="Enter number of assistant trainers" 
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                {numberOfAssistantTrainer > 0 && (
-                  <div className="space-y-4">
-                    <Label className="text-base font-medium">Assistant Trainer Compensation</Label>
-                    
-                    <div className="grid grid-cols-2 gap-4">
-                      <FormField
-                        control={form.control}
-                        name="assistantTrainerCompensationType"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Compensation Type</FormLabel>
-                            <FormControl>
-                              <Select 
-                                value={field.value || "PER_HOUR"} 
-                                onValueChange={field.onChange}
-                              >
-                                <SelectTrigger className="w-full">
-                                  <SelectValue placeholder="Select type" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="PER_HOUR">Per Hour</SelectItem>
-                                  <SelectItem value="PER_TRAINEES">Per Trainee</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      
-                      <FormField
-                        control={form.control}
-                        name="assistantTrainerCompensationAmount"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Amount</FormLabel>
-                            <FormControl>
-                              <Input 
-                                type="number" 
-                                min={0}
-                                {...field} 
-                                onChange={e => {
-                                  const value = e.target.value === "" ? 0 : Number(e.target.value);
-                                  field.onChange(isNaN(value) ? 0 : value);
-                                }}
-                                placeholder="Enter amount" 
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                  </div>
-                )}
-              </div>
+              {/* Requirements & Compensation */}
+              <SessionCompensationSection />
             </form>
           </Form>
         </div>
