@@ -428,7 +428,7 @@ export function SurveyModal({
         return (
           <div className="space-y-4">
             <h3 className="text-lg font-medium">
-              How satisfied were you with the trainer's delivery of the training content?
+              How satisfied were you with the trainer&apos;s delivery of the training content?
             </h3>
             <RadioGroup 
               value={trainerDeliverySatisfaction || ""} 
