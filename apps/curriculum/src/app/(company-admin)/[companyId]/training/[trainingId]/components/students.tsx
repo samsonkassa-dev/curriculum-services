@@ -131,16 +131,18 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
       email: student.email || "",
       contactPhone: student.contactPhone || "",
       dateOfBirth: dateOfBirth,
-      gender: student.gender === "MALE" || student.gender === "FEMALE" 
-        ? (student.gender as "MALE" | "FEMALE") 
-        : undefined,
-      countryId: student.city?.zone?.region?.country?.id || undefined,
-      regionId: student.city?.zone?.region?.id || undefined,
+      gender: (() => {
+        if (!student.gender) return undefined;
+        const normalized = student.gender.trim().toUpperCase();
+        return (normalized === "MALE" || normalized === "FEMALE") ? (normalized as "MALE" | "FEMALE") : undefined;
+      })(),
+      countryId: student.city?.zone?.region?.country?.id || student.zone?.region?.country?.id || undefined,
+      regionId: student.city?.zone?.region?.id || student.zone?.region?.id || undefined,
       zoneId: student.city?.zone?.id || student.zone?.id || undefined,
       cityId: student.city?.id || undefined,
       woreda: student.woreda || "",
       houseNumber: student.houseNumber || "",
-      languageId: student.language?.id || undefined,
+      languageId: student.language?.id ?? undefined,
       academicLevelId: student.academicLevel?.id || undefined,
       fieldOfStudy: student.fieldOfStudy || "",
       hasSmartphone: student.hasSmartphone || false,

@@ -113,6 +113,7 @@ export function PersonalInfoForm({ form, languages }: PersonalInfoFormProps) {
               <Select 
                 onValueChange={field.onChange} 
                 value={field.value || undefined}
+                key={field.value || 'gender-select'}
               >
                 <FormControl>
                   <SelectTrigger className="h-12 text-sm md:text-md select-trigger">
@@ -141,6 +142,7 @@ export function PersonalInfoForm({ form, languages }: PersonalInfoFormProps) {
               <Select 
                 onValueChange={field.onChange} 
                 value={field.value || undefined}
+                key={field.value || 'language-select'}
               >
                 <FormControl>
                   <SelectTrigger className="h-12 text-sm md:text-md select-trigger">
