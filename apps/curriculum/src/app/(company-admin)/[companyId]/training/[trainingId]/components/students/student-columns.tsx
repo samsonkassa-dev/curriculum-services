@@ -13,13 +13,20 @@ export const studentColumns: ColumnDef<Student>[] = [
     cell: ({ row }) => {
       const student = row.original
       
-      // Get display name
-      const name = `${student?.firstName || ''} ${student?.lastName || ''}`.trim()
+      // Get display name including middle name if it exists
+      const nameParts = [
+        student?.firstName || '',
+        student?.middleName || '',
+        student?.lastName || ''
+      ].filter(Boolean) // Remove empty parts
       
-      // Get initials for the avatar
-      const initials = name
-        .split(' ')
-        .map(n => n?.[0] || '')
+      const name = nameParts.join(' ').trim()
+      
+      // Get initials for the avatar from first and last name primarily
+      const initials = [
+        student?.firstName?.[0] || '',
+        student?.lastName?.[0] || student?.middleName?.[0] || ''
+      ].filter(Boolean)
         .join('')
         .toUpperCase()
         .slice(0, 2)
