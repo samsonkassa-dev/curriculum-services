@@ -523,6 +523,7 @@ export function useBulkImportStudentsByName() {
     disabilities,
     marginalizedGroups,
     bulkImportByName: bulkImportMutation.mutate,
+    bulkImportByNameAsync: bulkImportMutation.mutateAsync,
     isLoading: bulkImportMutation.isPending
   }
 }

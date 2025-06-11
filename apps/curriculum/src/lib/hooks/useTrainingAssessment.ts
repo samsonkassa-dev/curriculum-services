@@ -53,7 +53,13 @@ export interface AssignSessionData {
 
 interface TrainingAssessmentsResponse {
   code: string
-  trainingAssessment: TrainingAssessment[]
+  trainingAssessments: TrainingAssessment[]
+  message: string
+}
+
+interface SingleTrainingAssessmentResponse {
+  code: string
+  trainingAssessment: TrainingAssessment
   message: string
 }
 
@@ -64,28 +70,24 @@ interface TrainingAssessmentResponse {
 }
 
 /**
- * Hook for fetching training assessments for a specific training
+ * Hook for fetching training assessments for a specific training (list view)
  */
 export function useTrainingAssessments(
   trainingId: string, 
-  filters?: { type?: string, traineeId?: string },
+  filters?: { type?: string },
   options?: { enabled?: boolean }
 ) {
-  const enabled = options?.enabled ?? true // Default to true if not specified
+  const enabled = options?.enabled ?? true
 
   return useQuery({
     queryKey: ['training-assessments', trainingId, filters],
-    queryFn: async () => {
+    queryFn: async (): Promise<TrainingAssessmentsResponse> => {
       try {
         const token = getCookie('token')
         const params = new URLSearchParams()
         
         if (filters?.type) {
           params.append('type', filters.type)
-        }
-        
-        if (filters?.traineeId) {
-          params.append('traineeId', filters.traineeId)
         }
         
         const queryString = params.toString()
@@ -100,6 +102,40 @@ export function useTrainingAssessments(
       }
     },
     enabled: enabled && !!trainingId
+  })
+}
+
+/**
+ * Hook for fetching a single assessment for a specific trainee
+ */
+export function useTraineeAssessment(
+  trainingId: string,
+  traineeId: string,
+  assessmentType: 'PRE' | 'POST',
+  options?: { enabled?: boolean }
+) {
+  const enabled = options?.enabled ?? true
+
+  return useQuery({
+    queryKey: ['trainee-assessment', trainingId, traineeId, assessmentType],
+    queryFn: async (): Promise<SingleTrainingAssessmentResponse> => {
+      try {
+        const token = getCookie('token')
+        const params = new URLSearchParams()
+        params.append('type', assessmentType)
+        params.append('traineeId', traineeId)
+        
+        const url = `${process.env.NEXT_PUBLIC_API}/training-assessment/training/${trainingId}?${params.toString()}`
+        
+        const response = await axios.get<SingleTrainingAssessmentResponse>(url, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        return response.data
+      } catch (error: any) {
+        throw new Error(error?.response?.data?.message || 'Failed to load assessment for trainee')
+      }
+    },
+    enabled: enabled && !!trainingId && !!traineeId
   })
 }
 
@@ -256,13 +292,13 @@ export function useSubmitAssessmentAnswer() {
       queryClient.invalidateQueries({ queryKey: ['assessment-answers', assessmentId] })
       queryClient.invalidateQueries({ queryKey: ['training-assessment', assessmentId] })
       queryClient.invalidateQueries({ queryKey: ['training-assessments'] })
+      queryClient.invalidateQueries({ queryKey: ['trainee-assessment'] })
       // Also invalidate any queries that might include this trainee's data
       if (answerData.traineeId) {
         queryClient.invalidateQueries({ 
-          queryKey: ['training-assessments'],
+          queryKey: ['trainee-assessment'],
           predicate: (query) => {
-            const filters = query.queryKey[2] as any
-            return filters?.traineeId === answerData.traineeId
+            return query.queryKey.includes(answerData.traineeId)
           }
         })
       }

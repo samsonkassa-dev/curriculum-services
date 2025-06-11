@@ -149,10 +149,8 @@ export function AssessmentView({ trainingId }: CatViewProps) {
     totalElements,
     totalPages 
   } = useMemo(() => {
-    // Convert single assessment object to array if needed, or use array if it's already an array
-    const assessments = Array.isArray(data?.trainingAssessment) 
-      ? data.trainingAssessment 
-      : data?.trainingAssessment ? [data.trainingAssessment] : []
+    // Use the correct plural property name from API response
+    const assessments = data?.trainingAssessments || []
 
     const filtered = assessments.filter((assessment: TrainingAssessment) => {
       // Apply text search filter only - assessment type filter is handled by API
@@ -178,7 +176,7 @@ export function AssessmentView({ trainingId }: CatViewProps) {
       totalElements: total,
       totalPages: totalPgs
     }
-  }, [data?.trainingAssessment, debouncedSearch, page, pageSize])
+  }, [data?.trainingAssessments, debouncedSearch, page, pageSize])
 
   // Add the actions column to the existing columns
   const columnsWithActions = useMemo<ColumnDef<TrainingAssessment>[]>(() => {
@@ -237,7 +235,7 @@ export function AssessmentView({ trainingId }: CatViewProps) {
       <div className="flex-1 py-4 md:pl-12 min-w-0">
         <h1 className="text-lg font-semibold mb-6">Assessments</h1>
 
-        {!data?.trainingAssessment || (Array.isArray(data.trainingAssessment) ? !data.trainingAssessment.length : false) ? (
+        {!data?.trainingAssessments || !data.trainingAssessments.length ? (
           <div className="px-[7%] py-8">
             {emptyState}
           </div>
@@ -305,9 +303,7 @@ export function AssessmentView({ trainingId }: CatViewProps) {
             onClose={handleCloseModal}
             isEditing={isEditing}
             assessment={isEditing ? (() => {
-              const assessments = Array.isArray(data?.trainingAssessment) 
-                ? data.trainingAssessment 
-                : data?.trainingAssessment ? [data.trainingAssessment] : []
+              const assessments = data?.trainingAssessments || []
               return assessments.find((a: TrainingAssessment) => a.id === currentAssessmentId) || null
             })() : null}
             isSubmitting={isEditing ? updateAssessmentMutation.isPending : createAssessmentMutation.isPending}

@@ -10,9 +10,9 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Loader2, CheckCircle } from "lucide-react"
+import { Loader2 } from "lucide-react"
 import { 
-  useTrainingAssessments,
+  useTraineeAssessment,
   useSubmitAssessmentAnswer
 } from "@/lib/hooks/useTrainingAssessment"
 import { Label } from "@/components/ui/label"
@@ -43,13 +43,11 @@ export default function AssessmentModal({
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
 
-  // Only fetch when modal is open
-  const { data: assessmentData, isLoading: isLoadingAssessment } = useTrainingAssessments(
-    trainingId, 
-    { 
-      type: assessmentType,
-      traineeId: studentId
-    },
+  // Use the new dedicated hook for trainee assessments
+  const { data: assessmentData, isLoading: isLoadingAssessment } = useTraineeAssessment(
+    trainingId,
+    studentId,
+    assessmentType,
     {
       enabled: isOpen
     }
@@ -77,12 +75,8 @@ export default function AssessmentModal({
 
   // Set initial values when assessment loads
   useEffect(() => {
-    // When filtering by traineeId, the API returns a single assessment object, not an array
-    const assessment = Array.isArray(assessmentData?.trainingAssessment) 
-      ? assessmentData.trainingAssessment[0] 
-      : assessmentData?.trainingAssessment
-    
-    if (assessment) {
+    if (assessmentData?.trainingAssessment) {
+      const assessment = assessmentData.trainingAssessment
       setSelectedAssessmentId(assessment.id)
       // Only set these if they exist (for edit mode)
       if (assessment.answerFileLink) {
@@ -175,10 +169,7 @@ export default function AssessmentModal({
       )
     }
 
-    // When filtering by traineeId, the API returns a single assessment object, not an array
-    const assessment = Array.isArray(assessmentData.trainingAssessment) 
-      ? assessmentData.trainingAssessment[0] 
-      : assessmentData.trainingAssessment
+    const assessment = assessmentData.trainingAssessment
     
     if (!assessment) {
       return (

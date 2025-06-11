@@ -356,8 +356,9 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
 
   const handleCSVImport = useCallback(async (students: CreateStudentByNameData[]) => {
     try {
-      // Use the new bulk import by name endpoint
-      bulkImportMutation.bulkImportByName({ trainingId, studentsData: students })
+      // Use the async version to wait for completion
+      await bulkImportMutation.bulkImportByNameAsync({ trainingId, studentsData: students })
+      // Only close import view after successful completion
       setShowImportView(false)
     } catch (error) {
       console.log("CSV import failed:", error)
