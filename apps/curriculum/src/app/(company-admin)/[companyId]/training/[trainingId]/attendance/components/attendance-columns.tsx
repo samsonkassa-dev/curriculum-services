@@ -16,6 +16,7 @@ import {
 import { Textarea } from "@/components/ui/textarea"
 import AssessmentModal from "./assessment-modal"
 import { Session } from "@/lib/hooks/useSession"
+import { SurveyButton } from "./survey-button"
 
 // Define the student type for attendance
 export interface AttendanceStudent {
@@ -216,6 +217,35 @@ export const createAttendanceColumns = (
       },
     },
   ];
+
+  // Add survey column
+  if (session && trainingId) {
+    // Only add survey column if session is first or last
+    if (session.first || session.last) {
+      columns.push({
+        accessorKey: "survey",
+        header: "Survey",
+        cell: ({ row }) => {
+          const student = row.original;
+          const fullName = `${student.firstName} ${student.lastName}`;
+          const isDisabled = student._isDisabled === true;
+          
+          // Determine if this is a pre or post session survey
+          const isPreSession = session.first === true;
+          
+          return (
+            <SurveyButton 
+              trainingId={trainingId}
+              studentId={student.id}
+              studentName={fullName}
+              isPreSession={isPreSession}
+              disabled={isDisabled}
+            />
+          );
+        },
+      });
+    }
+  }
 
   // Only add assessment column if session has first or last flag
   if (session && (session.first || session.last)) {
