@@ -3,7 +3,7 @@
 import { memo, useState, useCallback } from "react"
 import { useRouter, useParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Users, Tag, Edit2 } from "lucide-react"
+import { Users, Tag, Edit2, Trash2 } from "lucide-react"
 import { Cohort, useDeleteCohort } from "@/lib/hooks/useCohorts"
 import { useUserRole } from "@/lib/hooks/useUserRole"
 import { DeleteCohortDialog } from "./delete-cohort-dialog"
@@ -106,16 +106,28 @@ function CohortCardComponent({ cohort, onEditCohort }: CohortCardProps) {
           >
             View Details
           </Button>
-          {canEditCohorts && onEditCohort && (
-            <Button
-              variant="outline"
-              size="sm"
-              className="rounded-full border-blue-300 text-blue-600 hover:bg-blue-50 text-xs font-medium"
-              onClick={handleEditCohort}
-              disabled={isDeleting}
-            >
-              <Edit2 className="h-3 w-3" />
-            </Button>
+          {canEditCohorts && (
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-full border-[#667085] text-[#667085] text-xs font-medium"
+                onClick={handleEditCohort}
+                disabled={isDeleting}
+              >
+                <Edit2 className="h-3 w-3 mr-1" />
+                Edit
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-full border-red-300 text-red-600 hover:bg-red-50 text-xs font-medium"
+                onClick={handleDeleteCohort}
+                disabled={isDeleting}
+              >
+                <Trash2 className="h-3 w-3" />
+              </Button>
+            </>
           )}
         </div>
       </div>

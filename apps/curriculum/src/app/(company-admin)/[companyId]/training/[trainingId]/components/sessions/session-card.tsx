@@ -1,12 +1,13 @@
 "use client"
 
-import { memo } from "react"
+import { memo, useState, useCallback } from "react"
 import { useRouter, useParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Calendar, Edit } from "lucide-react"
+import { Calendar, Edit, Trash2 } from "lucide-react"
 import { formatDateToDisplay, formatTimeToDisplay } from "@/lib/utils"
-import { Session, SessionStatus } from "@/lib/hooks/useSession"
+import { Session, SessionStatus, useDeleteSession } from "@/lib/hooks/useSession"
 import { useUserRole } from "@/lib/hooks/useUserRole"
+import { DeleteSessionDialog } from "./delete-session-dialog"
 
 interface SessionCardProps {
   session: Session
@@ -20,6 +21,10 @@ function SessionCardComponent({ session, cohortId, onEdit }: SessionCardProps) {
   const companyId = params.companyId as string
   const trainingId = params.trainingId as string
   const { isProjectManager, isTrainingAdmin } = useUserRole()
+  
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [sessionToDelete, setSessionToDelete] = useState<Session | null>(null)
+  const { deleteSession, isDeleting } = useDeleteSession()
 
   const handleViewDetails = () => {
     // Sessions only exist within cohorts, so we need cohortId
@@ -43,6 +48,19 @@ function SessionCardComponent({ session, cohortId, onEdit }: SessionCardProps) {
       console.warn('Edit should use modal handler for sessions within cohorts')
     }
   }
+
+  const handleDeleteSession = useCallback(() => {
+    setSessionToDelete(session)
+    setDeleteDialogOpen(true)
+  }, [session])
+
+  const confirmDelete = useCallback(() => {
+    if (sessionToDelete) {
+      deleteSession(sessionToDelete.id)
+      setDeleteDialogOpen(false)
+      setSessionToDelete(null)
+    }
+  }, [sessionToDelete, deleteSession])
 
   const getStatusColor = (status: SessionStatus) => {
     switch (status) {
@@ -134,17 +152,6 @@ function SessionCardComponent({ session, cohortId, onEdit }: SessionCardProps) {
         </div>
 
         <div className="flex items-center justify-end gap-2 col-span-1">
-          {(isProjectManager || isTrainingAdmin) && (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="rounded-full border-[#667085] text-[#667085] text-xs font-medium"
-              onClick={handleEdit}
-            >
-              <Edit className="h-3 w-3 mr-1" />
-              Edit
-            </Button>
-          )}
           <Button 
             variant="outline" 
             size="sm" 
@@ -153,8 +160,40 @@ function SessionCardComponent({ session, cohortId, onEdit }: SessionCardProps) {
           >
             View Details
           </Button>
+          {(isProjectManager || isTrainingAdmin) && (
+            <>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="rounded-full border-[#667085] text-[#667085] text-xs font-medium"
+                onClick={handleEdit}
+                disabled={isDeleting}
+              >
+                <Edit className="h-3 w-3 mr-1" />
+                Edit
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="rounded-full border-red-300 text-red-600 hover:bg-red-50 text-xs font-medium"
+                onClick={handleDeleteSession}
+                disabled={isDeleting}
+              >
+                <Trash2 className="h-3 w-3" />
+              </Button>
+            </>
+          )}
         </div>
       </div>
+
+      {/* Delete Session Dialog */}
+      <DeleteSessionDialog
+        isOpen={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        session={sessionToDelete}
+        onConfirmDelete={confirmDelete}
+        isDeleting={isDeleting}
+      />
     </div>
   )
 }

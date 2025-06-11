@@ -440,3 +440,37 @@ export function useCohortSessions(params: CohortSessionQueryParams) {
   })
 }
 
+// Delete session hook
+export function useDeleteSession() {
+  const queryClient = useQueryClient()
+
+  const deleteSessionMutation = useMutation({
+    mutationFn: async (sessionId: string) => {
+      const token = getCookie('token')
+      const response = await axios.delete(
+        `${process.env.NEXT_PUBLIC_API}/session/${sessionId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      )
+      return { responseData: response.data, sessionId }
+    },
+    onSuccess: ({ sessionId }) => {
+      // Invalidate relevant queries
+      queryClient.invalidateQueries({ queryKey: ['session', sessionId] })
+      queryClient.invalidateQueries({ queryKey: ['sessions'] })
+      queryClient.invalidateQueries({ queryKey: ['cohortSessions'] })
+      
+      toast.success('Session deleted successfully')
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to delete session')
+    }
+  })
+
+  return {
+    deleteSession: deleteSessionMutation.mutate,
+    isDeleting: deleteSessionMutation.isPending
+  }
+}
+
