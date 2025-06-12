@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Edit2, Check, X, AlertCircle } from "lucide-react"
+import { Edit2, Check, X, AlertCircle, Trash2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface CSVStudentData {
@@ -90,6 +90,7 @@ interface MarginalizedGroup {
 interface CSVDataTableProps {
   data: CSVStudentData[]
   onDataUpdate: (data: CSVStudentData[]) => void
+  onRemoveRow?: (rowIndex: number) => void
   languages: Language[]
   countries: Country[]
   regions: Region[]
@@ -103,6 +104,7 @@ interface CSVDataTableProps {
 export function CSVDataTable({
   data,
   onDataUpdate,
+  onRemoveRow,
   languages,
   countries,
   regions,
@@ -469,6 +471,7 @@ export function CSVDataTable({
               <th className="p-3 text-left font-medium text-gray-700">Disabilities</th>
               <th className="p-3 text-left font-medium text-gray-700">Marginalized Groups</th>
               <th className="p-3 text-left font-medium text-gray-700">Status</th>
+              {onRemoveRow && <th className="p-3 text-center font-medium text-gray-700">Actions</th>}
             </tr>
           </thead>
           <tbody>
@@ -510,6 +513,18 @@ export function CSVDataTable({
                     </span>
                   )}
                 </td>
+                {onRemoveRow && (
+                  <td className="p-3 text-center">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => onRemoveRow(row.rowIndex)}
+                      className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </td>
+                )}
               </tr>
             ))}
           </tbody>

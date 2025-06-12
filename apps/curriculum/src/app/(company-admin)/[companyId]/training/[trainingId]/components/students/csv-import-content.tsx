@@ -364,6 +364,16 @@ export function CSVImportContent({
     setCsvData(revalidatedData)
   }
 
+  const handleRemoveRow = (rowIndex: number) => {
+    setCsvData(prev => prev.filter(row => row.rowIndex !== rowIndex))
+    toast.success("Row removed successfully")
+  }
+
+  const handleRemoveErrorRows = () => {
+    setCsvData(prev => prev.filter(row => !row.errors || Object.keys(row.errors).length === 0))
+    toast.success("All rows with errors have been removed")
+  }
+
   return (
     <div className="space-y-6">
       {csvData.length === 0 ? (
@@ -379,6 +389,7 @@ export function CSVImportContent({
           <CSVDataTable
             data={csvData}
             onDataUpdate={updateCsvData}
+            onRemoveRow={handleRemoveRow}
             languages={languages}
             countries={countries}
             regions={regions}
@@ -389,7 +400,10 @@ export function CSVImportContent({
             marginalizedGroups={marginalizedGroups}
           />
 
-          <CSVErrorSummary data={csvData} />
+          <CSVErrorSummary 
+            data={csvData} 
+            onRemoveErrorRows={handleRemoveErrorRows}
+          />
 
           <div className="flex justify-end">
             <Button 
