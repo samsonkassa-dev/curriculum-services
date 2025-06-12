@@ -170,6 +170,7 @@ export function AudienceProfileEdit({
     
     // Save all audience profile data with the correct structure (IDs, not objects)
     const profileData = {
+      trainingId,
       learnerLevelId,
       languageId: data.languageId,
       educationLevelId: data.educationLevelId,

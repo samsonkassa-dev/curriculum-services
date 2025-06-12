@@ -24,6 +24,7 @@ interface AudienceProfile {
 }
 
 interface AudienceProfileRequest {
+  trainingId: string
   learnerLevelId: string
   languageId?: string
   educationLevelId?: string
