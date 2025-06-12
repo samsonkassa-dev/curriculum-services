@@ -112,7 +112,8 @@ export function useTrainingSurveys(trainingId: string, traineeId?: string, page 
           }
         )
         
-        return response.data.trainingSurveys
+        // Ensure we always return an array, never undefined
+        return response.data.trainingSurveys || []
       } catch (error: unknown) {
         const axiosError = error as AxiosError<ApiErrorResponse>
         const errorMessage = axiosError.response?.data?.message || axiosError.message || 'Failed to load training surveys'
