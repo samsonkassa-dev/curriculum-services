@@ -13,17 +13,19 @@ export type TrainingDuration = "TOO_SHORT" | "JUST_RIGHT" | "TOO_LONG"
 
 export interface TrainingSurvey {
   id: string
+  trainingId: string
+  trainingName: string
+  traineeId: string
+  traineeFullName: string
   futureEndeavorImpact: FutureEndeavorImpact
   perspectiveInfluences: PerspectiveInfluence[]
   overallSatisfaction: SatisfactionLevel
-  confidenceLevel: string
+  confidenceLevel: string | null
   recommendationRating: number
   trainerDeliverySatisfaction: SatisfactionLevel
   overallQualitySatisfaction: SatisfactionLevel
   trainingClarity: TrainingClarity
   trainingDurationFeedback: TrainingDuration
-  trainingId?: string
-  traineeId?: string
   createdAt?: string
   updatedAt?: string
 }
@@ -42,18 +44,18 @@ export interface CreateTrainingSurveyDTO {
 
 interface TrainingSurveyResponse {
   code: string
-  survey: TrainingSurvey
+  trainingSurvey: TrainingSurvey
   message: string
 }
 
 interface TrainingSurveysResponse {
   code: string
-  surveys: TrainingSurvey[]
-  totalPages: number
-  pageSize: number
+  trainingSurveys: TrainingSurvey[]
+  totalPages?: number
+  pageSize?: number
   message: string
-  currentPage: number
-  totalElements: number
+  currentPage?: number
+  totalElements?: number
 }
 
 interface ApiErrorResponse {
@@ -73,7 +75,7 @@ export function useTrainingSurvey(surveyId: string) {
             headers: { Authorization: `Bearer ${token}` }
           }
         )
-        return response.data.survey
+        return response.data.trainingSurvey
       } catch (error: unknown) {
         const axiosError = error as AxiosError<ApiErrorResponse>
         throw new Error(axiosError.response?.data?.message || 'Failed to load survey details')
@@ -84,9 +86,9 @@ export function useTrainingSurvey(surveyId: string) {
 }
 
 // Get all surveys for a specific training
-export function useTrainingSurveys(trainingId: string, page = 1, pageSize = 10) {
-  return useQuery<TrainingSurveysResponse, Error>({
-    queryKey: ['trainingSurveys', trainingId, page, pageSize],
+export function useTrainingSurveys(trainingId: string, traineeId?: string, page = 1, pageSize = 10) {
+  return useQuery<TrainingSurveysResponse['trainingSurveys'], Error>({
+    queryKey: ['trainingSurveys', trainingId, traineeId, page, pageSize],
     queryFn: async () => {
       try {
         const token = getCookie('token')
@@ -94,10 +96,14 @@ export function useTrainingSurveys(trainingId: string, page = 1, pageSize = 10) 
         // Build URL with query parameters
         const url = `${process.env.NEXT_PUBLIC_API}/training-survey/training/${trainingId}`
         
-        // Add pagination parameters
+        // Add pagination and optional trainee parameters
         const queryParams = new URLSearchParams()
         queryParams.append('page', page.toString())
         queryParams.append('pageSize', pageSize.toString())
+        
+        if (traineeId) {
+          queryParams.append('traineeId', traineeId)
+        }
         
         const response = await axios.get<TrainingSurveysResponse>(
           `${url}?${queryParams.toString()}`,
@@ -106,7 +112,7 @@ export function useTrainingSurveys(trainingId: string, page = 1, pageSize = 10) 
           }
         )
         
-        return response.data
+        return response.data.trainingSurveys
       } catch (error: unknown) {
         const axiosError = error as AxiosError<ApiErrorResponse>
         const errorMessage = axiosError.response?.data?.message || axiosError.message || 'Failed to load training surveys'
@@ -143,10 +149,11 @@ export function useCreateTrainingSurvey() {
           headers: { Authorization: `Bearer ${token}` }
         }
       )
-      return { responseData: response.data, trainingId }
+      return { responseData: response.data, trainingId, traineeId }
     },
-    onSuccess: ({ trainingId }) => {
+    onSuccess: ({ trainingId, traineeId }) => {
       queryClient.invalidateQueries({ queryKey: ['trainingSurveys', trainingId] })
+      queryClient.invalidateQueries({ queryKey: ['trainingSurveys', trainingId, traineeId] })
       toast.success('Survey submitted successfully')
     },
     onError: (error: unknown) => {
@@ -183,9 +190,22 @@ export function useUpdateTrainingSurvey() {
       )
       return { responseData: response.data, surveyId }
     },
-    onSuccess: ({ surveyId }) => {
+    onSuccess: ({ surveyId, responseData }) => {
+      // Extract trainingId and traineeId from the response if available
+      const trainingId = responseData?.trainingSurvey?.trainingId
+      const traineeId = responseData?.trainingSurvey?.traineeId
+      
+      // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: ['trainingSurvey', surveyId] })
-      queryClient.invalidateQueries({ queryKey: ['trainingSurveys'] })
+      
+      if (trainingId) {
+        queryClient.invalidateQueries({ queryKey: ['trainingSurveys', trainingId] })
+        
+        if (traineeId) {
+          queryClient.invalidateQueries({ queryKey: ['trainingSurveys', trainingId, traineeId] })
+        }
+      }
+      
       toast.success('Survey updated successfully')
     },
     onError: (error: unknown) => {
@@ -205,7 +225,11 @@ export function useDeleteTrainingSurvey() {
   const queryClient = useQueryClient()
 
   const deleteSurveyMutation = useMutation({
-    mutationFn: async (surveyId: string) => {
+    mutationFn: async ({ surveyId, trainingId, traineeId }: { 
+      surveyId: string, 
+      trainingId?: string, 
+      traineeId?: string 
+    }) => {
       const token = getCookie('token')
       const response = await axios.delete(
         `${process.env.NEXT_PUBLIC_API}/training-survey/${surveyId}`,
@@ -213,12 +237,19 @@ export function useDeleteTrainingSurvey() {
           headers: { Authorization: `Bearer ${token}` }
         }
       )
-      return { responseData: response.data, surveyId }
+      return { responseData: response.data, surveyId, trainingId, traineeId }
     },
-    onSuccess: ({ surveyId }) => {
+    onSuccess: ({ surveyId, trainingId, traineeId }) => {
       // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: ['trainingSurvey', surveyId] })
-      queryClient.invalidateQueries({ queryKey: ['trainingSurveys'] })
+      
+      if (trainingId) {
+        queryClient.invalidateQueries({ queryKey: ['trainingSurveys', trainingId] })
+        
+        if (traineeId) {
+          queryClient.invalidateQueries({ queryKey: ['trainingSurveys', trainingId, traineeId] })
+        }
+      }
       
       toast.success('Survey deleted successfully')
     },

@@ -23,10 +23,23 @@ export function AssessmentMethodContent({
   onSave,
   onCancel,
 }: AssessmentMethodContentProps) {
-  const [activeSection, setActiveSection] = useState("Formative Assessments");
+  const { formData, submitForm, isEditing, hasAssessmentMethods, isFormDataFilled } = useAssessmentForm();
   const [isMobile, setIsMobile] = useState(false);
   const [showSidebar, setShowSidebar] = useState(true);
-  const { formData, submitForm, isEditing } = useAssessmentForm();
+
+  // Find the first section with data to set as initial active section
+  const getInitialActiveSection = () => {
+    if (isFormDataFilled.formative) {
+      return "Formative Assessments";
+    } else if (isFormDataFilled.summative) {
+      return "Summative Assessments";
+    } else if (isFormDataFilled.other) {
+      return "Other Assessments";
+    }
+    return "Formative Assessments"; // Default
+  };
+  
+  const [activeSection, setActiveSection] = useState(getInitialActiveSection());
 
   // Fetch assessment methods for each type
   const { data: formativeMethods, isLoading: isLoadingFormative } = useBaseData(
@@ -64,20 +77,21 @@ export function AssessmentMethodContent({
     return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
+  // Update activeSection when formData changes (if it's empty)
+  useEffect(() => {
+    if (hasAssessmentMethods) {
+      setActiveSection(getInitialActiveSection());
+    }
+  }, [formData, hasAssessmentMethods, isFormDataFilled]);
+
   const isStepCompleted = (step: string) => {
     switch (step) {
       case "Formative Assessments":
-        return Object.values(formData.formative || {}).some(
-          (value) => value === true
-        );
+        return isFormDataFilled.formative;
       case "Summative Assessments":
-        return Object.values(formData.summative || {}).some(
-          (value) => value === true
-        );
+        return isFormDataFilled.summative;
       case "Other Assessments":
-        return Object.values(formData.other || {}).some(
-          (value) => value === true
-        );
+        return isFormDataFilled.other;
       default:
         return false;
     }
@@ -192,7 +206,7 @@ export function AssessmentMethodContent({
       >
         {renderContent()}
         <div className="flex justify-center gap-6 md:gap-10 mt-8">
-          {activeSection === "Generic Formative Assessments" ? (
+          {activeSection === sections[0] ? (
             <Button
               variant="outline"
               onClick={onCancel}

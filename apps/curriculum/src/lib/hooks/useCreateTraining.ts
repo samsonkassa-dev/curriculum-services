@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { toast } from 'sonner';
 import { useBaseData } from './useBaseData';
@@ -35,6 +35,8 @@ interface CreateTrainingData {
 }
 
 export function useCreateTraining() {
+  const queryClient = useQueryClient();
+
   // Use baseData hook for all required data
   const { data: cities } = useBaseData('city');
   const { data: ageGroups } = useBaseData('age-group');
@@ -58,6 +60,8 @@ export function useCreateTraining() {
     },
     onSuccess: () => {
       toast.success('Training created successfully');
+      // Invalidate training queries to refetch updated data
+      queryClient.invalidateQueries({ queryKey: ['training'] });
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || 'Failed to create training');

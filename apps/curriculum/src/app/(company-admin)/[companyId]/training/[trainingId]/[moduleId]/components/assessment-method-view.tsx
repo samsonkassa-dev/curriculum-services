@@ -30,7 +30,7 @@ interface AssessmentMethod {
 function AssessmentMethodViewContent({ onEdit }: AssessmentMethodViewProps) {
   const { canEdit } = useUserRole();
 
-  const { formData, hasAssessmentMethods } = useAssessmentForm();
+  const { formData, hasAssessmentMethods, isFormDataFilled } = useAssessmentForm();
 
   // Fetch assessment method types for each category
   const { data: formativeMethods, isLoading: isLoadingFormative } = useBaseData(
@@ -102,6 +102,14 @@ function AssessmentMethodViewContent({ onEdit }: AssessmentMethodViewProps) {
     );
   }
 
+  // Get default open section
+  const getDefaultOpenSection = () => {
+    if (isFormDataFilled.formative) return "formativeAssessments";
+    if (isFormDataFilled.summative) return "summativeAssessments";
+    if (isFormDataFilled.other) return "otherAssessments";
+    return "formativeAssessments";
+  };
+
   // Render list of assessment methods
   const renderMethodList = (methods: string[]) => {
     if (methods.length === 0)
@@ -131,12 +139,12 @@ function AssessmentMethodViewContent({ onEdit }: AssessmentMethodViewProps) {
       <div className="space-y-4">
         <Accordion
           type="multiple"
-          defaultValue={["genericFormative"]}
+          defaultValue={[getDefaultOpenSection()]}
           className="space-y-4"
         >
           {/*Formative Assessments Section */}
           <AccordionItem
-            value="formative"
+            value="formativeAssessments"
             className="border-[0.5px] border-[#CED4DA] rounded-md"
           >
             <AccordionTrigger className="bg-white data-[state=open]:bg-[#f7fbff] rounded-lg p-6 flex items-center justify-between hover:no-underline group">
@@ -170,13 +178,13 @@ function AssessmentMethodViewContent({ onEdit }: AssessmentMethodViewProps) {
 
           {/*Summative Assessment Section */}
           <AccordionItem
-            value="summative"
+            value="summativeAssessments"
             className="border-[0.5px] border-[#CED4DA] rounded-md"
           >
             <AccordionTrigger className="bg-white data-[state=open]:bg-[#f7fbff] rounded-lg p-6 flex items-center justify-between hover:no-underline group">
               <div className="flex items-center gap-3">
                 <span className="font-semibold text-md md:text-xl">
-                  Summative Assessment
+                  Summative Assessments
                 </span>
               </div>
               <div className="text-gray-400 flex gap-2">
@@ -202,9 +210,9 @@ function AssessmentMethodViewContent({ onEdit }: AssessmentMethodViewProps) {
             </AccordionContent>
           </AccordionItem>
 
-          {/* Alternative Formative Assessments Section */}
+          {/* Other Assessments Section */}
           <AccordionItem
-            value="other"
+            value="otherAssessments"
             className="border-[0.5px] border-[#CED4DA] rounded-md"
           >
             <AccordionTrigger className="bg-white data-[state=open]:bg-[#f7fbff] rounded-lg p-6 flex items-center justify-between hover:no-underline group">

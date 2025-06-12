@@ -3,8 +3,8 @@
 import { Button } from "@/components/ui/button"
 import { useState, useEffect, useRef } from "react"
 import { SurveyModal } from "./survey-modal"
-import { useTrainingSurveys } from "@/lib/hooks/useStaticSurvey"
-import { CheckCircle, Loader2 } from "lucide-react"
+import { useTrainingSurveys, type TrainingSurvey } from "@/lib/hooks/useStaticSurvey"
+import { CheckCircle, Loader2, Edit } from "lucide-react"
 
 interface SurveyButtonProps {
   trainingId: string
@@ -18,29 +18,35 @@ export function SurveyButton({ trainingId, studentId, studentName, isPreSession,
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [hasSurvey, setHasSurvey] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [existingSurveyId, setExistingSurveyId] = useState<string | null>(null)
   const didInitialCheck = useRef(false)
   
   // Fetch surveys to check if student has already submitted
-  // Note: We're assuming surveys endpoint can filter by trainee ID. If not, we'll need to adjust this logic.
-  const { data: surveyData, isLoading } = useTrainingSurveys(trainingId, 1, 100)
+  const { data: surveys, isLoading } = useTrainingSurveys(trainingId, studentId)
   
   // Reset state when studentId or session type changes
   useEffect(() => {
     setHasSurvey(false)
+    setExistingSurveyId(null)
     didInitialCheck.current = false
   }, [studentId, isPreSession])
   
   // Check if survey exists for this student
   useEffect(() => {
-    if (surveyData?.surveys && !didInitialCheck.current) {
+    if (surveys && !didInitialCheck.current) {
       // Find if student has already submitted a survey
-      const studentHasSurvey = surveyData.surveys.some(survey => 
+      const existingSurvey = surveys.find((survey: TrainingSurvey) => 
         survey.traineeId === studentId
       )
-      setHasSurvey(studentHasSurvey)
+      
+      if (existingSurvey) {
+        setHasSurvey(true)
+        setExistingSurveyId(existingSurvey.id)
+      }
+      
       didInitialCheck.current = true
     }
-  }, [surveyData, studentId])
+  }, [surveys, studentId])
   
   const handleSurveyStatusChange = (status: boolean) => {
     setHasSurvey(status)
@@ -58,10 +64,11 @@ export function SurveyButton({ trainingId, studentId, studentName, isPreSession,
     setIsSubmitting(true)
   }
   
-  // Combine disabled state: component is disabled if explicitly disabled, or if survey exists, or during loading/submitting
-  const isButtonDisabled = disabled || hasSurvey || isLoading || isSubmitting
+  // Combine disabled state: component is disabled if explicitly disabled, or during loading/submitting
+  // Note: we don't disable if hasSurvey is true, since we want to allow editing
+  const isButtonDisabled = disabled || isLoading || isSubmitting
   
-  // Button label changes based on pre/post session
+  // Button label changes based on pre/post session and whether survey exists
   const surveyType = isPreSession ? "Pre-Survey" : "Post-Survey"
   
   return (
@@ -84,8 +91,8 @@ export function SurveyButton({ trainingId, studentId, studentName, isPreSession,
           </span>
         ) : hasSurvey ? (
           <span className="text-sm flex items-center gap-1">
-            <CheckCircle className="h-4 w-4" />
-            Survey Completed
+            <Edit className="h-4 w-4" />
+            Edit {surveyType}
           </span>
         ) : (
           <span className="text-sm">Add {surveyType}</span>
@@ -100,6 +107,7 @@ export function SurveyButton({ trainingId, studentId, studentName, isPreSession,
           studentId={studentId}
           studentName={studentName}
           isPreSession={isPreSession}
+          existingSurveyId={existingSurveyId}
           onSurveyStatusChange={handleSurveyStatusChange}
           onSubmitStart={handleSubmitStart}
         />

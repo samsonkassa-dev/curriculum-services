@@ -51,7 +51,7 @@ function AddCohortStudentModalComponent({
     data: studentData, 
     isLoading: isLoadingStudents, 
     error: studentError 
-  } = useStudents(trainingId, modalPage, modalPageSize);
+  } = useStudents(trainingId, modalPage, modalPageSize, undefined, true);
 
   // Filter out already assigned students AND apply search client-side
   const availableStudents = useMemo(() => {

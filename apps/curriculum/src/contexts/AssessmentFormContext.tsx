@@ -38,8 +38,15 @@ interface AssessmentFormData {
   other: Record<string, boolean>;
 }
 
+interface FormDataFilled {
+  formative: boolean;
+  summative: boolean;
+  other: boolean;
+}
+
 interface AssessmentFormContextType {
   formData: AssessmentFormData;
+  isFormDataFilled: FormDataFilled;
   updateFormData: (
     type: keyof AssessmentFormData,
     methodId: string,
@@ -61,6 +68,12 @@ const initialFormData: AssessmentFormData = {
   other: {},
 };
 
+const initialFormDataFilled: FormDataFilled = {
+  formative: false,
+  summative: false,
+  other: false,
+};
+
 export function AssessmentFormProvider({
   children,
   moduleId,
@@ -69,6 +82,7 @@ export function AssessmentFormProvider({
   moduleId: string;
 }) {
   const [formData, setFormData] = useState<AssessmentFormData>(initialFormData);
+  const [isFormDataFilled, setIsFormDataFilled] = useState<FormDataFilled>(initialFormDataFilled);
   const [isEditing, setIsEditing] = useState(false);
   const [originalAssessmentData, setOriginalAssessmentData] =
     useState<AssessmentData | null>(null);
@@ -78,6 +92,15 @@ export function AssessmentFormProvider({
       staleTime: 1000 * 60 * 15, // 15 minutes cache
       gcTime: 1000 * 60 * 30, // 30 minutes garbage collection
     });
+
+  // Check if form data is filled for each type
+  const checkFormDataFilled = (data: AssessmentFormData): FormDataFilled => {
+    return {
+      formative: Object.values(data.formative || {}).some(value => value === true),
+      summative: Object.values(data.summative || {}).some(value => value === true),
+      other: Object.values(data.other || {}).some(value => value === true),
+    };
+  };
 
   useEffect(() => {
     if (existingData) {
@@ -110,6 +133,7 @@ export function AssessmentFormProvider({
         });
 
         setFormData(transformed);
+        setIsFormDataFilled(checkFormDataFilled(transformed));
 
         // Set editing flag if there's existing data
         if (
@@ -122,18 +146,27 @@ export function AssessmentFormProvider({
     }
   }, [existingData]);
 
+  // Update isFormDataFilled whenever formData changes
+  useEffect(() => {
+    setIsFormDataFilled(checkFormDataFilled(formData));
+  }, [formData]);
+
   const updateFormData = (
     type: keyof AssessmentFormData,
     methodId: string,
     value: boolean | string
   ) => {
-    setFormData((prev: AssessmentFormData) => ({
-      ...prev,
-      [type]: {
-        ...(prev[type] as Record<string, boolean | string>),
-        [methodId]: value,
-      },
-    }));
+    setFormData((prev: AssessmentFormData) => {
+      const updated = {
+        ...prev,
+        [type]: {
+          ...(prev[type] as Record<string, boolean | string>),
+          [methodId]: value,
+        },
+      };
+      
+      return updated;
+    });
   };
 
   const submitForm = async () => {
@@ -167,6 +200,7 @@ export function AssessmentFormProvider({
     <AssessmentFormContext.Provider
       value={{
         formData,
+        isFormDataFilled,
         updateFormData,
         submitForm,
         hasAssessmentMethods,

@@ -173,10 +173,11 @@ export function useStudents(
   trainingId: string, 
   page?: number, 
   pageSize?: number,
-  sessionId?: string
+  sessionId?: string,
+  noCohorts?: boolean
 ) {
   return useQuery({
-    queryKey: ['students', trainingId, page, pageSize, sessionId],
+    queryKey: ['students', trainingId, page, pageSize, sessionId, noCohorts],
     queryFn: async () => {
       try {
         const token = getCookie('token')
@@ -188,6 +189,7 @@ export function useStudents(
         const params = new URLSearchParams()
         if (page !== undefined) params.append('page', page.toString())
         if (pageSize !== undefined) params.append('page-size', pageSize.toString())
+        if (noCohorts !== undefined) params.append('no-cohorts', noCohorts.toString())
         
         // Append query parameters if any exist
         if (params.toString()) {
