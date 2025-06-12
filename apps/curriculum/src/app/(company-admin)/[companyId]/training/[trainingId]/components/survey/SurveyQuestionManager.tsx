@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import { Card } from "@/components/ui/card"
 import { Plus, Trash2, PencilIcon, Check, X } from "lucide-react"
 import { 
@@ -163,10 +164,11 @@ export function SurveyQuestionManager({
               <div className="pl-9 space-y-4">
                 <div>
                   <label className="block text-sm font-medium mb-2">Question</label>
-                  <Input
+                  <Textarea
                     value={editingEntry.question}
                     onChange={(e) => updateEditingQuestion(e.target.value)}
                     placeholder="Enter your question"
+                    rows={3}
                   />
                 </div>
 

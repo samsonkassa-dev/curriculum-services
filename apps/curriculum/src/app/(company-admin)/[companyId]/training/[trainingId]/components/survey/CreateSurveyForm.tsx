@@ -225,11 +225,12 @@ export function CreateSurveyForm({
                           </Button>
                         )}
                       </div>
-                      <Input
+                      <Textarea
                         value={q.question}
                         onChange={(e) => updateQuestionText(questionIndex, e.target.value)}
                         placeholder="Enter your question"
                         className="w-full"
+                        rows={3}
                       />
                     </div>
 

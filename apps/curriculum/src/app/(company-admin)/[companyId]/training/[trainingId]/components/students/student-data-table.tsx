@@ -74,6 +74,32 @@ export function StudentDataTable({
     ? `Showing ${startRecord} to ${endRecord} out of ${pagination.totalElements} records`
     : "No records to show"
 
+  // Calculate pagination button range
+  const getPaginationRange = () => {
+    const totalPages = pagination.totalPages
+    const currentPage = pagination.currentPage
+    const maxButtons = 5
+    
+    if (totalPages <= maxButtons) {
+      // Show all pages if total is less than or equal to max buttons
+      return Array.from({ length: totalPages }, (_, i) => i + 1)
+    }
+    
+    // Calculate start and end for sliding window
+    const halfRange = Math.floor(maxButtons / 2)
+    let start = Math.max(1, currentPage - halfRange)
+    const end = Math.min(totalPages, start + maxButtons - 1)
+    
+    // Adjust start if we're near the end
+    if (end - start + 1 < maxButtons) {
+      start = Math.max(1, end - maxButtons + 1)
+    }
+    
+    return Array.from({ length: end - start + 1 }, (_, i) => start + i)
+  }
+
+  const paginationRange = getPaginationRange()
+
   return (
     <div>
       <div className="rounded-md border border-gray-200 bg-white overflow-hidden relative">
@@ -168,45 +194,17 @@ export function StudentDataTable({
             >
               <ChevronLeftIcon className="w-4 h-4" />
             </Button>
-            {Array.from(
-              { length: Math.min(5, pagination.totalPages) },
-              (_, i) => {
-                // Logic to show pagination numbers centered around current page
-                let pageNumber;
-                if (pagination.totalPages <= 5) {
-                  // If we have 5 or fewer pages, show all
-                  pageNumber = i + 1;
-                } else {
-                  // For more pages, center around current page
-                  const middle = 2;
-                  const currentPage = pagination.currentPage;
-                  const start = Math.max(1, currentPage - middle);
-                  const end = Math.min(pagination.totalPages, start + 4);
-                  
-                  // Adjust start if we're near the end
-                  const adjustedStart = end === pagination.totalPages 
-                    ? Math.max(1, end - 4) 
-                    : start;
-                  
-                  pageNumber = adjustedStart + i;
-                }
-                
-                // Don't render if the page number exceeds total pages
-                if (pageNumber > pagination.totalPages) return null;
-                
-                return (
-                  <Button
-                    key={pageNumber}
-                    variant="outline"
-                    className={pagination.currentPage === pageNumber ? "border-brand text-brand" : ""}
-                    size="sm"
-                    onClick={() => pagination.setPage(pageNumber)}
-                  >
-                    {pageNumber}
-                  </Button>
-                );
-              }
-            ).filter(Boolean)}
+            {paginationRange.map((pageNumber) => (
+              <Button
+                key={pageNumber}
+                variant="outline"
+                className={pagination.currentPage === pageNumber ? "border-brand text-brand" : ""}
+                size="sm"
+                onClick={() => pagination.setPage(pageNumber)}
+              >
+                {pageNumber}
+              </Button>
+            ))}
             <Button
               variant="pagination"
               size="sm"

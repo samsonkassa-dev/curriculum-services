@@ -37,7 +37,7 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
   const debouncedSearch = useDebounce(searchQuery, 500)
   
   const { isProjectManager, isTrainingAdmin, isCompanyAdmin } = useUserRole()
-  const { data, isLoading } = useStudents(trainingId, page, pageSize)
+  const { data, isLoading } = useStudents(trainingId, page, pageSize, undefined, undefined, debouncedSearch)
   const { 
     countries,
     regions,
@@ -93,6 +93,12 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
 
   // Add a ref to track if we've loaded form data already
   const formDataLoadedRef = useRef(false);
+
+  // Reset to page 1 when search query changes
+  useEffect(() => {
+    if (debouncedSearch !== searchQuery) return; // Only run when debounced search actually changes
+    setPage(1);
+  }, [debouncedSearch]);
 
   // Memoize student form data preparation
   const studentFormData = useMemo(() => {
@@ -426,34 +432,15 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
     setPage(1) // Reset to first page when changing page size
   }, []);
 
-  // Memoize filtered and paginated students data
-  const { 
-    filteredStudents, 
-    paginatedStudents,
-    totalElements,
-    totalPages 
-  } = useMemo(() => {
-    const filtered = data?.trainees?.filter(student => 
-      student?.firstName?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-      student?.lastName?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-      student?.email?.toLowerCase().includes(debouncedSearch.toLowerCase())
-    ) || [];
-
-    const total = filtered.length || 0;
-    const totalPgs = Math.ceil(total / pageSize);
-    
-    const paginated = filtered.slice(
-      (page - 1) * pageSize,
-      page * pageSize
-    ) || [];
-
+  // Use server pagination data directly from the API response
+  const paginationData = useMemo(() => {
     return {
-      filteredStudents: filtered,
-      paginatedStudents: paginated,
-      totalElements: total,
-      totalPages: totalPgs
+      students: data?.trainees || [],
+      totalPages: data?.totalPages || 0,
+      totalElements: data?.totalElements || 0,
+      currentPage: data?.currentPage || 1
     };
-  }, [data?.trainees, debouncedSearch, page, pageSize]);
+  }, [data]);
 
   // Add the actions column to the existing columns
   const columnsWithActions = useMemo<ColumnDef<Student>[]>(() => {
@@ -544,7 +531,7 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
           <>
             <h1 className="text-lg font-semibold mb-6">Students</h1>
 
-            {!data?.trainees?.length ? (
+            {!paginationData.totalElements ? (
               emptyState
             ) : (
               <>
@@ -585,20 +572,17 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
                   )}
                 </div>
 
-                {/* CSV Format Guide */}
-                {/* {csvFormatGuide} */}
-
                 <StudentDataTable
                   columns={columnsWithActions}
-                  data={paginatedStudents}
+                  data={paginationData.students}
                   isLoading={isLoading}
                   pagination={{
-                    totalPages,
-                    currentPage: page,
+                    totalPages: paginationData.totalPages,
+                    currentPage: paginationData.currentPage,
                     setPage,
                     pageSize,
                     setPageSize: handlePageSizeChange,
-                    totalElements,
+                    totalElements: paginationData.totalElements,
                   }}
                 />
               </>

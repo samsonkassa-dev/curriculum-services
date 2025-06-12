@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import { Card } from "@/components/ui/card"
 import { Plus, Trash2 } from "lucide-react"
 import { SurveyQuestion } from "@/lib/hooks/useSessionAssesment"
@@ -119,11 +120,12 @@ export function AddQuestionForm({
             <div className="space-y-6">
               <div>
                 <label className="block text-sm font-medium mb-2">Question</label>
-                <Input
+                <Textarea
                   value={question.question}
                   onChange={(e) => updateQuestionText(e.target.value)}
                   placeholder="Enter your question"
                   className="w-full"
+                  rows={3}
                 />
               </div>
 
