@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback, useMemo } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -26,7 +26,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { useAddJob } from "@/lib/hooks/useJobs"
+import { useAddJob, useUpdateJob, useJobDetail } from "@/lib/hooks/useJobs"
 import { useTrainings } from "@/lib/hooks/useTrainings"
 import { useCohorts } from "@/lib/hooks/useCohorts"
 import { useCohortSessions } from "@/lib/hooks/useSession"
@@ -53,6 +53,7 @@ type CreateJobFormValues = z.infer<typeof createJobSchema>
 interface CreateJobModalProps {
   isOpen: boolean
   onClose: () => void
+  jobId?: string // Optional for editing
 }
 
 // Session interface for type safety
@@ -84,8 +85,12 @@ const generateTimeOptions = () => {
 
 const TIME_OPTIONS = generateTimeOptions();
 
-export function CreateJobModal({ isOpen, onClose }: CreateJobModalProps) {
+export function CreateJobModal({ isOpen, onClose, jobId }: CreateJobModalProps) {
   const { addJob, isLoading: isSubmitting, isSuccess: isSubmitSuccess } = useAddJob()
+  const { updateJob, isLoading: isUpdating, isSuccess: isUpdateSuccess } = useUpdateJob()
+  const { data: existingJob, isLoading: isLoadingJob } = useJobDetail(jobId || '')
+  
+  const isEditing = !!jobId
 
   const [selectedTrainingId, setSelectedTrainingId] = useState<string | undefined>(undefined)
   const [selectedCohortId, setSelectedCohortId] = useState<string | undefined>(undefined)
@@ -105,9 +110,15 @@ export function CreateJobModal({ isOpen, onClose }: CreateJobModalProps) {
     cohortId: selectedCohortId || "", // Pass selected cohort ID
   });
 
-  // Safe access to cohorts and sessions data
-  const safeCohorts = cohortsData?.cohorts?.length ? cohortsData.cohorts : [];
-  const safeSessions = sessionsData?.sessions?.length ? sessionsData.sessions : [];
+  // Memoize safe access to cohorts and sessions data
+  const safeCohorts = useMemo(() => 
+    cohortsData?.cohorts?.length ? cohortsData.cohorts : [], 
+    [cohortsData?.cohorts]
+  );
+  const safeSessions = useMemo(() => 
+    sessionsData?.sessions?.length ? sessionsData.sessions : [], 
+    [sessionsData?.sessions]
+  );
 
   const form = useForm<CreateJobFormValues>({
     resolver: zodResolver(createJobSchema),
@@ -125,14 +136,20 @@ export function CreateJobModal({ isOpen, onClose }: CreateJobModalProps) {
   // Get current value of sessionIds from form
   const sessionIds = form.watch("sessionIds");
 
-  // Map Trainings to Select options
-  const trainingOptions = trainingsData?.trainings?.map(t => ({ value: t.id, label: t.title })) || [];
+  // Memoize training options
+  const trainingOptions = useMemo(() => 
+    trainingsData?.trainings?.map(t => ({ value: t.id, label: t.title })) || [],
+    [trainingsData?.trainings]
+  );
 
-  // Map Cohorts to Select options
-  const cohortOptions = safeCohorts.map(c => ({ value: c.id, label: c.name }));
+  // Memoize cohort options
+  const cohortOptions = useMemo(() => 
+    safeCohorts.map(c => ({ value: c.id, label: c.name })),
+    [safeCohorts]
+  );
 
-  // Handle session selection toggle
-  const handleSelectSession = (sessionId: string) => {
+  // Memoize session selection handlers
+  const handleSelectSession = useCallback((sessionId: string) => {
     const currentSessionIds = form.getValues("sessionIds");
     let newSessionIds: string[];
     
@@ -145,16 +162,17 @@ export function CreateJobModal({ isOpen, onClose }: CreateJobModalProps) {
     }
     
     form.setValue('sessionIds', newSessionIds, { shouldValidate: true });
-  };
+  }, []);
 
-  // Remove session from selection
-  const handleRemoveSession = (sessionId: string) => {
+  // Memoize remove session handler
+  const handleRemoveSession = useCallback((sessionId: string) => {
     const currentSessionIds = form.getValues("sessionIds");
     const newSessionIds = currentSessionIds.filter(id => id !== sessionId);
     form.setValue('sessionIds', newSessionIds, { shouldValidate: true });
-  };
+  }, []);
 
-  const onSubmit = (data: CreateJobFormValues) => {
+  // Memoize submit handler
+  const onSubmit = useCallback((data: CreateJobFormValues) => {
     // Combine date and time for the API
     const combinedDeadline = `${data.deadlineDate}T${data.deadlineTime}:00`;
     
@@ -166,18 +184,22 @@ export function CreateJobModal({ isOpen, onClose }: CreateJobModalProps) {
       sessionIds: data.sessionIds,
     };
     
-    addJob(payload);
-  }
+    if (isEditing && jobId) {
+      updateJob({ jobId, jobData: payload });
+    } else {
+      addJob(payload);
+    }
+  }, [isEditing, jobId, updateJob, addJob]);
 
   // Reset form and close modal on successful submission
   useEffect(() => {
-    if (isSubmitSuccess) {
+    if (isSubmitSuccess || isUpdateSuccess) {
       form.reset();
       setSelectedTrainingId(undefined); 
       setSelectedCohortId(undefined);
       onClose(); 
     }
-  }, [isSubmitSuccess, onClose]);
+  }, [isSubmitSuccess, isUpdateSuccess, onClose]);
 
   // Reset cohort and session selection when training changes
   useEffect(() => {
@@ -195,26 +217,88 @@ export function CreateJobModal({ isOpen, onClose }: CreateJobModalProps) {
     }
   }, [selectedCohortId]);
 
-  // Prevent closing modal by clicking outside or pressing Esc
-  const handleInteractOutside = (event: Event) => {
-    event.preventDefault();
-  };
+  // Populate form when editing - basic fields first
+  useEffect(() => {
+    if (isEditing && existingJob && isOpen) {
+      // Set basic form fields
+      form.setValue("title", existingJob.title);
+      form.setValue("description", existingJob.description);
+      
+      // Parse deadline date and time
+      const deadlineDate = new Date(existingJob.deadlineDate);
+      const dateString = deadlineDate.toISOString().split('T')[0];
+      const timeString = deadlineDate.toTimeString().slice(0, 5);
+      
+      form.setValue("deadlineDate", dateString);
+      form.setValue("deadlineTime", timeString);
+      form.setValue("sessionIds", existingJob.sessions.map(s => s.id));
+    }
+  }, [isEditing, existingJob, isOpen]);
 
-  const handleTrainingChange = (trainingId: string) => {
+  // Populate training and cohort selection when data is available
+  useEffect(() => {
+    if (isEditing && existingJob && isOpen && trainingsData?.trainings) {
+      const firstSession = existingJob.sessions[0];
+      if (firstSession && firstSession.cohort) {
+        // Find and set training based on training title from cohort
+        const trainingTitle = firstSession.cohort.trainingTitle;
+        const matchingTraining = trainingsData.trainings.find(t => t.title === trainingTitle);
+        
+        if (matchingTraining && selectedTrainingId !== matchingTraining.id) {
+          setSelectedTrainingId(matchingTraining.id);
+          form.setValue("trainingId", matchingTraining.id);
+        }
+      }
+    }
+  }, [isEditing, existingJob, isOpen, trainingsData?.trainings, selectedTrainingId]);
+
+  // Set cohort when cohorts data is available
+  useEffect(() => {
+    if (isEditing && existingJob && isOpen && cohortsData?.cohorts && selectedTrainingId) {
+      const firstSession = existingJob.sessions[0];
+      if (firstSession && firstSession.cohort) {
+        const cohortId = firstSession.cohort.id;
+        // Verify the cohort exists in the loaded data
+        const cohortExists = cohortsData.cohorts.find(c => c.id === cohortId);
+        if (cohortExists && selectedCohortId !== cohortId) {
+          setSelectedCohortId(cohortId);
+          form.setValue("cohortId", cohortId);
+        }
+      }
+    }
+  }, [isEditing, existingJob, isOpen, cohortsData?.cohorts, selectedTrainingId, selectedCohortId]);
+
+  // Clear form when modal closes
+  useEffect(() => {
+    if (!isOpen) {
+      form.reset();
+      setSelectedTrainingId(undefined);
+      setSelectedCohortId(undefined);
+    }
+  }, [isOpen]);
+
+  // Memoize interaction outside handler
+  const handleInteractOutside = useCallback((event: Event) => {
+    event.preventDefault();
+  }, []);
+
+  // Memoize training change handler
+  const handleTrainingChange = useCallback((trainingId: string) => {
     setSelectedTrainingId(trainingId);
     form.setValue("trainingId", trainingId, { shouldValidate: true });
-  }
+  }, []);
 
-  const handleCohortChange = (cohortId: string) => {
+  // Memoize cohort change handler
+  const handleCohortChange = useCallback((cohortId: string) => {
     setSelectedCohortId(cohortId);
     form.setValue("cohortId", cohortId, { shouldValidate: true });
-  }
+  }, []);
   
-  // Helper to get current date string in YYYY-MM-DD format
-  const getMinDate = () => {
+  // Memoize minimum date value
+  const minDate = useMemo(() => {
     const now = new Date();
     return now.toISOString().split('T')[0];
-  }
+  }, []);
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -224,7 +308,7 @@ export function CreateJobModal({ isOpen, onClose }: CreateJobModalProps) {
         onEscapeKeyDown={handleInteractOutside}
       >
         <DialogHeader>
-          <DialogTitle>New Job</DialogTitle>
+          <DialogTitle>{isEditing ? 'Edit Job' : 'New Job'}</DialogTitle>
         </DialogHeader>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
           {/* Job Title */}
@@ -406,7 +490,7 @@ export function CreateJobModal({ isOpen, onClose }: CreateJobModalProps) {
                   {...form.register("deadlineDate")}
                   className="pl-10"
                   disabled={isSubmitting}
-                  min={getMinDate()}
+                                      min={minDate}
                 />
               </div>
               
@@ -450,9 +534,9 @@ export function CreateJobModal({ isOpen, onClose }: CreateJobModalProps) {
                 Back
               </Button>
             </DialogClose>
-            <Button type="submit" className="bg-[#0B75FF] hover:bg-[#0B75FF]/90 text-white" disabled={isSubmitting}>
-              {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-              {isSubmitting ? "Creating..." : "Create Job"}
+            <Button type="submit" className="bg-[#0B75FF] hover:bg-[#0B75FF]/90 text-white" disabled={isSubmitting || isUpdating || isLoadingJob}>
+              {(isSubmitting || isUpdating) ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              {(isSubmitting || isUpdating) ? (isEditing ? "Updating..." : "Creating...") : (isEditing ? "Update Job" : "Create Job")}
             </Button>
           </DialogFooter>
         </form>

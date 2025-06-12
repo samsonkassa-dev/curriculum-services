@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label";
 import { VisuallyHidden } from "@/components/ui/visually-hidden";
 import { Badge } from "@/components/ui/badge";
 import { DeliveryMethod } from "@/lib/hooks/useSession";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface TrainingVenue {
   id: string;
@@ -32,6 +33,7 @@ interface JobDetailModalProps {
 export const JobDetailModal = ({ jobId, isOpen, onClose, hideActions }: JobDetailModalProps) => {
   const [showApplyForm, setShowApplyForm] = useState(false);
   const [reason, setReason] = useState("");
+  const [applicationType, setApplicationType] = useState<"MAIN" | "ASSISTANT">("MAIN");
   const { applyForJob, isLoading } = useApplyForJob();
   const { data: job, isLoading: isLoadingJob } = useJobDetail(jobId);
 
@@ -39,11 +41,12 @@ export const JobDetailModal = ({ jobId, isOpen, onClose, hideActions }: JobDetai
     if (!reason.trim() || !job) return;
     
     applyForJob(
-      { jobId: job.id, reason },
+      { jobId: job.id, reason, applicationType },
       {
         onSuccess: () => {
           onClose();
           setReason("");
+          setApplicationType("MAIN");
           setShowApplyForm(false);
         }
       }
@@ -167,6 +170,20 @@ export const JobDetailModal = ({ jobId, isOpen, onClose, hideActions }: JobDetai
             <div className="flex flex-col gap-4">
               {showApplyForm ? (
                 <div className="flex flex-col gap-4 w-full">
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor="applicationType" className="text-base font-medium">
+                      Application Type
+                    </Label>
+                    <Select value={applicationType} onValueChange={(value: "MAIN" | "ASSISTANT") => setApplicationType(value)}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Select application type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="MAIN">Main Trainer</SelectItem>
+                        <SelectItem value="ASSISTANT">Assistant Trainer</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <div className="flex flex-col gap-2">
                     <Label htmlFor="reason" className="text-base font-medium">
                       Why do you want to apply for this position?

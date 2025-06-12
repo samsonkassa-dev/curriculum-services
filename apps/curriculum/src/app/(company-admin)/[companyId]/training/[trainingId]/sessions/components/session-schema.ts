@@ -16,7 +16,9 @@ export const sessionSchema = z.object({
   lessonIds: z.array(z.string()).min(1, "At least one lesson is required"),
   deliveryMethod: z.enum(["OFFLINE", "ONLINE", "SELF_PACED"] as const),
   startDate: z.date(),
+  startTime: z.string().min(1, "Start time is required"),
   endDate: z.date(),
+  endTime: z.string().min(1, "End time is required"),
   numberOfStudents: z.coerce.number().min(1, "Number of students is required"),
   trainingVenueId: z.string().optional(),
   meetsRequirement: z.boolean(),
@@ -38,6 +40,19 @@ export const sessionSchema = z.object({
 }, {
   message: "Training venue is required for offline sessions",
   path: ["trainingVenueId"]
+}).refine((data) => {
+  // Validate that end date/time is after start date/time
+  const formatDateForValidation = (date: Date): string => {
+    const adjustedDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000)
+    return adjustedDate.toISOString().split("T")[0]
+  }
+  
+  const startDateTime = new Date(`${formatDateForValidation(data.startDate)}T${data.startTime}`);
+  const endDateTime = new Date(`${formatDateForValidation(data.endDate)}T${data.endTime}`);
+  return endDateTime > startDateTime;
+}, {
+  message: "End date and time must be after start date and time",
+  path: ["endTime"]
 });
 
 export type SessionFormValues = z.infer<typeof sessionSchema>

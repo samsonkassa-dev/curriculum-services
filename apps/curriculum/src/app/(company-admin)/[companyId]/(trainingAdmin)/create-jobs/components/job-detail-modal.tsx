@@ -114,8 +114,13 @@ export function JobDetailModal({ jobId, isOpen, onClose }: JobDetailModalProps) 
 
                   {/* Deadline Date */}
                   <div className="flex justify-between items-center py-3.5 border-b border-[#E8E8E8]">
-                    <span className="text-[#5D5D5D]">Date Closed</span>
-                    <span>{format(new Date(job.deadlineDate), 'dd MMM yyyy')}</span>
+                    <span className="text-[#5D5D5D]">Application Deadline</span>
+                    <div className="text-right">
+                      <div>{format(new Date(job.deadlineDate), 'dd MMM yyyy')}</div>
+                      <div className="text-sm text-gray-500">
+                        {format(new Date(job.deadlineDate), 'h:mm a')}
+                      </div>
+                    </div>
                   </div>
 
                   {/* Applicants Required */}

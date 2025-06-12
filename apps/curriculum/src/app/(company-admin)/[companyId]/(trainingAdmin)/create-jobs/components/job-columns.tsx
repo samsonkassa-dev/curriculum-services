@@ -4,16 +4,8 @@ import { ColumnDef } from "@tanstack/react-table"
 import { format } from 'date-fns'
 import { Job } from "@/lib/hooks/useJobs" 
 import { Badge } from "@/components/ui/badge"
-import { MoreHorizontal } from "lucide-react"
+import { Edit, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 
 // Define the *actual* allowed badge variants based on the linter error
 type AllowedBadgeVariant = 'active' | 'pending' | 'accepted' | 'rejected' | 'deactivated' | 'deleted' | 'approved';
@@ -37,7 +29,7 @@ const getStatusBadgeVariant = (status: Job['status']): AllowedBadgeVariant => {
   return 'pending'; // Default fallback if switch doesn't cover all possibilities
 }
 
-export const createJobColumns = (onViewDetails: (jobId: string) => void): ColumnDef<Job>[] => [
+export const createJobColumns = (onEditJob: (jobId: string) => void, onDeleteJob: (jobId: string) => void): ColumnDef<Job>[] => [
   {
     accessorKey: "title",
     header: "Title",
@@ -48,11 +40,15 @@ export const createJobColumns = (onViewDetails: (jobId: string) => void): Column
     header: "Description",
     cell: ({ row }) => {
       const description = row.getValue("description") as string
-      // Optional: Truncate long descriptions
-      const truncatedDescription = description.length > 50 
-        ? description.substring(0, 47) + "..." 
+      // Truncate long descriptions but allow more space
+      const truncatedDescription = description.length > 80 
+        ? description.substring(0, 77) + "..." 
         : description
-      return <div className="text-sm text-muted-foreground">{truncatedDescription}</div>
+      return (
+        <div className="text-sm text-muted-foreground max-w-xs" title={description}>
+          {truncatedDescription}
+        </div>
+      )
     },
   },
   {
@@ -70,7 +66,14 @@ export const createJobColumns = (onViewDetails: (jobId: string) => void): Column
     header: "Deadline",
     cell: ({ row }) => {
       const date = row.getValue("deadlineDate") as string
-      return <div>{format(new Date(date), 'PP')}</div> // Format date nicely
+      return (
+        <div className="text-sm">
+          <div>{format(new Date(date), 'MMM dd, yyyy')}</div>
+          <div className="text-xs text-muted-foreground">
+            {format(new Date(date), 'h:mm a')}
+          </div>
+        </div>
+      )
     },
   },
   {
@@ -90,33 +93,31 @@ export const createJobColumns = (onViewDetails: (jobId: string) => void): Column
   },
   {
     id: "actions",
+    header: "Actions",
     cell: ({ row }) => {
       const job = row.original
 
       return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0">
-              <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-            <DropdownMenuItem
-              onClick={() => navigator.clipboard.writeText(job.id)}
-            >
-              Copy Job ID
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem 
-              onClick={() => onViewDetails(job.id)}
-            >
-              View Details
-            </DropdownMenuItem> 
-            {/* Add other actions like Edit, Delete, View Applicants later */}
-          </DropdownMenuContent>
-        </DropdownMenu>
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => onEditJob(job.id)}
+            className="h-8 px-3 text-blue-600 border-blue-200 hover:bg-blue-50 hover:border-blue-300"
+          >
+            <Edit className="h-3 w-3 mr-1" />
+            Edit
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => onDeleteJob(job.id)}
+            className="h-8 px-3 text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300"
+          >
+            <Trash2 className="h-3 w-3 mr-1" />
+            Delete
+          </Button>
+        </div>
       )
     },
   },
@@ -124,8 +125,9 @@ export const createJobColumns = (onViewDetails: (jobId: string) => void): Column
 
 // Keep the original jobColumns for backward compatibility
 export const jobColumns = createJobColumns(() => {
-  // Fallback to old custom event pattern if used without the new pattern
-  document.dispatchEvent(
-    new CustomEvent("view-job-details", { detail: { jobId: '' } })
-  )
+  // Fallback for edit action
+  console.log('Edit action not implemented')
+}, () => {
+  // Fallback for delete action
+  console.log('Delete action not implemented')
 }) 

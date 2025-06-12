@@ -42,9 +42,25 @@ const formatDateForInput = (date: Date | null | undefined): string => {
   return adjustedDate.toISOString().split("T")[0]
 }
 
+// Helper function to format Date to HH:MM string
+const formatTimeForInput = (date: Date | null | undefined): string => {
+  if (!date) return ""
+  const hours = date.getHours().toString().padStart(2, '0')
+  const minutes = date.getMinutes().toString().padStart(2, '0')
+  return `${hours}:${minutes}`
+}
+
 // Helper function to convert date string to date object
 const parseDate = (dateString: string): Date => {
   return new Date(dateString)
+}
+
+// Helper function to combine date and time into a single Date object
+const combineDateAndTime = (date: Date, timeString: string): Date => {
+  const [hours, minutes] = timeString.split(':').map(Number)
+  const combined = new Date(date)
+  combined.setHours(hours, minutes, 0, 0)
+  return combined
 }
 
 interface SessionFormProps {
@@ -135,7 +151,9 @@ export function SessionForm({ trainingId, companyId, cohortId, sessionId, onSucc
       lessonIds: [],
       deliveryMethod: "OFFLINE",
       startDate: new Date(),
+      startTime: "09:00",
       endDate: new Date(),
+      endTime: "17:00",
       numberOfStudents: 0,
       trainingVenueId: "",
       meetsRequirement: true,
@@ -161,7 +179,9 @@ export function SessionForm({ trainingId, companyId, cohortId, sessionId, onSucc
       lessonIds: existingSession.lessons.map(lesson => lesson.id),
       deliveryMethod: existingSession.deliveryMethod,
       startDate: startDateTime,
+      startTime: formatTimeForInput(startDateTime),
       endDate: endDateTime,
+      endTime: formatTimeForInput(endDateTime),
       numberOfStudents: existingSession.numberOfStudents,
       trainingVenueId: existingSession.trainingVenue?.id || "",
       meetsRequirement: existingSession.meetsRequirement,
@@ -250,13 +270,17 @@ export function SessionForm({ trainingId, companyId, cohortId, sessionId, onSucc
   
   // Handler for form submission
   const onSubmit = (values: SessionFormValues) => {
+    // Combine date and time for start and end
+    const startDateTime = combineDateAndTime(values.startDate, values.startTime)
+    const endDateTime = combineDateAndTime(values.endDate, values.endTime)
+    
     // Create session data that matches CreateSessionData type
     const sessionData: CustomCreateSessionData = {
       name: values.name,
       lessonIds: values.lessonIds,
       deliveryMethod: values.deliveryMethod,
-      startDate: values.startDate.toISOString(),
-      endDate: values.endDate.toISOString(),
+      startDate: startDateTime.toISOString(),
+      endDate: endDateTime.toISOString(),
       numberOfStudents: values.numberOfStudents,
       trainingVenueId: values.trainingVenueId || "", // Provide default empty string
       meetsRequirement: values.meetsRequirement,
@@ -646,49 +670,89 @@ export function SessionForm({ trainingId, companyId, cohortId, sessionId, onSucc
                 )}
               />
               
-              {/* Start Date and End Date in one row */}
-              <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="startDate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Start Date</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="date"
-                          value={formatDateForInput(field.value)}
-                          onChange={(e) => {
-                            const newDate = parseDate(e.target.value)
-                            field.onChange(newDate)
-                          }}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+              {/* Start Date/Time and End Date/Time */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Start Date and Time */}
+                <div className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="startDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Start Date</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="date"
+                            value={formatDateForInput(field.value)}
+                            onChange={(e) => {
+                              const newDate = parseDate(e.target.value)
+                              field.onChange(newDate)
+                            }}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="startTime"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Start Time</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="time"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
 
-                <FormField
-                  control={form.control}
-                  name="endDate"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>End Date</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="date"
-                          value={formatDateForInput(field.value)}
-                          onChange={(e) => {
-                            const newDate = parseDate(e.target.value)
-                            field.onChange(newDate)
-                          }}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                {/* End Date and Time */}
+                <div className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="endDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>End Date</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="date"
+                            value={formatDateForInput(field.value)}
+                            onChange={(e) => {
+                              const newDate = parseDate(e.target.value)
+                              field.onChange(newDate)
+                            }}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="endTime"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>End Time</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="time"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </div>
               
               {/* Number of Students */}

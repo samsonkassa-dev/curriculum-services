@@ -47,6 +47,11 @@ export const ApplicationCard = ({ application }: ApplicationCardProps) => {
                 </div>
                 <span className="font-inter text-xs leading-[1.67em]">{application.job.numberOfSessions} Sessions</span>
               </div>
+              <div className="flex items-center gap-1">
+                <span className="font-inter text-xs leading-[1.67em]">
+                  Applied as: {application.applicationType === "MAIN" ? "Main Trainer" : "Assistant Trainer"}
+                </span>
+              </div>
             </div>
           </div>
           <Badge variant={application.status.toLowerCase() as "pending" | "accepted" | "rejected"}>

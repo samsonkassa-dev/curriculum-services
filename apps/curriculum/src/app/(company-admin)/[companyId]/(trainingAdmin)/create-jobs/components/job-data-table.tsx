@@ -74,65 +74,67 @@ export function JobDataTable<TData, TValue>({
   return (
     <div>
       <div className="rounded-md border border-gray-200 bg-white overflow-hidden relative">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id} className="bg-gray-50">
-                {headerGroup.headers.map((header) => (
-                  <TableHead
-                    key={header.id}
-                    className="py-4 px-5 text-sm font-medium text-gray-500 bg-gray-50"
-                  >
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                  </TableHead>
-                ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="h-24">
-                  <div className="flex items-center justify-center gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span>Loading...</span>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ) : table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow 
-                  key={row.id} 
-                  className="border-gray-100"
-                  data-state={row.getIsSelected() && "selected"}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell 
-                      key={cell.id} 
-                      className="py-4 px-5 text-sm"
+        <div className="overflow-x-auto">
+          <Table className="min-w-full">
+            <TableHeader>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id} className="bg-gray-50">
+                  {headerGroup.headers.map((header) => (
+                    <TableHead
+                      key={header.id}
+                      className="py-4 px-5 text-sm font-medium text-gray-500 bg-gray-50"
                     >
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </TableCell>
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                    </TableHead>
                   ))}
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell 
-                  colSpan={columns.length} 
-                  className="h-24 text-center"
-                >
-                  No jobs found.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {isLoading ? (
+                <TableRow>
+                  <TableCell colSpan={columns.length} className="h-24">
+                    <div className="flex items-center justify-center gap-2">
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>Loading...</span>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ) : table.getRowModel().rows?.length ? (
+                table.getRowModel().rows.map((row) => (
+                  <TableRow 
+                    key={row.id} 
+                    className="border-gray-100"
+                    data-state={row.getIsSelected() && "selected"}
+                  >
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell 
+                        key={cell.id} 
+                        className="py-4 px-5 text-sm"
+                      >
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell 
+                    colSpan={columns.length} 
+                    className="h-24 text-center"
+                  >
+                    No jobs found.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </div>
       <div className="flex items-center justify-between py-4">
         <div className="flex items-center justify-between w-full">

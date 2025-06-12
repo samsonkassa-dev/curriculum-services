@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter, useParams } from "next/navigation"
-import { useJobs } from "@/lib/hooks/useJobs"
+import { useJobs, useDeleteJob } from "@/lib/hooks/useJobs"
 import { useUserRole } from "@/lib/hooks/useUserRole"
 import { Button } from "@/components/ui/button"
 import { Loading } from "@/components/ui/loading"
@@ -14,6 +14,16 @@ import Image from 'next/image'
 import { useDebounce } from "@/lib/hooks/useDebounce"
 import { CreateJobModal } from "./create-job-modal"
 import { JobDetailModal } from "./job-detail-modal"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 export function JobsList() {
   const router = useRouter()
@@ -28,6 +38,9 @@ export function JobsList() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
   const [selectedJobId, setSelectedJobId] = useState<string>("")
+  const [editingJobId, setEditingJobId] = useState<string | undefined>(undefined)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+  const [jobToDelete, setJobToDelete] = useState<string | null>(null)
 
   const { isProjectManager, isTrainingAdmin } = useUserRole()
   
@@ -35,18 +48,44 @@ export function JobsList() {
     page: page,
     pageSize: pageSize,
   })
+  const { deleteJob, isLoading: isDeleting } = useDeleteJob()
 
   const handleViewDetails = (jobId: string) => {
     setSelectedJobId(jobId)
     setIsDetailModalOpen(true)
   }
 
+  const handleEditJob = (jobId: string) => {
+    setEditingJobId(jobId)
+    setIsCreateModalOpen(true)
+  }
+
+  const handleDeleteJob = (jobId: string) => {
+    setJobToDelete(jobId)
+    setIsDeleteDialogOpen(true)
+  }
+
+  const confirmDeleteJob = () => {
+    if (jobToDelete) {
+      deleteJob(jobToDelete)
+      setIsDeleteDialogOpen(false)
+      setJobToDelete(null)
+    }
+  }
+
+  const cancelDeleteJob = () => {
+    setIsDeleteDialogOpen(false)
+    setJobToDelete(null)
+  }
+
   const handleOpenCreateModal = () => {
+    setEditingJobId(undefined)
     setIsCreateModalOpen(true)
   }
 
   const handleCloseCreateModal = () => {
     setIsCreateModalOpen(false)
+    setEditingJobId(undefined)
   }
 
   const handleCloseDetailModal = () => {
@@ -71,8 +110,8 @@ export function JobsList() {
     page * pageSize
   )
 
-  // Create columns with the handler
-  const jobColumns = createJobColumns(handleViewDetails)
+  // Create columns with the handlers
+  const jobColumns = createJobColumns(handleEditJob, handleDeleteJob)
 
   if (isLoading && !data) {
     return <Loading />
@@ -135,7 +174,8 @@ export function JobsList() {
           {(isProjectManager || isTrainingAdmin) && (
             <CreateJobModal 
               isOpen={isCreateModalOpen} 
-              onClose={handleCloseCreateModal} 
+              onClose={handleCloseCreateModal}
+              jobId={editingJobId}
             />
           )}
         </div>
@@ -206,7 +246,8 @@ export function JobsList() {
         {(isProjectManager || isTrainingAdmin) && (
           <CreateJobModal 
             isOpen={isCreateModalOpen} 
-            onClose={handleCloseCreateModal} 
+            onClose={handleCloseCreateModal}
+            jobId={editingJobId}
           />
         )}
 
@@ -218,6 +259,28 @@ export function JobsList() {
             onClose={handleCloseDetailModal}
           />
         )}
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Job</AlertDialogTitle>
+              <AlertDialogDescription>
+                Are you sure you want to delete this job? This action cannot be undone and will permanently remove the job posting.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={cancelDeleteJob}>Cancel</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={confirmDeleteJob}
+                className="bg-red-600 hover:bg-red-700 text-white"
+                disabled={isDeleting}
+              >
+                {isDeleting ? "Deleting..." : "Delete Job"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   )

@@ -55,6 +55,7 @@ export interface Job {
 export interface Application {
   id: string
   reason: string
+  applicationType: "MAIN" | "ASSISTANT"
   job: Job
   trainer: Trainer
   status: "PENDING" | "ACCEPTED" | "REJECTED"
@@ -64,6 +65,7 @@ export interface Application {
 export interface CreateApplicationData {
   jobId: string
   reason: string
+  applicationType: "MAIN" | "ASSISTANT"
 }
 
 export interface RejectApplicationData {
