@@ -423,7 +423,7 @@ export function JobDetailModal({ jobId, isOpen, onClose, mode = 'view' }: JobDet
                     {/* Description */}
                     <div className="flex justify-between items-center py-3.5 border-b border-[#E8E8E8]">
                       <span className="text-[#5D5D5D]">Description</span>
-                      <span className="w-3/4 text-center">{job.description}</span>
+                      <span className="w-3/4 text-left">{job.description}</span>
                     </div>
 
                     {/* Number of Sessions */}
