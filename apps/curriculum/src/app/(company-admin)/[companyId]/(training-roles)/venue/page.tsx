@@ -12,6 +12,7 @@ import { useDebounce } from "@/lib/hooks/useDebounce";
 import { createVenueColumns } from "./components/venue-columns";
 import { VenueDataTable } from "./components/venue-data-table";
 import { AddVenueDialog } from "./components/add-venue-dialog";
+import { VenueDetailModal } from "./components/venue-detail-modal";
 
 // TODO: Implement pagination controls
 const DEFAULT_PAGE_SIZE = 20;
@@ -30,6 +31,7 @@ export default function VenuePage() {
     // Edit dialog state
     const [editingVenue, setEditingVenue] = useState<Venue | null>(null);
     const [editingVenueId, setEditingVenueId] = useState<string | null>(null);
+    const [viewVenue, setViewVenue] = useState<Venue | null>(null);
 
     const { data, isLoading, error } = useVenues(page - 1, pageSize);
     const { deleteVenue, isLoading: isDeleting } = useDeleteVenue();
@@ -106,11 +108,17 @@ export default function VenuePage() {
         setEditingVenueId(null);
     }, []);
 
-    // Create venue columns with edit and delete handlers
+    // Handle view venue
+    const handleViewVenue = useCallback((venue: Venue) => {
+        setViewVenue(venue);
+    }, []);
+
+    // Create venue columns with edit, delete, and view handlers
     const venueColumns = useMemo(() => createVenueColumns({
+        onView: handleViewVenue,
         onEdit: handleEditVenue,
         onDelete: handleDeleteVenue,
-    }), [handleEditVenue, handleDeleteVenue]);
+    }), [handleViewVenue, handleEditVenue, handleDeleteVenue]);
 
     if (isLoading) {
         return <Loading />;
@@ -225,6 +233,15 @@ export default function VenuePage() {
                     onSuccess={handleDialogSuccess}
                     onClose={handleDialogClose}
                 />
+
+                {/* View Venue Modal */}
+                {viewVenue && (
+                  <VenueDetailModal 
+                    venueId={viewVenue.id}
+                    open={!!viewVenue}
+                    onClose={() => setViewVenue(null)}
+                  />
+                )}
             </div>
         </div>
     );

@@ -31,16 +31,18 @@ const defaultValues: VenueSchema = {
   latitude: undefined,
   longitude: undefined,
   venueRequirements: [],
-  seatingCapacity: undefined as unknown as number,
+  seatingCapacity: undefined,
   standingCapacity: undefined,
-  roomCount: undefined as unknown as number,
-  totalArea: undefined as unknown as number,
+  roomCount: undefined,
+  totalArea: undefined,
   hasAccessibility: false,
   accessibilityFeatures: "",
   hasParkingSpace: false,
   parkingCapacity: undefined,
   isActive: true,
 }
+
+type ZoneObj = { id?: string; region?: { id?: string; country?: { id?: string } } };
 
 export const VenueWizard = memo(function VenueWizard({ 
   companyId, 
@@ -55,6 +57,20 @@ export const VenueWizard = memo(function VenueWizard({
   
   const isLoading = isAddingVenue || isUpdatingVenue
   const isEditMode = !!venue
+
+  // Derive initial region/country for edit mode
+  const { initialCountryId, initialRegionId } = useMemo(() => {
+    if (!venueDetails?.venue && !venue) return { initialCountryId: "", initialRegionId: "" };
+    const venueData = venueDetails?.venue || venue!;
+    let regionId = "";
+    let countryId = "";
+    if (venueData.zone) {
+      const zoneObj = venueData.zone as ZoneObj;
+      regionId = zoneObj.region?.id || "";
+      countryId = zoneObj.region?.country?.id || "";
+    }
+    return { initialCountryId: countryId, initialRegionId: regionId };
+  }, [venueDetails?.venue, venue]);
 
   // Initialize form with values based on edit or add mode
   const form = useForm<VenueSchema>({
@@ -89,10 +105,10 @@ export const VenueWizard = memo(function VenueWizard({
           remark: req.remark || "",
           available: req.available,
         })) || [],
-        seatingCapacity: venueData.seatingCapacity || 1,
-        standingCapacity: venueData.standingCapacity,
-        roomCount: venueData.roomCount || 1,
-        totalArea: venueData.totalArea || 1,
+        seatingCapacity: venueData.seatingCapacity ?? undefined,
+        standingCapacity: venueData.standingCapacity ?? undefined,
+        roomCount: venueData.roomCount ?? undefined,
+        totalArea: venueData.totalArea ?? undefined,
         hasAccessibility: venueData.hasAccessibility || false,
         accessibilityFeatures: venueData.accessibilityFeatures || "",
         hasParkingSpace: venueData.hasParkingSpace || false,
@@ -127,11 +143,6 @@ export const VenueWizard = memo(function VenueWizard({
 
   // Handle form submission
   const onSubmit = (values: VenueSchema) => {
-    // Ensure required numeric fields have valid values
-    const seatingCapacity = values.seatingCapacity || 1;
-    const roomCount = values.roomCount || 1;
-    const totalArea = values.totalArea || 1;
-
     const formattedData: CreateVenueData = {
       name: values.name,
       location: values.location,
@@ -146,36 +157,34 @@ export const VenueWizard = memo(function VenueWizard({
         remark: req.remark ?? '',
         available: req.available ?? false,
       })),
-      seatingCapacity,
-      standingCapacity: values.standingCapacity,
-      roomCount,
-      totalArea,
       hasAccessibility: values.hasAccessibility,
-      accessibilityFeatures: values.accessibilityFeatures,
       hasParkingSpace: values.hasParkingSpace,
-      parkingCapacity: values.parkingCapacity,
       isActive: values.isActive,
-    };
-    
+    } as CreateVenueData;
+
+    // Only include capacity fields if they have values
+    if (values.seatingCapacity !== undefined) formattedData.seatingCapacity = values.seatingCapacity;
+    if (values.standingCapacity !== undefined) formattedData.standingCapacity = values.standingCapacity;
+    if (values.roomCount !== undefined) formattedData.roomCount = values.roomCount;
+    if (values.totalArea !== undefined) formattedData.totalArea = values.totalArea;
+    if (values.accessibilityFeatures) formattedData.accessibilityFeatures = values.accessibilityFeatures;
+    if (values.parkingCapacity !== undefined) formattedData.parkingCapacity = values.parkingCapacity;
+
     if (isEditMode && venue) {
       updateVenue({ venueId: venue.id, venueData: formattedData }, {
         onSuccess: () => {
-          // Only call onSuccess when the API operation actually succeeds
           onSuccess()
         },
-        onError: (error) => {
-          // Keep modal open on error - toast notification is handled by the hook
+        onError: (error: unknown) => {
           console.error('Update venue failed:', error);
         }
       })
     } else {
       addVenue(formattedData, {
         onSuccess: () => {
-          // Only call onSuccess when the API operation actually succeeds
           onSuccess()
         },
-        onError: (error) => {
-          // Keep modal open on error - toast notification is handled by the hook
+        onError: (error: unknown) => {
           console.error('Add venue failed:', error);
         }
       })
@@ -207,7 +216,8 @@ export const VenueWizard = memo(function VenueWizard({
       {/* Form Content Area */}
       <div className="flex-1 min-h-0">
         <VenueWizardForm
-          form={form} 
+          companyId={companyId}
+          form={form}
           currentStep={currentStep}
           steps={steps}
           nextStep={nextStep}
@@ -215,10 +225,9 @@ export const VenueWizard = memo(function VenueWizard({
           onSubmit={onSubmit}
           onCancel={onCancel}
           isLoading={isLoading}
-          companyId={companyId}
           isEditMode={isEditMode}
-          initialCountryId={venueDetails?.venue?.city?.zone?.region?.country?.id || venue?.city?.zone?.region?.country?.id || ""}
-          initialRegionId={venueDetails?.venue?.city?.zone?.region?.id || venue?.city?.zone?.region?.id || ""}
+          initialCountryId={initialCountryId}
+          initialRegionId={initialRegionId}
         />
       </div>
     </div>

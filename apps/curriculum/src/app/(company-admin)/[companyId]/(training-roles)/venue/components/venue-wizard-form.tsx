@@ -285,6 +285,31 @@ export function VenueWizardForm({
   const isStep3 = currentStep === 3;
   const isLastStep = currentStep === steps.length;
 
+  // Check if current step has validation errors
+  const hasCurrentStepErrors = () => {
+    const errors = form.formState.errors;
+    const values = form.getValues();
+    
+    if (currentStep === 1) {
+      // Check required fields for step 1
+      const step1Errors = !!(errors.name || errors.location || errors.zoneId || errors.woreda);
+      const step1EmptyRequired = !values.name || !values.location || !values.zoneId || !values.woreda;
+      return step1Errors || step1EmptyRequired;
+    } else if (currentStep === 2) {
+      return !!errors.venueRequirements;
+    } else if (currentStep === 3) {
+      // Check only fields that have values for validation errors
+      return !!(errors.seatingCapacity || errors.standingCapacity || errors.roomCount || 
+               errors.totalArea || errors.accessibilityFeatures || errors.parkingCapacity);
+    }
+    return false;
+  };
+
+  // Check if form has any validation errors
+  const hasFormErrors = () => {
+    return Object.keys(form.formState.errors).length > 0;
+  };
+
   // Function to validate and go to next step
   const handleNextStep = async () => {
     let fieldsToValidate: (keyof VenueSchema)[] = [];
@@ -296,7 +321,9 @@ export function VenueWizardForm({
       nextStep();
       return;
     } else if (currentStep === 3) {
-      fieldsToValidate = ['seatingCapacity', 'roomCount', 'totalArea'];
+      // Step 3 fields are all optional now, so no validation needed
+      nextStep();
+      return;
     }
 
     const isValid = await form.trigger(fieldsToValidate);
@@ -1006,13 +1033,14 @@ export function VenueWizardForm({
             {isStep3 && (
               <div className="space-y-6 p-4 border rounded-md bg-white">
                 <h3 className="text-lg font-semibold">Venue Capacity & Features</h3>
+                <p className="text-sm text-gray-600 mb-4">All fields in this step are optional</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   <FormField
                     control={form.control}
                     name="seatingCapacity"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Seating Capacity <span className="text-red-500">*</span></FormLabel>
+                        <FormLabel>Seating Capacity (Optional)</FormLabel>
                         <FormControl>
                           <Input
                             type="number"
@@ -1068,7 +1096,7 @@ export function VenueWizardForm({
                     name="roomCount"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Number of Rooms <span className="text-red-500">*</span></FormLabel>
+                        <FormLabel>Number of Rooms (Optional)</FormLabel>
                         <FormControl>
                           <Input
                             type="number"
@@ -1096,7 +1124,7 @@ export function VenueWizardForm({
                     name="totalArea"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Total Area (m²) <span className="text-red-500">*</span></FormLabel>
+                        <FormLabel>Total Area (m²) (Optional)</FormLabel>
                         <FormControl>
                           <Input
                             type="number"
@@ -1270,23 +1298,43 @@ export function VenueWizardForm({
           )}
 
           {!isLastStep ? (
-            <Button
-              type="button"
-              onClick={handleNextStep}
-              disabled={isLoading}
-              className="bg-brand hover:bg-blue-700 text-white"
-            >
-              Continue
-            </Button>
+            <div className="flex flex-col items-end">
+              <Button
+                type="button"
+                onClick={handleNextStep}
+                disabled={isLoading || hasCurrentStepErrors()}
+                className={cn(
+                  "bg-brand hover:bg-blue-700 text-white",
+                  hasCurrentStepErrors() && "opacity-50 cursor-not-allowed"
+                )}
+              >
+                Continue
+              </Button>
+              {hasCurrentStepErrors() && (
+                <p className="text-sm text-red-500 mt-1">
+                  Please fix the errors above to continue
+                </p>
+              )}
+            </div>
           ) : (
-            <Button
-              type="button"
-              onClick={handleFormSubmit}
-              disabled={isLoading}
-              className="bg-brand hover:bg-blue-700 text-white"
-            >
-              {isLoading ? "Submitting..." : isEditMode ? "Update Venue" : "Submit Venue"}
-            </Button>
+            <div className="flex flex-col items-end">
+              <Button
+                type="button"
+                onClick={handleFormSubmit}
+                disabled={isLoading || hasFormErrors()}
+                className={cn(
+                  "bg-brand hover:bg-blue-700 text-white",
+                  hasFormErrors() && "opacity-50 cursor-not-allowed"
+                )}
+              >
+                {isLoading ? "Submitting..." : isEditMode ? "Update Venue" : "Submit Venue"}
+              </Button>
+              {hasFormErrors() && (
+                <p className="text-sm text-red-500 mt-1">
+                  Please fix form errors before {isEditMode ? "updating" : "submitting"}
+                </p>
+              )}
+            </div>
           )}
         </div>
       </div>

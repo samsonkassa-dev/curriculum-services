@@ -3,7 +3,7 @@
 import { ColumnDef } from "@tanstack/react-table"
 import { Venue } from "@/lib/hooks/useVenue"
 import { Button } from "@/components/ui/button"
-import { Edit2, Trash2 } from "lucide-react"
+import { Edit2, Trash2, Eye } from "lucide-react"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,32 +18,44 @@ import { useState, memo } from "react"
 
 interface ActionsCellProps {
   venue: Venue
+  onView: (venue: Venue) => void
   onEdit: (venue: Venue) => void
   onDelete: (venueId: string) => void
 }
 
 // Memoized Actions Cell Component
-const ActionsCell = memo(function ActionsCell({ venue, onEdit, onDelete }: ActionsCellProps) {
+const ActionsCell = memo(function ActionsCell({ venue, onView, onEdit, onDelete }: ActionsCellProps) {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
 
   return (
     <>
       <div className="flex items-center gap-2">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => onEdit(venue)}
-          className="h-8 w-8 p-0"
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={() => onView(venue)}
+          className="h-8 px-3 text-gray-600 border-gray-200 hover:bg-gray-50 hover:border-gray-300"
         >
-          <Edit2 className="h-4 w-4 text-blue-600" />
+          <Eye className="h-3 w-3 mr-1" />
+          View
         </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => setShowDeleteDialog(true)}
-          className="h-8 w-8 p-0"
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={() => onEdit(venue)}
+          className="h-8 px-3 text-blue-600 border-blue-200 hover:bg-blue-50 hover:border-blue-300"
         >
-          <Trash2 className="h-4 w-4 text-red-600" />
+          <Edit2 className="h-3 w-3 mr-1" />
+          Edit
+        </Button>
+        <Button 
+          variant="outline" 
+          size="sm"
+          onClick={() => setShowDeleteDialog(true)}
+          className="h-8 px-3 text-red-600 border-red-200 hover:bg-red-50 hover:border-red-300"
+        >
+          <Trash2 className="h-3 w-3 mr-1" />
+          Delete
         </Button>
       </div>
 
@@ -74,11 +86,12 @@ const ActionsCell = memo(function ActionsCell({ venue, onEdit, onDelete }: Actio
 })
 
 interface VenueColumnsProps {
+  onView: (venue: Venue) => void
   onEdit: (venue: Venue) => void
   onDelete: (venueId: string) => void
 }
 
-export const createVenueColumns = ({ onEdit, onDelete }: VenueColumnsProps): ColumnDef<Venue>[] => [
+export const createVenueColumns = ({ onView, onEdit, onDelete }: VenueColumnsProps): ColumnDef<Venue>[] => [
   {
     id: "venue",
     header: "Venues",
@@ -143,6 +156,7 @@ export const createVenueColumns = ({ onEdit, onDelete }: VenueColumnsProps): Col
     cell: ({ row }) => (
       <ActionsCell
         venue={row.original}
+        onView={onView}
         onEdit={onEdit}
         onDelete={onDelete}
       />

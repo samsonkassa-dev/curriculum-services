@@ -10,14 +10,14 @@ const venueRequirementSchema = z.object({
 
 // Step 3: Venue Capacity Schema
 const venueCapacitySchema = z.object({
-  seatingCapacity: z.number().min(1, "Seating capacity must be at least 1"),
-  standingCapacity: z.number().min(0, "Standing capacity cannot be negative").optional(),
-  roomCount: z.number().min(1, "Room count must be at least 1"),
-  totalArea: z.number().min(1, "Total area must be at least 1 square meter"),
+  seatingCapacity: z.number().min(1, "Seating capacity must be at least 1").optional().nullable().transform(val => val === null ? undefined : val),
+  standingCapacity: z.number().min(0, "Standing capacity cannot be negative").optional().nullable().transform(val => val === null ? undefined : val),
+  roomCount: z.number().min(1, "Room count must be at least 1").optional().nullable().transform(val => val === null ? undefined : val),
+  totalArea: z.number().min(1, "Total area must be at least 1 square meter").optional().nullable().transform(val => val === null ? undefined : val),
   hasAccessibility: z.boolean().optional(),
   accessibilityFeatures: z.string().optional(),
   hasParkingSpace: z.boolean().optional(),
-  parkingCapacity: z.number().min(0, "Parking capacity cannot be negative").optional(),
+  parkingCapacity: z.number().min(0, "Parking capacity cannot be negative").optional().nullable().transform(val => val === null ? undefined : val),
 });
 
 // Main venue schema that matches the API structure
@@ -31,15 +31,15 @@ export const venueSchema = z.object({
   longitude: z.number().optional(),
   venueRequirements: z.array(venueRequirementSchema).optional(),
   
-  // Step 3: Venue Capacity fields
-  seatingCapacity: z.number().min(1, "Seating capacity must be at least 1"),
-  standingCapacity: z.number().min(0, "Standing capacity cannot be negative").optional(),
-  roomCount: z.number().min(1, "Room count must be at least 1"),
-  totalArea: z.number().min(1, "Total area must be at least 1 square meter"),
+  // Step 3: Venue Capacity fields - All optional to match the hook interface
+  seatingCapacity: z.number().min(1, "Seating capacity must be at least 1").optional().nullable().transform(val => val === null ? undefined : val),
+  standingCapacity: z.number().min(0, "Standing capacity cannot be negative").optional().nullable().transform(val => val === null ? undefined : val),
+  roomCount: z.number().min(1, "Room count must be at least 1").optional().nullable().transform(val => val === null ? undefined : val),
+  totalArea: z.number().min(1, "Total area must be at least 1 square meter").optional().nullable().transform(val => val === null ? undefined : val),
   hasAccessibility: z.boolean().optional().default(false),
   accessibilityFeatures: z.string().optional().default(''),
   hasParkingSpace: z.boolean().optional().default(false),
-  parkingCapacity: z.number().min(0, "Parking capacity cannot be negative").optional(),
+  parkingCapacity: z.number().min(0, "Parking capacity cannot be negative").optional().nullable().transform(val => val === null ? undefined : val),
   
   isActive: z.boolean().default(true),
 });
