@@ -346,7 +346,7 @@ export function JobDetailModal({ jobId, isOpen, onClose, mode = 'view' }: JobDet
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent 
-        className="sm:max-w-[600px] p-0 rounded-2xl max-h-[85vh] overflow-hidden" 
+        className="sm:max-w-[800px] p-0 rounded-2xl max-h-[85vh] overflow-hidden" 
       >
         {isLoading ? (
           <>
@@ -423,7 +423,7 @@ export function JobDetailModal({ jobId, isOpen, onClose, mode = 'view' }: JobDet
                     {/* Description */}
                     <div className="flex justify-between items-center py-3.5 border-b border-[#E8E8E8]">
                       <span className="text-[#5D5D5D]">Description</span>
-                      <span className="max-w-[280px] text-right">{job.description}</span>
+                      <span className="w-full text-right">{job.description}</span>
                     </div>
 
                     {/* Number of Sessions */}
