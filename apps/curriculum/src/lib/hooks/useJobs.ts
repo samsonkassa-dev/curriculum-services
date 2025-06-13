@@ -207,7 +207,7 @@ export function useUpdateJob() {
   const updateJobMutation = useMutation({
     mutationFn: async ({ jobId, jobData }: { jobId: string; jobData: CreateJobData }) => {
       const token = getCookie('token')
-      const response = await axios.put<JobResponse>(
+      const response = await axios.patch<JobResponse>(
         `${process.env.NEXT_PUBLIC_API}/job/${jobId}`,
         jobData,
         {
