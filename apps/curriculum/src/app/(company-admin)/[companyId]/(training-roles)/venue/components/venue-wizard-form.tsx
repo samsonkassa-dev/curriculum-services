@@ -85,6 +85,9 @@ export function VenueWizardForm({
   // Local state for cascading selects (not part of form schema)
   const [selectedCountryId, setSelectedCountryId] = useState(initialCountryId);
   const [selectedRegionId, setSelectedRegionId] = useState(initialRegionId);
+  
+  // Track validation attempts for better UX
+  const [validationAttempted, setValidationAttempted] = useState(isEditMode);
 
   // Popover states
   const [openCountries, setOpenCountries] = useState(false);
@@ -287,6 +290,9 @@ export function VenueWizardForm({
 
   // Check if current step has validation errors
   const hasCurrentStepErrors = () => {
+    // For new venues, only show errors after user has tried to continue
+    if (!isEditMode && !validationAttempted) return false;
+    
     const errors = form.formState.errors;
     const values = form.getValues();
     
@@ -312,6 +318,9 @@ export function VenueWizardForm({
 
   // Function to validate and go to next step
   const handleNextStep = async () => {
+    // Mark that validation has been attempted
+    setValidationAttempted(true);
+    
     let fieldsToValidate: (keyof VenueSchema)[] = [];
     
     if (currentStep === 1) {
