@@ -404,6 +404,8 @@ export function SurveyModal({
                     </div>
                   </div>
                 )}
+
+                
                 
                 {/* Only show the following steps for post-session surveys */}
                 {!isPreSession && (
@@ -444,28 +446,7 @@ export function SurveyModal({
                       </div>
                     )}
                     
-                    {/* Step 4: Confidence Level */}
-                    {step === 4 && (
-                      <div className="space-y-4">
-                        <h3 className="text-lg font-medium">
-                          How confident do you feel about applying what you&apos;ve learned? (0-100)
-                        </h3>
-                        <div className="space-y-6">
-                          <Slider
-                            value={[parseInt(confidenceLevel || "50")]}
-                            min={0}
-                            max={100}
-                            step={1}
-                            onValueChange={handleSliderChange}
-                          />
-                          <div className="flex justify-between">
-                            <span>Not Confident (0)</span>
-                            <span className="font-medium">{confidenceLevel || 50}%</span>
-                            <span>Very Confident (100)</span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
+              
                     
                     {/* Step 5: Recommendation Rating */}
                     {step === 5 && (

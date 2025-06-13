@@ -4,7 +4,7 @@ import { ColumnDef } from "@tanstack/react-table"
 import { format } from 'date-fns'
 import { Job } from "@/lib/hooks/useJobs" 
 import { Badge } from "@/components/ui/badge"
-import { Edit, Trash2 } from "lucide-react"
+import { Edit, Trash2, Eye } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 // Define the *actual* allowed badge variants based on the linter error
@@ -29,7 +29,7 @@ const getStatusBadgeVariant = (status: Job['status']): AllowedBadgeVariant => {
   return 'pending'; // Default fallback if switch doesn't cover all possibilities
 }
 
-export const createJobColumns = (onEditJob: (jobId: string) => void, onDeleteJob: (jobId: string) => void): ColumnDef<Job>[] => [
+export const createJobColumns = (onViewJob: (jobId: string) => void, onEditJob: (jobId: string) => void, onDeleteJob: (jobId: string) => void): ColumnDef<Job>[] => [
   {
     accessorKey: "title",
     header: "Title",
@@ -102,6 +102,15 @@ export const createJobColumns = (onEditJob: (jobId: string) => void, onDeleteJob
           <Button 
             variant="outline" 
             size="sm"
+            onClick={() => onViewJob(job.id)}
+            className="h-8 px-3 text-gray-600 border-gray-200 hover:bg-gray-50 hover:border-gray-300"
+          >
+            <Eye className="h-3 w-3 mr-1" />
+            View
+          </Button>
+          <Button 
+            variant="outline" 
+            size="sm"
             onClick={() => onEditJob(job.id)}
             className="h-8 px-3 text-blue-600 border-blue-200 hover:bg-blue-50 hover:border-blue-300"
           >
@@ -125,6 +134,9 @@ export const createJobColumns = (onEditJob: (jobId: string) => void, onDeleteJob
 
 // Keep the original jobColumns for backward compatibility
 export const jobColumns = createJobColumns(() => {
+  // Fallback for view action
+  console.log('View action not implemented')
+}, () => {
   // Fallback for edit action
   console.log('Edit action not implemented')
 }, () => {

@@ -38,6 +38,7 @@ export function JobsList() {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false)
   const [selectedJobId, setSelectedJobId] = useState<string>("")
+  const [modalMode, setModalMode] = useState<'view' | 'edit'>('view')
   const [editingJobId, setEditingJobId] = useState<string | undefined>(undefined)
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
   const [jobToDelete, setJobToDelete] = useState<string | null>(null)
@@ -52,12 +53,14 @@ export function JobsList() {
 
   const handleViewDetails = (jobId: string) => {
     setSelectedJobId(jobId)
+    setModalMode('view')
     setIsDetailModalOpen(true)
   }
 
   const handleEditJob = (jobId: string) => {
-    setEditingJobId(jobId)
-    setIsCreateModalOpen(true)
+    setSelectedJobId(jobId)
+    setModalMode('edit')
+    setIsDetailModalOpen(true)
   }
 
   const handleDeleteJob = (jobId: string) => {
@@ -90,6 +93,8 @@ export function JobsList() {
 
   const handleCloseDetailModal = () => {
     setIsDetailModalOpen(false)
+    setSelectedJobId("")
+    setModalMode('view')
   }
 
   const handlePageSizeChange = (newPageSize: number) => {
@@ -111,7 +116,7 @@ export function JobsList() {
   )
 
   // Create columns with the handlers
-  const jobColumns = createJobColumns(handleEditJob, handleDeleteJob)
+  const jobColumns = createJobColumns(handleViewDetails, handleEditJob, handleDeleteJob)
 
   if (isLoading && !data) {
     return <Loading />
@@ -257,6 +262,7 @@ export function JobsList() {
             jobId={selectedJobId}
             isOpen={isDetailModalOpen}
             onClose={handleCloseDetailModal}
+            mode={modalMode}
           />
         )}
 
