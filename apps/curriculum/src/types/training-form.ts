@@ -26,7 +26,7 @@ export const durationSchema = z.object({
   duration: z.number().min(1, "Duration must be at least 1"),
   durationType: z.enum(["DAYS", "WEEKS", "MONTHS", "HOURS"]),
   trainingTypeId: z.string().min(1, "Training type is required"),
-  deliveryMethod: z.enum(["BLENDED", "ONLINE", "VIRTUAL"]),
+  deliveryMethod: z.enum(["BLENDED", "OFFLINE", "VIRTUAL"]),
 })
 
 export type DurationFormData = z.infer<typeof durationSchema>
@@ -94,7 +94,7 @@ export interface PreloadedFormData extends Partial<TrainingFormData> {
   // Step 3
   preloadedTrainingType?: BaseItem
   preloadedTrainingTypes?: BaseItem[]
-  deliveryMethod?: "BLENDED" | "ONLINE" | "VIRTUAL"
+  deliveryMethod?: "BLENDED" | "OFFLINE" | "VIRTUAL"
   
   // Step 4
   totalParticipants?: number
@@ -111,19 +111,19 @@ export interface PreloadedFormData extends Partial<TrainingFormData> {
 /**
  * Helper function to normalize deliveryMethod values
  */
-const normalizeDeliveryMethod = (value?: string): "BLENDED" | "ONLINE" | "VIRTUAL" | undefined => {
+const normalizeDeliveryMethod = (value?: string): "BLENDED" | "OFFLINE" | "VIRTUAL" | undefined => {
   if (!value) return undefined;
   
-  if (value === "BLENDED" || value === "ONLINE" || value === "VIRTUAL") {
+  if (value === "BLENDED" || value === "OFFLINE" || value === "VIRTUAL") {
     return value;
   }
   
   // Map old values to new values
-  if (value === "OFFLINE") return "BLENDED";
+  if (value === "OFFLINE") return "OFFLINE";
   if (value === "SELF_PACED") return "VIRTUAL";
   
   // Default fallback
-  return "ONLINE";
+  return "OFFLINE";
 }
 
 /**
@@ -271,7 +271,7 @@ export function apiToFormData(training: Training): PreloadedFormData {
     // Step 3
     duration: training.duration,
     durationType: training.durationType as "DAYS" | "WEEKS" | "MONTHS" | "HOURS",
-    deliveryMethod: normalizeDeliveryMethod(training.deliveryMethod) || "ONLINE", // Default to ONLINE if not set
+    deliveryMethod: normalizeDeliveryMethod(training.deliveryMethod) || "OFFLINE", // Default to ONLINE if not set
     trainingTypeId: training.trainingType?.id || "",
     preloadedTrainingType: training.trainingType,
     preloadedTrainingTypes: training.trainingType ? [training.trainingType] : [],

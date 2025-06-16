@@ -1,6 +1,5 @@
 "use client"
 
-import { useState } from 'react'
 import { useFormContext } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -11,14 +10,16 @@ import { BaseItem } from '@/types/curriculum'
 import { useBaseData } from '@/lib/hooks/useBaseData'
 
 export function CreateTrainingStep3({ onNext, onBack, onCancel, initialData, isEditing = false }: StepProps) {
-  // Fetch training types if not provided
+  // Fetch training types - enabled for editing to ensure all data is available
   const { data: trainingTypes, isLoading: isLoadingTrainingTypes } = useBaseData(
     'training-type', 
-    { enabled: !initialData?.preloadedTrainingTypes?.length }
+    { enabled: isEditing || !initialData?.preloadedTrainingTypes?.length }
   )
 
-  // Use preloaded or fetched training types
-  const allTrainingTypes = initialData?.preloadedTrainingTypes || trainingTypes || []
+  // Use fetched data when editing (to show all options), otherwise use preloaded data if available
+  const allTrainingTypes = isEditing 
+    ? trainingTypes || []
+    : (initialData?.preloadedTrainingTypes?.length ? initialData.preloadedTrainingTypes : trainingTypes || [])
 
   const {
     register,
@@ -40,7 +41,7 @@ export function CreateTrainingStep3({ onNext, onBack, onCancel, initialData, isE
     setValue('trainingTypeId', value, { shouldValidate: true })
   }
   
-  const handleDeliveryMethodChange = (value: "BLENDED" | "ONLINE" | "VIRTUAL") => {
+  const handleDeliveryMethodChange = (value: "BLENDED" | "OFFLINE" | "VIRTUAL") => {
     setValue('deliveryMethod', value, { shouldValidate: true })
   }
 
@@ -104,7 +105,7 @@ export function CreateTrainingStep3({ onNext, onBack, onCancel, initialData, isE
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="BLENDED">Blended</SelectItem>
-              <SelectItem value="ONLINE">Online</SelectItem>
+              <SelectItem value="OFFLINE">Offline</SelectItem>
               <SelectItem value="VIRTUAL">Virtual</SelectItem>
             </SelectContent>
           </Select>

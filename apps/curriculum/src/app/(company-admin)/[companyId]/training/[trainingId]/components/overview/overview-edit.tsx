@@ -45,7 +45,7 @@ export function OverviewEdit({ training, initialStep = 1, onSave, onCancel }: Ov
       cityIds: formData.cityIds || [],
       duration: formData.duration || 1,
       durationType: formData.durationType || 'DAYS',
-      deliveryMethod: formData.deliveryMethod || 'ONLINE',
+      deliveryMethod: formData.deliveryMethod || 'OFFLINE',
       trainingTypeId: formData.trainingTypeId || '',
       totalParticipants: formData.totalParticipants || 0,
       ageGroupIds: formData.ageGroupIds || [],

@@ -37,7 +37,7 @@ export interface Training {
   countries?: BaseItem[];
   duration: number;
   durationType: "HOURS" | "DAYS" | "WEEKS" | "MONTHS";
-  deliveryMethod?: "BLENDED" | "ONLINE" | "VIRTUAL";
+  deliveryMethod?: "BLENDED" | "OFFLINE" | "VIRTUAL";
   totalParticipants?: number;
   ageGroups: BaseItem[];
   genderPercentages: {

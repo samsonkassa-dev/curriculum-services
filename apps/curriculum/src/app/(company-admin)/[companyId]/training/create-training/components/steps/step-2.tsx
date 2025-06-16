@@ -362,14 +362,21 @@ export function CreateTrainingStep2({ onNext, onBack, onCancel, isEditing = fals
               >
                 <div className="flex flex-wrap gap-1 max-w-[calc(100%-2rem)] overflow-hidden">
                   {selectedZoneIds.length > 0 ? (
-                    selectedZoneIds.map(zoneId => {
-                      const zone = availableZones.find((z: Zone) => z.id === zoneId);
-                      return (
-                        <Badge key={zoneId} variant="pending" className="text-xs">
-                          {zone?.name}
-                        </Badge>
-                      );
-                    })
+                    <>
+                      {selectedZoneIds.slice(0, 1).map(zoneId => {
+                        const zone = availableZones.find((z: Zone) => z.id === zoneId);
+                        return (
+                          <Badge key={zoneId} variant="pending" className="text-xs">
+                            {zone?.name}
+                          </Badge>
+                        );
+                      })}
+                      {selectedZoneIds.length > 1 && (
+                        <span className="text-sm text-gray-500 ml-1">
+                          + {selectedZoneIds.length - 1} more
+                        </span>
+                      )}
+                    </>
                   ) : (
                     "Select zones..."
                   )}

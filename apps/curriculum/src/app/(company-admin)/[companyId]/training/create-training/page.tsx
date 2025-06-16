@@ -43,7 +43,7 @@ export default function CreateTraining() {
       cityIds: [],       // Optional for API
       duration: 1,
       durationType: "DAYS",
-      deliveryMethod: "BLENDED",
+      deliveryMethod: "OFFLINE",
       trainingTypeId: "",
       totalParticipants: 0,
       ageGroupIds: [],

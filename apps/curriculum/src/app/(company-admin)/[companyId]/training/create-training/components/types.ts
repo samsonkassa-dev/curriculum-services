@@ -13,7 +13,7 @@ export interface StepProps {
     cityIds?: string[];
     duration?: number;
     durationType?: 'DAYS' | 'WEEKS' | 'MONTHS' | 'HOURS';
-    deliveryMethod?: 'BLENDED' | 'ONLINE' | 'VIRTUAL';
+    deliveryMethod?: 'BLENDED' | 'OFFLINE' | 'VIRTUAL';
     trainingTypeId?: string;
     totalParticipants?: number;
     trainingPurposeIds?: string[];

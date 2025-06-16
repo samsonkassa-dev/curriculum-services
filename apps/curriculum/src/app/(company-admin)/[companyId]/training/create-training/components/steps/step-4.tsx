@@ -20,21 +20,21 @@ interface BaseItem {
 }
 
 export function CreateTrainingStep4({ onNext, onBack, onCancel, initialData, isEditing = false }: StepProps) {
-  // Only fetch data if not preloaded
+  // Fetch all base data - enabled for editing to ensure all data is available
   const { data: ageGroups } = useBaseData('age-group', { 
-    enabled: !initialData?.preloadedAgeGroups?.length
+    enabled: isEditing || !initialData?.preloadedAgeGroups?.length
   })
   const { data: disabilities } = useBaseData('disability', {
-    enabled: !initialData?.preloadedDisabilities?.length
+    enabled: isEditing || !initialData?.preloadedDisabilities?.length
   })
   const { data: marginalizedGroups } = useBaseData('marginalized-group', {
-    enabled: !initialData?.preloadedMarginalizedGroups?.length
+    enabled: isEditing || !initialData?.preloadedMarginalizedGroups?.length
   })
   const { data: economicBackgrounds } = useBaseData('economic-background', {
-    enabled: !initialData?.preloadedEconomicBackgrounds?.length
+    enabled: isEditing || !initialData?.preloadedEconomicBackgrounds?.length
   })
   const { data: academicQualifications } = useBaseData('academic-qualification', {
-    enabled: !initialData?.preloadedAcademicQualifications?.length
+    enabled: isEditing || !initialData?.preloadedAcademicQualifications?.length
   })
 
   // Popover states
@@ -66,26 +66,26 @@ export function CreateTrainingStep4({ onNext, onBack, onCancel, initialData, isE
   const disabilityIds = disabilityPercentages?.map(d => d.disabilityId) || []
   const marginalizedGroupIds = marginalizedGroupPercentages?.map(m => m.marginalizedGroupId) || []
 
-  // Use preloaded data or fetched data
-  const safeAgeGroups = initialData?.preloadedAgeGroups?.length 
-    ? initialData.preloadedAgeGroups 
-    : ageGroups || []
+  // Use fetched data when editing (to show all options), otherwise use preloaded data if available
+  const safeAgeGroups = isEditing 
+    ? ageGroups || []
+    : (initialData?.preloadedAgeGroups?.length ? initialData.preloadedAgeGroups : ageGroups || [])
   
-  const safeDisabilities = initialData?.preloadedDisabilities?.length
-    ? initialData.preloadedDisabilities
-    : disabilities || []
+  const safeDisabilities = isEditing
+    ? disabilities || []
+    : (initialData?.preloadedDisabilities?.length ? initialData.preloadedDisabilities : disabilities || [])
   
-  const safeMarginalizedGroups = initialData?.preloadedMarginalizedGroups?.length
-    ? initialData.preloadedMarginalizedGroups
-    : marginalizedGroups || []
+  const safeMarginalizedGroups = isEditing
+    ? marginalizedGroups || []
+    : (initialData?.preloadedMarginalizedGroups?.length ? initialData.preloadedMarginalizedGroups : marginalizedGroups || [])
   
-  const safeEconomicBackgrounds = initialData?.preloadedEconomicBackgrounds?.length
-    ? initialData.preloadedEconomicBackgrounds
-    : economicBackgrounds || []
+  const safeEconomicBackgrounds = isEditing
+    ? economicBackgrounds || []
+    : (initialData?.preloadedEconomicBackgrounds?.length ? initialData.preloadedEconomicBackgrounds : economicBackgrounds || [])
   
-  const safeAcademicQualifications = initialData?.preloadedAcademicQualifications?.length
-    ? initialData.preloadedAcademicQualifications
-    : academicQualifications || []
+  const safeAcademicQualifications = isEditing
+    ? academicQualifications || []
+    : (initialData?.preloadedAcademicQualifications?.length ? initialData.preloadedAcademicQualifications : academicQualifications || [])
 
   // Handle age group selection
   const handleAgeGroupChange = (value: string) => {
@@ -143,7 +143,7 @@ export function CreateTrainingStep4({ onNext, onBack, onCancel, initialData, isE
   const handleDisabilityPercentageChange = (disabilityId: string, percentage: number | null) => {
     const newDisabilityPercentages = disabilityPercentages?.map(d => 
       d.disabilityId === disabilityId 
-        ? { ...d, percentage: percentage === null ? 0 : Math.min(100, Math.max(1, percentage)) } 
+        ? { ...d, percentage: percentage === null ? 0 : Math.min(100, Math.max(0.1, percentage)) } 
         : d
     ) || []
     
@@ -175,7 +175,7 @@ export function CreateTrainingStep4({ onNext, onBack, onCancel, initialData, isE
   const handleMarginalizedGroupPercentageChange = (groupId: string, percentage: number | null) => {
     const newMarginalizedGroupPercentages = marginalizedGroupPercentages?.map(m => 
       m.marginalizedGroupId === groupId 
-        ? { ...m, percentage: percentage === null ? 0 : Math.min(100, Math.max(1, percentage)) } 
+        ? { ...m, percentage: percentage === null ? 0 : Math.min(100, Math.max(0.1, percentage)) } 
         : m
     ) || []
     
@@ -539,11 +539,12 @@ export function CreateTrainingStep4({ onNext, onBack, onCancel, initialData, isE
                             <span className="text-xs text-gray-500">Percentage:</span>
                             <input
                               type="number"
-                              min="1"
+                              min="0.1"
                               max="100"
+                              step="0.1"
                               value={disabilityPercentages?.find(d => d.disabilityId === disability.id)?.percentage || ''}
                               onChange={(e) => {
-                                const val = e.target.value === '' ? null : parseInt(e.target.value);
+                                const val = e.target.value === '' ? null : parseFloat(e.target.value);
                                 handleDisabilityPercentageChange(disability.id, val);
                               }}
                               onClick={(e) => e.stopPropagation()}
@@ -630,11 +631,12 @@ export function CreateTrainingStep4({ onNext, onBack, onCancel, initialData, isE
                             <span className="text-xs text-gray-500">Percentage:</span>
                             <input
                               type="number"
-                              min="1"
+                              min="0.1"
                               max="100"
+                              step="0.1"
                               value={marginalizedGroupPercentages?.find(m => m.marginalizedGroupId === group.id)?.percentage || ''}
                               onChange={(e) => {
-                                const val = e.target.value === '' ? null : parseInt(e.target.value);
+                                const val = e.target.value === '' ? null : parseFloat(e.target.value);
                                 handleMarginalizedGroupPercentageChange(group.id, val);
                               }}
                               onClick={(e) => e.stopPropagation()}

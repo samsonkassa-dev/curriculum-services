@@ -39,10 +39,18 @@ export function TrainingProfileView({ trainingProfile, onEdit }: TrainingProfile
   const { canEdit } = useUserRole()
 
   // Fetch base data for displaying names instead of IDs
-  const { data: deliveryTools } = useBaseData('delivery-tool')
-  const { data: technologicalRequirements } = useBaseData('technological-requirement')
-  const { data: learnerStylePreferences } = useBaseData('learner-style-preference')
-  const { data: alignmentStandards } = useBaseData('alignment-standard')
+  const { data: deliveryTools } = useBaseData('delivery-tool', { 
+    disablePagination: true 
+  })
+  const { data: technologicalRequirements } = useBaseData('technological-requirement', { 
+    disablePagination: true 
+  })
+  const { data: learnerStylePreferences } = useBaseData('learner-style-preference', { 
+    disablePagination: true 
+  })
+  const { data: alignmentStandards } = useBaseData('alignment-standard', { 
+    disablePagination: true 
+  })
   const { data: objectiveData } = useObjective(trainingProfile.trainingId)
 
   // Create maps for easy lookup
@@ -291,7 +299,16 @@ export function TrainingProfileView({ trainingProfile, onEdit }: TrainingProfile
             </AccordionTrigger>
             <AccordionContent>
               <div className="bg-white p-6">
-                <p className="text-gray-600 text-sm md:text-lg">{trainingProfile.professionalBackground || 'No professional background available'}</p>
+                <div className="text-gray-600 text-sm md:text-lg whitespace-pre-wrap">
+                  {trainingProfile.professionalBackground ? 
+                    trainingProfile.professionalBackground.split('\n').map((line, index) => (
+                      <p key={index} className={line.trim().startsWith('•') || line.trim().startsWith('-') || line.trim().startsWith('*') ? 'ml-4' : ''}>
+                        {line}
+                      </p>
+                    )) 
+                    : 'No professional background available'
+                  }
+                </div>
               </div>
             </AccordionContent>
           </AccordionItem>

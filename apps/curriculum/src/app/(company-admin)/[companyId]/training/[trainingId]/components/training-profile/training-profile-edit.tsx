@@ -50,10 +50,18 @@ export function TrainingProfileEdit({ trainingId, initialData, onSave, onCancel 
   const [selectedAlignmentStandards, setSelectedAlignmentStandards] = useState<string[]>([])
 
   // Fetch base data for the new fields
-  const { data: deliveryTools, isLoading: isLoadingDeliveryTools } = useBaseData('delivery-tool')
-  const { data: technologicalRequirements, isLoading: isLoadingTechRequirements } = useBaseData('technological-requirement')
-  const { data: learnerStylePreferences, isLoading: isLoadingLearnerStylePreferences } = useBaseData('learner-style-preference')
-  const { data: alignmentStandards, isLoading: isLoadingAlignmentStandards } = useBaseData('alignment-standard')
+  const { data: deliveryTools, isLoading: isLoadingDeliveryTools } = useBaseData('delivery-tool', { 
+    disablePagination: true 
+  })
+  const { data: technologicalRequirements, isLoading: isLoadingTechRequirements } = useBaseData('technological-requirement', { 
+    disablePagination: true 
+  })
+  const { data: learnerStylePreferences, isLoading: isLoadingLearnerStylePreferences } = useBaseData('learner-style-preference', { 
+    disablePagination: true 
+  })
+  const { data: alignmentStandards, isLoading: isLoadingAlignmentStandards } = useBaseData('alignment-standard', { 
+    disablePagination: true 
+  })
 
   const createProfile = useCreateTrainingProfile()
   const updateProfile = useUpdateTrainingProfile()
@@ -387,11 +395,12 @@ export function TrainingProfileEdit({ trainingId, initialData, onSave, onCancel 
         return (
           <div className="space-y-1 ">
             <h3 className="text-lg font-medium">Professional Background</h3>
-          <p className="text-[12.5px] text-[#99948E] pb-4">Enter the professional background for the target audience of this training.</p>
+          <p className="text-[12.5px] text-[#99948E] pb-2">Enter the professional background for the target audience of this training.</p>
+          <p className="text-[11px] text-[#667085] pb-4">Tip: Use • or - at the start of lines to create bullet points</p>
           <Textarea
               value={professionalBackground}
               onChange={(e) => setProfessionalBackground(e.target.value)}
-              placeholder="Enter professional background"
+              placeholder="Enter professional background&#10;&#10;Example:&#10;• 5+ years experience in project management&#10;• Bachelor's degree in relevant field&#10;• Familiarity with agile methodologies"
             className="min-h-[200px] w-full"
           />
           </div>
@@ -464,9 +473,11 @@ export function TrainingProfileEdit({ trainingId, initialData, onSave, onCancel 
               <h3 className="text-lg font-medium">Technological Requirements</h3>
             <p className="text-[12.5px] text-[#99948E] pb-4">Select the technology requirements needed for both learners and instructors to participate in this training.</p>
               <h2 className="text-base font-semibold mt-6">For Learners</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-3 max-h-64 overflow-y-auto border rounded-md p-4 bg-gray-50">
                 {isLoadingTechRequirements ? (
-                  <p>Loading technological requirements...</p>
+                  <p className="text-sm text-gray-500">Loading technological requirements...</p>
+                ) : learnerTechRequirements.length === 0 ? (
+                  <p className="text-sm text-gray-500 col-span-full text-center py-4">No technological requirements available for learners</p>
                 ) : (
                   learnerTechRequirements.map((req: BaseItem) => (
                     <div key={req.id} className="flex items-center space-x-3">
@@ -479,7 +490,7 @@ export function TrainingProfileEdit({ trainingId, initialData, onSave, onCancel 
                       />
                       <label
                         htmlFor={`learner-${req.id}`}
-                        className="text-sm md:text-base text-gray-500 font-normal"
+                        className="text-sm text-gray-700 font-normal leading-5 cursor-pointer"
                       >
                         {req.name}
                       </label>
@@ -492,9 +503,11 @@ export function TrainingProfileEdit({ trainingId, initialData, onSave, onCancel 
             {/* For Instructors Section */}
             <div className="space-y-1 ">
               <h2 className="text-base font-semibold">For Instructors</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-3 max-h-64 overflow-y-auto border rounded-md p-4 bg-gray-50">
                 {isLoadingTechRequirements ? (
-                  <p>Loading technological requirements...</p>
+                  <p className="text-sm text-gray-500">Loading technological requirements...</p>
+                ) : instructorTechRequirements.length === 0 ? (
+                  <p className="text-sm text-gray-500 col-span-full text-center py-4">No technological requirements available for instructors</p>
                 ) : (
                   instructorTechRequirements.map((req: BaseItem) => (
                     <div key={req.id} className="flex items-center space-x-3">
@@ -507,7 +520,7 @@ export function TrainingProfileEdit({ trainingId, initialData, onSave, onCancel 
                       />
                       <label
                         htmlFor={`instructor-${req.id}`}
-                        className="text-sm md:text-base text-gray-500 font-normal"
+                        className="text-sm text-gray-700 font-normal leading-5 cursor-pointer"
                       >
                         {req.name}
                       </label>

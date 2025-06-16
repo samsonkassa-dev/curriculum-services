@@ -234,7 +234,7 @@ export function Overview({ training }: { training: Training }) {
                   <h3 className="text-gray-700 font-medium mb-1">Delivery Method:</h3>
                   <p className="text-gray-600 text-sm md:text-lg">
                     {training.deliveryMethod ? 
-                      training.deliveryMethod === 'ONLINE' ? 'Online' :
+                      training.deliveryMethod === 'OFFLINE' ? 'Offline' :
                       training.deliveryMethod === 'BLENDED' ? 'Blended' : 
                       'Virtual' : 'N/A'}
                   </p>

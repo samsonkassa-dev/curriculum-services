@@ -14,7 +14,7 @@ interface CreateTrainingData {
   duration: number;
   durationType: 'HOURS' | 'DAYS' | 'WEEKS' | 'MONTHS';
   trainingTypeId: string;
-  deliveryMethod: 'BLENDED' | 'ONLINE' | 'VIRTUAL';
+  deliveryMethod: 'BLENDED' | 'OFFLINE' | 'VIRTUAL';
   totalParticipants: number;
   ageGroupIds: string[];
   genderPercentages: Array<{
