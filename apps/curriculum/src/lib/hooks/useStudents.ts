@@ -169,16 +169,29 @@ const addPhonePrefix = (phone: string): string => {
   return `+251${phone}`
 }
 
+export interface StudentFilters {
+  genders?: string[]
+  languageIds?: string[]
+  academicLevelIds?: string[]
+  zoneIds?: string[]
+  // Commented out for now - can be enabled later
+  // disabilityIds?: string[]
+  // marginalizedGroupIds?: string[]
+  // hasSmartphone?: boolean
+  // hasTrainingExperience?: boolean
+}
+
 export function useStudents(
   trainingId: string, 
   page?: number, 
   pageSize?: number,
   sessionId?: string,
   noCohorts?: boolean,
-  search?: string
+  search?: string,
+  filters?: StudentFilters
 ) {
   return useQuery({
-    queryKey: ['students', trainingId, page, pageSize, sessionId, noCohorts, search],
+    queryKey: ['students', trainingId, page, pageSize, sessionId, noCohorts, search, filters],
     queryFn: async () => {
       try {
         const token = getCookie('token')
@@ -191,7 +204,36 @@ export function useStudents(
         if (page !== undefined) params.append('page', page.toString())
         if (pageSize !== undefined) params.append('page-size', pageSize.toString())
         if (noCohorts !== undefined) params.append('no-cohorts', noCohorts.toString())
-        if (search !== undefined && search.trim() !== '') params.append('search', search.trim())
+        if (search !== undefined && search.trim() !== '') params.append('search-query', search.trim())
+        
+        // Add filter parameters
+        if (filters) {
+          if (filters.genders && filters.genders.length > 0) {
+            filters.genders.forEach(gender => params.append('gender', gender))
+          }
+          if (filters.languageIds && filters.languageIds.length > 0) {
+            filters.languageIds.forEach(languageId => params.append('language-ids', languageId))
+          }
+          if (filters.academicLevelIds && filters.academicLevelIds.length > 0) {
+            filters.academicLevelIds.forEach(levelId => params.append('academic-level-ids', levelId))
+          }
+          if (filters.zoneIds && filters.zoneIds.length > 0) {
+            filters.zoneIds.forEach(zoneId => params.append('zone-ids', zoneId))
+          }
+          // Commented out for now - can be enabled later
+          // if (filters.disabilityIds && filters.disabilityIds.length > 0) {
+          //   filters.disabilityIds.forEach(disabilityId => params.append('disability-id', disabilityId))
+          // }
+          // if (filters.marginalizedGroupIds && filters.marginalizedGroupIds.length > 0) {
+          //   filters.marginalizedGroupIds.forEach(groupId => params.append('marginalized-group-id', groupId))
+          // }
+          // if (filters.hasSmartphone !== undefined) {
+          //   params.append('has-smartphone', filters.hasSmartphone.toString())
+          // }
+          // if (filters.hasTrainingExperience !== undefined) {
+          //   params.append('has-training-experience', filters.hasTrainingExperience.toString())
+          // }
+        }
         
         // Append query parameters if any exist
         if (params.toString()) {

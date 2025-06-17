@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from "react"
 import { useUserRole } from "@/lib/hooks/useUserRole"
 import { Button } from "@/components/ui/button"
 import { Loading } from "@/components/ui/loading"
-import { useStudents, useAddStudent, useStudentById, useUpdateStudent, useDeleteStudent, useBulkImportStudentsByName, Student, CreateStudentData, CreateStudentByNameData } from "@/lib/hooks/useStudents"
+import { useStudents, useAddStudent, useStudentById, useUpdateStudent, useDeleteStudent, useBulkImportStudentsByName, Student, CreateStudentData, CreateStudentByNameData, StudentFilters } from "@/lib/hooks/useStudents"
 import { Plus, Upload, ArrowLeft } from "lucide-react"
 import Image from "next/image"
 import { Input } from "@/components/ui/input"
@@ -18,6 +18,7 @@ import { ColumnDef } from "@tanstack/react-table"
 import { StudentFormModal } from "./students/student-form-modal"
 import { DeleteStudentDialog } from "./students/delete-student-dialog"
 import { CSVImportContent } from "./students/csv-import-content"
+import { StudentFilter } from "./students/student-filter"
 
 interface StudentsComponentProps {
   trainingId: string
@@ -34,10 +35,30 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
   const [currentStudentId, setCurrentStudentId] = useState<string | null>(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [studentToDelete, setStudentToDelete] = useState<Student | null>(null)
+  const [filters, setFilters] = useState<StudentFilters>({})
   const debouncedSearch = useDebounce(searchQuery, 500)
   
   const { isProjectManager, isTrainingAdmin, isCompanyAdmin } = useUserRole()
-  const { data, isLoading } = useStudents(trainingId, page, pageSize, undefined, undefined, debouncedSearch)
+  
+  // Memoize filters to prevent unnecessary re-renders
+  const memoizedFilters = useMemo(() => filters, [filters]);
+  
+  // Main students query with search and filters
+  const { data, isLoading } = useStudents(trainingId, page, pageSize, undefined, undefined, debouncedSearch, memoizedFilters)
+  
+  // Query to check if there are any students at all (without search and filters)
+  // Only fetch when we don't have a search query or filters to determine initial empty state
+  const shouldFetchAllStudents = !debouncedSearch.trim() && Object.keys(memoizedFilters).length === 0
+  const { data: allStudentsData, isLoading: isLoadingAllStudents } = useStudents(
+    shouldFetchAllStudents ? trainingId : '', // Only fetch when needed
+    1, 
+    1, 
+    undefined, 
+    undefined, 
+    "", // No search query
+    {} // No filters
+  )
+  
   const { 
     countries,
     regions,
@@ -462,6 +483,20 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
     return isCompanyAdmin || isProjectManager || isTrainingAdmin;
   }, [isCompanyAdmin, isProjectManager, isTrainingAdmin]);
 
+  // Determine if we should show the empty state (only when no search, no filters, and no students exist at all)
+  const shouldShowEmptyState = useMemo(() => {
+    const hasNoSearchQuery = !debouncedSearch.trim();
+    const hasNoFilters = Object.keys(memoizedFilters).length === 0;
+    const hasNoStudentsAtAll = allStudentsData?.totalElements === 0;
+    return hasNoSearchQuery && hasNoFilters && hasNoStudentsAtAll;
+  }, [debouncedSearch, memoizedFilters, allStudentsData?.totalElements]);
+
+  // Handle filter application
+  const handleApplyFilters = useCallback((newFilters: StudentFilters) => {
+    setFilters(newFilters);
+    setPage(1); // Reset to first page when filters change
+  }, []);
+
   const emptyState = useMemo(() => (
         <div className="text-center py-40 bg-[#fbfbfb] rounded-lg border-[0.1px]">
           <h3 className="text-lg font-medium mb-2">No Student Added Yet</h3>
@@ -490,8 +525,8 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
         </div>
   ), [handleAddStudent, hasEditPermission, handleShowImport]);
 
-
-  if (isLoading) {
+  // Show loading only for initial load (when checking if any students exist)
+  if (isLoadingAllStudents && !allStudentsData) {
     return <Loading />
   }
 
@@ -531,26 +566,41 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
           <>
             <h1 className="text-lg font-semibold mb-6">Students</h1>
 
-            {!paginationData.totalElements ? (
+            {shouldShowEmptyState ? (
               emptyState
             ) : (
               <>
+                {/* Always show search bar and buttons when there are students or user has edit permission */}
                 <div className="flex items-center lg:justify-end gap-3 mb-6">
-                  <div className="relative md:w-[300px]">
-                    <Image
-                      src="/search.svg"
-                      alt="Search"
-                      width={19}
-                      height={19}
-                      className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black h-5 w-5 z-10"
-                    />
-                    <Input
-                      placeholder="Search students..."
-                      className="pl-10 h-10 text-sm bg-white border-gray-200"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
+                  <div className="flex items-center gap-3">
+                    <div className="relative md:w-[300px]">
+                      <Image
+                        src="/search.svg"
+                        alt="Search"
+                        width={19}
+                        height={19}
+                        className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black h-5 w-5 z-10"
+                      />
+                      <Input
+                        placeholder="Search students..."
+                        className="pl-10 h-10 text-sm bg-white border-gray-200"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                      />
+                    </div>
+                    
+                    {/* Filter Component */}
+                    <StudentFilter
+                      countries={countries}
+                      regions={regions}
+                      zones={zones}
+                      languages={languages}
+                      academicLevels={academicLevels}
+                      onApply={handleApplyFilters}
+                      defaultSelected={memoizedFilters}
                     />
                   </div>
+                  
                   {hasEditPermission && (
                     <div className="flex gap-2">
                       <Button
@@ -572,6 +622,7 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
                   )}
                 </div>
 
+                {/* Always show the table - it handles its own loading and empty states */}
                 <StudentDataTable
                   columns={columnsWithActions}
                   data={paginationData.students}

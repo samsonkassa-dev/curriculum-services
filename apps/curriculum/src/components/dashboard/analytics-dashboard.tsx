@@ -83,23 +83,10 @@ export function AnalyticsDashboard() {
     data.sessionCountPerTraining
   );
   
-  // Most common gender (for fourth trainee card)
-  const findMostCommonGender = () => {
-    if (!genderDistribution || Object.keys(genderDistribution).length === 0) {
-      return { gender: "N/A", percentage: 0 };
-    }
-    
-    const topGender = Object.entries(genderDistribution).sort(
-      ([, countA], [, countB]) => countB - countA
-    )[0];
-    
-    return {
-      gender: topGender[0],
-      percentage: topGender[1],
-    };
-  };
-  
-  const mostCommonGender = findMostCommonGender();
+  // Session completion percentage for description
+  const sessionCompletionPercentage = totalSessions > 0 
+    ? Math.round((completedSessions / totalSessions) * 100) 
+    : 0;
   
   // Session metrics data for the new pie chart
   const sessionMetricsData = [
@@ -142,9 +129,9 @@ export function AnalyticsDashboard() {
               className="bg-white"
             />
             <StatsCard 
-              title={`Most Common Gender`}
-              value={mostCommonGender.gender}
-              description={`${mostCommonGender.percentage}% of trainees`}
+              title="Total Sessions"
+              value={totalSessions.toString()}
+              description={`${sessionCompletionPercentage}% completed`}
               icon={<Blocks className="h-6 w-6 text-purple-600" />}
               className="bg-white"
             />

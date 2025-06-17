@@ -164,14 +164,6 @@ export function CohortStudents({ cohortId, trainingId }: CohortStudentsProps) {
               disabled={isLoading}
             />
           </div>
-
-          <button 
-            className="flex items-center gap-2 px-4 py-2.5 border border-gray-300 rounded-md text-sm font-medium text-[#344054] h-10 whitespace-nowrap disabled:opacity-50"
-            disabled={isLoading}
-          >
-            <Filter className="h-4 w-4" />
-            <span>Filters</span>
-          </button>
           {(isProjectManager || isTrainingAdmin) && (
             <Button
               className="bg-[#0B75FF] hover:bg-[#0B75FF]/90 text-white flex items-center gap-2 h-10"
