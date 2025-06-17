@@ -1,12 +1,13 @@
 "use client"
 
 import { use } from 'react'
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Input } from "@/components/ui/input"
 import Image from 'next/image'
 import { useDebounce } from "@/lib/hooks/useDebounce"
 import { Filter } from "@/components/ui/filter"
-import { useApplications } from "@/lib/hooks/useApplication"
+import { useApplications, ApplicationsFilters } from "@/lib/hooks/useApplication"
+import { useJobs } from "@/lib/hooks/useJobs"
 import { jobColumns } from "./components/job-columns"
 import { JobDataTable } from "./components/job-data-table"
 
@@ -20,10 +21,35 @@ export default function TrainersJobApprovalPage({
   const [pageSize, setPageSize] = useState(10)
   const [searchQuery, setSearchQuery] = useState("")
   const debouncedSearch = useDebounce(searchQuery, 500)
-  const [status, setStatus] = useState<string>()
+
+  // Reset to page 1 when search changes
+  useEffect(() => {
+    if (debouncedSearch !== searchQuery) return // Only when debounced value changes
+    setPage(1)
+  }, [debouncedSearch, searchQuery])
+  const [status, setStatus] = useState<"PENDING" | "ACCEPTED" | "REJECTED" | undefined>()
+  const [applicationType, setApplicationType] = useState<"MAIN" | "ASSISTANT" | undefined>()
+  const [selectedJobs, setSelectedJobs] = useState<string[]>([])
  
-  // Fetch jobs with server-side pagination
-  const { data, isLoading } = useApplications(page, pageSize)
+  // Build filters object
+  const filters: ApplicationsFilters = {
+    page,
+    pageSize,
+    ...(status && { applicationStatus: status }),
+    ...(applicationType && { applicationType }),
+    ...(selectedJobs.length > 0 && { jobIds: selectedJobs }),
+    ...(debouncedSearch && { search: debouncedSearch }),
+  }
+
+  // Fetch applications with server-side pagination and filters
+  const { data, isLoading } = useApplications(filters)
+
+  // Fetch jobs for the filter dropdown with a reasonable limit
+  const { data: jobsData } = useJobs({ 
+    page: 1, 
+    pageSize: 100, // Fetch first 100 jobs - adjust based on your needs
+    status: "ACTIVE" // Only fetch active jobs for filtering
+  })
 
   const statusOptions = [
     { id: 'ACCEPTED', label: 'Accepted' },
@@ -31,12 +57,29 @@ export default function TrainersJobApprovalPage({
     { id: 'PENDING', label: 'Pending' },
   ]
 
+  const applicationTypeOptions = [
+    { id: 'MAIN', label: 'Main' },
+    { id: 'ASSISTANT', label: 'Assistant' },
+  ]
+
+  // Transform jobs data for the filter component
+  const jobOptions = jobsData?.jobs?.map(job => ({
+    id: job.id,
+    label: job.title
+  })) || []
+
   const handleFilterApply = ({
     selectedStatus,
+    selectedApplicationType,
+    selectedJobs,
   }: {
     selectedStatus?: string;
+    selectedApplicationType?: string;
+    selectedJobs?: string[];
   }) => {
-    setStatus(selectedStatus)
+    setStatus(selectedStatus as "PENDING" | "ACCEPTED" | "REJECTED" | undefined)
+    setApplicationType(selectedApplicationType as "MAIN" | "ASSISTANT" | undefined)
+    setSelectedJobs(selectedJobs || [])
     setPage(1)
   }
 
@@ -52,7 +95,7 @@ export default function TrainersJobApprovalPage({
         <h1 className="text-lg font-normal mb-6">Jobs</h1>
 
         <div className="flex items-center lg:justify-end gap-3 mb-6">
-          <div className="relative md:w-[300px]">
+          {/* <div className="relative md:w-[300px]">
             <Image
               src="/search.svg"
               alt="Search"
@@ -66,12 +109,16 @@ export default function TrainersJobApprovalPage({
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
-          </div>
+          </div> */}
           <Filter
             statusOptions={statusOptions}
+            applicationTypeOptions={applicationTypeOptions}
+            jobOptions={jobOptions}
             onApply={handleFilterApply}
             defaultSelected={{
               status,
+              applicationType,
+              jobs: selectedJobs,
             }}
           />
         </div>

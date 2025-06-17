@@ -27,6 +27,7 @@ interface MultiSelectComboboxProps {
   noResultsText?: string
   className?: string
   disabled?: boolean
+  maxDisplayItems?: number // Max number of items to show before collapsing to "X more"
 }
 
 export function MultiSelectCombobox({
@@ -38,6 +39,7 @@ export function MultiSelectCombobox({
   noResultsText = "No options found.",
   className,
   disabled = false,
+  maxDisplayItems = 2,
 }: MultiSelectComboboxProps) {
   const [open, setOpen] = React.useState(false)
 
@@ -56,6 +58,56 @@ export function MultiSelectCombobox({
     .map((value) => options.find((option) => option.value === value)?.label)
     .filter(Boolean) as string[]
 
+  // Determine what to display based on number of selected items
+  const getDisplayContent = () => {
+    if (selectedLabels.length === 0) {
+      return <span className="text-muted-foreground text-sm">{placeholder}</span>
+    }
+    
+    if (selectedLabels.length <= maxDisplayItems) {
+      // Show all items as badges
+      return selectedLabels.map((label) => (
+        <Badge
+          variant="deactivated"
+          key={label}
+          className="mr-1 mb-1 cursor-pointer"
+          onClick={(e) => {
+            e.stopPropagation()
+            const valueToRemove = options.find(opt => opt.label === label)?.value;
+            if (valueToRemove) handleRemove(valueToRemove);
+          }}
+        >
+          {label}
+          <X className="ml-1 h-3 w-3 cursor-pointer" />
+        </Badge>
+      ))
+    } else {
+      // Show first item and "X more" text
+      const firstLabel = selectedLabels[0]
+      const remainingCount = selectedLabels.length - 1
+      
+      return (
+        <div className="flex items-center gap-1 flex-wrap">
+          <Badge
+            variant="deactivated"
+            className="mr-1 mb-1 cursor-pointer"
+            onClick={(e) => {
+              e.stopPropagation()
+              const valueToRemove = options.find(opt => opt.label === firstLabel)?.value;
+              if (valueToRemove) handleRemove(valueToRemove);
+            }}
+          >
+            {firstLabel}
+            <X className="ml-1 h-3 w-3 cursor-pointer" />
+          </Badge>
+          <span className="text-sm text-muted-foreground">
+            and {remainingCount} more selected
+          </span>
+        </div>
+      )
+    }
+  }
+
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild disabled={disabled}>
@@ -66,26 +118,8 @@ export function MultiSelectCombobox({
           className={cn("w-full justify-between h-auto min-h-10", className)} // Ensure height adjusts
           onClick={() => setOpen(!open)}
         >
-          <div className="flex gap-1 flex-wrap">
-            {selectedLabels.length > 0 ? (
-              selectedLabels.map((label) => (
-                <Badge
-                  variant="deactivated"
-                  key={label}
-                  className="mr-1 mb-1 cursor-pointer"
-                  onClick={(e) => {
-                    e.stopPropagation() // Prevent popover trigger
-                    const valueToRemove = options.find(opt => opt.label === label)?.value;
-                    if (valueToRemove) handleRemove(valueToRemove);
-                  }}
-                >
-                  {label}
-                  <X className="ml-1 h-3 w-3 cursor-pointer" />
-                </Badge>
-              ))
-            ) : (
-              <span className="text-muted-foreground text-sm">{placeholder}</span>
-            )}
+          <div className="flex gap-1 flex-wrap flex-1 min-w-0">
+            {getDisplayContent()}
           </div>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>

@@ -8,7 +8,7 @@ import { toast } from "sonner"
 import { Student } from "./useStudents"
 
 export type DeliveryMethod = "OFFLINE" | "ONLINE" | "SELF_PACED"
-export type CompensationType = "PER_HOUR" | "PER_TRAINEES" 
+export type CompensationType = "PER_HOUR" | "PER_TRAINEES" | "PER_SESSION" 
 export type SessionStatus = "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELED" | "POSTPONED"
 export type DurationType = "HOURS" | "DAYS" | "WEEKS" | "MONTHS"
 

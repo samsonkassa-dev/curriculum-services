@@ -24,15 +24,47 @@ export interface AcademicLevel {
   description: string
 }
 
+export interface Country {
+  id: string
+  name: string
+  description: string
+}
+
+export interface Region {
+  id: string
+  name: string
+  description: string
+  country: Country
+}
+
+export interface Zone {
+  id: string
+  name: string
+  description: string
+  region: Region
+}
+
+export interface City {
+  id: string
+  name: string
+  description: string
+  zone: Zone
+}
+
 export interface Trainer {
   id: string
   firstName: string
   lastName: string
   email: string
   phoneNumber: string
+  faydaId: string
   gender: string
   dateOfBirth: string
   language: Language
+  zone: Zone
+  city: City
+  woreda: string
+  houseNumber: string
   location: string
   academicLevel: AcademicLevel
   trainingTags: TrainingTag[]
@@ -86,12 +118,20 @@ interface SingleApplicationResponse {
   message: string
 }
 
-export function useApplications(
-  page?: number,
+export interface ApplicationsFilters {
+  page?: number
   pageSize?: number
-) {
+  jobId?: string
+  jobIds?: string[]
+  trainerId?: string
+  applicationStatus?: "PENDING" | "ACCEPTED" | "REJECTED"
+  applicationType?: "MAIN" | "ASSISTANT"
+  search?: string
+}
+
+export function useApplications(filters?: ApplicationsFilters) {
   return useQuery({
-    queryKey: ['applications', page, pageSize],
+    queryKey: ['applications', filters],
     queryFn: async () => {
       try {
         const token = getCookie('token')
@@ -99,10 +139,18 @@ export function useApplications(
         // Build URL with query parameters
         let url = `${process.env.NEXT_PUBLIC_API}/application`
         
-        // Add pagination parameters if provided
+        // Add query parameters if provided
         const params = new URLSearchParams()
-        if (page !== undefined) params.append('page', page.toString())
-        if (pageSize !== undefined) params.append('page-size', pageSize.toString())
+        if (filters?.page !== undefined) params.append('page', filters.page.toString())
+        if (filters?.pageSize !== undefined) params.append('pageSize', filters.pageSize.toString())
+        if (filters?.jobId) params.append('jobId', filters.jobId)
+        if (filters?.jobIds && filters.jobIds.length > 0) {
+          filters.jobIds.forEach(jobId => params.append('jobIds', jobId))
+        }
+        if (filters?.trainerId) params.append('trainerId', filters.trainerId)
+        if (filters?.applicationStatus) params.append('applicationStatus', filters.applicationStatus)
+        if (filters?.applicationType) params.append('applicationType', filters.applicationType)
+        if (filters?.search) params.append('search', filters.search)
         
         // Append query parameters if any exist
         if (params.toString()) {

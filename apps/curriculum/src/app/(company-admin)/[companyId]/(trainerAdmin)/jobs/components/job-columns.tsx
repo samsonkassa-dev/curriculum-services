@@ -73,6 +73,7 @@ export const jobColumns: ColumnDef<Application>[] = [
       )
     }
   },
+
   {
     id: "actions",
     header: "Actions",

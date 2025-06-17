@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
+import { MultiSelectCombobox } from "@/components/ui/multi-select-combobox"
 import Image from "next/image"
 
 
@@ -14,19 +15,27 @@ import Image from "next/image"
 interface FilterProps {
   statusOptions?: { id: string; label: string }[]
   attributeOptions?: { id: string; label: string }[]
+  applicationTypeOptions?: { id: string; label: string }[]
+  jobOptions?: { id: string; label: string }[]
   onApply: (filters: {
     selectedAttributes: string[]
     selectedStatus?: string
+    selectedApplicationType?: string
+    selectedJobs?: string[]
   }) => void
   defaultSelected?: {
     attributes?: string[]
     status?: string
+    applicationType?: string
+    jobs?: string[]
   }
 }
 
 export function Filter({
   statusOptions = [],
   attributeOptions = [],
+  applicationTypeOptions = [],
+  jobOptions = [],
   onApply,
   defaultSelected = {},
 }: FilterProps) {
@@ -37,6 +46,14 @@ export function Filter({
   const [selectedAttributes, setSelectedAttributes] = React.useState<string[]>(
     defaultSelected.attributes || []
   )
+
+  const [selectedApplicationType, setSelectedApplicationType] = React.useState<string | undefined>(
+    defaultSelected.applicationType
+  )
+
+  const [selectedJobs, setSelectedJobs] = React.useState<string[]>(
+    defaultSelected.jobs || []
+  )
   
   const [open, setOpen] = React.useState(false)
 
@@ -44,6 +61,8 @@ export function Filter({
     onApply({
       selectedAttributes,
       selectedStatus,
+      selectedApplicationType,
+      selectedJobs,
     })
     setOpen(false)
   }
@@ -133,6 +152,47 @@ export function Filter({
             </div>
           )}
 
+          {applicationTypeOptions.length > 0 && (
+            <div className="space-y-4">
+              <h4 className="text-lg font-semibold">Application Type</h4>
+              <div className="grid grid-cols-2 gap-4">
+                {applicationTypeOptions.map((type) => (
+                  <div key={type.id} className="flex items-center space-x-2">
+                    <Checkbox
+                      id={type.id}
+                      checked={selectedApplicationType === type.id}
+                      onCheckedChange={(checked) => {
+                        setSelectedApplicationType(checked ? type.id : undefined)
+                      }}
+                      className="h-5 w-5 rounded-[4px] border-gray-300 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
+                    />
+                    <Label 
+                      htmlFor={type.id}
+                      className="text-base font-normal"
+                    >
+                      {type.label}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {jobOptions.length > 0 && (
+            <div className="space-y-4">
+              <h4 className="text-lg font-semibold">Select Jobs</h4>
+              <MultiSelectCombobox
+                options={jobOptions.map(job => ({ value: job.id, label: job.label }))}
+                selected={selectedJobs}
+                onChange={setSelectedJobs}
+                placeholder="Search and select jobs..."
+                searchPlaceholder="Search jobs..."
+                noResultsText="No jobs found."
+                className="w-full"
+              />
+            </div>
+          )}
+
           <div className="flex justify-between gap-4 pt-2">
             <Button
               variant="outline"
@@ -140,6 +200,8 @@ export function Filter({
               onClick={() => {
                 setSelectedAttributes([])
                 setSelectedStatus(undefined)
+                setSelectedApplicationType(undefined)
+                setSelectedJobs([])
                 handleApply()
               }}
             >

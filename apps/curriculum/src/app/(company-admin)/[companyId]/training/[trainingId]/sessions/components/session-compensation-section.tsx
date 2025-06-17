@@ -104,6 +104,7 @@ export function SessionCompensationSection() {
                     <SelectContent>
                       <SelectItem value="PER_HOUR">Per Hour</SelectItem>
                       <SelectItem value="PER_TRAINEES">Per Trainee</SelectItem>
+                      <SelectItem value="PER_SESSION">Per Session</SelectItem>
                     </SelectContent>
                   </Select>
                 </FormControl>
@@ -184,6 +185,7 @@ export function SessionCompensationSection() {
                         <SelectContent>
                           <SelectItem value="PER_HOUR">Per Hour</SelectItem>
                           <SelectItem value="PER_TRAINEES">Per Trainee</SelectItem>
+                          <SelectItem value="PER_SESSION">Per Session</SelectItem>
                         </SelectContent>
                       </Select>
                     </FormControl>

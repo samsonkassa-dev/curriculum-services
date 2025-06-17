@@ -47,7 +47,7 @@ export function ApplicantDataTable({
 
   return (
     <div>
-      <div className="border-t border-gray-200 bg-white overflow-hidden relative">
+      <div className="rounded-md border border-gray-200 bg-white overflow-hidden relative">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
