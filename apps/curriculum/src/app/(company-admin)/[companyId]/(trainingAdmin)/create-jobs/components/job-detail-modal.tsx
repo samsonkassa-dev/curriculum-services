@@ -346,7 +346,7 @@ export function JobDetailModal({ jobId, isOpen, onClose, mode = 'view' }: JobDet
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent 
-        className="sm:max-w-[800px] p-0 rounded-2xl max-h-[85vh] overflow-hidden" 
+        className="sm:max-w-[800px] p-0 rounded-2xl max-h-full overflow-hidden" 
       >
         {isLoading ? (
           <>
