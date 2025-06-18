@@ -10,6 +10,7 @@ export type PerspectiveInfluence = "INCREASED_INTEREST_IN_EDUCATION" | "CONSIDER
 export type SatisfactionLevel = "VERY_DISSATISFIED" | "DISSATISFIED" | "NEUTRAL" | "SATISFIED" | "VERY_SATISFIED"
 export type TrainingClarity = "NOT_AT_ALL_CLEAR" | "SLIGHTLY_CLEAR" | "MODERATELY_CLEAR" | "CLEAR" | "VERY_CLEAR"
 export type TrainingDuration = "TOO_SHORT" | "JUST_RIGHT" | "TOO_LONG"
+export type SurveyType = "PRE" | "POST"
 
 export interface TrainingSurvey {
   id: string
@@ -17,6 +18,7 @@ export interface TrainingSurvey {
   trainingName: string
   traineeId: string
   traineeFullName: string
+  surveyType?: SurveyType
   futureEndeavorImpact: FutureEndeavorImpact
   perspectiveInfluences: PerspectiveInfluence[]
   overallSatisfaction: SatisfactionLevel
@@ -30,7 +32,14 @@ export interface TrainingSurvey {
   updatedAt?: string
 }
 
-export interface CreateTrainingSurveyDTO {
+export interface CreatePreSurveyDTO {
+  futureEndeavorImpact: FutureEndeavorImpact
+  perspectiveInfluences: PerspectiveInfluence[]
+  overallSatisfaction: SatisfactionLevel
+  confidenceLevel: string
+}
+
+export interface CreatePostSurveyDTO {
   futureEndeavorImpact: FutureEndeavorImpact
   perspectiveInfluences: PerspectiveInfluence[]
   overallSatisfaction: SatisfactionLevel
@@ -42,6 +51,8 @@ export interface CreateTrainingSurveyDTO {
   trainingDurationFeedback: TrainingDuration
 }
 
+export type CreateTrainingSurveyDTO = CreatePreSurveyDTO | CreatePostSurveyDTO
+
 interface TrainingSurveyResponse {
   code: string
   trainingSurvey: TrainingSurvey
@@ -50,7 +61,8 @@ interface TrainingSurveyResponse {
 
 interface TrainingSurveysResponse {
   code: string
-  trainingSurveys: TrainingSurvey[]
+  trainingSurveys?: TrainingSurvey[]
+  trainingSurvey?: TrainingSurvey // For single survey response
   totalPages?: number
   pageSize?: number
   message: string
@@ -86,9 +98,9 @@ export function useTrainingSurvey(surveyId: string) {
 }
 
 // Get all surveys for a specific training
-export function useTrainingSurveys(trainingId: string, traineeId?: string, page = 1, pageSize = 10) {
+export function useTrainingSurveys(trainingId: string, traineeId?: string, type?: SurveyType, page = 1, pageSize = 10) {
   return useQuery<TrainingSurveysResponse['trainingSurveys'], Error>({
-    queryKey: ['trainingSurveys', trainingId, traineeId, page, pageSize],
+    queryKey: ['trainingSurveys', trainingId, traineeId, type, page, pageSize],
     queryFn: async () => {
       try {
         const token = getCookie('token')
@@ -96,13 +108,17 @@ export function useTrainingSurveys(trainingId: string, traineeId?: string, page 
         // Build URL with query parameters
         const url = `${process.env.NEXT_PUBLIC_API}/training-survey/training/${trainingId}`
         
-        // Add pagination and optional trainee parameters
+        // Add pagination and optional parameters
         const queryParams = new URLSearchParams()
         queryParams.append('page', page.toString())
         queryParams.append('pageSize', pageSize.toString())
         
         if (traineeId) {
           queryParams.append('traineeId', traineeId)
+        }
+        
+        if (type) {
+          queryParams.append('type', type)
         }
         
         const response = await axios.get<TrainingSurveysResponse>(
@@ -112,10 +128,22 @@ export function useTrainingSurveys(trainingId: string, traineeId?: string, page 
           }
         )
         
+        // Handle the case where API returns single survey object vs array
+        if (response.data.trainingSurvey) {
+          // Single survey response format
+          return [response.data.trainingSurvey]
+        }
+        
         // Ensure we always return an array, never undefined
         return response.data.trainingSurveys || []
       } catch (error: unknown) {
         const axiosError = error as AxiosError<ApiErrorResponse>
+        
+        // Handle the case where no survey is found (should return empty array, not error)
+        if (axiosError.response?.data?.message === "No survey found for this training and trainee") {
+          return []
+        }
+        
         const errorMessage = axiosError.response?.data?.message || axiosError.message || 'Failed to load training surveys'
         console.log("Error fetching training surveys:", error)
         throw new Error(errorMessage)
@@ -136,25 +164,33 @@ export function useCreateTrainingSurvey() {
     mutationFn: async ({ 
       trainingId, 
       traineeId, 
-      surveyData 
+      surveyData,
+      surveyType
     }: { 
       trainingId: string, 
       traineeId: string, 
-      surveyData: CreateTrainingSurveyDTO 
+      surveyData: CreateTrainingSurveyDTO,
+      surveyType: SurveyType
     }) => {
       const token = getCookie('token')
+      const endpoint = surveyType === 'PRE' ? 'pre' : 'post'
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API}/training-survey/training/${trainingId}/trainee/${traineeId}`,
+        `${process.env.NEXT_PUBLIC_API}/training-survey/${endpoint}/training/${trainingId}/trainee/${traineeId}`,
         surveyData,
         {
           headers: { Authorization: `Bearer ${token}` }
         }
       )
-      return { responseData: response.data, trainingId, traineeId }
+      return { responseData: response.data, trainingId, traineeId, surveyType }
     },
-    onSuccess: ({ trainingId, traineeId }) => {
+    onSuccess: ({ trainingId, traineeId, surveyType }) => {
+      // Invalidate general queries
       queryClient.invalidateQueries({ queryKey: ['trainingSurveys', trainingId] })
       queryClient.invalidateQueries({ queryKey: ['trainingSurveys', trainingId, traineeId] })
+      
+      // Invalidate specific survey type queries
+      queryClient.invalidateQueries({ queryKey: ['trainingSurveys', trainingId, traineeId, surveyType] })
+      
       toast.success('Survey submitted successfully')
     },
     onError: (error: unknown) => {
@@ -169,6 +205,19 @@ export function useCreateTrainingSurvey() {
   }
 }
 
+// Complete survey data for updates (includes all fields)
+export interface UpdateTrainingSurveyDTO {
+  futureEndeavorImpact: FutureEndeavorImpact
+  perspectiveInfluences: PerspectiveInfluence[]
+  overallSatisfaction: SatisfactionLevel
+  confidenceLevel: string
+  recommendationRating: number | null
+  trainerDeliverySatisfaction: SatisfactionLevel | null
+  overallQualitySatisfaction: SatisfactionLevel | null
+  trainingClarity: TrainingClarity | null
+  trainingDurationFeedback: TrainingDuration | null
+}
+
 // Update an existing survey
 export function useUpdateTrainingSurvey() {
   const queryClient = useQueryClient()
@@ -179,7 +228,7 @@ export function useUpdateTrainingSurvey() {
       surveyData 
     }: { 
       surveyId: string, 
-      surveyData: Partial<CreateTrainingSurveyDTO>
+      surveyData: UpdateTrainingSurveyDTO
     }) => {
       const token = getCookie('token')
       const response = await axios.patch(
@@ -195,6 +244,7 @@ export function useUpdateTrainingSurvey() {
       // Extract trainingId and traineeId from the response if available
       const trainingId = responseData?.trainingSurvey?.trainingId
       const traineeId = responseData?.trainingSurvey?.traineeId
+      const surveyType = responseData?.trainingSurvey?.surveyType
       
       // Invalidate relevant queries
       queryClient.invalidateQueries({ queryKey: ['trainingSurvey', surveyId] })
@@ -204,6 +254,10 @@ export function useUpdateTrainingSurvey() {
         
         if (traineeId) {
           queryClient.invalidateQueries({ queryKey: ['trainingSurveys', trainingId, traineeId] })
+          
+          if (surveyType) {
+            queryClient.invalidateQueries({ queryKey: ['trainingSurveys', trainingId, traineeId, surveyType] })
+          }
         }
       }
       

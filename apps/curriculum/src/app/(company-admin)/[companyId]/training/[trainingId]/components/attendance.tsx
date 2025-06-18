@@ -535,16 +535,11 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
             No students are available for this cohort. Add students to the cohort to track attendance.
           </p>
         </div>
-      ) : isLoadingStudentsData && !studentData ? (
-        // Initial load of students
-        <div className="mt-8">
-          <Loading />
-        </div>
       ) : (
         <AttendanceDataTable
           columns={memoizedColumns}
           data={filteredStudents}
-          isLoading={isTableTransitioning}
+          isLoading={isLoadingStudents} // Pass all loading states to the table component
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           pagination={{

@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { useState, useEffect, useRef } from "react"
 import { SurveyModal } from "./survey-modal"
-import { useTrainingSurveys, type TrainingSurvey } from "@/lib/hooks/useStaticSurvey"
+import { useTrainingSurveys, type TrainingSurvey, type SurveyType } from "@/lib/hooks/useStaticSurvey"
 import { CheckCircle, Loader2, Edit } from "lucide-react"
 
 interface SurveyButtonProps {
@@ -21,41 +21,53 @@ export function SurveyButton({ trainingId, studentId, studentName, isPreSession,
   const [existingSurveyId, setExistingSurveyId] = useState<string | null>(null)
   const didInitialCheck = useRef(false)
   
+  // Determine survey type based on session type
+  const currentSurveyType: SurveyType = isPreSession ? "PRE" : "POST"
+  
   // Fetch surveys to check if student has already submitted
-  const { data: surveys, isLoading } = useTrainingSurveys(trainingId, studentId)
+  const { data: surveys, isLoading, refetch: refetchSurveys } = useTrainingSurveys(trainingId, studentId, currentSurveyType)
   
   // Reset state when studentId or session type changes
   useEffect(() => {
     setHasSurvey(false)
     setExistingSurveyId(null)
     didInitialCheck.current = false
-  }, [studentId, isPreSession])
+  }, [studentId, isPreSession, currentSurveyType])
   
   // Check if survey exists for this student
   useEffect(() => {
-    if (surveys && !didInitialCheck.current) {
-      // Find if student has already submitted a survey
+    if (surveys !== undefined && !didInitialCheck.current) {
+      // Find if student has already submitted a survey of the current type
       const existingSurvey = surveys.find((survey: TrainingSurvey) => 
-        survey.traineeId === studentId
+        survey.traineeId === studentId && survey.surveyType === currentSurveyType
       )
       
       if (existingSurvey) {
         setHasSurvey(true)
         setExistingSurveyId(existingSurvey.id)
+      } else {
+        setHasSurvey(false)
+        setExistingSurveyId(null)
       }
       
       didInitialCheck.current = true
     }
-  }, [surveys, studentId])
+  }, [surveys, studentId, currentSurveyType])
   
   const handleSurveyStatusChange = (status: boolean) => {
     setHasSurvey(status)
+    // Refetch surveys to get the latest data including the new survey ID
+    refetchSurveys()
     // Close modal after status is updated
     setIsModalOpen(false)
     setIsSubmitting(false)
   }
 
-  const handleOpenModal = () => {
+  const handleOpenModal = async () => {
+    // If editing existing survey, refetch to ensure we have latest data
+    if (hasSurvey) {
+      await refetchSurveys()
+    }
     setIsModalOpen(true)
     setIsSubmitting(false)
   }

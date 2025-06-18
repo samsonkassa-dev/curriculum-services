@@ -19,7 +19,11 @@ import type {
   SatisfactionLevel, 
   TrainingClarity, 
   TrainingDuration,
-  CreateTrainingSurveyDTO
+  CreateTrainingSurveyDTO,
+  CreatePreSurveyDTO,
+  CreatePostSurveyDTO,
+  UpdateTrainingSurveyDTO,
+  SurveyType
 } from "@/lib/hooks/useStaticSurvey"
 
 export interface SurveyModalProps {
@@ -45,6 +49,8 @@ export function SurveyModal({
   onSurveyStatusChange,
   onSubmitStart
 }: SurveyModalProps) {
+  // Brand radio button styling
+  const radioButtonStyle = "text-[#0B75FF] border-[#0B75FF] focus:ring-[#0B75FF] data-[state=checked]:bg-[#0B75FF] data-[state=checked]:border-[#0B75FF] data-[state=checked]:text-white"
   // State
   const [step, setStep] = useState(1)
   const [error, setError] = useState<string | null>(null)
@@ -96,19 +102,31 @@ export function SurveyModal({
   useEffect(() => {
     if (existingSurvey) {
       setFutureEndeavorImpact(existingSurvey.futureEndeavorImpact)
-      setPerspectiveInfluences(existingSurvey.perspectiveInfluences)
+      setPerspectiveInfluences(existingSurvey.perspectiveInfluences || [])
       setOverallSatisfaction(existingSurvey.overallSatisfaction)
-      setConfidenceLevel(existingSurvey.confidenceLevel || "50")
-      setRecommendationRating(existingSurvey.recommendationRating)
-      setTrainerDeliverySatisfaction(existingSurvey.trainerDeliverySatisfaction)
-      setOverallQualitySatisfaction(existingSurvey.overallQualitySatisfaction)
-      setTrainingClarity(existingSurvey.trainingClarity)
-      setTrainingDurationFeedback(existingSurvey.trainingDurationFeedback)
+      setConfidenceLevel(existingSurvey.confidenceLevel || "")
+      
+      // Only set post-survey fields if they exist (not null)
+      if (existingSurvey.recommendationRating !== null) {
+        setRecommendationRating(existingSurvey.recommendationRating)
+      }
+      if (existingSurvey.trainerDeliverySatisfaction !== null) {
+        setTrainerDeliverySatisfaction(existingSurvey.trainerDeliverySatisfaction)
+      }
+      if (existingSurvey.overallQualitySatisfaction !== null) {
+        setOverallQualitySatisfaction(existingSurvey.overallQualitySatisfaction)
+      }
+      if (existingSurvey.trainingClarity !== null) {
+        setTrainingClarity(existingSurvey.trainingClarity)
+      }
+      if (existingSurvey.trainingDurationFeedback !== null) {
+        setTrainingDurationFeedback(existingSurvey.trainingDurationFeedback)
+      }
     }
   }, [existingSurvey])
   
   // Calculate total steps based on session type
-  const totalSteps = isPreSession ? 2 : 9
+  const totalSteps = isPreSession ? 4 : 9
   
   // Validation logic for each step
   const isCurrentStepValid = () => {
@@ -120,7 +138,7 @@ export function SurveyModal({
       case 3:
         return !!overallSatisfaction
       case 4:
-        return !!confidenceLevel
+        return confidenceLevel.trim().length > 0
       case 5:
         return !!recommendationRating
       case 6:
@@ -171,25 +189,27 @@ export function SurveyModal({
     
     try {
       let surveyData: CreateTrainingSurveyDTO
+      const surveyTypeValue: SurveyType = isPreSession ? "PRE" : "POST"
       
       if (existingSurveyId) {
-        // Update existing survey
-        surveyData = {
+        // Update existing survey - always send complete object with nulls for unused fields
+        const updateData: UpdateTrainingSurveyDTO = {
           futureEndeavorImpact: futureEndeavorImpact!,
           perspectiveInfluences: perspectiveInfluences,
           overallSatisfaction: overallSatisfaction!,
           confidenceLevel: confidenceLevel,
-          recommendationRating: recommendationRating!,
-          trainerDeliverySatisfaction: trainerDeliverySatisfaction!,
-          overallQualitySatisfaction: overallQualitySatisfaction!,
-          trainingClarity: trainingClarity!,
-          trainingDurationFeedback: trainingDurationFeedback!
+          // For pre-session surveys, these will be null
+          recommendationRating: isPreSession ? null : (recommendationRating || null),
+          trainerDeliverySatisfaction: isPreSession ? null : (trainerDeliverySatisfaction || null),
+          overallQualitySatisfaction: isPreSession ? null : (overallQualitySatisfaction || null),
+          trainingClarity: isPreSession ? null : (trainingClarity || null),
+          trainingDurationFeedback: isPreSession ? null : (trainingDurationFeedback || null)
         }
         
         updateTrainingSurvey(
           { 
             surveyId: existingSurveyId, 
-            surveyData 
+            surveyData: updateData 
           },
           {
             onSuccess: () => {
@@ -210,16 +230,25 @@ export function SurveyModal({
         )
       } else {
         // Create new survey
-        surveyData = {
-          futureEndeavorImpact: futureEndeavorImpact!,
-          perspectiveInfluences: perspectiveInfluences,
-          overallSatisfaction: isPreSession ? "NEUTRAL" : overallSatisfaction!,
-          confidenceLevel: isPreSession ? "Not applicable - Pre-session" : confidenceLevel,
-          recommendationRating: isPreSession ? 0 : recommendationRating!,
-          trainerDeliverySatisfaction: isPreSession ? "NEUTRAL" : trainerDeliverySatisfaction!,
-          overallQualitySatisfaction: isPreSession ? "NEUTRAL" : overallQualitySatisfaction!,
-          trainingClarity: isPreSession ? "MODERATELY_CLEAR" : trainingClarity!,
-          trainingDurationFeedback: isPreSession ? "JUST_RIGHT" : trainingDurationFeedback!
+        if (isPreSession) {
+          surveyData = {
+            futureEndeavorImpact: futureEndeavorImpact!,
+            perspectiveInfluences: perspectiveInfluences,
+            overallSatisfaction: overallSatisfaction!,
+            confidenceLevel: confidenceLevel
+          } as CreatePreSurveyDTO
+        } else {
+          surveyData = {
+            futureEndeavorImpact: futureEndeavorImpact!,
+            perspectiveInfluences: perspectiveInfluences,
+            overallSatisfaction: overallSatisfaction!,
+            confidenceLevel: confidenceLevel,
+            recommendationRating: recommendationRating!,
+            trainerDeliverySatisfaction: trainerDeliverySatisfaction!,
+            overallQualitySatisfaction: overallQualitySatisfaction!,
+            trainingClarity: trainingClarity!,
+            trainingDurationFeedback: trainingDurationFeedback!
+          } as CreatePostSurveyDTO
         }
         
         onSubmitStart()
@@ -228,7 +257,8 @@ export function SurveyModal({
           { 
             trainingId, 
             traineeId: studentId, 
-            surveyData 
+            surveyData,
+            surveyType: surveyTypeValue
           },
           {
             onSuccess: () => {
@@ -320,23 +350,23 @@ export function SurveyModal({
                     >
                       <div className="space-y-2">
                         <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="STRONGLY_DISAGREE" id="impact-1" />
+                          <RadioGroupItem value="STRONGLY_DISAGREE" id="impact-1" className={radioButtonStyle} />
                           <Label htmlFor="impact-1">Strongly Disagree</Label>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="DISAGREE" id="impact-2" />
+                          <RadioGroupItem value="DISAGREE" id="impact-2" className={radioButtonStyle} />
                           <Label htmlFor="impact-2">Disagree</Label>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="NEUTRAL" id="impact-3" />
+                          <RadioGroupItem value="NEUTRAL" id="impact-3" className={radioButtonStyle} />
                           <Label htmlFor="impact-3">Neutral</Label>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="AGREE" id="impact-4" />
+                          <RadioGroupItem value="AGREE" id="impact-4" className={radioButtonStyle} />
                           <Label htmlFor="impact-4">Agree</Label>
                         </div>
                         <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="STRONGLY_AGREE" id="impact-5" />
+                          <RadioGroupItem value="STRONGLY_AGREE" id="impact-5" className={radioButtonStyle} />
                           <Label htmlFor="impact-5">Strongly Agree</Label>
                         </div>
                       </div>
@@ -407,47 +437,62 @@ export function SurveyModal({
 
                 
                 
+                {/* Step 3: Overall Satisfaction - Show for both PRE and POST */}
+                {step === 3 && (
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-medium">
+                      How satisfied are you with the overall training experience so far?
+                    </h3>
+                    <RadioGroup 
+                      value={overallSatisfaction || ""} 
+                      onValueChange={(value) => setOverallSatisfaction(value as SatisfactionLevel)}
+                    >
+                      <div className="space-y-2">
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="VERY_DISSATISFIED" id="satisfaction-1" className={radioButtonStyle} />
+                          <Label htmlFor="satisfaction-1">Very Dissatisfied</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="DISSATISFIED" id="satisfaction-2" className={radioButtonStyle} />
+                          <Label htmlFor="satisfaction-2">Dissatisfied</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="NEUTRAL" id="satisfaction-3" className={radioButtonStyle} />
+                          <Label htmlFor="satisfaction-3">Neutral</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="SATISFIED" id="satisfaction-4" className={radioButtonStyle} />
+                          <Label htmlFor="satisfaction-4">Satisfied</Label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <RadioGroupItem value="VERY_SATISFIED" id="satisfaction-5" className={radioButtonStyle} />
+                          <Label htmlFor="satisfaction-5">Very Satisfied</Label>
+                        </div>
+                      </div>
+                    </RadioGroup>
+                  </div>
+                )}
+
+                {/* Step 4: Confidence Level - Show for both PRE and POST */}
+                {step === 4 && (
+                  <div className="space-y-4">
+                    <h3 className="text-lg font-medium">
+                      {isPreSession ? "How confident do you feel about the upcoming training content?" : "How confident do you feel about applying what you've learned?"}
+                    </h3>
+                    <div className="space-y-4">
+                      <Input
+                        value={confidenceLevel}
+                        onChange={(e) => setConfidenceLevel(e.target.value)}
+                        placeholder="Describe your confidence level..."
+                        className="w-full"
+                      />
+                    </div>
+                  </div>
+                )}
+                
                 {/* Only show the following steps for post-session surveys */}
                 {!isPreSession && (
                   <>
-                    {/* Step 3: Overall Satisfaction */}
-                    {step === 3 && (
-                      <div className="space-y-4">
-                        <h3 className="text-lg font-medium">
-                          How satisfied are you with the overall training experience?
-                        </h3>
-                        <RadioGroup 
-                          value={overallSatisfaction || ""} 
-                          onValueChange={(value) => setOverallSatisfaction(value as SatisfactionLevel)}
-                        >
-                          <div className="space-y-2">
-                            <div className="flex items-center space-x-2">
-                              <RadioGroupItem value="VERY_DISSATISFIED" id="satisfaction-1" />
-                              <Label htmlFor="satisfaction-1">Very Dissatisfied</Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <RadioGroupItem value="DISSATISFIED" id="satisfaction-2" />
-                              <Label htmlFor="satisfaction-2">Dissatisfied</Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <RadioGroupItem value="NEUTRAL" id="satisfaction-3" />
-                              <Label htmlFor="satisfaction-3">Neutral</Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <RadioGroupItem value="SATISFIED" id="satisfaction-4" />
-                              <Label htmlFor="satisfaction-4">Satisfied</Label>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <RadioGroupItem value="VERY_SATISFIED" id="satisfaction-5" />
-                              <Label htmlFor="satisfaction-5">Very Satisfied</Label>
-                            </div>
-                          </div>
-                        </RadioGroup>
-                      </div>
-                    )}
-                    
-              
-                    
                     {/* Step 5: Recommendation Rating */}
                     {step === 5 && (
                       <div className="space-y-4">
@@ -483,23 +528,23 @@ export function SurveyModal({
                         >
                           <div className="space-y-2">
                             <div className="flex items-center space-x-2">
-                              <RadioGroupItem value="VERY_DISSATISFIED" id="trainer-1" />
+                              <RadioGroupItem value="VERY_DISSATISFIED" id="trainer-1" className={radioButtonStyle} />
                               <Label htmlFor="trainer-1">Very Dissatisfied</Label>
                             </div>
                             <div className="flex items-center space-x-2">
-                              <RadioGroupItem value="DISSATISFIED" id="trainer-2" />
+                              <RadioGroupItem value="DISSATISFIED" id="trainer-2" className={radioButtonStyle} />
                               <Label htmlFor="trainer-2">Dissatisfied</Label>
                             </div>
                             <div className="flex items-center space-x-2">
-                              <RadioGroupItem value="NEUTRAL" id="trainer-3" />
+                              <RadioGroupItem value="NEUTRAL" id="trainer-3" className={radioButtonStyle} />
                               <Label htmlFor="trainer-3">Neutral</Label>
                             </div>
                             <div className="flex items-center space-x-2">
-                              <RadioGroupItem value="SATISFIED" id="trainer-4" />
+                              <RadioGroupItem value="SATISFIED" id="trainer-4" className={radioButtonStyle} />
                               <Label htmlFor="trainer-4">Satisfied</Label>
                             </div>
                             <div className="flex items-center space-x-2">
-                              <RadioGroupItem value="VERY_SATISFIED" id="trainer-5" />
+                              <RadioGroupItem value="VERY_SATISFIED" id="trainer-5" className={radioButtonStyle} />
                               <Label htmlFor="trainer-5">Very Satisfied</Label>
                             </div>
                           </div>
@@ -519,23 +564,23 @@ export function SurveyModal({
                         >
                           <div className="space-y-2">
                             <div className="flex items-center space-x-2">
-                              <RadioGroupItem value="VERY_DISSATISFIED" id="quality-1" />
+                              <RadioGroupItem value="VERY_DISSATISFIED" id="quality-1" className={radioButtonStyle} />
                               <Label htmlFor="quality-1">Very Dissatisfied</Label>
                             </div>
                             <div className="flex items-center space-x-2">
-                              <RadioGroupItem value="DISSATISFIED" id="quality-2" />
+                              <RadioGroupItem value="DISSATISFIED" id="quality-2" className={radioButtonStyle} />
                               <Label htmlFor="quality-2">Dissatisfied</Label>
                             </div>
                             <div className="flex items-center space-x-2">
-                              <RadioGroupItem value="NEUTRAL" id="quality-3" />
+                              <RadioGroupItem value="NEUTRAL" id="quality-3" className={radioButtonStyle} />
                               <Label htmlFor="quality-3">Neutral</Label>
                             </div>
                             <div className="flex items-center space-x-2">
-                              <RadioGroupItem value="SATISFIED" id="quality-4" />
+                              <RadioGroupItem value="SATISFIED" id="quality-4" className={radioButtonStyle} />
                               <Label htmlFor="quality-4">Satisfied</Label>
                             </div>
                             <div className="flex items-center space-x-2">
-                              <RadioGroupItem value="VERY_SATISFIED" id="quality-5" />
+                              <RadioGroupItem value="VERY_SATISFIED" id="quality-5" className={radioButtonStyle} />
                               <Label htmlFor="quality-5">Very Satisfied</Label>
                             </div>
                           </div>
@@ -555,23 +600,23 @@ export function SurveyModal({
                         >
                           <div className="space-y-2">
                             <div className="flex items-center space-x-2">
-                              <RadioGroupItem value="NOT_AT_ALL_CLEAR" id="clarity-1" />
+                              <RadioGroupItem value="NOT_AT_ALL_CLEAR" id="clarity-1" className={radioButtonStyle} />
                               <Label htmlFor="clarity-1">Not at all clear</Label>
                             </div>
                             <div className="flex items-center space-x-2">
-                              <RadioGroupItem value="SLIGHTLY_CLEAR" id="clarity-2" />
+                              <RadioGroupItem value="SLIGHTLY_CLEAR" id="clarity-2" className={radioButtonStyle} />
                               <Label htmlFor="clarity-2">Slightly clear</Label>
                             </div>
                             <div className="flex items-center space-x-2">
-                              <RadioGroupItem value="MODERATELY_CLEAR" id="clarity-3" />
+                              <RadioGroupItem value="MODERATELY_CLEAR" id="clarity-3" className={radioButtonStyle} />
                               <Label htmlFor="clarity-3">Moderately clear</Label>
                             </div>
                             <div className="flex items-center space-x-2">
-                              <RadioGroupItem value="CLEAR" id="clarity-4" />
+                              <RadioGroupItem value="CLEAR" id="clarity-4" className={radioButtonStyle} />
                               <Label htmlFor="clarity-4">Clear</Label>
                             </div>
                             <div className="flex items-center space-x-2">
-                              <RadioGroupItem value="VERY_CLEAR" id="clarity-5" />
+                              <RadioGroupItem value="VERY_CLEAR" id="clarity-5" className={radioButtonStyle} />
                               <Label htmlFor="clarity-5">Very clear</Label>
                             </div>
                           </div>
@@ -591,15 +636,15 @@ export function SurveyModal({
                         >
                           <div className="space-y-2">
                             <div className="flex items-center space-x-2">
-                              <RadioGroupItem value="TOO_SHORT" id="duration-1" />
+                              <RadioGroupItem value="TOO_SHORT" id="duration-1" className={radioButtonStyle} />
                               <Label htmlFor="duration-1">Too short</Label>
                             </div>
                             <div className="flex items-center space-x-2">
-                              <RadioGroupItem value="JUST_RIGHT" id="duration-2" />
+                              <RadioGroupItem value="JUST_RIGHT" id="duration-2" className={radioButtonStyle} />
                               <Label htmlFor="duration-2">Just right</Label>
                             </div>
                             <div className="flex items-center space-x-2">
-                              <RadioGroupItem value="TOO_LONG" id="duration-3" />
+                              <RadioGroupItem value="TOO_LONG" id="duration-3" className={radioButtonStyle} />
                               <Label htmlFor="duration-3">Too long</Label>
                             </div>
                           </div>
