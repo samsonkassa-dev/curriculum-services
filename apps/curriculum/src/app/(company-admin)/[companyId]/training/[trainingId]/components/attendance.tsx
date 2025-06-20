@@ -8,7 +8,7 @@ import { useCohorts, useCohortTrainees } from "@/lib/hooks/useCohorts"
 import { createAttendanceColumns } from "../attendance/components/attendance-columns"
 import { AttendanceDataTable } from "../attendance/components/attendance-data-table"
 import { CohortSessionTabs } from "../attendance/components/cohort-session-tabs"
-import { useSubmitAttendance } from "@/lib/hooks/useAttendance"
+import { useSubmitAttendance, useSubmitBulkAttendance, useSessionAttendance } from "@/lib/hooks/useAttendance"
 import { Student } from "@/lib/hooks/useStudents"
 import { toast } from "sonner"
 
@@ -77,6 +77,7 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
   const [studentPage, setStudentPage] = useState(1)
   const [studentPageSize, setStudentPageSize] = useState(10)
   const [searchQuery, setSearchQuery] = useState("")
+  const [selectedStudents, setSelectedStudents] = useState<Set<string>>(new Set())
   const [attendanceState, dispatchAttendance] = useReducer(attendanceReducer, {
     data: {},
     dirty: false,
@@ -174,85 +175,88 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
     { noCohorts: true }
   )
 
-  // Initialize attendance data from student records
+  // Fetch attendance data for the active session
+  const { 
+    data: attendanceResponse, 
+    isLoading: isLoadingAttendance, 
+    error: attendanceError,
+    refetch: refetchAttendance
+  } = useSessionAttendance(activeSessionId)
+
+  // Initialize attendance data from session attendance API
   useEffect(() => {
-    if (studentData?.trainees && studentData.trainees.length > 0) {
+    if (attendanceResponse?.attendance) {
       const newAttendanceData: Record<string, AttendanceRecord> = {};
       
-      studentData.trainees.forEach(student => {
-        // Check if the student has attendance data
-        const typedStudent = student as unknown as StudentWithAttendance;
-        
-        if (student.id && typedStudent.isPresent !== null && typedStudent.isPresent !== undefined) {
-          newAttendanceData[student.id] = {
-            status: typedStudent.isPresent ? 'present' : 'absent',
-            comment: typedStudent.comment || '',
-            attendanceId: typedStudent.attendanceId
+      attendanceResponse.attendance.forEach(record => {
+        if (record.trainee?.id) {
+          newAttendanceData[record.trainee.id] = {
+            status: record.isPresent ? 'present' : 'absent',
+            comment: record.comment || '',
+            attendanceId: record.id
           };
         }
       });
       
       dispatchAttendance({ type: 'load', payload: newAttendanceData })
-    } else {
+    } else if (attendanceResponse && attendanceResponse.attendance && attendanceResponse.attendance.length === 0) {
+      // Handle empty attendance array - reset to clean state
       dispatchAttendance({ type: 'reset' })
     }
-  }, [studentData]); 
+  }, [attendanceResponse]); 
 
   const students = studentData?.trainees || [];
   
-  // Handle attendance change - modified for single student edits
+  // Handle student selection for multi-select
+  const handleStudentSelection = useCallback((studentId: string, selected: boolean) => {
+    setSelectedStudents(prev => {
+      const newSet = new Set(prev)
+      if (selected) {
+        newSet.add(studentId)
+      } else {
+        newSet.delete(studentId)
+      }
+      return newSet
+    })
+  }, [])
+
+  // Handle attendance change - now allows multiple students
   const handleAttendanceChange = useCallback((studentId: string, status: 'present' | 'absent') => {
-    // Prevent changing another student if one already has unsaved changes
-    if (hasUnsavedChanges && unsavedStudentId !== studentId) {
-      toast.error("Unsaved Changes", {
-        description: "Please save the current student's attendance before modifying another."
-      });
-      return;
-    }
-    
     const existingRecord = attendanceData[studentId]
     if (existingRecord?.status === status) return
 
     dispatchAttendance({ type: 'edit', studentId, data: { status } })
-  }, [hasUnsavedChanges, unsavedStudentId, attendanceData]);
+  }, [attendanceData]);
 
-  // Handle comment change - modified for single student edits
+  // Handle comment change - now allows multiple students
   const handleCommentChange = useCallback((studentId: string, comment: string) => {
-    // Prevent changing another student if one already has unsaved changes
-    if (hasUnsavedChanges && unsavedStudentId !== studentId) {
-      toast.error("Unsaved Changes", {
-        description: "Please save the current student's attendance before modifying another."
-      });
-      return;
-    }
-    
     const existingRecord = attendanceData[studentId] || { status: undefined, comment: '' }
     if (existingRecord.comment === comment) return
 
     dispatchAttendance({ type: 'edit', studentId, data: { comment } })
-  }, [hasUnsavedChanges, unsavedStudentId, attendanceData]);
+  }, [attendanceData]);
   
   // Map the student data to AttendanceStudent format - memoized to prevent recalculation
   const attendanceStudents = useMemo(() => students.map(student => {
     const studentAttendance = attendanceData[student.id];
-    const typedStudent = student as unknown as StudentWithAttendance;
-    const hasRecordedAttendance = typedStudent.isPresent !== null && typedStudent.isPresent !== undefined;
     
-    // Determine the effective attendance and comment based on unsaved state
+    // Find the corresponding attendance record from API
+    const attendanceRecord = attendanceResponse?.attendance?.find(
+      record => record.trainee?.id === student.id
+    );
+    
+    // Determine the effective attendance and comment based on local state or API data
     let effectiveAttendance: 'present' | 'absent' | undefined;
-    let effectiveComment: string = typedStudent.comment || '';
+    let effectiveComment: string = '';
 
-    if (hasUnsavedChanges && unsavedStudentId === student.id && studentAttendance) {
-      // Use local state if this student has unsaved changes
+    if (studentAttendance) {
+      // Use local state if it exists (user made changes)
       effectiveAttendance = studentAttendance.status;
       effectiveComment = studentAttendance.comment || '';
-    } else if (hasRecordedAttendance) {
-      // Use API data if no unsaved changes for this student
-      effectiveAttendance = typedStudent.isPresent ? 'present' : 'absent';
-    } else if (studentAttendance) {
-       // Use local state if it exists (e.g., comment added without changing status)
-       effectiveAttendance = studentAttendance.status;
-       effectiveComment = studentAttendance.comment || '';
+    } else if (attendanceRecord) {
+      // Use API data if no local changes
+      effectiveAttendance = attendanceRecord.isPresent ? 'present' : 'absent';
+      effectiveComment = attendanceRecord.comment || '';
     }
     
     return {
@@ -263,23 +267,25 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
       sessionDate: sessions.find(s => s.id === activeSessionId)?.startDate || '',
       attendance: effectiveAttendance,
       comment: effectiveComment,
-      attendanceId: typedStudent.attendanceId,
-      answerFileLink: typedStudent.answerFileLink,
+      attendanceId: attendanceRecord?.id || studentAttendance?.attendanceId,
+      answerFileLink: null, // We'll handle assessments separately
       _onAttendanceChange: handleAttendanceChange,
       _onCommentChange: handleCommentChange,
+      _onSelectionChange: handleStudentSelection,
       _isProcessing: pendingSubmissions.includes(student.id),
-      _isDisabled: hasUnsavedChanges && unsavedStudentId !== student.id 
+      _isSelected: selectedStudents.has(student.id)
     }
   }), [
     students, 
     attendanceData, 
+    attendanceResponse,
     activeSessionId, 
     sessions, 
     handleAttendanceChange, 
     handleCommentChange, 
-    hasUnsavedChanges, 
+    handleStudentSelection,
     pendingSubmissions,
-    unsavedStudentId
+    selectedStudents
   ]);
   
   // Filter students based on search query - memoized to prevent recalculation
@@ -311,72 +317,131 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
     setStudentPage(1) // Reset to first page when changing page size
   }, []);
 
-  // Replace bulk mutation with single attendance mutation
+  // Individual and bulk attendance mutations
   const { mutate: submitAttendance, isPending: isSavingAttendance } = useSubmitAttendance();
+  const { mutate: submitBulkAttendance, isPending: isSavingBulkAttendance } = useSubmitBulkAttendance();
 
-  // Handle save attendance for the single student with unsaved changes
+  // Get students with unsaved changes
+  const studentsWithChanges = useMemo(() => {
+    return Object.keys(attendanceData).filter(studentId => {
+      const record = attendanceData[studentId];
+      return record && record.status !== undefined;
+    });
+  }, [attendanceData]);
+
+  // Handle save attendance - supports both single and bulk
   const handleSaveAttendance = useCallback(async () => {
-    if (!activeSessionId || !unsavedStudentId || !hasUnsavedChanges) return;
+    if (!activeSessionId || studentsWithChanges.length === 0) return;
 
-    const attendanceToSave = attendanceData[unsavedStudentId];
-    if (!attendanceToSave) {
-      console.error("Could not find attendance data for unsaved student:", unsavedStudentId);
-      toast.error("Error saving attendance", { description: "Could not find data to save." });
+    // Check if all students with changes have a status defined
+    const invalidStudents = studentsWithChanges.filter(studentId => {
+      const record = attendanceData[studentId];
+      return !record || record.status === undefined;
+    });
+
+    if (invalidStudents.length > 0) {
+      toast.error("Cannot Save", {
+        description: "Please mark all students as 'Present' or 'Absent' before saving."
+      });
       return;
     }
 
-    // Check if status is defined before saving
-    if (attendanceToSave.status === undefined) {
-       toast.error("Cannot Save", {
-         description: "Please mark the student as 'Present' or 'Absent' before saving."
-       });
-       return;
-    }
-
     setIsSaving(true);
-    const studentToSave = students.find(s => s.id === unsavedStudentId); // For toast message
-    const studentName = studentToSave ? `${studentToSave.firstName} ${studentToSave.lastName}` : `Student ID ${unsavedStudentId}`;
-    
-    submitAttendance(
-      {
-        traineeId: unsavedStudentId,
-        sessionId: activeSessionId,
-        present: attendanceToSave.status === 'present',
-        comment: attendanceToSave.comment || ''
-      },
-      {
-        onSuccess: async () => {
-          toast.success(`Attendance saved for ${studentName}`);
-          dispatchAttendance({ type: 'reset' });
-          await refetchStudents(); // Refresh data after saving
+
+    if (studentsWithChanges.length === 1) {
+      // Single student save
+      const studentId = studentsWithChanges[0];
+      const attendanceToSave = attendanceData[studentId];
+      const studentToSave = students.find(s => s.id === studentId);
+      const studentName = studentToSave ? `${studentToSave.firstName} ${studentToSave.lastName}` : `Student ID ${studentId}`;
+      
+      submitAttendance(
+        {
+          traineeId: studentId,
+          sessionId: activeSessionId,
+          present: attendanceToSave.status === 'present',
+          comment: attendanceToSave.comment || ''
         },
-        onError: (error) => {
-          console.log("Error saving attendance:", error);
-          toast.error("Error saving attendance", {
-            description: `Could not save attendance for ${studentName}. Please try again.`
-          });
-        },
-        onSettled: () => {
-          setIsSaving(false);
+        {
+          onSuccess: async () => {
+            toast.success(`Attendance saved for ${studentName}`);
+            dispatchAttendance({ type: 'reset' });
+            setSelectedStudents(new Set()); // Clear selections
+            await Promise.all([refetchStudents(), refetchAttendance()]);
+          },
+          onError: (error) => {
+            console.log("Error saving attendance:", error);
+            toast.error("Error saving attendance", {
+              description: `Could not save attendance for ${studentName}. Please try again.`
+            });
+          },
+          onSettled: () => {
+            setIsSaving(false);
+          }
         }
-      }
-    );
-  }, [activeSessionId, unsavedStudentId, hasUnsavedChanges, attendanceData, submitAttendance, refetchStudents, students, dispatchAttendance]);
+      );
+    } else {
+      // Bulk save
+      const attendanceRecords = studentsWithChanges.map(studentId => ({
+        traineeId: studentId,
+        present: attendanceData[studentId].status === 'present',
+        comment: attendanceData[studentId].comment || ''
+      }));
+
+      submitBulkAttendance(
+        {
+          sessionId: activeSessionId,
+          attendanceRecords
+        },
+        {
+          onSuccess: async () => {
+            toast.success(`Attendance saved for ${studentsWithChanges.length} students`);
+            dispatchAttendance({ type: 'reset' });
+            setSelectedStudents(new Set()); // Clear selections
+            await Promise.all([refetchStudents(), refetchAttendance()]);
+          },
+          onError: (error) => {
+            console.log("Error saving bulk attendance:", error);
+            toast.error("Error saving attendance", {
+              description: `Could not save attendance for ${studentsWithChanges.length} students. Please try again.`
+            });
+          },
+          onSettled: () => {
+            setIsSaving(false);
+          }
+        }
+      );
+    }
+  }, [activeSessionId, studentsWithChanges, attendanceData, submitAttendance, submitBulkAttendance, refetchStudents, students, dispatchAttendance]);
 
   // Find the current session object
   const currentSession = sessions.find(session => session.id === activeSessionId);
 
+  // Get IDs of students who have submitted attendance (from API)
+  const submittedAttendanceIds = useMemo(() => {
+    const ids = new Set<string>();
+    if (attendanceResponse?.attendance) {
+      attendanceResponse.attendance.forEach(record => {
+        if (record.trainee?.id) {
+          ids.add(record.trainee.id);
+        }
+      });
+    }
+    return ids;
+  }, [attendanceResponse]);
+
   // Memoize the attendance columns to prevent recreation on each render
   const memoizedColumns = useMemo(() => 
-    createAttendanceColumns(activeSessionId, canEditAssessment, currentSession, trainingId),
-    [activeSessionId, canEditAssessment, currentSession, trainingId, isLoadingAuth]
+    createAttendanceColumns(activeSessionId, canEditAssessment, currentSession, trainingId, [], hasUnsavedChanges, submittedAttendanceIds),
+    [activeSessionId, canEditAssessment, currentSession, trainingId, hasUnsavedChanges, submittedAttendanceIds, isLoadingAuth]
   );
 
   // Comprehensive loading states
   const isInitialLoadingCohorts = isLoadingCohorts && cohorts.length === 0
   const isInitialLoadingSessions = isLoadingSessions && sessions.length === 0 && activeCohortId
   const isLoadingStudentsData = isLoadingStudents && !studentData
-  const isTableTransitioning = isLoadingStudents && studentData // When switching sessions/cohorts
+  const isLoadingAttendanceData = isLoadingAttendance && !attendanceResponse
+  const isTableTransitioning = (isLoadingStudents && studentData) || (isLoadingAttendance && attendanceResponse) // When switching sessions/cohorts
 
   // Header section with title
   const headerSection = (
@@ -517,18 +582,21 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
       />
       
       {/* Student Attendance Table */}
-      {studentError ? (
+      {(studentError || attendanceError) ? (
         <div className="text-center py-20 bg-[#fbfbfb] rounded-lg border border-[#EAECF0]">
           <h3 className="text-lg font-medium mb-2">Error Loading Data</h3>
           <p className="text-gray-500 text-sm">
-            There was a problem loading the required data. Please try again later.
+            {studentError && "There was a problem loading student data."} 
+            {studentError && attendanceError && " "}
+            {attendanceError && "There was a problem loading attendance data."} 
+            Please try again later.
           </p>
         </div>
       ) : !activeSessionId ? (
         <div className="mt-8">
           <Loading />
         </div>
-      ) : students.length === 0 && !isLoadingStudentsData && !isTableTransitioning ? (
+      ) : students.length === 0 && !isLoadingStudentsData && !isLoadingAttendanceData && !isTableTransitioning ? (
         <div className="text-center py-20 bg-[#fbfbfb] rounded-lg border border-[#EAECF0]">
           <h3 className="text-lg font-medium mb-2">No Students Assigned</h3>
           <p className="text-gray-500 text-sm">
@@ -539,7 +607,7 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
         <AttendanceDataTable
           columns={memoizedColumns}
           data={filteredStudents}
-          isLoading={isLoadingStudents} // Pass all loading states to the table component
+          isLoading={isLoadingStudents || isLoadingAttendance} // Pass all loading states to the table component
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           pagination={{
@@ -550,11 +618,12 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
             setPageSize: handleStudentPageSizeChange,
             totalElements: totalStudentElements
           }}
-          isSaving={isSaving || isSavingAttendance}
+          isSaving={isSaving || isSavingAttendance || isSavingBulkAttendance}
           onSaveAttendance={handleSaveAttendance}
           hasUnsavedChanges={hasUnsavedChanges}
           sessionId={activeSessionId}
-          unsavedStudentId={unsavedStudentId}
+          unsavedStudentId={null}
+          studentsWithChanges={studentsWithChanges}
           isInitialLoadComplete={isInitialLoadComplete}
           canEditAttendance={canEditAssessment}
         />

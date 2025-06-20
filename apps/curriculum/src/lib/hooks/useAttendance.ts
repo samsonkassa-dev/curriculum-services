@@ -121,15 +121,19 @@ export function useSubmitBulkAttendance() {
     }) => {
       const token = getCookie("token");
       
-      // Add sessionId to each record
-      const records = attendanceRecords.map(record => ({
-        ...record,
-        sessionId
+      // Map to the new bulk API structure
+      const attendances = attendanceRecords.map(record => ({
+        traineeId: record.traineeId,
+        comment: record.comment,
+        present: record.present
       }));
       
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API}/attendance`,
-        { records },
+        `${process.env.NEXT_PUBLIC_API}/attendance/bulk`,
+        { 
+          sessionId,
+          attendances 
+        },
         {
           headers: { 
             "Content-Type": "application/json",

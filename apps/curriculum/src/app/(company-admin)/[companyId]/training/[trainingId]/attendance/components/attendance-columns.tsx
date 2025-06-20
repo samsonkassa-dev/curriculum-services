@@ -32,8 +32,9 @@ export interface AttendanceStudent {
   _onAttendanceChange?: (id: string, status: 'present' | 'absent') => void
   _onCommentChange?: (id: string, comment: string) => void
   _isProcessing?: boolean
-  _isDisabled?: boolean // Added to indicate if controls should be disabled
-  [key: string]: string | 'present' | 'absent' | null | undefined | ((id: string, value: string) => void) | ((id: string, status: 'present' | 'absent') => void) | boolean
+  _isSelected?: boolean // Track if student is selected for bulk operations
+  _onSelectionChange?: (id: string, selected: boolean) => void
+  [key: string]: string | 'present' | 'absent' | null | undefined | ((id: string, value: string) => void) | ((id: string, status: 'present' | 'absent') => void) | ((id: string, selected: boolean) => void) | boolean
 }
 
 // CommentDialog component
@@ -61,7 +62,13 @@ function CommentDialog({
       <DialogTrigger asChild>
         <button 
           className={`w-6 h-6 rounded-full flex items-center justify-center ml-2 ${
-            comment ? 'text-[#0B75FF] bg-[#5da8f3]' : 'text-gray-400 bg-gray-100'
+            comment 
+              ? student.attendance === 'present' 
+                ? 'text-[#037847] bg-[#ECFDF3] ring-1 ring-[#037847]' 
+                : student.attendance === 'absent'
+                ? 'text-[#D03710] bg-[rgba(243,88,88,0.47)] ring-1 ring-[#D03710]'
+                : 'text-[#0B75FF] bg-blue-50 ring-1 ring-[#0B75FF]'
+              : 'text-gray-400 bg-gray-100'
           } ${disabled ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-80'}`}
           aria-label={`Add comment for ${student.firstName} ${student.lastName}`}
           disabled={disabled}
@@ -105,9 +112,51 @@ export const createAttendanceColumns = (
   canEditAssessment: boolean = false,
   session?: Session,
   trainingId?: string,
-  extras: ColumnDef<AttendanceStudent>[] = []
+  extras: ColumnDef<AttendanceStudent>[] = [],
+  hasUnsavedChanges: boolean = false,
+  submittedAttendanceIds: Set<string> = new Set()
 ) => {
   const columns: ColumnDef<AttendanceStudent>[] = [
+    {
+      id: "select",
+      header: ({ table }) => {
+        // Check if any students have submitted attendance to disable select all
+        const hasAnySubmittedAttendance = table.getRowModel().rows.some(row => 
+          submittedAttendanceIds.has((row.original as AttendanceStudent).id)
+        );
+        
+        return (
+          <input
+            type="checkbox"
+            checked={table.getIsAllPageRowsSelected()}
+            onChange={(e) => table.toggleAllPageRowsSelected(e.target.checked)}
+            className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            disabled={hasUnsavedChanges || hasAnySubmittedAttendance}
+            aria-label="Select all students"
+          />
+        );
+      },
+      cell: ({ row }) => {
+        const student = row.original
+        const hasSubmittedAttendance = submittedAttendanceIds.has(student.id)
+        const isSelectionDisabled = hasUnsavedChanges || hasSubmittedAttendance
+        
+        return (
+          <input
+            type="checkbox"
+            checked={student._isSelected || false}
+            onChange={(e) => {
+              if (!hasSubmittedAttendance && student._onSelectionChange) {
+                student._onSelectionChange(student.id, e.target.checked)
+              }
+            }}
+            className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+            disabled={isSelectionDisabled}
+            aria-label={`Select ${student.firstName} ${student.lastName}`}
+          />
+        )
+      },
+    },
     {
       accessorKey: "name",
       header: "Full Name",
@@ -148,7 +197,8 @@ export const createAttendanceColumns = (
         const student = row.original
         const hasAttendance = student.attendance !== undefined
         const isProcessing = student._isProcessing === true
-        const isDisabled = student._isDisabled === true || isProcessing; // Check if controls should be disabled
+        const hasSubmittedAttendance = submittedAttendanceIds.has(student.id)
+        const isDisabled = isProcessing || hasSubmittedAttendance
         
         // Visual enhancement - container for attendance buttons
         const attendanceContainerClass = hasAttendance 
@@ -156,20 +206,20 @@ export const createAttendanceColumns = (
           : ""
         
         return (
-          <div className={`flex gap-2 items-center ${attendanceContainerClass} ${isDisabled ? 'opacity-60 cursor-not-allowed' : ''}`}>
+          <div className={`flex gap-2 items-center ${attendanceContainerClass} ${hasSubmittedAttendance ? 'opacity-75' : ''}`}>
             <button 
               className={`w-6 h-6 rounded-full ${
                 student.attendance === 'present' 
                   ? 'bg-[#ECFDF3] ring-2 ring-[#037847] shadow-sm' 
                   : 'bg-[#F2F4F7]'
-              } flex items-center justify-center transition-all ${isDisabled ? 'pointer-events-none' : ''}`} // Disable pointer events if needed
+              } flex items-center justify-center transition-all ${isDisabled ? 'cursor-not-allowed' : ''}`}
               aria-label={`Mark ${student.firstName} ${student.lastName} as present`}
               onClick={() => {
-                if (row.original._onAttendanceChange) {
+                if (!isDisabled && row.original._onAttendanceChange) {
                   row.original._onAttendanceChange(student.id, 'present')
                 }
               }}
-              disabled={isDisabled} // Disable button if needed
+              disabled={isDisabled}
             >
               <Check size={12} className={`${student.attendance === 'present' ? 'text-[#037847] font-bold' : 'text-gray-400'}`} />
             </button>
@@ -178,25 +228,30 @@ export const createAttendanceColumns = (
                 student.attendance === 'absent' 
                   ? 'bg-[rgba(243,88,88,0.47)] ring-2 ring-[#D03710] shadow-sm' 
                   : 'bg-[#F2F4F7]'
-              } flex items-center justify-center transition-all ${isDisabled ? 'pointer-events-none' : ''}`} // Disable pointer events if needed
+              } flex items-center justify-center transition-all ${isDisabled ? 'cursor-not-allowed' : ''}`}
               aria-label={`Mark ${student.firstName} ${student.lastName} as absent`}
               onClick={() => {
-                if (row.original._onAttendanceChange) {
+                if (!isDisabled && row.original._onAttendanceChange) {
                   row.original._onAttendanceChange(student.id, 'absent')
                 }
               }}
-              disabled={isDisabled} // Disable button if needed
+              disabled={isDisabled}
             >
               <X size={12} className={`${student.attendance === 'absent' ? 'text-[#D03710] font-bold' : 'text-gray-400'}`} />
             </button>
             
             {/* Status indicator */}
             {hasAttendance && (
-              <div className="ml-1 text-xs font-medium">
+              <div className="ml-1 text-xs font-medium flex items-center gap-1">
                 {student.attendance === 'present' ? (
                   <span className="text-green-700">Present</span>
                 ) : (
                   <span className="text-red-700">Absent</span>
+                )}
+                {hasSubmittedAttendance && (
+                  <span className="text-xs text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-full">
+                    Submitted
+                  </span>
                 )}
               </div>
             )}
@@ -209,7 +264,7 @@ export const createAttendanceColumns = (
                 onCommentChange={(comment) => {
                   row.original._onCommentChange?.(student.id, comment)
                 }}
-                disabled={isDisabled} // Disable comment dialog trigger if needed
+                disabled={isDisabled}
               />
             )}
           </div>
@@ -228,7 +283,6 @@ export const createAttendanceColumns = (
         cell: ({ row }) => {
           const student = row.original;
           const fullName = `${student.firstName} ${student.lastName}`;
-          const isDisabled = student._isDisabled === true;
           
           // Determine if this is a pre or post session survey
           const isPreSession = session.first === true;
@@ -239,7 +293,7 @@ export const createAttendanceColumns = (
               studentId={student.id}
               studentName={fullName}
               isPreSession={isPreSession}
-              disabled={isDisabled}
+              disabled={false}
             />
           );
         },
@@ -255,14 +309,13 @@ export const createAttendanceColumns = (
       cell: ({ row }) => {
         const student = row.original;
         const fullName = `${student.firstName} ${student.lastName}`;
-        const isDisabled = student._isDisabled === true;
         
         // Add a SessionAssessmentWrapper component to handle fetching assessments
         return <SessionAssessmentCell 
           sessionId={sessionId} 
           student={student}
           canEditAssessment={canEditAssessment}
-          isDisabled={isDisabled}
+          isDisabled={false}
           session={session}
           trainingId={trainingId}
         />;
@@ -341,13 +394,13 @@ function SessionAssessmentCell({
         studentName={fullName}
         assessmentType={assessmentType}
         trigger={
-          <Button
-            variant="outline"
-            className={`text-blue-600 border-blue-600 text-xs h-7 px-2 hover:bg-blue-50 ${isDisabled ? 'opacity-50 pointer-events-none' : ''}`}
-            disabled={isDisabled}
-          >
-            {buttonLabel}
-          </Button>
+                  <Button
+          variant="outline"
+          className="text-blue-600 border-blue-600 text-xs h-7 px-2 hover:bg-blue-50"
+          disabled={false}
+        >
+          {buttonLabel}
+        </Button>
         }
       />
     </div>

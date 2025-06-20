@@ -45,6 +45,7 @@ interface AttendanceDataTableProps<TData> {
   hasUnsavedChanges?: boolean
   sessionId?: string
   unsavedStudentId?: string | null
+  studentsWithChanges?: string[]
   isInitialLoadComplete: boolean
   canEditAttendance: boolean
 }
@@ -61,13 +62,14 @@ export function AttendanceDataTable({
   hasUnsavedChanges = false,
   sessionId = "",
   unsavedStudentId = null,
+  studentsWithChanges = [],
   isInitialLoadComplete,
   canEditAttendance,
 }: AttendanceDataTableProps<AttendanceStudent>) {
   const [sorting, setSorting] = useState<SortingState>([])
   
-  // Only consider view-only if initial load is complete
-  const isViewOnly = isInitialLoadComplete && !canEditAttendance
+  // View-only mode for non-editing users
+  const isViewOnly = !canEditAttendance
 
   const table = useReactTable({
     data: Array.isArray(data) ? data : [],
@@ -89,12 +91,11 @@ export function AttendanceDataTable({
     ? `Showing ${startRecord} to ${endRecord} out of ${pagination.totalElements} records`
     : "No records to show"
 
-  // Determine the name of the student with unsaved changes for the button text
-  const unsavedStudent = unsavedStudentId 
-    ? data.find(student => (student as AttendanceStudent).id === unsavedStudentId) as AttendanceStudent | undefined 
-    : undefined;
-  const saveButtonText = hasUnsavedChanges && unsavedStudent 
-    ? `Save for ${unsavedStudent.firstName}` 
+  // Determine the save button text based on number of students with changes
+  const saveButtonText = hasUnsavedChanges
+    ? studentsWithChanges.length === 1 
+      ? `Save for 1 student`
+      : `Save for ${studentsWithChanges.length} students`
     : "Save Attendance";
 
   return (
@@ -188,25 +189,18 @@ export function AttendanceDataTable({
                 </TableCell>
               </TableRow>
             ) : data && data.length > 0 ? (
-              table.getRowModel().rows.map((row) => {
-                // Only apply disabled state if initial load is complete
-                if (isInitialLoadComplete && isViewOnly && row.original) {
-                  (row.original as AttendanceStudent)._isDisabled = true;
-                }
-                
-                return (
-                  <TableRow key={row.id} className="border-b border-[#EAECF0]">
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id} className="p-3">
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext()
-                        )}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                );
-              })
+              table.getRowModel().rows.map((row) => (
+                <TableRow key={row.id} className="border-b border-[#EAECF0]">
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id} className="p-3">
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
             ) : (
               <TableRow>
                 <TableCell
