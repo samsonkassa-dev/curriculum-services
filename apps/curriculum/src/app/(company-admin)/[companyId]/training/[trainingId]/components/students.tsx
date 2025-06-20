@@ -4,17 +4,18 @@ import { useState, useEffect, useMemo, useCallback, useRef } from "react"
 import { useUserRole } from "@/lib/hooks/useUserRole"
 import { Button } from "@/components/ui/button"
 import { Loading } from "@/components/ui/loading"
-import { useStudents, useAddStudent, useStudentById, useUpdateStudent, useDeleteStudent, useBulkImportStudentsByName, Student, CreateStudentData, CreateStudentByNameData, StudentFilters } from "@/lib/hooks/useStudents"
-import { Plus, Upload, ArrowLeft } from "lucide-react"
+import { useStudents, useAddStudent, useStudentById, useUpdateStudent, useDeleteStudent, useBulkDeleteStudents, useBulkImportStudentsByName, Student, CreateStudentData, CreateStudentByNameData, StudentFilters } from "@/lib/hooks/useStudents"
+import { toast } from "sonner"
+import { Plus, Upload, ArrowLeft, Trash2 } from "lucide-react"
 import Image from "next/image"
 import { Input } from "@/components/ui/input"
 import { useDebounce } from "@/lib/hooks/useDebounce"
-import { studentColumns, createActionsColumn } from "./students/student-columns"
+import { studentColumns, createActionsColumn, createStudentColumnsWithSelection } from "./students/student-columns"
 import { StudentDataTable } from "./students/student-data-table"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { studentFormSchema, StudentFormValues } from "../students/add/components/formSchemas"
-import { ColumnDef } from "@tanstack/react-table"
+import { ColumnDef, RowSelectionState } from "@tanstack/react-table"
 import { StudentFormModal } from "./students/student-form-modal"
 import { DeleteStudentDialog } from "./students/delete-student-dialog"
 import { CSVImportContent } from "./students/csv-import-content"
@@ -35,6 +36,8 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
   const [currentStudentId, setCurrentStudentId] = useState<string | null>(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [studentToDelete, setStudentToDelete] = useState<Student | null>(null)
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({})
+  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false)
   const [filters, setFilters] = useState<StudentFilters>({})
   const debouncedSearch = useDebounce(searchQuery, 500)
   
@@ -76,6 +79,7 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
   )
   const updateStudentMutation = useUpdateStudent()
   const deleteStudentMutation = useDeleteStudent()
+  const bulkDeleteMutation = useBulkDeleteStudents()
   const bulkImportMutation = useBulkImportStudentsByName()
 
   const form = useForm<StudentFormValues>({
@@ -120,6 +124,9 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
     if (debouncedSearch !== searchQuery) return; // Only run when debounced search actually changes
     setPage(1);
   }, [debouncedSearch]);
+
+  // Calculate selected students count
+  const selectedStudentsCount = Object.keys(rowSelection).length;
 
   // Memoize student form data preparation
   const studentFormData = useMemo(() => {
@@ -442,7 +449,8 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
       }
     }
   }, [deleteStudentMutation, studentToDelete]);
-  
+
+
   const handleCloseModal = useCallback(() => {
     setShowModal(false)
   }, []);
@@ -463,19 +471,59 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
     };
   }, [data]);
 
+  const handleBulkDelete = useCallback(async () => {
+    const selectedIndices = Object.keys(rowSelection);
+    if (selectedIndices.length === 0) return;
+
+    // Get the selected student IDs
+    const selectedStudentIds = selectedIndices
+      .map(index => {
+        const student = paginationData.students[parseInt(index)];
+        return student?.id;
+      })
+      .filter(Boolean) as string[];
+
+    if (selectedStudentIds.length === 0) {
+      toast.error('No valid students selected for deletion');
+      return;
+    }
+
+    // Open the delete dialog instead of browser confirm
+    setBulkDeleteDialogOpen(true);
+  }, [rowSelection, paginationData.students]);
+
+  const confirmBulkDelete = useCallback(async () => {
+    const selectedIndices = Object.keys(rowSelection);
+    const selectedStudentIds = selectedIndices
+      .map(index => {
+        const student = paginationData.students[parseInt(index)];
+        return student?.id;
+      })
+      .filter(Boolean) as string[];
+
+    try {
+      await bulkDeleteMutation.mutateAsync(selectedStudentIds);
+      setRowSelection({}); // Clear selection after successful delete
+      setBulkDeleteDialogOpen(false);
+    } catch (error) {
+      console.log("Bulk delete failed:", error);
+    }
+  }, [rowSelection, paginationData.students, bulkDeleteMutation]);
+
   // Add the actions column to the existing columns
   const columnsWithActions = useMemo<ColumnDef<Student>[]>(() => {
-    // Get the base columns
-    const columns = [...studentColumns];
+    // Always use selection-enabled columns when user has edit permission
+    const hasEditPermission = isCompanyAdmin || isProjectManager || isTrainingAdmin;
+    const baseColumns = hasEditPermission 
+      ? createStudentColumnsWithSelection()
+      : [...studentColumns];
     
     // Add the actions column only if user has appropriate permissions
-    const hasEditPermission = isCompanyAdmin || isProjectManager || isTrainingAdmin;
-    
     if (hasEditPermission) {
-      columns.push(createActionsColumn(handleEditStudent, handleDeleteStudent, hasEditPermission));
+      baseColumns.push(createActionsColumn(handleEditStudent, handleDeleteStudent, hasEditPermission));
     }
     
-    return columns;
+    return baseColumns;
   }, [handleEditStudent, handleDeleteStudent, isCompanyAdmin, isProjectManager, isTrainingAdmin]);
 
   // Check if user has permissions to edit
@@ -570,6 +618,8 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
               emptyState
             ) : (
               <>
+
+
                 {/* Always show search bar and buttons when there are students or user has edit permission */}
                 <div className="flex items-center lg:justify-end gap-3 mb-6">
                   <div className="flex items-center gap-3">
@@ -603,6 +653,27 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
                   
                   {hasEditPermission && (
                     <div className="flex gap-2">
+                      {/* Delete Button - only show when multiple students selected */}
+                      {selectedStudentsCount > 1 && (
+                        <Button
+                          variant="destructive"
+                          className="flex items-center gap-2"
+                          onClick={handleBulkDelete}
+                          disabled={bulkDeleteMutation.isPending}
+                        >
+                          {bulkDeleteMutation.isPending ? (
+                            <>
+                              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                              Deleting...
+                            </>
+                          ) : (
+                            <>
+                              <Trash2 className="h-4 w-4" />
+                              Delete {selectedStudentsCount} Students
+                            </>
+                          )}
+                        </Button>
+                      )}
                       <Button
                         variant="outline"
                         className="flex items-center gap-2"
@@ -635,6 +706,8 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
                     setPageSize: handlePageSizeChange,
                     totalElements: paginationData.totalElements,
                   }}
+                  rowSelection={hasEditPermission ? rowSelection : {}}
+                  onRowSelectionChange={hasEditPermission ? setRowSelection : undefined}
                 />
               </>
             )}
@@ -671,6 +744,17 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
           student={studentToDelete}
           onConfirmDelete={confirmDelete}
           isDeleting={deleteStudentMutation.isPending}
+        />
+
+        {/* Bulk Delete Dialog */}
+        <DeleteStudentDialog
+          isOpen={bulkDeleteDialogOpen}
+          onOpenChange={setBulkDeleteDialogOpen}
+          student={null} // We pass null for bulk delete
+          onConfirmDelete={confirmBulkDelete}
+          isDeleting={bulkDeleteMutation.isPending}
+          title={`Delete ${selectedStudentsCount} Students`}
+          description={`Are you sure you want to delete these ${selectedStudentsCount} students? This action cannot be undone.`}
         />
       </div>
     </div>

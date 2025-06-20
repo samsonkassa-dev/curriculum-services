@@ -398,6 +398,32 @@ export function useDeleteStudent() {
   })
 }
 
+export function useBulkDeleteStudents() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (traineeIds: string[]) => {
+      const token = getCookie('token')
+      const response = await axios.delete(
+        `${process.env.NEXT_PUBLIC_API}/trainee/bulk`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          data: { traineeIds }
+        }
+      )
+      return response.data
+    },
+    onSuccess: (data, traineeIds) => {
+      const count = traineeIds.length
+      toast.success(`${count} student${count > 1 ? 's' : ''} deleted successfully`)
+      queryClient.invalidateQueries({ queryKey: ['students'] })
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to delete students')
+    }
+  })
+}
+
 export function useUpdateStudent() {
   const queryClient = useQueryClient()
 
@@ -573,6 +599,9 @@ export function useBulkImportStudentsByName() {
     isLoading: bulkImportMutation.isPending
   }
 }
+
+
+
 
 
 

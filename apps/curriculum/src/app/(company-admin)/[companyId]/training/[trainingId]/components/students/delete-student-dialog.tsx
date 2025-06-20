@@ -18,6 +18,8 @@ interface DeleteStudentDialogProps {
   student: Student | null
   onConfirmDelete: () => Promise<void>
   isDeleting: boolean
+  title?: string
+  description?: string
 }
 
 export function DeleteStudentDialog({
@@ -25,16 +27,21 @@ export function DeleteStudentDialog({
   onOpenChange,
   student,
   onConfirmDelete,
-  isDeleting
+  isDeleting,
+  title,
+  description
 }: DeleteStudentDialogProps) {
+  const dialogTitle = title || "Delete Student"
+  const dialogDescription = description || 
+    `Are you sure you want to delete ${student?.firstName} ${student?.lastName}? This action cannot be undone.`
+
   return (
     <AlertDialog open={isOpen} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Delete Student</AlertDialogTitle>
+          <AlertDialogTitle>{dialogTitle}</AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to delete {student?.firstName}{" "}
-            {student?.lastName}? This action cannot be undone.
+            {dialogDescription}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

@@ -6,7 +6,8 @@ import { format } from "date-fns"
 import { Button } from "@/components/ui/button"
 import { Pencil, Trash2 } from "lucide-react"
 
-export const studentColumns: ColumnDef<Student>[] = [
+// Base student columns without selection - for when selection is not needed
+export const studentColumnsBase: ColumnDef<Student>[] = [
   {
     id: "name",
     header: "Full Name",
@@ -99,6 +100,35 @@ export const studentColumns: ColumnDef<Student>[] = [
     }
   }
 ]
+
+// Student columns with selection checkbox
+export const createStudentColumnsWithSelection = (): ColumnDef<Student>[] => [
+  {
+    id: "select",
+    header: ({ table }) => (
+      <input
+        type="checkbox"
+        checked={table.getIsAllPageRowsSelected()}
+        onChange={(e) => table.toggleAllPageRowsSelected(e.target.checked)}
+        className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+        aria-label="Select all students"
+      />
+    ),
+    cell: ({ row }) => (
+      <input
+        type="checkbox"
+        checked={row.getIsSelected()}
+        onChange={(e) => row.toggleSelected(e.target.checked)}
+        className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+        aria-label={`Select ${row.original.firstName} ${row.original.lastName}`}
+      />
+    ),
+  },
+  ...studentColumnsBase
+]
+
+// Default export maintains backward compatibility
+export const studentColumns = studentColumnsBase
 
 // Creates the actions column with passed-in handler functions
 export const createActionsColumn = (
