@@ -44,6 +44,7 @@ type AttendanceAction =
   | { type: 'load'; payload: Record<string, AttendanceRecord> }
   | { type: 'edit'; studentId: string; data: Partial<AttendanceRecord> }
   | { type: 'reset' }
+  | { type: 'clearSaved'; studentIds: string[] }
 
 function attendanceReducer(state: AttendanceState, action: AttendanceAction): AttendanceState {
   switch (action.type) {
@@ -63,6 +64,18 @@ function attendanceReducer(state: AttendanceState, action: AttendanceAction): At
     }
     case 'reset':
       return { data: {}, dirty: false, pendingId: null }
+    case 'clearSaved': {
+      const newData = { ...state.data }
+      action.studentIds.forEach(studentId => {
+        delete newData[studentId]
+      })
+      const hasPendingData = Object.keys(newData).length > 0
+      return {
+        data: newData,
+        dirty: hasPendingData,
+        pendingId: hasPendingData ? state.pendingId : null
+      }
+    }
     default:
       return state
   }
@@ -78,6 +91,7 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
   const [studentPageSize, setStudentPageSize] = useState(10)
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedStudents, setSelectedStudents] = useState<Set<string>>(new Set())
+  const [editingStudents, setEditingStudents] = useState<Set<string>>(new Set())
   const [attendanceState, dispatchAttendance] = useReducer(attendanceReducer, {
     data: {},
     dirty: false,
@@ -143,6 +157,7 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
       setActiveCohortId(newCohortId)
       setActiveSessionId("") // Reset session when cohort changes
       dispatchAttendance({ type: 'reset' })
+      setEditingStudents(new Set()) // Clear edit states
     }
   }, [activeCohortId])
 
@@ -154,10 +169,12 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
         if (confirmed) {
           setActiveSessionId(newSessionId)
           dispatchAttendance({ type: 'reset' })
+          setEditingStudents(new Set()) // Clear edit states
         }
       } else {
         setActiveSessionId(newSessionId)
         dispatchAttendance({ type: 'reset' })
+        setEditingStudents(new Set()) // Clear edit states
       }
     }
   }, [activeSessionId, hasUnsavedChanges])
@@ -186,24 +203,30 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
   // Initialize attendance data from session attendance API
   useEffect(() => {
     if (attendanceResponse?.attendance) {
-      const newAttendanceData: Record<string, AttendanceRecord> = {};
-      
-      attendanceResponse.attendance.forEach(record => {
-        if (record.trainee?.id) {
-          newAttendanceData[record.trainee.id] = {
-            status: record.isPresent ? 'present' : 'absent',
-            comment: record.comment || '',
-            attendanceId: record.id
-          };
-        }
-      });
-      
-      dispatchAttendance({ type: 'load', payload: newAttendanceData })
+      // Only load API data if we don't have unsaved changes
+      // This prevents overwriting user's current edits
+      if (!hasUnsavedChanges) {
+        const newAttendanceData: Record<string, AttendanceRecord> = {};
+        
+        attendanceResponse.attendance.forEach(record => {
+          if (record.trainee?.id) {
+            newAttendanceData[record.trainee.id] = {
+              status: record.isPresent ? 'present' : 'absent',
+              comment: record.comment || '',
+              attendanceId: record.id
+            };
+          }
+        });
+        
+        dispatchAttendance({ type: 'load', payload: newAttendanceData })
+      }
     } else if (attendanceResponse && attendanceResponse.attendance && attendanceResponse.attendance.length === 0) {
-      // Handle empty attendance array - reset to clean state
-      dispatchAttendance({ type: 'reset' })
+      // Handle empty attendance array - reset to clean state only if no unsaved changes
+      if (!hasUnsavedChanges) {
+        dispatchAttendance({ type: 'reset' })
+      }
     }
-  }, [attendanceResponse]); 
+  }, [attendanceResponse, hasUnsavedChanges]); 
 
   const students = studentData?.trainees || [];
   
@@ -215,6 +238,21 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
         newSet.add(studentId)
       } else {
         newSet.delete(studentId)
+      }
+      return newSet
+    })
+  }, [])
+
+  // Handle edit mode change for individual students
+  const handleEditModeChange = useCallback((studentId: string, editing: boolean) => {
+    setEditingStudents(prev => {
+      const newSet = new Set(prev)
+      if (editing) {
+        newSet.add(studentId)
+      } else {
+        newSet.delete(studentId)
+        // If canceling edit, remove any unsaved changes for this student
+        dispatchAttendance({ type: 'clearSaved', studentIds: [studentId] })
       }
       return newSet
     })
@@ -272,8 +310,10 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
       _onAttendanceChange: handleAttendanceChange,
       _onCommentChange: handleCommentChange,
       _onSelectionChange: handleStudentSelection,
+      _onEditModeChange: handleEditModeChange,
       _isProcessing: pendingSubmissions.includes(student.id),
-      _isSelected: selectedStudents.has(student.id)
+      _isSelected: selectedStudents.has(student.id),
+      _isEditing: editingStudents.has(student.id)
     }
   }), [
     students, 
@@ -284,8 +324,10 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
     handleAttendanceChange, 
     handleCommentChange, 
     handleStudentSelection,
+    handleEditModeChange,
     pendingSubmissions,
-    selectedStudents
+    selectedStudents,
+    editingStudents
   ]);
   
   // Filter students based on search query - memoized to prevent recalculation
@@ -321,13 +363,30 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
   const { mutate: submitAttendance, isPending: isSavingAttendance } = useSubmitAttendance();
   const { mutate: submitBulkAttendance, isPending: isSavingBulkAttendance } = useSubmitBulkAttendance();
 
-  // Get students with unsaved changes
+  // Get students with unsaved changes (comparing local state vs API state)
   const studentsWithChanges = useMemo(() => {
     return Object.keys(attendanceData).filter(studentId => {
-      const record = attendanceData[studentId];
-      return record && record.status !== undefined;
+      const localRecord = attendanceData[studentId];
+      if (!localRecord || localRecord.status === undefined) return false;
+      
+      // Find the corresponding saved attendance record from API
+      const apiRecord = attendanceResponse?.attendance?.find(
+        record => record.trainee?.id === studentId
+      );
+      
+      // If no API record exists, this is a new unsaved change
+      if (!apiRecord) return true;
+      
+      // Compare local state with API state
+      const apiStatus = apiRecord.isPresent ? 'present' : 'absent';
+      const apiComment = apiRecord.comment || '';
+      
+      const hasStatusChange = localRecord.status !== apiStatus;
+      const hasCommentChange = (localRecord.comment || '') !== apiComment;
+      
+      return hasStatusChange || hasCommentChange;
     });
-  }, [attendanceData]);
+  }, [attendanceData, attendanceResponse]);
 
   // Handle save attendance - supports both single and bulk
   const handleSaveAttendance = useCallback(async () => {
@@ -365,8 +424,20 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
         {
           onSuccess: async () => {
             toast.success(`Attendance saved for ${studentName}`);
-            dispatchAttendance({ type: 'reset' });
-            setSelectedStudents(new Set()); // Clear selections
+            // Clear local state for this saved student
+            dispatchAttendance({ type: 'clearSaved', studentIds: [studentId] });
+            // Clear selection for this specific student only
+            setSelectedStudents(prev => {
+              const newSet = new Set(prev);
+              newSet.delete(studentId);
+              return newSet;
+            });
+            // Exit edit mode for this student
+            setEditingStudents(prev => {
+              const newSet = new Set(prev);
+              newSet.delete(studentId);
+              return newSet;
+            });
             await Promise.all([refetchStudents(), refetchAttendance()]);
           },
           onError: (error) => {
@@ -396,8 +467,20 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
         {
           onSuccess: async () => {
             toast.success(`Attendance saved for ${studentsWithChanges.length} students`);
-            dispatchAttendance({ type: 'reset' });
-            setSelectedStudents(new Set()); // Clear selections
+            // Clear local state for saved students
+            dispatchAttendance({ type: 'clearSaved', studentIds: studentsWithChanges });
+            // Clear selections for saved students only
+            setSelectedStudents(prev => {
+              const newSet = new Set(prev);
+              studentsWithChanges.forEach(studentId => newSet.delete(studentId));
+              return newSet;
+            });
+            // Exit edit mode for all saved students
+            setEditingStudents(prev => {
+              const newSet = new Set(prev);
+              studentsWithChanges.forEach(studentId => newSet.delete(studentId));
+              return newSet;
+            });
             await Promise.all([refetchStudents(), refetchAttendance()]);
           },
           onError: (error) => {

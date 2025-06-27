@@ -2,7 +2,7 @@
 
 import { ColumnDef } from "@tanstack/react-table"
 import { Button } from "@/components/ui/button"
-import { Check, X, MessageSquare, X as CloseIcon, CheckCircle, AlertCircle } from "lucide-react"
+import { Check, X, MessageSquare, X as CloseIcon, CheckCircle, AlertCircle, Edit2, Save, XCircle } from "lucide-react"
 import { formatDateToDisplay } from "@/lib/utils"
 import { useState } from "react"
 import { 
@@ -34,7 +34,9 @@ export interface AttendanceStudent {
   _isProcessing?: boolean
   _isSelected?: boolean // Track if student is selected for bulk operations
   _onSelectionChange?: (id: string, selected: boolean) => void
-  [key: string]: string | 'present' | 'absent' | null | undefined | ((id: string, value: string) => void) | ((id: string, status: 'present' | 'absent') => void) | ((id: string, selected: boolean) => void) | boolean
+  _isEditing?: boolean // Track if this student is in edit mode
+  _onEditModeChange?: (id: string, editing: boolean) => void
+  [key: string]: string | 'present' | 'absent' | null | undefined | ((id: string, value: string) => void) | ((id: string, status: 'present' | 'absent') => void) | ((id: string, selected: boolean) => void) | ((id: string, editing: boolean) => void) | boolean
 }
 
 // CommentDialog component
@@ -198,7 +200,8 @@ export const createAttendanceColumns = (
         const hasAttendance = student.attendance !== undefined
         const isProcessing = student._isProcessing === true
         const hasSubmittedAttendance = submittedAttendanceIds.has(student.id)
-        const isDisabled = isProcessing || hasSubmittedAttendance
+        const isEditing = student._isEditing === true
+        const isDisabled = isProcessing || (hasSubmittedAttendance && !isEditing)
         
         // Visual enhancement - container for attendance buttons
         const attendanceContainerClass = hasAttendance 
@@ -249,7 +252,7 @@ export const createAttendanceColumns = (
                   <span className="text-red-700">Absent</span>
                 )}
                 {hasSubmittedAttendance && (
-                  <span className="text-xs text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded-full">
+                  <span className="text-xs text-gray-500 bg-gray-100 px-1 py-0.5 rounded-full">
                     Submitted
                   </span>
                 )}
@@ -266,6 +269,33 @@ export const createAttendanceColumns = (
                 }}
                 disabled={isDisabled}
               />
+            )}
+            
+            {/* Edit/Cancel button - only show if attendance exists and can edit */}
+            {hasAttendance && hasSubmittedAttendance && row.original._onEditModeChange && (
+              <div className="ml-2">
+                {isEditing ? (
+                  <button
+                    className="w-6 h-6 rounded-full bg-red-50 text-red-600 flex items-center justify-center hover:bg-red-100 transition-colors"
+                    aria-label={`Cancel editing ${student.firstName} ${student.lastName}`}
+                    onClick={() => {
+                      row.original._onEditModeChange?.(student.id, false)
+                    }}
+                  >
+                    <XCircle size={12} />
+                  </button>
+                ) : (
+                  <button
+                    className="w-6 h-6 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-100 transition-colors"
+                    aria-label={`Edit attendance for ${student.firstName} ${student.lastName}`}
+                    onClick={() => {
+                      row.original._onEditModeChange?.(student.id, true)
+                    }}
+                  >
+                    <Edit2 size={12} />
+                  </button>
+                )}
+              </div>
             )}
           </div>
         )
