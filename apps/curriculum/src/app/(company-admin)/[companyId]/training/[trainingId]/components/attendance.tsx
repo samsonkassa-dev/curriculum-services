@@ -164,20 +164,12 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
   // Handle session change
   const handleSessionChange = useCallback((newSessionId: string) => {
     if (newSessionId !== activeSessionId) {
-      if (hasUnsavedChanges) {
-        const confirmed = window.confirm("You have unsaved attendance changes for a student. Do you want to discard them?");
-        if (confirmed) {
-          setActiveSessionId(newSessionId)
-          dispatchAttendance({ type: 'reset' })
-          setEditingStudents(new Set()) // Clear edit states
-        }
-      } else {
-        setActiveSessionId(newSessionId)
-        dispatchAttendance({ type: 'reset' })
-        setEditingStudents(new Set()) // Clear edit states
-      }
+      // Always allow session change, no confirmation dialog
+      setActiveSessionId(newSessionId)
+      dispatchAttendance({ type: 'reset' })
+      setEditingStudents(new Set()) // Clear edit states
     }
-  }, [activeSessionId, hasUnsavedChanges])
+  }, [activeSessionId])
 
   // Fetch students for the active cohort (not session)
   const { 
@@ -229,6 +221,31 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
   }, [attendanceResponse, hasUnsavedChanges]); 
 
   const students = studentData?.trainees || [];
+
+  // Get students with unsaved changes (comparing local state vs API state)
+  const studentsWithChanges = useMemo(() => {
+    return Object.keys(attendanceData).filter(studentId => {
+      const localRecord = attendanceData[studentId];
+      if (!localRecord || localRecord.status === undefined) return false;
+      
+      // Find the corresponding saved attendance record from API
+      const apiRecord = attendanceResponse?.attendance?.find(
+        record => record.trainee?.id === studentId
+      );
+      
+      // If no API record exists, this is a new unsaved change
+      if (!apiRecord) return true;
+      
+      // Compare local state with API state
+      const apiStatus = apiRecord.isPresent ? 'present' : 'absent';
+      const apiComment = apiRecord.comment || '';
+      
+      const hasStatusChange = localRecord.status !== apiStatus;
+      const hasCommentChange = (localRecord.comment || '') !== apiComment;
+      
+      return hasStatusChange || hasCommentChange;
+    });
+  }, [attendanceData, attendanceResponse]);
   
   // Handle student selection for multi-select
   const handleStudentSelection = useCallback((studentId: string, selected: boolean) => {
@@ -252,6 +269,7 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
       } else {
         newSet.delete(studentId)
         // If canceling edit, remove any unsaved changes for this student
+        // This will revert to the API state
         dispatchAttendance({ type: 'clearSaved', studentIds: [studentId] })
       }
       return newSet
@@ -313,7 +331,8 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
       _onEditModeChange: handleEditModeChange,
       _isProcessing: pendingSubmissions.includes(student.id),
       _isSelected: selectedStudents.has(student.id),
-      _isEditing: editingStudents.has(student.id)
+      _isEditing: editingStudents.has(student.id),
+      _hasUnsavedChanges: studentsWithChanges.includes(student.id)
     }
   }), [
     students, 
@@ -327,7 +346,8 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
     handleEditModeChange,
     pendingSubmissions,
     selectedStudents,
-    editingStudents
+    editingStudents,
+    studentsWithChanges
   ]);
   
   // Filter students based on search query - memoized to prevent recalculation
@@ -363,30 +383,61 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
   const { mutate: submitAttendance, isPending: isSavingAttendance } = useSubmitAttendance();
   const { mutate: submitBulkAttendance, isPending: isSavingBulkAttendance } = useSubmitBulkAttendance();
 
-  // Get students with unsaved changes (comparing local state vs API state)
-  const studentsWithChanges = useMemo(() => {
-    return Object.keys(attendanceData).filter(studentId => {
-      const localRecord = attendanceData[studentId];
-      if (!localRecord || localRecord.status === undefined) return false;
-      
-      // Find the corresponding saved attendance record from API
-      const apiRecord = attendanceResponse?.attendance?.find(
-        record => record.trainee?.id === studentId
-      );
-      
-      // If no API record exists, this is a new unsaved change
-      if (!apiRecord) return true;
-      
-      // Compare local state with API state
-      const apiStatus = apiRecord.isPresent ? 'present' : 'absent';
-      const apiComment = apiRecord.comment || '';
-      
-      const hasStatusChange = localRecord.status !== apiStatus;
-      const hasCommentChange = (localRecord.comment || '') !== apiComment;
-      
-      return hasStatusChange || hasCommentChange;
-    });
-  }, [attendanceData, attendanceResponse]);
+  // Handle save attendance for individual student (used in edit mode)
+  const handleSaveIndividualAttendance = useCallback(async (studentId: string) => {
+    if (!activeSessionId || !attendanceData[studentId]) return;
+
+    const attendanceToSave = attendanceData[studentId];
+    const studentToSave = students.find(s => s.id === studentId);
+    const studentName = studentToSave ? `${studentToSave.firstName} ${studentToSave.lastName}` : `Student ID ${studentId}`;
+    
+    if (!attendanceToSave.status) {
+      toast.error("Cannot Save", {
+        description: "Please mark the student as 'Present' or 'Absent' before saving."
+      });
+      return;
+    }
+
+    setIsSaving(true);
+    
+    submitAttendance(
+      {
+        traineeId: studentId,
+        sessionId: activeSessionId,
+        present: attendanceToSave.status === 'present',
+        comment: attendanceToSave.comment || ''
+      },
+      {
+        onSuccess: async () => {
+          toast.success(`Attendance saved for ${studentName}`);
+          // Clear local state for this saved student
+          dispatchAttendance({ type: 'clearSaved', studentIds: [studentId] });
+          // Clear selection for this specific student only
+          setSelectedStudents(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(studentId);
+            return newSet;
+          });
+          // Exit edit mode for this student
+          setEditingStudents(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(studentId);
+            return newSet;
+          });
+          await Promise.all([refetchStudents(), refetchAttendance()]);
+        },
+        onError: (error) => {
+          console.log("Error saving attendance:", error);
+          toast.error("Error saving attendance", {
+            description: `Could not save attendance for ${studentName}. Please try again.`
+          });
+        },
+        onSettled: () => {
+          setIsSaving(false);
+        }
+      }
+    );
+  }, [activeSessionId, attendanceData, students, submitAttendance, refetchStudents, refetchAttendance]);
 
   // Handle save attendance - supports both single and bulk
   const handleSaveAttendance = useCallback(async () => {
@@ -515,8 +566,8 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
 
   // Memoize the attendance columns to prevent recreation on each render
   const memoizedColumns = useMemo(() => 
-    createAttendanceColumns(activeSessionId, canEditAssessment, currentSession, trainingId, [], hasUnsavedChanges, submittedAttendanceIds),
-    [activeSessionId, canEditAssessment, currentSession, trainingId, hasUnsavedChanges, submittedAttendanceIds, isLoadingAuth]
+    createAttendanceColumns(activeSessionId, canEditAssessment, currentSession, trainingId, [], hasUnsavedChanges, submittedAttendanceIds, handleSaveIndividualAttendance),
+    [activeSessionId, canEditAssessment, currentSession, trainingId, hasUnsavedChanges, submittedAttendanceIds, handleSaveIndividualAttendance, isLoadingAuth]
   );
 
   // Comprehensive loading states

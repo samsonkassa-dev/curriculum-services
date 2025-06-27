@@ -36,6 +36,7 @@ export interface AttendanceStudent {
   _onSelectionChange?: (id: string, selected: boolean) => void
   _isEditing?: boolean // Track if this student is in edit mode
   _onEditModeChange?: (id: string, editing: boolean) => void
+  _hasUnsavedChanges?: boolean // Track if this student has unsaved changes
   [key: string]: string | 'present' | 'absent' | null | undefined | ((id: string, value: string) => void) | ((id: string, status: 'present' | 'absent') => void) | ((id: string, selected: boolean) => void) | ((id: string, editing: boolean) => void) | boolean
 }
 
@@ -116,7 +117,8 @@ export const createAttendanceColumns = (
   trainingId?: string,
   extras: ColumnDef<AttendanceStudent>[] = [],
   hasUnsavedChanges: boolean = false,
-  submittedAttendanceIds: Set<string> = new Set()
+  submittedAttendanceIds: Set<string> = new Set(),
+  onSaveIndividualAttendance?: (studentId: string) => void
 ) => {
   const columns: ColumnDef<AttendanceStudent>[] = [
     {
@@ -205,17 +207,17 @@ export const createAttendanceColumns = (
         
         // Visual enhancement - container for attendance buttons
         const attendanceContainerClass = hasAttendance 
-          ? "p-1 rounded-md bg-opacity-20 border border-gray-200" 
+          ? "rounded-md bg-opacity-20 border border-gray-200" 
           : ""
         
         return (
-          <div className={`flex gap-2 items-center ${attendanceContainerClass} ${hasSubmittedAttendance ? 'opacity-75' : ''}`}>
+          <div className={`flex gap-2 items-center w-72 px-4 py-2 ${attendanceContainerClass} ${hasSubmittedAttendance && !isEditing ? 'opacity-75' : ''} ${isEditing ? 'ring-2 ring-blue-300 bg-blue-50 rounded-lg' : ''}`}>
             <button 
-              className={`w-6 h-6 rounded-full ${
+              className={`w-7 h-7 rounded-full ${
                 student.attendance === 'present' 
                   ? 'bg-[#ECFDF3] ring-2 ring-[#037847] shadow-sm' 
                   : 'bg-[#F2F4F7]'
-              } flex items-center justify-center transition-all ${isDisabled ? 'cursor-not-allowed' : ''}`}
+              } flex items-center justify-center transition-all flex-shrink-0 ${isDisabled ? 'cursor-not-allowed' : ''}`}
               aria-label={`Mark ${student.firstName} ${student.lastName} as present`}
               onClick={() => {
                 if (!isDisabled && row.original._onAttendanceChange) {
@@ -224,14 +226,14 @@ export const createAttendanceColumns = (
               }}
               disabled={isDisabled}
             >
-              <Check size={12} className={`${student.attendance === 'present' ? 'text-[#037847] font-bold' : 'text-gray-400'}`} />
+              <Check size={14} className={`${student.attendance === 'present' ? 'text-[#037847] font-bold' : 'text-gray-400'}`} />
             </button>
             <button 
-              className={`w-6 h-6 rounded-full ${
+              className={`w-7 h-7 rounded-full ${
                 student.attendance === 'absent' 
                   ? 'bg-[rgba(243,88,88,0.47)] ring-2 ring-[#D03710] shadow-sm' 
                   : 'bg-[#F2F4F7]'
-              } flex items-center justify-center transition-all ${isDisabled ? 'cursor-not-allowed' : ''}`}
+              } flex items-center justify-center transition-all flex-shrink-0 ${isDisabled ? 'cursor-not-allowed' : ''}`}
               aria-label={`Mark ${student.firstName} ${student.lastName} as absent`}
               onClick={() => {
                 if (!isDisabled && row.original._onAttendanceChange) {
@@ -240,19 +242,24 @@ export const createAttendanceColumns = (
               }}
               disabled={isDisabled}
             >
-              <X size={12} className={`${student.attendance === 'absent' ? 'text-[#D03710] font-bold' : 'text-gray-400'}`} />
+              <X size={14} className={`${student.attendance === 'absent' ? 'text-[#D03710] font-bold' : 'text-gray-400'}`} />
             </button>
             
             {/* Status indicator */}
             {hasAttendance && (
-              <div className="ml-1 text-xs font-medium flex items-center gap-1">
+              <div className="ml-1 text-xs font-medium flex items-center gap-1.5">
                 {student.attendance === 'present' ? (
-                  <span className="text-green-700">Present</span>
+                  <span className="text-green-700 text-xs font-medium">Present</span>
                 ) : (
-                  <span className="text-red-700">Absent</span>
+                  <span className="text-red-700 text-xs font-medium">Absent</span>
                 )}
-                {hasSubmittedAttendance && (
-                  <span className="text-xs text-gray-500 bg-gray-100 px-1 py-0.5 rounded-full">
+                {isEditing && (
+                  <span className="text-[10px] text-blue-600 bg-blue-100 px-2 py-1 rounded-full leading-none font-medium">
+                    Editing
+                  </span>
+                )}
+                {hasSubmittedAttendance && !isEditing && (
+                  <span className="text-[10px] text-gray-500 bg-gray-100 px-2 py-1 rounded-full leading-none font-medium">
                     Submitted
                   </span>
                 )}
@@ -271,28 +278,43 @@ export const createAttendanceColumns = (
               />
             )}
             
-            {/* Edit/Cancel button - only show if attendance exists and can edit */}
+            {/* Edit/Cancel/Save buttons - only show if attendance exists and can edit */}
             {hasAttendance && hasSubmittedAttendance && row.original._onEditModeChange && (
-              <div className="ml-2">
+              <div className="ml-2 flex gap-1">
                 {isEditing ? (
-                  <button
-                    className="w-6 h-6 rounded-full bg-red-50 text-red-600 flex items-center justify-center hover:bg-red-100 transition-colors"
-                    aria-label={`Cancel editing ${student.firstName} ${student.lastName}`}
-                    onClick={() => {
-                      row.original._onEditModeChange?.(student.id, false)
-                    }}
-                  >
-                    <XCircle size={12} />
-                  </button>
+                  <>
+                    {/* Save button - only show if there are unsaved changes */}
+                    {student._hasUnsavedChanges && onSaveIndividualAttendance && (
+                      <button
+                        className="w-7 h-7 rounded-full bg-green-50 text-green-600 flex items-center justify-center hover:bg-green-100 transition-colors flex-shrink-0"
+                        aria-label={`Save changes for ${student.firstName} ${student.lastName}`}
+                        onClick={() => {
+                          onSaveIndividualAttendance(student.id)
+                        }}
+                      >
+                        <Save size={14} />
+                      </button>
+                    )}
+                    {/* Cancel button */}
+                    <button
+                      className="w-7 h-7 rounded-full bg-red-50 text-red-600 flex items-center justify-center hover:bg-red-100 transition-colors flex-shrink-0"
+                      aria-label={`Cancel editing ${student.firstName} ${student.lastName}`}
+                      onClick={() => {
+                        row.original._onEditModeChange?.(student.id, false)
+                      }}
+                    >
+                      <XCircle size={14} />
+                    </button>
+                  </>
                 ) : (
                   <button
-                    className="w-6 h-6 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-100 transition-colors"
+                    className="w-7 h-7 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-100 transition-colors flex-shrink-0"
                     aria-label={`Edit attendance for ${student.firstName} ${student.lastName}`}
                     onClick={() => {
                       row.original._onEditModeChange?.(student.id, true)
                     }}
                   >
-                    <Edit2 size={12} />
+                    <Edit2 size={14} />
                   </button>
                 )}
               </div>
