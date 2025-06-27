@@ -211,7 +211,7 @@ export const createAttendanceColumns = (
           : ""
         
         return (
-          <div className={`flex gap-2 items-center w-72 px-4 py-2 ${attendanceContainerClass} ${hasSubmittedAttendance && !isEditing ? 'opacity-75' : ''} ${isEditing ? 'ring-2 ring-blue-300 bg-blue-50 rounded-lg' : ''}`}>
+          <div className={`flex gap-2 items-center w-80 px-4 py-2 ${attendanceContainerClass} ${hasSubmittedAttendance && !isEditing ? 'opacity-75' : ''} ${isEditing ? 'ring-2 ring-blue-300 bg-blue-50 rounded-lg' : ''}`}>
             <button 
               className={`w-7 h-7 rounded-full ${
                 student.attendance === 'present' 
