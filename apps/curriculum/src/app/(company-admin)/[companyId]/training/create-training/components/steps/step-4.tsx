@@ -12,12 +12,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Check, ChevronsUpDown } from 'lucide-react'
 import { GenderSlider } from '@/components/ui/gender-slider'
 import { Input } from '@/components/ui/input'
-
-interface BaseItem {
-  id: string
-  name: string
-  description: string
-}
+import { BaseItem } from '@/types/curriculum'
 
 export function CreateTrainingStep4({ onNext, onBack, onCancel, initialData, isEditing = false }: StepProps) {
   // Fetch all base data - enabled for editing to ensure all data is available

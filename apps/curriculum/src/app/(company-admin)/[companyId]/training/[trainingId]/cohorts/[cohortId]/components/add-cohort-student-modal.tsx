@@ -15,6 +15,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useStudents, useAddStudent, StudentFilters } from '@/lib/hooks/useStudents';
+import { useSingleCascadingLocation } from '@/lib/hooks/useCascadingLocation';
 import { useDebounce } from '@/lib/hooks/useDebounce';
 import { Loading } from '@/components/ui/loading';
 import { StudentDataTable } from '../../../components/students/student-data-table';
@@ -185,12 +186,16 @@ function AddCohortStudentModalComponent({
 
   // Get base data for filters
   const {
-    countries,
-    regions,
-    zones,
     languages,
     academicLevels,
   } = useAddStudent();
+  
+  // Get location data from cascading hook
+  const {
+    countries,
+    regions,
+    zones
+  } = useSingleCascadingLocation();
 
   // Filter data based on selections (client-side filtering for hierarchical relationships)
   const availableRegions = useMemo(() => {

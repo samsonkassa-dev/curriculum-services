@@ -33,20 +33,24 @@ import { sessionSchema, SessionFormValues, CustomCreateSessionData } from "./ses
 import { toast } from "sonner"
 import { SessionCompensationSection } from "./session-compensation-section"
 import { Loading } from "@/components/ui/loading"
+import { TimePicker } from "./time-picker"
 
-// Helper function to format Date to YYYY-MM-DD string
+// Helper function to format Date to YYYY-MM-DD string using UTC date
 const formatDateForInput = (date: Date | null | undefined): string => {
   if (!date) return ""
-  // Adjust for timezone offset before formatting
-  const adjustedDate = new Date(date.getTime() - date.getTimezoneOffset() * 60000)
-  return adjustedDate.toISOString().split("T")[0]
+  // Use UTC date components to maintain consistency with UTC time handling
+  const year = date.getUTCFullYear()
+  const month = (date.getUTCMonth() + 1).toString().padStart(2, '0')
+  const day = date.getUTCDate().toString().padStart(2, '0')
+  return `${year}-${month}-${day}`
 }
 
-// Helper function to format Date to HH:MM string
+// Helper function to format Date to HH:MM string using UTC time
 const formatTimeForInput = (date: Date | null | undefined): string => {
   if (!date) return ""
-  const hours = date.getHours().toString().padStart(2, '0')
-  const minutes = date.getMinutes().toString().padStart(2, '0')
+  // Use UTC methods to get the time as stored (UTC) without timezone conversion
+  const hours = date.getUTCHours().toString().padStart(2, '0')
+  const minutes = date.getUTCMinutes().toString().padStart(2, '0')
   return `${hours}:${minutes}`
 }
 
@@ -55,11 +59,21 @@ const parseDate = (dateString: string): Date => {
   return new Date(dateString)
 }
 
-// Helper function to combine date and time into a single Date object
+// Helper function to combine date and time into a single Date object in UTC
 const combineDateAndTime = (date: Date, timeString: string): Date => {
   const [hours, minutes] = timeString.split(':').map(Number)
-  const combined = new Date(date)
-  combined.setHours(hours, minutes, 0, 0)
+  
+  // Get the date components in local timezone
+  const year = date.getFullYear()
+  const month = date.getMonth()
+  const day = date.getDate()
+  
+  // Create a new Date object using UTC methods to avoid timezone conversion
+  // This ensures the selected time is stored as UTC without adjustment
+  const combined = new Date()
+  combined.setUTCFullYear(year, month, day)
+  combined.setUTCHours(hours, minutes, 0, 0)
+  
   return combined
 }
 
@@ -569,34 +583,9 @@ export function SessionForm({ trainingId, companyId, cohortId, sessionId, onSucc
                             <div className="space-y-2">
                               {/* Current module's lessons */}
                               {moduleIdToFetch && lessonsByModule && lessonsByModule.length > 0 && (
-                                lessonsByModule.map((lesson) => (
-                                  <div key={lesson.id} className="flex items-center space-x-2">
-                                    <Checkbox
-                                      id={lesson.id}
-                                      checked={field.value.includes(lesson.id)}
-                                      onCheckedChange={(checked) => {
-                                        if (checked) {
-                                          field.onChange([...field.value, lesson.id])
-                                        } else {
-                                          field.onChange(field.value.filter((id) => id !== lesson.id))
-                                        }
-                                      }}
-                                    />
-                                    <label
-                                      htmlFor={lesson.id}
-                                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                                    >
-                                      {lesson.name}
-                                    </label>
-                                  </div>
-                                ))
-                              )}
-
-                              {/* Lessons from all other selected modules */}
-                              {Object.entries(allLessonsByModule)
-                                .filter(([id]) => id !== moduleIdToFetch && selectedModuleIds.includes(id))
-                                .flatMap(([moduleId, lessons]) => 
-                                  lessons.map((lesson) => (
+                                lessonsByModule.map((lesson) => {
+                                  const currentModule = modules.find(m => m.id === moduleIdToFetch)
+                                  return (
                                     <div key={lesson.id} className="flex items-center space-x-2">
                                       <Checkbox
                                         id={lesson.id}
@@ -611,14 +600,49 @@ export function SessionForm({ trainingId, companyId, cohortId, sessionId, onSucc
                                       />
                                       <label
                                         htmlFor={lesson.id}
-                                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex-1"
                                       >
                                         {lesson.name}
                                       </label>
+                                      <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                                        {currentModule?.name || 'Unknown Module'}
+                                      </span>
+                                    </div>
+                                  )
+                                })
+                              )}
+
+                              {/* Lessons from all other selected modules */}
+                              {Object.entries(allLessonsByModule)
+                                .filter(([id]) => id !== moduleIdToFetch && selectedModuleIds.includes(id))
+                                .flatMap(([moduleId, lessons]) => {
+                                  const moduleForLessons = modules.find(m => m.id === moduleId)
+                                  return lessons.map((lesson) => (
+                                    <div key={lesson.id} className="flex items-center space-x-2">
+                                      <Checkbox
+                                        id={lesson.id}
+                                        checked={field.value.includes(lesson.id)}
+                                        onCheckedChange={(checked) => {
+                                          if (checked) {
+                                            field.onChange([...field.value, lesson.id])
+                                          } else {
+                                            field.onChange(field.value.filter((id) => id !== lesson.id))
+                                          }
+                                        }}
+                                      />
+                                      <label
+                                        htmlFor={lesson.id}
+                                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer flex-1"
+                                      >
+                                        {lesson.name}
+                                      </label>
+                                      <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                                        {moduleForLessons?.name || 'Unknown Module'}
+                                      </span>
                                     </div>
                                   ))
-                                )
-                              }
+                                }
+                              )}
 
                               {/* Show message when no lessons are available */}
                               {(!lessonsByModule || lessonsByModule.length === 0) && 
@@ -702,9 +726,10 @@ export function SessionForm({ trainingId, companyId, cohortId, sessionId, onSucc
                       <FormItem>
                         <FormLabel>Start Time</FormLabel>
                         <FormControl>
-                          <Input
-                            type="time"
-                            {...field}
+                          <TimePicker
+                            value={field.value}
+                            onChange={field.onChange}
+                            placeholder="Select start time"
                           />
                         </FormControl>
                         <FormMessage />
@@ -743,9 +768,10 @@ export function SessionForm({ trainingId, companyId, cohortId, sessionId, onSucc
                       <FormItem>
                         <FormLabel>End Time</FormLabel>
                         <FormControl>
-                          <Input
-                            type="time"
-                            {...field}
+                          <TimePicker
+                            value={field.value}
+                            onChange={field.onChange}
+                            placeholder="Select end time"
                           />
                         </FormControl>
                         <FormMessage />
@@ -798,9 +824,7 @@ export function SessionForm({ trainingId, companyId, cohortId, sessionId, onSucc
                       disabled={isLoadingVenues}
                     >
                       <SelectTrigger className="w-full">
-                        <SelectValue>
-                          {venuesData?.venues?.find(v => v.id === field.value)?.name || "Select a venue"}
-                        </SelectValue>
+                        <SelectValue placeholder="Select a venue" />
                       </SelectTrigger>
                       <SelectContent>
                         {isLoadingVenues ? (

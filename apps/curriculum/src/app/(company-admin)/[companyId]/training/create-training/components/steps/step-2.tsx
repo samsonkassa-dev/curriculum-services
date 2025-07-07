@@ -8,16 +8,11 @@ import { Input } from "@/components/ui/input"
 import { Check, ChevronsUpDown, Search } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { cn } from '@/lib/utils'
-import { useBaseData } from '@/lib/hooks/useBaseData'
+import { useCascadingLocation } from '@/lib/hooks/useCascadingLocation'
 import { useDebounce } from '@/lib/hooks/useDebounce'
 import { StepProps } from '../types'
 import { TrainingFormData } from '@/types/training-form'
-
-interface BaseItem {
-  id: string;
-  name: string;
-  description: string;
-}
+import { BaseItem } from '@/types/curriculum'
 
 interface Region extends BaseItem {
   country: BaseItem;
@@ -60,28 +55,20 @@ export function CreateTrainingStep2({ onNext, onBack, onCancel, isEditing = fals
   const selectedZoneIds = watch('zoneIds') || [];
   const selectedCityIds = watch('cityIds') || [];
   
-  // Fetch all available countries (no pagination for forms)
-  const { data: allCountries, isLoading: isLoadingCountries } = useBaseData('country', { 
-    enabled: true,
-    disablePagination: true 
-  });
-  
-  // Fetch all regions only when countries are selected
-  const { data: allRegions, isLoading: isLoadingRegions } = useBaseData('region', { 
-    enabled: selectedCountryIds.length > 0,
-    disablePagination: true
-  });
-  
-  // Fetch all zones only when regions are selected
-  const { data: allZones, isLoading: isLoadingZones } = useBaseData('zone', { 
-    enabled: selectedRegionIds.length > 0,
-    disablePagination: true
-  });
-  
-  // Fetch all cities only when zones are selected
-  const { data: allCities, isLoading: isLoadingCities } = useBaseData('city', { 
-    enabled: selectedZoneIds.length > 0,
-    disablePagination: true
+  // Use cascading location hook
+  const { 
+    countries,
+    regions: allRegions,
+    zones: allZones, 
+    cities: allCities,
+    isLoadingCountries,
+    isLoadingRegions,
+    isLoadingZones,
+    isLoadingCities
+  } = useCascadingLocation({
+    selectedCountryIds,
+    selectedRegionIds,
+    selectedZoneIds
   });
 
   // Filter data based on selections (client-side filtering for hierarchical relationships)
@@ -98,7 +85,7 @@ export function CreateTrainingStep2({ onNext, onBack, onCancel, isEditing = fals
   );
 
   // Filter data based on search
-  const filteredCountries = (allCountries || []).filter((country: BaseItem) =>
+  const filteredCountries = (countries || []).filter((country: BaseItem) =>
     country.name.toLowerCase().includes(debouncedCountrySearch.toLowerCase())
   );
   
@@ -218,7 +205,7 @@ export function CreateTrainingStep2({ onNext, onBack, onCancel, isEditing = fals
                 <div className="flex flex-wrap gap-1 max-w-[calc(100%-2rem)] overflow-hidden">
                   {selectedCountryIds.length > 0 ? (
                     selectedCountryIds.map(countryId => {
-                      const country = allCountries?.find((c: BaseItem) => c.id === countryId);
+                      const country = countries?.find((c: BaseItem) => c.id === countryId);
                       return (
                         <Badge key={countryId} variant="pending" className="text-xs">
                           {country?.name}

@@ -12,11 +12,14 @@ export interface StepProps {
     zoneIds?: string[];
     cityIds?: string[];
     duration?: number;
-    durationType?: 'DAYS' | 'WEEKS' | 'MONTHS' | 'HOURS';
+    durationType?: 'MINUTES' | 'HOURS' | 'DAYS' | 'WEEKS' | 'MONTHS';
     deliveryMethod?: 'BLENDED' | 'OFFLINE' | 'VIRTUAL';
+    startDate?: string;
+    endDate?: string;
     trainingTypeId?: string;
     totalParticipants?: number;
     trainingPurposeIds?: string[];
+    certificateDescription?: string;
     ageGroupIds?: string[];
     genderPercentages?: Array<{
       gender: "MALE" | "FEMALE";

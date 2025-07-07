@@ -12,9 +12,11 @@ interface CreateTrainingData {
   zoneIds: string[];
   cityIds: string[];
   duration: number;
-  durationType: 'HOURS' | 'DAYS' | 'WEEKS' | 'MONTHS';
+  durationType: 'MINUTES' | 'HOURS' | 'DAYS' | 'WEEKS' | 'MONTHS';
   trainingTypeId: string;
   deliveryMethod: 'BLENDED' | 'OFFLINE' | 'VIRTUAL';
+  startDate: string;
+  endDate: string;
   totalParticipants: number;
   ageGroupIds: string[];
   genderPercentages: Array<{
@@ -32,6 +34,7 @@ interface CreateTrainingData {
     percentage: number;
   }>;
   trainingPurposeIds: string[];
+  certificateDescription: string;
 }
 
 export function useCreateTraining() {
@@ -49,6 +52,7 @@ export function useCreateTraining() {
   const createTrainingMutation = useMutation({
     mutationFn: async (data: CreateTrainingData) => {
       const token = getCookie('token');
+      console.log(data);
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_API}/training`,
         data,

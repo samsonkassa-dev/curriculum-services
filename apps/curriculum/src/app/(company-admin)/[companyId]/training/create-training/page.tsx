@@ -55,7 +55,10 @@ export default function CreateTraining() {
       marginalizedGroupPercentages: [],
       economicBackgroundIds: [],
       academicQualificationIds: [],
-      trainingPurposeIds: []
+      trainingPurposeIds: [],
+      startDate: "",
+      endDate: "",
+      certificateDescription: ""
     }
   });
 
@@ -76,6 +79,8 @@ export default function CreateTraining() {
       durationType: data.durationType,
       trainingTypeId: data.trainingTypeId,
       deliveryMethod: data.deliveryMethod,
+      startDate: data.startDate,
+      endDate: data.endDate,
       
       // Step 4
       totalParticipants: data.totalParticipants,
@@ -87,7 +92,8 @@ export default function CreateTraining() {
       marginalizedGroupPercentages: data.marginalizedGroupPercentages,
       
       // Step 5
-      trainingPurposeIds: data.trainingPurposeIds
+      trainingPurposeIds: data.trainingPurposeIds,
+      certificateDescription: data.certificateDescription
     };
 
     createTraining(transformedData, {

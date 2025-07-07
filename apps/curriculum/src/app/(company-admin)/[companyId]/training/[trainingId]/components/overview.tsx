@@ -229,6 +229,26 @@ export function Overview({ training }: { training: Training }) {
                   } ${training.durationType.toLowerCase()}`}</p>
                 </div>
                 
+                {/* Start Date */}
+                {training.startDate && (
+                  <div>
+                    <h3 className="text-gray-700 font-medium mb-1">Start Date:</h3>
+                    <p className="text-gray-600 text-sm md:text-lg">
+                      {new Date(training.startDate).toLocaleDateString()}
+                    </p>
+                  </div>
+                )}
+                
+                {/* End Date */}
+                {training.endDate && (
+                  <div>
+                    <h3 className="text-gray-700 font-medium mb-1">End Date:</h3>
+                    <p className="text-gray-600 text-sm md:text-lg">
+                      {new Date(training.endDate).toLocaleDateString()}
+                    </p>
+                  </div>
+                )}
+                
                 {/* Delivery Method */}
                 <div>
                   <h3 className="text-gray-700 font-medium mb-1">Delivery Method:</h3>
@@ -378,12 +398,22 @@ export function Overview({ training }: { training: Training }) {
               </div>
             </AccordionTrigger>
             <AccordionContent>
-              <div className="bg-white p-6">
-                <p className="text-gray-600 text-sm md:text-lg">
-                  {training.trainingPurposes.length > 0 
-                    ? training.trainingPurposes.map(purpose => purpose.name).join(", ")
-                    : "N/A"}
-                </p>
+              <div className="bg-white p-6 space-y-4">
+                <div>
+                  <h3 className="text-gray-700 font-medium mb-1">Training Purpose:</h3>
+                  <p className="text-gray-600 text-sm md:text-lg">
+                    {training.trainingPurposes.length > 0 
+                      ? training.trainingPurposes.map(purpose => purpose.name).join(", ")
+                      : "N/A"}
+                  </p>
+                </div>
+                
+                <div>
+                  <h3 className="text-gray-700 font-medium mb-1">Certificate Description:</h3>
+                  <p className="text-gray-600 text-sm md:text-lg">
+                    {training.certificateDescription || "N/A"}
+                  </p>
+                </div>
               </div>
             </AccordionContent>
           </AccordionItem>

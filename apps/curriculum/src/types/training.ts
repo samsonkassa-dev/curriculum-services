@@ -36,8 +36,10 @@ export interface Training {
   }[];
   countries?: BaseItem[];
   duration: number;
-  durationType: "HOURS" | "DAYS" | "WEEKS" | "MONTHS";
+  durationType: "MINUTES" | "HOURS" | "DAYS" | "WEEKS" | "MONTHS";
   deliveryMethod?: "BLENDED" | "OFFLINE" | "VIRTUAL";
+  startDate?: string;
+  endDate?: string;
   totalParticipants?: number;
   ageGroups: BaseItem[];
   genderPercentages: {
@@ -56,6 +58,7 @@ export interface Training {
   academicQualifications: BaseItem[];
   trainingPurposes: BaseItem[];
   trainingTags?: BaseItem[]; // Populated tags in response
+  certificateDescription?: string;
   companyProfile: {
     id: string;
     name: string;

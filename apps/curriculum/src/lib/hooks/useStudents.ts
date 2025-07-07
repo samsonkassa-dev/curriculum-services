@@ -257,48 +257,32 @@ export function useStudents(
 }
 
 export function useAddStudent() {
-  // Always fetch countries first
-  const { data: countries } = useBaseData('country', {
-    enabled: true,
-    disablePagination: true
-  })
-  
-  // Fetch all regions, zones, and cities without pagination for client-side filtering
-  // This matches the venue form pattern exactly
-  const { data: regions } = useBaseData('region', {
-    enabled: true,
-    disablePagination: true
-  })
-  
-  const { data: zones } = useBaseData('zone', {
-    enabled: true,
-    disablePagination: true
-  })
-  
-  const { data: cities } = useBaseData('city', {
-    enabled: true,
-    disablePagination: true
-  })
-  
+  // Fetch non-location base data with reasonable pagination
   const { data: languages } = useBaseData('language', {
     enabled: true,
-    disablePagination: true
+    page: 1,
+    pageSize: 50 // Most applications won't have more than 50 languages
   })
   
   const { data: academicLevels } = useBaseData('academic-level', {
     enabled: true,
-    disablePagination: true
+    page: 1,
+    pageSize: 20 // Academic levels are typically limited
   })
   
   const { data: disabilities } = useBaseData('disability', {
     enabled: true,
-    disablePagination: true
+    page: 1,
+    pageSize: 30 // Reasonable limit for disabilities
   })
   
   const { data: marginalizedGroups } = useBaseData('marginalized-group', {
     enabled: true,
-    disablePagination: true
+    page: 1,
+    pageSize: 20 // Reasonable limit for marginalized groups
   })
+
+  // Location data will be handled by cascading location hook in components
 
   // Get query client instance
   const queryClient = useQueryClient()
@@ -340,10 +324,6 @@ export function useAddStudent() {
   })
 
   return {
-    countries,
-    regions,
-    zones,
-    cities,
     languages,
     academicLevels,
     disabilities,

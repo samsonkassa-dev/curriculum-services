@@ -24,9 +24,11 @@ export type LocationFormData = z.infer<typeof locationSchema>
 // Step 3: Duration and Training Type
 export const durationSchema = z.object({
   duration: z.number().min(1, "Duration must be at least 1"),
-  durationType: z.enum(["DAYS", "WEEKS", "MONTHS", "HOURS"]),
+  durationType: z.enum(["MINUTES", "HOURS", "DAYS", "WEEKS", "MONTHS"]),
   trainingTypeId: z.string().min(1, "Training type is required"),
   deliveryMethod: z.enum(["BLENDED", "OFFLINE", "VIRTUAL"]),
+  startDate: z.string().min(1, "Start date is required"),
+  endDate: z.string().min(1, "End date is required"),
 })
 
 export type DurationFormData = z.infer<typeof durationSchema>
@@ -55,7 +57,8 @@ export type TargetAudienceFormData = z.infer<typeof targetAudienceSchema>
 
 // Step 5: Purpose
 export const purposeSchema = z.object({
-  trainingPurposeIds: z.array(z.string()).min(1, "At least one training purpose is required")
+  trainingPurposeIds: z.array(z.string()).min(1, "At least one training purpose is required"),
+  certificateDescription: z.string().min(1, "Certificate description is required")
 })
 
 export type PurposeFormData = z.infer<typeof purposeSchema>
@@ -95,6 +98,8 @@ export interface PreloadedFormData extends Partial<TrainingFormData> {
   preloadedTrainingType?: BaseItem
   preloadedTrainingTypes?: BaseItem[]
   deliveryMethod?: "BLENDED" | "OFFLINE" | "VIRTUAL"
+  startDate?: string
+  endDate?: string
   
   // Step 4
   totalParticipants?: number
@@ -106,6 +111,7 @@ export interface PreloadedFormData extends Partial<TrainingFormData> {
   
   // Step 5
   preloadedTrainingPurposes?: BaseItem[]
+  certificateDescription?: string
 }
 
 /**
@@ -270,9 +276,11 @@ export function apiToFormData(training: Training): PreloadedFormData {
     
     // Step 3
     duration: training.duration,
-    durationType: training.durationType as "DAYS" | "WEEKS" | "MONTHS" | "HOURS",
+    durationType: training.durationType as "MINUTES" | "HOURS" | "DAYS" | "WEEKS" | "MONTHS",
     deliveryMethod: normalizeDeliveryMethod(training.deliveryMethod) || "OFFLINE", // Default to ONLINE if not set
     trainingTypeId: training.trainingType?.id || "",
+    startDate: training.startDate || '',
+    endDate: training.endDate || '',
     preloadedTrainingType: training.trainingType,
     preloadedTrainingTypes: training.trainingType ? [training.trainingType] : [],
     
@@ -294,7 +302,8 @@ export function apiToFormData(training: Training): PreloadedFormData {
     
     // Step 5
     trainingPurposeIds: training.trainingPurposes.map(tp => tp.id),
-    preloadedTrainingPurposes: training.trainingPurposes
+    preloadedTrainingPurposes: training.trainingPurposes,
+    certificateDescription: training.certificateDescription || ''
   }
 }
 
@@ -345,6 +354,14 @@ export function formToApiData(formData: Partial<TrainingFormData>): Record<strin
     apiData.deliveryMethod = normalizeDeliveryMethod(formData.deliveryMethod)
   }
   
+  if (formData.startDate !== undefined) {
+    apiData.startDate = formData.startDate
+  }
+  
+  if (formData.endDate !== undefined) {
+    apiData.endDate = formData.endDate
+  }
+  
   if (formData.totalParticipants !== undefined) {
     apiData.totalParticipants = formData.totalParticipants
   }
@@ -387,6 +404,10 @@ export function formToApiData(formData: Partial<TrainingFormData>): Record<strin
   
   if (formData.trainingTagIds !== undefined) {
     apiData.trainingTagIds = formData.trainingTagIds
+  }
+  
+  if (formData.certificateDescription !== undefined) {
+    apiData.certificateDescription = formData.certificateDescription
   }
   
   return apiData

@@ -5,6 +5,7 @@ import { useUserRole } from "@/lib/hooks/useUserRole"
 import { Button } from "@/components/ui/button"
 import { Loading } from "@/components/ui/loading"
 import { useStudents, useAddStudent, useStudentById, useUpdateStudent, useDeleteStudent, useBulkDeleteStudents, useBulkImportStudentsByName, Student, CreateStudentData, CreateStudentByNameData, StudentFilters } from "@/lib/hooks/useStudents"
+import { useSingleCascadingLocation } from "@/lib/hooks/useCascadingLocation"
 import { toast } from "sonner"
 import { Plus, Upload, ArrowLeft, Trash2 } from "lucide-react"
 import Image from "next/image"
@@ -63,10 +64,6 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
   )
   
   const { 
-    countries,
-    regions,
-    zones,
-    cities, 
     languages, 
     academicLevels,
     disabilities,
@@ -74,6 +71,15 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
     addStudent,
     isLoading: isSubmitting
   } = useAddStudent()
+  
+  // Add cascading location hook for location data
+  const {
+    countries,
+    regions,
+    zones,
+    cities
+  } = useSingleCascadingLocation()
+  
   const { data: studentData, isLoading: isLoadingStudent } = useStudentById(
     isEditing && currentStudentId ? currentStudentId : ''
   )
@@ -728,10 +734,6 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
             validateStep={validateStep}
             onSubmit={onSubmit}
             languages={languages}
-            countries={countries}
-            regions={regions}
-            zones={zones}
-            cities={cities}
             academicLevels={academicLevels}
             disabilities={disabilities}
             marginalizedGroups={marginalizedGroups}

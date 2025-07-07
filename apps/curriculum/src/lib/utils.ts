@@ -41,27 +41,38 @@ export function decodeJWT(token: string | null): DecodedToken | null {
   }
 }
 
-// Format date string to display format (DD/MM/YYYY)
+// Format date string to display format (DD/MM/YYYY) in EAT timezone
 export function formatDateToDisplay(dateString: string): string {
   try {
     const date = new Date(dateString);
-    return `${date.getDate().toString().padStart(2, '0')}/${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getFullYear()}`;
+    // Convert to EAT (East Africa Time - UTC+3) using Intl.DateTimeFormat
+    const eatFormatter = new Intl.DateTimeFormat('en-GB', {
+      timeZone: 'Africa/Addis_Ababa', // EAT timezone
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+    
+    return eatFormatter.format(date);
   } catch (error) {
     console.error('Failed to format date:', error);
     return dateString;
   }
 }
 
-// Format time string to display format (HH:MM AM/PM)
+// Format time string to display format (HH:MM AM/PM) in EAT timezone
 export function formatTimeToDisplay(dateString: string): string {
   try {
     const date = new Date(dateString);
-    let hours = date.getHours();
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    const ampm = hours >= 12 ? 'PM' : 'AM';
-    hours = hours % 12;
-    hours = hours ? hours : 12; // the hour '0' should be '12'
-    return `${hours}:${minutes} ${ampm}`;
+    // Convert to EAT (East Africa Time - UTC+3) using Intl.DateTimeFormat
+    const eatFormatter = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Africa/Addis_Ababa', // EAT timezone
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true
+    });
+    
+    return eatFormatter.format(date);
   } catch (error) {
     console.error('Failed to format time:', error);
     return '';

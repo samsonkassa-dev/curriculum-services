@@ -114,7 +114,7 @@ export default function SessionDetailPage() {
     <div className="space-y-1">
       <h3 className="text-sm font-medium mb-2 text-[#292827]">{label}</h3>
       <div className="bg-white border border-[#E4E4E4] p-3 rounded-md min-h-[48px] flex items-center">
-        <p className="text-sm text-[#565555]">{value}</p>
+        <div className="text-sm text-[#565555]">{value}</div>
       </div>
     </div>
   )

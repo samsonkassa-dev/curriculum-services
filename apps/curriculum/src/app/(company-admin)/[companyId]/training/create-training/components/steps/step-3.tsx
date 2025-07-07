@@ -4,6 +4,7 @@ import { useFormContext } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { DatePicker } from '@/components/ui/date-picker'
 import { StepProps } from '../types'
 import { TrainingFormData } from '@/types/training-form'
 import { BaseItem } from '@/types/curriculum'
@@ -32,8 +33,20 @@ export function CreateTrainingStep3({ onNext, onBack, onCancel, initialData, isE
   const durationType = watch('durationType')
   const trainingTypeId = watch('trainingTypeId')
   const deliveryMethod = watch('deliveryMethod')
+  const startDateString = watch('startDate') || initialData?.startDate || ''
+  const endDateString = watch('endDate') || initialData?.endDate || ''
 
-  const handleDurationTypeChange = (value: "DAYS" | "WEEKS" | "MONTHS" | "HOURS") => {
+  // Convert strings to Date objects for DatePicker components
+  const startDate = startDateString ? new Date(startDateString) : undefined
+  const endDate = endDateString ? new Date(endDateString) : undefined
+
+  // Helper function to format date to YYYY-MM-DD string
+  const formatDateToString = (date: Date | undefined): string => {
+    if (!date) return ''
+    return date.toISOString().split('T')[0]
+  }
+
+  const handleDurationTypeChange = (value: "MINUTES" | "HOURS" | "DAYS" | "WEEKS" | "MONTHS") => {
     setValue('durationType', value, { shouldValidate: true })
   }
 
@@ -43,6 +56,16 @@ export function CreateTrainingStep3({ onNext, onBack, onCancel, initialData, isE
   
   const handleDeliveryMethodChange = (value: "BLENDED" | "OFFLINE" | "VIRTUAL") => {
     setValue('deliveryMethod', value, { shouldValidate: true })
+  }
+
+  const handleStartDateChange = (date: Date | undefined) => {
+    const dateString = formatDateToString(date)
+    setValue('startDate', dateString, { shouldValidate: true })
+  }
+
+  const handleEndDateChange = (date: Date | undefined) => {
+    const dateString = formatDateToString(date)
+    setValue('endDate', dateString, { shouldValidate: true })
   }
 
   return (
@@ -83,6 +106,7 @@ export function CreateTrainingStep3({ onNext, onBack, onCancel, initialData, isE
                 <SelectValue placeholder="Select duration type" />
               </SelectTrigger>
               <SelectContent>
+                <SelectItem value="MINUTES">Minutes</SelectItem>
                 <SelectItem value="HOURS">Hours</SelectItem>
                 <SelectItem value="DAYS">Days</SelectItem>
                 <SelectItem value="WEEKS">Weeks</SelectItem>
@@ -139,6 +163,51 @@ export function CreateTrainingStep3({ onNext, onBack, onCancel, initialData, isE
           )}
         </div>
 
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">
+              Start Date <span className="text-red-500">*</span>
+            </label>
+            <DatePicker
+              date={startDate}
+              setDate={handleStartDateChange}
+              placeholder="Select start date"
+              disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+              className="text-sm md:text-md h-12"
+            />
+            {errors.startDate && (
+              <p className="text-sm text-red-500">{errors.startDate.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-sm font-medium">
+              End Date <span className="text-red-500">*</span>
+            </label>
+            <DatePicker
+              date={endDate}
+              setDate={handleEndDateChange}
+              placeholder="Select end date"
+              disabled={(date) => {
+                const today = new Date()
+                today.setHours(0, 0, 0, 0)
+                
+                if (startDate) {
+                  const selectedStartDate = new Date(startDate)
+                  selectedStartDate.setHours(0, 0, 0, 0)
+                  return date < today || date < selectedStartDate
+                }
+                
+                return date < today
+              }}
+              className="text-sm md:text-md h-12"
+            />
+            {errors.endDate && (
+              <p className="text-sm text-red-500">{errors.endDate.message}</p>
+            )}
+          </div>
+        </div>
+
         {isEditing ? (
           <div className="flex justify-between pt-8 w-full">
             <div>
@@ -165,7 +234,7 @@ export function CreateTrainingStep3({ onNext, onBack, onCancel, initialData, isE
               <Button 
                 onClick={onNext}
                 className="bg-blue-500 text-white px-8"
-                disabled={!duration || !durationType || !trainingTypeId || !deliveryMethod}
+                disabled={!duration || !durationType || !trainingTypeId || !deliveryMethod || !startDateString || !endDateString}
                 type="button"
               >
                 Continue
@@ -173,14 +242,25 @@ export function CreateTrainingStep3({ onNext, onBack, onCancel, initialData, isE
             </div>
           </div>
         ) : (
-          <Button 
-            onClick={onNext}
-            className="bg-blue-500 text-white px-8 w-[25%] mx-auto"
-            disabled={!duration || !durationType || !trainingTypeId || !deliveryMethod}
-            type="button"
-          >
-            Continue
-          </Button>
+          <div className="flex justify-between pt-8 w-full">
+            {onBack && (
+              <Button 
+                onClick={onBack} 
+                variant="outline" 
+                type="button"
+              >
+                Back
+              </Button>
+            )}
+                         <Button 
+               onClick={onNext}
+               className="bg-blue-500 text-white px-8"
+                               disabled={!duration || !durationType || !trainingTypeId || !deliveryMethod || !startDateString || !endDateString}
+               type="button"
+             >
+               Continue
+             </Button>
+          </div>
         )}
       </div>
     </div>

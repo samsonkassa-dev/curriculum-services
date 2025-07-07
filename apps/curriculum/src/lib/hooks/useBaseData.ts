@@ -64,6 +64,10 @@ interface BaseDataOptions {
   pageSize?: number;
   // Option to disable pagination (useful for forms)
   disablePagination?: boolean;
+  // Cascading selects support
+  countryId?: string; // For filtering regions by country
+  regionId?: string; // For filtering zones by region
+  zoneId?: string; // For filtering cities by zone
 }
 
 interface ApiResponse {
@@ -80,7 +84,7 @@ export function useBaseData(type: BaseDataType, options?: BaseDataOptions) {
   const queryClient = useQueryClient();
   const page = options?.page || 1;
   const pageSize = options?.pageSize || 20;
-  const queryKey = ['base-data', type, options?.type, options?.subType, options?.disablePagination ? 'no-pagination' : page, options?.disablePagination ? 'no-pagination' : pageSize];
+  const queryKey = ['base-data', type, options?.type, options?.subType, options?.countryId, options?.regionId, options?.zoneId, options?.disablePagination ? 'no-pagination' : page, options?.disablePagination ? 'no-pagination' : pageSize];
   const responseKey = getResponseKey(type);
 
   // Query for fetching base data
@@ -96,6 +100,17 @@ export function useBaseData(type: BaseDataType, options?: BaseDataOptions) {
         if (options?.type) queryParams.push(`type=${options.type}`);
         if (type === 'assessment-type' && options?.subType) {
           queryParams.push(`sub-type=${options.subType}`);
+        }
+        
+        // Add cascading select parameters
+        if (options?.countryId && type === 'region') {
+          queryParams.push(`country-id=${options.countryId}`);
+        }
+        if (options?.regionId && type === 'zone') {
+          queryParams.push(`region-id=${options.regionId}`);
+        }
+        if (options?.zoneId && type === 'city') {
+          queryParams.push(`zone-id=${options.zoneId}`);
         }
         
         // Add pagination parameters only if pagination is not disabled
@@ -139,8 +154,8 @@ export function useBaseData(type: BaseDataType, options?: BaseDataOptions) {
         throw error;
       }
     },
-    staleTime: 60000, // 1 minute
-    gcTime: 300000, // 5 minutes
+    staleTime: Infinity, // Never goes stale - base data changes rarely
+    gcTime: 24 * 60 * 60 * 1000, // 24 hours in cache
     refetchOnWindowFocus: false,
     refetchOnMount: true,
     refetchOnReconnect: true,

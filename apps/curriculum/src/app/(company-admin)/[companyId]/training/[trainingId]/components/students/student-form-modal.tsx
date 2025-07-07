@@ -14,33 +14,6 @@ import { Button } from "@/components/ui/button"
 import { Form } from "@/components/ui/form"
 import { Loading } from "@/components/ui/loading"
 
-interface Country {
-  id: string
-  name: string
-  description: string
-}
-
-interface Region {
-  id: string
-  name: string
-  description: string
-  country: Country
-}
-
-interface Zone {
-  id: string
-  name: string
-  description: string
-  region: Region
-}
-
-interface City {
-  id: string
-  name: string
-  description: string
-  zone?: Zone
-}
-
 interface Language {
   id: string
   name: string
@@ -77,10 +50,6 @@ interface StudentFormModalProps {
   validateStep: () => Promise<boolean>
   onSubmit: (values: StudentFormValues) => Promise<void>
   languages: Language[]
-  countries: Country[]
-  regions: Region[]
-  zones: Zone[]
-  cities: City[]
   academicLevels: AcademicLevel[]
   disabilities: Disability[]
   marginalizedGroups: MarginalizedGroup[]
@@ -98,10 +67,6 @@ export function StudentFormModal({
   validateStep,
   onSubmit,
   languages,
-  countries,
-  regions,
-  zones,
-  cities,
   academicLevels,
   disabilities,
   marginalizedGroups
@@ -164,10 +129,6 @@ export function StudentFormModal({
                   {step === 2 && (
                     <ContactInfoForm 
                       form={form} 
-                      countries={countries}
-                      regions={regions}
-                      zones={zones}
-                      cities={cities} 
                     />
                   )}
                   {step === 3 && (

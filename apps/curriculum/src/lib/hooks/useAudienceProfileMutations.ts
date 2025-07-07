@@ -3,12 +3,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import axios from "axios"
 import { getCookie } from "@curriculum-services/auth"
-
-interface BaseItem {
-  id: string
-  name: string
-  description: string
-}
+import { BaseItem } from "@/types/curriculum"
 
 interface AudienceProfile {
   id: string

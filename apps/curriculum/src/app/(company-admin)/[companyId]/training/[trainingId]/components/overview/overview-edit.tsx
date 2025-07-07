@@ -46,6 +46,8 @@ export function OverviewEdit({ training, initialStep = 1, onSave, onCancel }: Ov
       duration: formData.duration || 1,
       durationType: formData.durationType || 'DAYS',
       deliveryMethod: formData.deliveryMethod || 'OFFLINE',
+      startDate: formData.startDate || '',
+      endDate: formData.endDate || '',
       trainingTypeId: formData.trainingTypeId || '',
       totalParticipants: formData.totalParticipants || 0,
       ageGroupIds: formData.ageGroupIds || [],
@@ -57,7 +59,8 @@ export function OverviewEdit({ training, initialStep = 1, onSave, onCancel }: Ov
       marginalizedGroupPercentages: formData.marginalizedGroupPercentages || [],
       economicBackgroundIds: formData.economicBackgroundIds || [],
       academicQualificationIds: formData.academicQualificationIds || [],
-      trainingPurposeIds: formData.trainingPurposeIds || []
+      trainingPurposeIds: formData.trainingPurposeIds || [],
+      certificateDescription: formData.certificateDescription || ''
     }
   })
 
@@ -131,6 +134,8 @@ export function OverviewEdit({ training, initialStep = 1, onSave, onCancel }: Ov
               duration: formData.duration,
               durationType: formData.durationType,
               deliveryMethod: formData.deliveryMethod,
+              startDate: formData.startDate,
+              endDate: formData.endDate,
               trainingTypeId: formData.trainingTypeId || '',
               preloadedTrainingType: formData.preloadedTrainingType,
               preloadedTrainingTypes: formData.preloadedTrainingTypes
@@ -161,7 +166,16 @@ export function OverviewEdit({ training, initialStep = 1, onSave, onCancel }: Ov
           />
         )
       case 5:
-        return <CreateTrainingStep5 {...stepProps} />
+        return (
+          <CreateTrainingStep5 
+            {...stepProps}
+            initialData={{
+              trainingPurposeIds: formData.trainingPurposeIds || [],
+              certificateDescription: formData.certificateDescription || '',
+              preloadedTrainingPurposes: formData.preloadedTrainingPurposes
+            }}
+          />
+        )
       default:
         return null
     }

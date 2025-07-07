@@ -3,18 +3,20 @@
 import { useFormContext } from 'react-hook-form'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Textarea } from '@/components/ui/textarea'
 import { useBaseData } from '@/lib/hooks/useBaseData'
 import { StepProps } from '../types'
 import { TrainingFormData } from '@/types/training-form'
 import { BaseItem } from '@/types/curriculum'
 
-export function CreateTrainingStep5({ onNext, onBack, onCancel, isSubmitting, isEditing = false }: StepProps) {
+export function CreateTrainingStep5({ onNext, onBack, onCancel, isSubmitting, isEditing = false, initialData }: StepProps) {
   const { data: trainingPurposes, isLoading } = useBaseData('training-purpose', { enabled: true });
   
-  const { watch, setValue } = useFormContext<TrainingFormData>();
+  const { watch, setValue, register, formState: { errors } } = useFormContext<TrainingFormData>();
   
-  const trainingPurposeIds = watch('trainingPurposeIds') || [];
+  const trainingPurposeIds = watch('trainingPurposeIds') || initialData?.trainingPurposeIds || [];
   const selectedPurposeId = trainingPurposeIds[0] || '';
+  const certificateDescription = watch('certificateDescription') || initialData?.certificateDescription || '';
 
   const handlePurposeChange = (value: string) => {
     setValue('trainingPurposeIds', [value], { shouldValidate: true });
@@ -54,6 +56,21 @@ export function CreateTrainingStep5({ onNext, onBack, onCancel, isSubmitting, is
           </Select>
         </div>
 
+        <div className="space-y-2">
+          <label className="text-sm font-medium">
+            Certificate Description <span className="text-red-500">*</span>
+          </label>
+          <Textarea
+            {...register('certificateDescription')}
+            placeholder="Describe what participants will receive upon completion..."
+            rows={4}
+            className="text-sm md:text-md"
+          />
+          {errors.certificateDescription && (
+            <p className="text-sm text-red-500">{errors.certificateDescription.message}</p>
+          )}
+        </div>
+
         {isEditing ? (
           <div className="flex justify-between pt-8 w-full">
             <div>
@@ -80,7 +97,7 @@ export function CreateTrainingStep5({ onNext, onBack, onCancel, isSubmitting, is
               <Button 
                 onClick={onNext}
                 className="bg-blue-500 text-white px-8"
-                disabled={!selectedPurposeId || isSubmitting}
+                disabled={!selectedPurposeId || !certificateDescription?.trim() || isSubmitting}
                 type="button"
               >
                 {isSubmitting ? 'Editing...' : 'Edit Training'}
@@ -101,7 +118,7 @@ export function CreateTrainingStep5({ onNext, onBack, onCancel, isSubmitting, is
             <Button 
               onClick={onNext}
               className="bg-blue-500 text-white px-8"
-              disabled={!selectedPurposeId || isSubmitting}
+              disabled={!selectedPurposeId || !certificateDescription?.trim() || isSubmitting}
               type="button"
             >
               {isSubmitting ? 'Creating...' : 'Create Training'}

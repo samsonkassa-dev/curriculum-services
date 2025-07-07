@@ -6,48 +6,51 @@ import { UseFormReturn } from "react-hook-form"
 import { StudentFormValues } from "./formSchemas"
 import { useEffect, useMemo, useState } from "react"
 import { useDebounce } from "@/lib/hooks/useDebounce"
+import { useSingleCascadingLocation } from "@/lib/hooks/useCascadingLocation"
+import { BaseItem } from "@/types/curriculum"
+
 import { cn } from "@/lib/utils"
 import { Check, ChevronsUpDown, Search } from "lucide-react"
 
-interface Country {
-  id: string
-  name: string
-  description: string
+interface Country extends BaseItem {
+  country?: never
 }
 
-interface Region {
-  id: string
-  name: string
-  description: string
+interface Region extends BaseItem {
   country: Country
 }
 
-interface Zone {
-  id: string
-  name: string
-  description: string
+interface Zone extends BaseItem {
   region: Region
 }
 
-interface City {
-  id: string
-  name: string
-  description: string
+interface City extends BaseItem {
   zone?: Zone
 }
 
 interface ContactInfoFormProps {
   form: UseFormReturn<StudentFormValues>
-  countries?: Country[]
-  regions?: Region[]
-  zones?: Zone[]
-  cities?: City[]
 }
 
-export function ContactInfoForm({ form, countries, regions, zones, cities }: ContactInfoFormProps) {
+export function ContactInfoForm({ form }: ContactInfoFormProps) {
   // Local state for cascading selects (not part of form schema) - exactly like venue form
   const [selectedCountryId, setSelectedCountryId] = useState("");
   const [selectedRegionId, setSelectedRegionId] = useState("");
+
+  // Get the selected zone ID from form to fetch cities
+  const selectedZoneId = form.watch("zoneId") || '';
+
+  // Use cascading location hook
+  const {
+    countries,
+    regions,
+    zones,
+    cities,
+    isLoadingCountries,
+    isLoadingRegions,
+    isLoadingZones,
+    isLoadingCities
+  } = useSingleCascadingLocation(selectedCountryId, selectedRegionId, selectedZoneId);
 
   // Popover states
   const [openCountries, setOpenCountries] = useState(false);
@@ -67,8 +70,7 @@ export function ContactInfoForm({ form, countries, regions, zones, cities }: Con
   const debouncedZoneSearch = useDebounce(zoneSearch, 300);
   const debouncedCitySearch = useDebounce(citySearch, 300);
 
-  // Watch form values for cascading selects
-  const selectedZoneId = form.watch("zoneId") || '';
+  // selectedZoneId is already declared above
   
   // Initialize local state from form values (for edit mode)
   useEffect(() => {
@@ -108,25 +110,25 @@ export function ContactInfoForm({ form, countries, regions, zones, cities }: Con
   // Filter data based on search
   const filteredCountries = useMemo(() => {
     if (!countries) return [];
-    return countries.filter((country) =>
+    return countries.filter((country: Country) =>
       country.name.toLowerCase().includes(debouncedCountrySearch.toLowerCase())
     );
   }, [countries, debouncedCountrySearch]);
   
   const filteredRegions = useMemo(() => {
-    return availableRegions.filter((region) =>
+    return availableRegions.filter((region: Region) =>
       region.name.toLowerCase().includes(debouncedRegionSearch.toLowerCase())
     );
   }, [availableRegions, debouncedRegionSearch]);
   
   const filteredZones = useMemo(() => {
-    return availableZones.filter((zone) =>
+    return availableZones.filter((zone: Zone) =>
       zone.name.toLowerCase().includes(debouncedZoneSearch.toLowerCase())
     );
   }, [availableZones, debouncedZoneSearch]);
   
   const filteredCities = useMemo(() => {
-    return availableCities.filter((city) =>
+    return availableCities.filter((city: City) =>
       city.name.toLowerCase().includes(debouncedCitySearch.toLowerCase())
     );
   }, [availableCities, debouncedCitySearch]);
@@ -188,26 +190,26 @@ export function ContactInfoForm({ form, countries, regions, zones, cities }: Con
   // Get display names for selected items
   const getSelectedCountryName = () => {
     if (!selectedCountryId || !countries) return "";
-    const country = countries.find(c => c.id === selectedCountryId);
+    const country = countries.find((c: Country) => c.id === selectedCountryId);
     return country?.name || "";
   };
 
   const getSelectedRegionName = () => {
     if (!selectedRegionId || !availableRegions) return "";
-    const region = availableRegions.find(r => r.id === selectedRegionId);
+    const region = availableRegions.find((r: Region) => r.id === selectedRegionId);
     return region?.name || "";
   };
 
   const getSelectedZoneName = () => {
     if (!selectedZoneId || !availableZones) return "";
-    const zone = availableZones.find(z => z.id === selectedZoneId);
+    const zone = availableZones.find((z: Zone) => z.id === selectedZoneId);
     return zone?.name || "";
   };
 
   const getSelectedCityName = () => {
     const cityId = form.watch("cityId");
     if (!cityId || !availableCities) return "";
-    const city = availableCities.find(c => c.id === cityId);
+    const city = availableCities.find((c: City) => c.id === cityId);
     return city?.name || "";
   };
 
@@ -347,7 +349,7 @@ export function ContactInfoForm({ form, countries, regions, zones, cities }: Con
                           Loading countries...
                         </div>
                       ) : filteredCountries.length > 0 ? (
-                        filteredCountries.map((country) => (
+                        filteredCountries.map((country: Country) => (
                           <div
                             key={country.id}
                             className={cn(
@@ -428,7 +430,7 @@ export function ContactInfoForm({ form, countries, regions, zones, cities }: Con
                     </div>
                     <div className="max-h-[200px] sm:max-h-[250px] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
                       {filteredRegions.length > 0 ? (
-                        filteredRegions.map((region) => (
+                        filteredRegions.map((region: Region) => (
                           <div
                             key={region.id}
                             className={cn(
@@ -512,7 +514,7 @@ export function ContactInfoForm({ form, countries, regions, zones, cities }: Con
                     </div>
                     <div className="max-h-[200px] sm:max-h-[250px] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
                       {filteredZones.length > 0 ? (
-                        filteredZones.map((zone) => (
+                        filteredZones.map((zone: Zone) => (
                           <div
                             key={zone.id}
                             className={cn(
@@ -593,7 +595,7 @@ export function ContactInfoForm({ form, countries, regions, zones, cities }: Con
                     </div>
                     <div className="max-h-[200px] sm:max-h-[250px] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
                       {filteredCities.length > 0 ? (
-                        filteredCities.map((city) => (
+                        filteredCities.map((city: City) => (
                           <div
                             key={city.id}
                             className={cn(
