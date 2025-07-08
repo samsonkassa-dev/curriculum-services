@@ -208,13 +208,13 @@ export function CSVImportContent({
       errors.zoneName = "Zone does not belong to the selected region"
     }
     
+    // City validation - optional field
     if (row.cityName) {
       const selectedCity = cities.find(c => c.name === row.cityName);
-      if (!selectedCity) {
-        errors.cityName = "Invalid city name"
-      } else if (selectedZone && selectedCity.zone && selectedCity.zone.name !== selectedZone.name) {
+      if (selectedCity && selectedZone && selectedCity.zone && selectedCity.zone.name !== selectedZone.name) {
         errors.cityName = "City does not belong to the selected zone"
       }
+      // Note: If city is not found, we ignore it (no error) since city is optional
     }
 
     // Validate disability names (only if provided)

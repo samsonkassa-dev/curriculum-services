@@ -72,12 +72,12 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
     isLoading: isSubmitting
   } = useAddStudent()
   
-  // Add cascading location hook for location data
+  // Add cascading location hook for location data (used by student form)
   const {
-    countries,
-    regions,
-    zones,
-    cities
+    countries: formCountries,
+    regions: formRegions,
+    zones: formZones,
+    cities: formCities
   } = useSingleCascadingLocation()
   
   const { data: studentData, isLoading: isLoadingStudent } = useStudentById(
@@ -86,7 +86,20 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
   const updateStudentMutation = useUpdateStudent()
   const deleteStudentMutation = useDeleteStudent()
   const bulkDeleteMutation = useBulkDeleteStudents()
-  const bulkImportMutation = useBulkImportStudentsByName()
+  
+  // Get bulk import hook with ALL location data for CSV validation
+  const {
+    countries: csvCountries,
+    regions: csvRegions,
+    zones: csvZones,
+    cities: csvCities,
+    languages: csvLanguages,
+    academicLevels: csvAcademicLevels,
+    disabilities: csvDisabilities,
+    marginalizedGroups: csvMarginalizedGroups,
+    bulkImportByName,
+    isLoading: isBulkImporting
+  } = useBulkImportStudentsByName()
 
   const form = useForm<StudentFormValues>({
     resolver: zodResolver(studentFormSchema),
@@ -399,14 +412,14 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
   const handleCSVImport = useCallback(async (students: CreateStudentByNameData[]) => {
     try {
       // Use the async version to wait for completion
-      await bulkImportMutation.bulkImportByNameAsync({ trainingId, studentsData: students })
+      await bulkImportByName({ trainingId, studentsData: students })
       // Only close import view after successful completion
       setShowImportView(false)
     } catch (error) {
       console.log("CSV import failed:", error)
       throw error // Re-throw to let CSVImportContent handle the error display
     }
-  }, [bulkImportMutation, trainingId])
+  }, [bulkImportByName, trainingId])
 
   const onSubmit = useCallback(async (values: StudentFormValues) => {
     const studentData = convertToCreateStudentData(values);
@@ -605,15 +618,15 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
             {/* CSV Import Content */}
             <CSVImportContent
               onImport={handleCSVImport}
-              isSubmitting={bulkImportMutation.isLoading}
-              languages={languages || []}
-              countries={countries || []}
-              regions={regions || []}
-              zones={zones || []}
-              cities={cities || []}
-              academicLevels={academicLevels || []}
-              disabilities={disabilities || []}
-              marginalizedGroups={marginalizedGroups || []}
+              isSubmitting={isBulkImporting}
+              languages={csvLanguages || []}
+              countries={csvCountries || []}
+              regions={csvRegions || []}
+              zones={csvZones || []}
+              cities={csvCities || []}
+              academicLevels={csvAcademicLevels || []}
+              disabilities={csvDisabilities || []}
+              marginalizedGroups={csvMarginalizedGroups || []}
             />
           </>
         ) : (
@@ -647,9 +660,9 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
                     
                     {/* Filter Component */}
                     <StudentFilter
-                      countries={countries}
-                      regions={regions}
-                      zones={zones}
+                      countries={formCountries}
+                      regions={formRegions}
+                      zones={formZones}
                       languages={languages}
                       academicLevels={academicLevels}
                       onApply={handleApplyFilters}
