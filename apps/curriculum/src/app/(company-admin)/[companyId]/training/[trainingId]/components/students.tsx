@@ -660,9 +660,9 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
                     
                     {/* Filter Component */}
                     <StudentFilter
-                      countries={formCountries}
-                      regions={formRegions}
-                      zones={formZones}
+                      countries={csvCountries}
+                      regions={csvRegions}
+                      zones={csvZones}
                       languages={languages}
                       academicLevels={academicLevels}
                       onApply={handleApplyFilters}

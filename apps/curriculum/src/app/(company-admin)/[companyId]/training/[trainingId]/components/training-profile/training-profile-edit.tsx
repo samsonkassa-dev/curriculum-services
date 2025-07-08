@@ -45,6 +45,8 @@ export function TrainingProfileEdit({ trainingId, initialData, onSave, onCancel 
   const [priorKnowledge, setPriorKnowledge] = useState<string[]>([])
   const [attendanceRequirementPercentage, setAttendanceRequirementPercentage] = useState<number>(100)
   const [hasSetAttendanceRequirement, setHasSetAttendanceRequirement] = useState<boolean>(false)
+  const [assessmentResultPercentage, setAssessmentResultPercentage] = useState<number>(100)
+  const [hasSetAssessmentResult, setHasSetAssessmentResult] = useState<boolean>(false)
   const [isMobile, setIsMobile] = useState(false)
   const [showSidebar, setShowSidebar] = useState(true)
   const [selectedAlignmentStandards, setSelectedAlignmentStandards] = useState<string[]>([])
@@ -123,6 +125,7 @@ export function TrainingProfileEdit({ trainingId, initialData, onSave, onCancel 
         { label: "Keywords", isCompleted: keywords.some(keyword => keyword.trim() !== "") },
         { label: "Scope", isCompleted: scope.trim().length > 0 },
         { label: "Attendance Requirement", isCompleted: hasSetAttendanceRequirement },
+        { label: "Assessment Result Requirement", isCompleted: hasSetAssessmentResult },
         { label: "Professional Background", isCompleted: professionalBackground.trim().length > 0 },
         { label: "Alignment With Standard", isCompleted: selectedAlignmentStandards.length > 0 }
       ]
@@ -150,7 +153,7 @@ export function TrainingProfileEdit({ trainingId, initialData, onSave, onCancel 
         }
       ]
     }
-  ], [keywords, scope, hasSetAttendanceRequirement, professionalBackground, selectedAlignmentStandards, selectedDeliveryTools, selectedLearnerTechRequirements, selectedInstructorTechRequirements, hasPriorKnowledge, priorKnowledge, selectedLearnerStylePreferences, objectiveData])
+  ], [keywords, scope, hasSetAttendanceRequirement, hasSetAssessmentResult, professionalBackground, selectedAlignmentStandards, selectedDeliveryTools, selectedLearnerTechRequirements, selectedInstructorTechRequirements, hasPriorKnowledge, priorKnowledge, selectedLearnerStylePreferences, objectiveData])
 
   // Initialize activeSection after outlineGroups is defined
   const [activeSection, setActiveSection] = useState("Keywords")
@@ -163,6 +166,8 @@ export function TrainingProfileEdit({ trainingId, initialData, onSave, onCancel 
       setProfessionalBackground(initialData.professionalBackground || "")
       setAttendanceRequirementPercentage(initialData.attendanceRequirementPercentage ?? 100)
       setHasSetAttendanceRequirement(initialData.attendanceRequirementPercentage !== null && initialData.attendanceRequirementPercentage !== undefined)
+      setAssessmentResultPercentage(initialData.assessmentResultPercentage ?? 100)
+      setHasSetAssessmentResult(initialData.assessmentResultPercentage !== null && initialData.assessmentResultPercentage !== undefined)
       
       // Extract IDs from object arrays for the checkbox fields
       const alignmentIds = initialData.alignmentStandardIds || extractIds(initialData.alignmentsWithStandard)
@@ -387,6 +392,34 @@ export function TrainingProfileEdit({ trainingId, initialData, onSave, onCancel 
               />
               <p className="text-xs text-gray-500">
                 Enter a value between 0 and 100. For example, 80 means learners must attend at least 80% of sessions.
+              </p>
+            </div>
+          </div>
+        )
+      case "Assessment Result Requirement":
+        return (
+          <div className="space-y-1">
+            <h3 className="text-lg font-medium">Assessment Result Requirement</h3>
+            <p className="text-[12.5px] text-[#99948E] pb-4">Set the minimum assessment result percentage required for learners to pass this training successfully.</p>
+            <div className="space-y-2">
+              <label htmlFor="assessment-percentage" className="text-sm font-medium text-gray-700">
+                Minimum Assessment Result Percentage (%)
+              </label>
+              <Input
+                id="assessment-percentage"
+                type="number"
+                min="0"
+                max="100"
+                value={assessmentResultPercentage}
+                onChange={(e) => {
+                  setAssessmentResultPercentage(Number(e.target.value))
+                  setHasSetAssessmentResult(true)
+                }}
+                placeholder="Enter percentage (0-100)"
+                className="w-full max-w-xs"
+              />
+              <p className="text-xs text-gray-500">
+                Enter a value between 0 and 100. For example, 70 means learners must score at least 70% on assessments.
               </p>
             </div>
           </div>
@@ -665,6 +698,7 @@ export function TrainingProfileEdit({ trainingId, initialData, onSave, onCancel 
         keywords: keywords.filter(k => k.trim() !== ''),
         scope: scope || null,
         attendanceRequirementPercentage: attendanceRequirementPercentage,
+        assessmentResultPercentage: assessmentResultPercentage,
         professionalBackground: professionalBackground || null,
         alignmentStandardIds: selectedAlignmentStandards.length > 0 ? selectedAlignmentStandards : null,
         deliveryToolIds: selectedDeliveryTools.length > 0 ? selectedDeliveryTools : null,
@@ -707,6 +741,7 @@ export function TrainingProfileEdit({ trainingId, initialData, onSave, onCancel 
         keywords: keywords.filter(k => k.trim() !== ''),
         scope: scope || null,
         attendanceRequirementPercentage: attendanceRequirementPercentage,
+        assessmentResultPercentage: assessmentResultPercentage,
         professionalBackground: professionalBackground || null,
         alignmentStandardIds: selectedAlignmentStandards.length > 0 ? selectedAlignmentStandards : null,
         deliveryToolIds: selectedDeliveryTools.length > 0 ? selectedDeliveryTools : null,
