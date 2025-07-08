@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { UseFormReturn, useFieldArray, Controller } from "react-hook-form";
 import { VenueSchema } from "./venue-schema";
 import { EquipmentItem, useEquipmentItems } from "@/lib/hooks/useVenue";
-import { useBaseData } from "@/lib/hooks/useBaseData";
+import { useSingleCascadingLocation } from "@/lib/hooks/useCascadingLocation";
 import { useDebounce } from "@/lib/hooks/useDebounce";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -107,26 +107,17 @@ export function VenueWizardForm({
   const debouncedZoneSearch = useDebounce(zoneSearch, 300);
   const debouncedCitySearch = useDebounce(citySearch, 300);
 
-  // Fetch location data with conditional enabling (like step-2)
-  const { data: allCountries, isLoading: countriesLoading } = useBaseData("country", {
-    enabled: true,
-    disablePagination: true
-  });
-  
-  const { data: allRegions, isLoading: regionsLoading } = useBaseData("region", {
-    enabled: !!selectedCountryId,
-    disablePagination: true
-  });
-  
-  const { data: allZones, isLoading: zonesLoading } = useBaseData("zone", {
-    enabled: !!selectedRegionId,
-    disablePagination: true
-  });
-  
-  const { data: allCities, isLoading: citiesLoading } = useBaseData("city", {
-    enabled: !!form.watch("zoneId"),
-    disablePagination: true
-  });
+  // Use cascading location hook instead of individual useBaseData calls
+  const {
+    countries: allCountries,
+    regions: allRegions,
+    zones: allZones,
+    cities: allCities,
+    isLoadingCountries: countriesLoading,
+    isLoadingRegions: regionsLoading,
+    isLoadingZones: zonesLoading,
+    isLoadingCities: citiesLoading
+  } = useSingleCascadingLocation(selectedCountryId, selectedRegionId, form.watch("zoneId"));
   
   const { data: equipmentItems, isLoading: equipmentLoading } = useEquipmentItems();
 
