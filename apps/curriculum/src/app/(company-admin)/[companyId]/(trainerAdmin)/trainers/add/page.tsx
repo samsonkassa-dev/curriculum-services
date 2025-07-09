@@ -26,7 +26,7 @@ const trainerFormSchema = z.object({
   email: z.string().email("Invalid email address").min(1, "Email is required"),
   phoneNumber: z.string().min(1, "Phone number is required"),
   
-  // Location fields - hierarchical structure
+  // Location fields - hierarchical structure (countryId and regionId are for UI cascading only, not sent to API)
   countryId: z.string().optional(),
   regionId: z.string().optional(),
   zoneId: z.string().min(1, "Zone is required"),
@@ -34,7 +34,7 @@ const trainerFormSchema = z.object({
   woreda: z.string().optional(),
   houseNumber: z.string().optional(),
   location: z.string().optional(),
-  languageId: z.string().optional(),
+  languageId: z.string().min(1, "Language is required"),
 
   // Professional Info
   academicLevelId: z.string().min(1, "Academic level is required"),
@@ -129,26 +129,26 @@ export default function AddTrainerPage() {
   const onSubmit = async (values: TrainerFormValues) => {
     // console.log("Submitting Trainer form:", values);
 
-    // Fill in default values for optional fields to satisfy API requirements
+    // Format date of birth
     const formattedDateOfBirth = values.dateOfBirth instanceof Date
       ? values.dateOfBirth.toISOString().split('T')[0]
-      : "2000-01-01"; // Default value
+      : undefined;
 
-    // Construct the data payload
+    // Construct the data payload - all values should come from user input
     const trainerData: CreateTrainerData = {
       firstName: values.firstName,
       lastName: values.lastName,
       faydaId: values.faydaId || "",
       email: values.email,
       phoneNumber: values.phoneNumber,
-      dateOfBirth: formattedDateOfBirth,
-      gender: values.gender || "OTHER", // Default value
-      languageId: values.languageId || "1", // Default value - may need adjustment
+      dateOfBirth: formattedDateOfBirth || "",
+      gender: values.gender || "OTHER",
+      languageId: values.languageId,
       zoneId: values.zoneId,
-      cityId: values.cityId || "", // Optional field - can be empty
+      cityId: values.cityId || "",
       woreda: values.woreda || "",
       houseNumber: values.houseNumber || "",
-      location: values.location || "Ethiopia", // Default value
+      location: values.location || "",
       academicLevelId: values.academicLevelId,
       trainingTagIds: values.trainingTagIds || [],
       experienceYears: values.experienceYears,

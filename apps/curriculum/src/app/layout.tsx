@@ -9,7 +9,11 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState } from 'react';
 import { Analytics } from '@vercel/analytics/next';
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({ 
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap"
+});
 
 export default function RootLayout({
   children,
@@ -26,8 +30,8 @@ export default function RootLayout({
   }));
 
   return (
-    <html lang="en" className={inter.className}>
-      <body className="antialiased">
+    <html lang="en" className={inter.variable}>
+      <body className={`antialiased font-sans`}>
         <QueryClientProvider client={queryClient}>
           <AuthProvider>
             <Script

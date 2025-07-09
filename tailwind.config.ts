@@ -78,6 +78,9 @@ export default {
       boxShadow: {
         "custom-shadow": "0px 0px 10px 4px rgba(204, 204, 204, 0.18)", // Convert #CCCCCC2E to RGBA
       },
+      fontFamily: {
+        sans: ["var(--font-inter)", "sans-serif"],
+      },
     },
   },
   plugins: [require("tailwindcss-animate")],

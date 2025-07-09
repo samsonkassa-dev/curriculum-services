@@ -106,7 +106,7 @@ export function StudentFilter({
   const [selectedLanguageIds, setSelectedLanguageIds] = useState<string[]>(defaultSelected.languageIds || [])
   const [selectedAcademicLevelIds, setSelectedAcademicLevelIds] = useState<string[]>(defaultSelected.academicLevelIds || [])
   const [selectedZoneIds, setSelectedZoneIds] = useState<string[]>(defaultSelected.zoneIds || [])
-  // Commented out for now
+    // Commented out for now
   // const [selectedDisabilityIds, setSelectedDisabilityIds] = useState<string[]>(defaultSelected.disabilityIds || [])
   // const [selectedMarginalizedGroupIds, setSelectedMarginalizedGroupIds] = useState<string[]>(defaultSelected.marginalizedGroupIds || [])
   // const [selectedHasSmartphone, setSelectedHasSmartphone] = useState<boolean | undefined>(defaultSelected.hasSmartphone)
@@ -196,6 +196,8 @@ export function StudentFilter({
     return region?.name || ""
   }
 
+ 
+
   const handleApply = () => {
     const filters: StudentFilters = {}
     
@@ -235,13 +237,13 @@ export function StudentFilter({
     setSelectedLanguageIds([])
     setSelectedAcademicLevelIds([])
     setSelectedZoneIds([])
+    setSelectedCountryId("")
+    setSelectedRegionId("")
     // Commented out for now
     // setSelectedDisabilityIds([])
     // setSelectedMarginalizedGroupIds([])
     // setSelectedHasSmartphone(undefined)
     // setSelectedHasTrainingExperience(undefined)
-    setSelectedCountryId("")
-    setSelectedRegionId("")
     
     // Apply empty filters immediately instead of waiting for state update
     onApply({})
@@ -267,17 +269,17 @@ export function StudentFilter({
         </Button>
       </PopoverTrigger>
       <PopoverContent 
-        className="w-[500px] p-6 max-h-[80vh] overflow-y-auto" 
+        className="w-[500px] p-4 max-h-[70vh] overflow-y-auto" 
         align="end" 
         alignOffset={-40}
         sideOffset={8}
       >
-        <div className="space-y-6">
-          <h3 className="text-xl font-semibold">Filter Students</h3>
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">Filter Students</h3>
           
           {/* Gender Filter */}
-          <div className="space-y-4">
-            <h4 className="text-lg font-semibold">Gender</h4>
+          <div className="space-y-3">
+            <h4 className="text-base font-semibold">Gender</h4>
             <div className="grid grid-cols-2 gap-4">
               {genderOptions.map((gender) => (
                 <div key={gender.id} className="flex items-center space-x-2">
@@ -301,8 +303,8 @@ export function StudentFilter({
           </div>
 
           {/* Location Filter */}
-          <div className="space-y-4">
-            <h4 className="text-lg font-semibold">Location</h4>
+          <div className="space-y-3">
+            <h4 className="text-base font-semibold">Location</h4>
             
             {/* Country Selection */}
             <div className="space-y-2">
@@ -421,7 +423,7 @@ export function StudentFilter({
               </Popover>
             </div>
 
-            {/* Zone Multi-Select */}
+            {/* Zone Multi-Select - Only show when region is selected */}
             {selectedRegionId && (
               <div className="space-y-2">
                 <Label className="text-sm font-medium">Zones</Label>
@@ -440,8 +442,8 @@ export function StudentFilter({
 
           {/* Languages Filter */}
           {languages.length > 0 && (
-            <div className="space-y-4">
-              <h4 className="text-lg font-semibold">Languages</h4>
+            <div className="space-y-3">
+              <h4 className="text-base font-semibold">Languages</h4>
               <MultiSelectCombobox
                 options={languages.map(lang => ({ value: lang.id, label: lang.name }))}
                 selected={selectedLanguageIds}
@@ -456,8 +458,8 @@ export function StudentFilter({
 
           {/* Academic Levels Filter */}
           {academicLevels.length > 0 && (
-            <div className="space-y-4">
-              <h4 className="text-lg font-semibold">Academic Levels</h4>
+            <div className="space-y-3">
+              <h4 className="text-base font-semibold">Academic Levels</h4>
               <MultiSelectCombobox
                 options={academicLevels.map(level => ({ value: level.id, label: level.name }))}
                 selected={selectedAcademicLevelIds}
@@ -549,7 +551,7 @@ export function StudentFilter({
             </div>
           </div>*/}
 
-          <div className="flex justify-between gap-4 pt-2">
+          <div className="flex justify-between gap-3 pt-2">
             <Button
               variant="outline"
               className="flex-1 border-gray-200"

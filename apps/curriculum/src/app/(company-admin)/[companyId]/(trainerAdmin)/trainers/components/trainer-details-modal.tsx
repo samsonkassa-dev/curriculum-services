@@ -22,7 +22,7 @@ const trainerFormSchema = z.object({
   email: z.string().email("Invalid email address").min(1, "Email is required"),
   phoneNumber: z.string().min(1, "Phone number is required"),
   
-  // Location fields - hierarchical structure
+  // Location fields - hierarchical structure (countryId and regionId are for UI cascading only, not sent to API)
   countryId: z.string().optional(),
   regionId: z.string().optional(),
   zoneId: z.string().min(1, "Zone is required"),
@@ -30,7 +30,7 @@ const trainerFormSchema = z.object({
   woreda: z.string().optional(),
   houseNumber: z.string().optional(),
   location: z.string().optional(),
-  languageId: z.string().optional(),
+  languageId: z.string().min(1, "Language is required"),
   academicLevelId: z.string().min(1, "Academic level is required"),
   experienceYears: z.number().min(0, "Experience years must be non-negative").int(),
   trainingTagIds: z.array(z.string()).optional(),
@@ -66,29 +66,28 @@ export function TrainerDetailsModal({
   const form = useForm<TrainerFormValues>({
     resolver: zodResolver(trainerFormSchema),
     defaultValues: {
-      firstName: trainer.firstName,
-      lastName: trainer.lastName,
-      email: trainer.email,
-      phoneNumber: trainer.phoneNumber,
-      gender: trainer.gender,
+      firstName: trainer.firstName || "",
+      lastName: trainer.lastName || "",
+      faydaId: trainer.faydaId || "",
+      email: trainer.email || "",
+      phoneNumber: trainer.phoneNumber || "",
+      gender: trainer.gender as "MALE" | "FEMALE" | "OTHER",
       dateOfBirth: trainer.dateOfBirth ? new Date(trainer.dateOfBirth) : undefined,
-      languageId: trainer.language?.id,
+      languageId: trainer.language?.id || "",
+      academicLevelId: trainer.academicLevel?.id || "",
+      experienceYears: trainer.experienceYears || 0,
+      trainingTagIds: trainer.trainingTags?.map(tag => tag.id) || [],
+      coursesTaught: trainer.coursesTaught || [],
+      certifications: trainer.certifications || [],
       
-      // Location fields
+      // Location fields - get full hierarchy from nested data for display
       countryId: trainer.zone?.region?.country?.id || "",
       regionId: trainer.zone?.region?.id || "",
       zoneId: trainer.zone?.id || "",
       cityId: trainer.city?.id || "",
       woreda: trainer.woreda || "",
       houseNumber: trainer.houseNumber || "",
-      location: trainer.location,
-      
-      academicLevelId: trainer.academicLevel?.id,
-      experienceYears: trainer.experienceYears,
-      trainingTagIds: trainer.trainingTags?.map(tag => tag.id) || [],
-      coursesTaught: trainer.coursesTaught || [],
-      certifications: trainer.certifications || [],
-      faydaId: trainer.faydaId,
+      location: trainer.location || "",
     },
   })
 
@@ -159,13 +158,67 @@ export function TrainerDetailsModal({
                 )}
                 
                 {step === 2 && (
-                  <TrainerProfessionalInfoForm 
-                    form={form} 
-                    trainingTags={trainingTags} 
-                    academicLevels={academicLevels}
-                    languages={languages}
-                    disabled={!isEditing}
-                  />
+                  <div>
+                    <TrainerProfessionalInfoForm 
+                      form={form} 
+                      trainingTags={trainingTags} 
+                      academicLevels={academicLevels}
+                      languages={languages}
+                      disabled={!isEditing}
+                    />
+                    
+                    {/* Location Hierarchy Display - Show full location path in view mode */}
+                    {!isEditing && (trainer.zone || trainer.city) && (
+                      <div className="mt-6 p-4 bg-gray-50 rounded-lg border">
+                        <h3 className="text-lg font-semibold text-gray-800 mb-3">Location Hierarchy</h3>
+                        <div className="space-y-2">
+                          {/* Full location path */}
+                          {trainer.zone?.region?.country && (
+                            <div className="flex items-center text-sm text-gray-600">
+                              <span className="font-medium">Country:</span>
+                              <span className="ml-2">{trainer.zone.region.country.name}</span>
+                            </div>
+                          )}
+                          {trainer.zone?.region && (
+                            <div className="flex items-center text-sm text-gray-600">
+                              <span className="font-medium">Region:</span>
+                              <span className="ml-2">{trainer.zone.region.name}</span>
+                            </div>
+                          )}
+                          {trainer.zone && (
+                            <div className="flex items-center text-sm text-gray-600">
+                              <span className="font-medium">Zone:</span>
+                              <span className="ml-2">{trainer.zone.name}</span>
+                            </div>
+                          )}
+                          {trainer.city && (
+                            <div className="flex items-center text-sm text-gray-600">
+                              <span className="font-medium">City:</span>
+                              <span className="ml-2">{trainer.city.name}</span>
+                            </div>
+                          )}
+                          {trainer.woreda && (
+                            <div className="flex items-center text-sm text-gray-600">
+                              <span className="font-medium">Woreda:</span>
+                              <span className="ml-2">{trainer.woreda}</span>
+                            </div>
+                          )}
+                          {trainer.houseNumber && (
+                            <div className="flex items-center text-sm text-gray-600">
+                              <span className="font-medium">House Number:</span>
+                              <span className="ml-2">{trainer.houseNumber}</span>
+                            </div>
+                          )}
+                          {trainer.location && (
+                            <div className="flex items-center text-sm text-gray-600">
+                              <span className="font-medium">Additional Location:</span>
+                              <span className="ml-2">{trainer.location}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 )}
 
                 {/* Navigation Buttons */}

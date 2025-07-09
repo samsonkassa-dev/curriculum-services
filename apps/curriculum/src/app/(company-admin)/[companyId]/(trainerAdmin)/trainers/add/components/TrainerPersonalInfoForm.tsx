@@ -1,7 +1,7 @@
 "use client"
 
 import { UseFormReturn } from "react-hook-form"
-import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
@@ -10,6 +10,7 @@ import { Calendar } from "@/components/ui/calendar"
 import { CalendarIcon } from "lucide-react"
 import { format } from "date-fns"
 import { cn } from "@/lib/utils"
+import { useMemo } from "react"
 import { TrainerFormValues } from "../page" // Import the form values type
 import { Language } from "@/lib/hooks/useTrainers" // Import Language type if needed separately
 
@@ -20,6 +21,15 @@ interface TrainerPersonalInfoFormProps {
 }
 
 export function TrainerPersonalInfoForm({ form, languages, disabled = false }: TrainerPersonalInfoFormProps) {
+  // Create stable date reference to prevent hydration issues
+  const maxDate = useMemo(() => {
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    return today
+  }, [])
+
+  const minDate = useMemo(() => new Date("1900-01-01"), [])
+
   return (
     <div className="space-y-8">
       {/* First Section - First Name and Last Name */}
@@ -132,9 +142,7 @@ export function TrainerPersonalInfoForm({ form, languages, disabled = false }: T
                         mode="single"
                         selected={field.value}
                         onSelect={field.onChange}
-                        disabled={(date) =>
-                          date > new Date() || date < new Date("1900-01-01")
-                        }
+                        disabled={(date) => date > maxDate || date < minDate}
                         initialFocus
                       />
                     </PopoverContent>

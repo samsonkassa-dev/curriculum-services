@@ -15,7 +15,6 @@ import { cn } from "@/lib/utils"
 import { useState, useMemo } from "react"
 import { useBaseData } from "@/lib/hooks/useBaseData"
 import { useDebounce } from "@/lib/hooks/useDebounce"
-import { useSingleCascadingLocation } from "@/lib/hooks/useCascadingLocation"
 import { BaseItem } from "@/types/curriculum"
 import { Search } from "lucide-react"
 
@@ -88,35 +87,53 @@ export function TrainerProfessionalInfoForm({
   const selectedZoneId = form.watch('zoneId') || '';
   const selectedCityId = form.watch('cityId') || '';
 
-  // Use cascading location hook
-  const {
-    countries,
-    regions,
-    zones,
-    cities,
-    isLoadingCountries,
-    isLoadingRegions,
-    isLoadingZones,
-    isLoadingCities
-  } = useSingleCascadingLocation(selectedCountryId, selectedRegionId, selectedZoneId);
+  // Load all location data directly without cascade restrictions
+  const { data: countries, isLoading: isLoadingCountries } = useBaseData('country', {
+    enabled: true,
+    disablePagination: true
+  });
+
+  const { data: regions, isLoading: isLoadingRegions } = useBaseData('region', {
+    enabled: true,
+    disablePagination: true
+  });
+
+  const { data: zones, isLoading: isLoadingZones } = useBaseData('zone', {
+    enabled: true,
+    disablePagination: true
+  });
+
+  const { data: cities, isLoading: isLoadingCities } = useBaseData('city', {
+    enabled: true,
+    disablePagination: true
+  });
 
   // Filter data based on selections (client-side filtering for hierarchical relationships)
   const availableRegions = useMemo(() => {
-    if (!selectedCountryId || !regions) return [];
+    if (!regions) return [];
+    // If no country is selected, show all regions
+    if (!selectedCountryId) return regions;
+    // If country is selected, filter regions by that country
     return regions.filter((region: Region) => 
-      region.country.id === selectedCountryId
+      region.country && region.country.id === selectedCountryId
     );
   }, [regions, selectedCountryId]);
-  
+
   const availableZones = useMemo(() => {
-    if (!selectedRegionId || !zones) return [];
+    if (!zones) return [];
+    // If no region is selected, show all zones
+    if (!selectedRegionId) return zones;
+    // If region is selected, filter zones by that region
     return zones.filter((zone: Zone) => 
-      zone.region.id === selectedRegionId
+      zone.region && zone.region.id === selectedRegionId
     );
   }, [zones, selectedRegionId]);
-  
+
   const availableCities = useMemo(() => {
-    if (!selectedZoneId || !cities) return [];
+    if (!cities) return [];
+    // If no zone is selected, show all cities
+    if (!selectedZoneId) return cities;
+    // If zone is selected, filter cities by that zone
     return cities.filter((city: City) => 
       city.zone && city.zone.id === selectedZoneId
     );
@@ -129,13 +146,13 @@ export function TrainerProfessionalInfoForm({
       country.name.toLowerCase().includes(debouncedCountrySearch.toLowerCase())
     );
   }, [countries, debouncedCountrySearch]);
-  
+
   const filteredRegions = useMemo(() => {
     return availableRegions.filter((region: Region) =>
       region.name.toLowerCase().includes(debouncedRegionSearch.toLowerCase())
     );
   }, [availableRegions, debouncedRegionSearch]);
-  
+
   const filteredZones = useMemo(() => {
     return availableZones.filter((zone: Zone) =>
       zone.name.toLowerCase().includes(debouncedZoneSearch.toLowerCase())
@@ -271,14 +288,14 @@ export function TrainerProfessionalInfoForm({
           <h3 className="text-lg font-semibold mb-4">Address Information</h3>
           
           {/* Country and Region */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-            {/* Country Selection with Search */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Country Selection */}
             <FormField
               control={form.control}
               name="countryId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-sm font-medium">Country <span className="text-red-500">*</span></FormLabel>
+                  <FormLabel className="text-sm font-medium">Country</FormLabel>
                   <FormDescription className="text-gray-500 text-sm">
                     Select your country
                   </FormDescription>
@@ -287,11 +304,11 @@ export function TrainerProfessionalInfoForm({
                       <Button
                         variant="outline"
                         className="w-full justify-between h-12"
-                        disabled={!countries || disabled}
+                        disabled={disabled}
                         type="button"
                       >
                         <span className="truncate">
-                          {!countries ? "Loading countries..." : (getSelectedCountryName() || "Select a country")}
+                          {getSelectedCountryName() || "Select a country"}
                         </span>
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
@@ -317,11 +334,7 @@ export function TrainerProfessionalInfoForm({
                         </div>
                       </div>
                       <div className="max-h-[200px] sm:max-h-[250px] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-                        {!countries ? (
-                          <div className="px-4 py-3 text-sm text-gray-500">
-                            Loading countries...
-                          </div>
-                        ) : filteredCountries.length > 0 ? (
+                        {filteredCountries.length > 0 ? (
                           filteredCountries.map((country: Country) => (
                             <div
                               key={country.id}
@@ -356,14 +369,14 @@ export function TrainerProfessionalInfoForm({
                 </FormItem>
               )}
             />
-            
-            {/* Region Selection with Search */}
+
+            {/* Region Selection */}
             <FormField
               control={form.control}
               name="regionId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-sm font-medium">Region <span className="text-red-500">*</span></FormLabel>
+                  <FormLabel className="text-sm font-medium">Region</FormLabel>
                   <FormDescription className="text-gray-500 text-sm">
                     Select your region
                   </FormDescription>
@@ -372,11 +385,11 @@ export function TrainerProfessionalInfoForm({
                       <Button
                         variant="outline"
                         className="w-full justify-between h-12"
-                        disabled={!selectedCountryId || disabled}
+                        disabled={disabled}
                         type="button"
                       >
                         <span className="truncate">
-                          {getSelectedRegionName() || (!selectedCountryId ? "Select country first" : "Select a region")}
+                          {getSelectedRegionName() || "Select a region"}
                         </span>
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
@@ -422,12 +435,12 @@ export function TrainerProfessionalInfoForm({
                                   selectedRegionId === region.id ? "opacity-100" : "opacity-0"
                                 )}
                               />
-                              {region.name} ({region.country.name})
+                              {region.name}
                             </div>
                           ))
                         ) : (
                           <div className="px-4 py-3 text-sm text-gray-500">
-                            {regionSearch ? "No regions found" : selectedCountryId ? "No regions available for selected country" : "Please select country first"}
+                            {regionSearch ? "No regions found" : "No regions available"}
                           </div>
                         )}
                       </div>
@@ -456,11 +469,11 @@ export function TrainerProfessionalInfoForm({
                       <Button
                         variant="outline"
                         className="w-full justify-between h-12"
-                        disabled={!selectedRegionId || disabled}
+                        disabled={disabled}
                         type="button"
                       >
                         <span className="truncate">
-                          {getSelectedZoneName() || (!selectedRegionId ? "Select region first" : "Select a zone")}
+                          {getSelectedZoneName() || "Select a zone"}
                         </span>
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
@@ -506,12 +519,12 @@ export function TrainerProfessionalInfoForm({
                                   selectedZoneId === zone.id ? "opacity-100" : "opacity-0"
                                 )}
                               />
-                              {zone.name} ({zone.region.name})
+                              {zone.name}
                             </div>
                           ))
                         ) : (
                           <div className="px-4 py-3 text-sm text-gray-500">
-                            {zoneSearch ? "No zones found" : selectedRegionId ? "No zones available for selected region" : "Please select region first"}
+                            {zoneSearch ? "No zones found" : "No zones available"}
                           </div>
                         )}
                       </div>
@@ -537,11 +550,11 @@ export function TrainerProfessionalInfoForm({
                       <Button
                         variant="outline"
                         className="w-full justify-between h-12"
-                        disabled={!selectedZoneId || disabled}
+                        disabled={disabled}
                         type="button"
                       >
                         <span className="truncate">
-                          {getSelectedCityName() || (!selectedZoneId ? "Select zone first" : "Select a city")}
+                          {getSelectedCityName() || "Select a city"}
                         </span>
                         <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                       </Button>
@@ -592,7 +605,7 @@ export function TrainerProfessionalInfoForm({
                           ))
                         ) : (
                           <div className="px-4 py-3 text-sm text-gray-500">
-                            {citySearch ? "No cities found" : selectedZoneId ? "No cities available for selected zone" : "Please select zone first"}
+                            {citySearch ? "No cities found" : selectedZoneId ? "No cities available for selected zone" : "No cities available"}
                           </div>
                         )}
                       </div>
@@ -603,29 +616,81 @@ export function TrainerProfessionalInfoForm({
               )}
             />
           </div>
-        </div>
-      </div>
 
-      {/* Location */}
-      <div className="space-y-2">
-        <FormField
-          control={form.control}
-          name="location"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel className="text-[16px] font-medium text-gray-800">Additional Location Details</FormLabel>
-              <FormControl>
-                <Input 
-                  placeholder="Enter additional location information" 
-                  {...field} 
-                  className="h-12 border-[#E4E4E4] rounded-md"
-                  disabled={disabled}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+          {/* Woreda and House Number */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+            {/* Woreda Field */}
+            <FormField
+              control={form.control}
+              name="woreda"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm font-medium">Woreda</FormLabel>
+                  <FormDescription className="text-gray-500 text-sm">
+                    Enter your woreda
+                  </FormDescription>
+                  <FormControl>
+                    <Input 
+                      placeholder="Enter woreda" 
+                      {...field} 
+                      className="h-12 border-[#E4E4E4] rounded-md"
+                      disabled={disabled}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* House Number Field */}
+            <FormField
+              control={form.control}
+              name="houseNumber"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="text-sm font-medium">House Number</FormLabel>
+                  <FormDescription className="text-gray-500 text-sm">
+                    Enter your house number
+                  </FormDescription>
+                  <FormControl>
+                    <Input 
+                      placeholder="Enter house number" 
+                      {...field} 
+                      className="h-12 border-[#E4E4E4] rounded-md"
+                      disabled={disabled}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        </div>
+
+        {/* Location Details */}
+        <div className="space-y-2">
+          <FormField
+            control={form.control}
+            name="location"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-[16px] font-medium text-gray-800">Additional Location Details</FormLabel>
+                <FormDescription className="text-gray-500 text-sm">
+                  Enter any additional location information
+                </FormDescription>
+                <FormControl>
+                  <Input 
+                    placeholder="Enter additional location information" 
+                    {...field} 
+                    className="h-12 border-[#E4E4E4] rounded-md"
+                    disabled={disabled}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
       </div>
 
       {/* Training Tags (Multi-select Popover) */}
