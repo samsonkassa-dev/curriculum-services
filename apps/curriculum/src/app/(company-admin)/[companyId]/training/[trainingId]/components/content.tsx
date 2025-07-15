@@ -21,8 +21,8 @@ export function Content() {
   const [searchQuery, setSearchQuery] = useState("")
   
   const debouncedSearch = useDebounce(searchQuery, 500)
-  const { isContentDeveloper, isIcogAdmin } = useUserRole()
-  const canRequestContent = !isContentDeveloper && !isIcogAdmin
+  const { isContentDeveloper, isIcogAdmin, isTrainer } = useUserRole()
+  const canRequestContent = !isContentDeveloper && !isIcogAdmin && !isTrainer
 
   const { data, isLoading } = useGetContents({
     trainingId: params.trainingId as string,
@@ -52,9 +52,12 @@ export function Content() {
 
       {!data?.contents.length && !searchQuery ? (
         <div className="text-center py-40 bg-[#fbfbfb] rounded-lg border-[0.1px]">
-          <h3 className="text-lg font-medium mb-2">No Content Found</h3>
+          <h3 className="text-lg font-medium mb-2">No Content Available</h3>
           <p className="text-gray-500 text-sm">
-            This specifies the core teaching methods used to deliver content and facilitate learning.
+            {canRequestContent 
+              ? "This specifies the core teaching methods used to deliver content and facilitate learning."
+              : "No content has been added for this training yet."
+            }
           </p>
         </div>
       ) : (

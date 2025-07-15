@@ -126,7 +126,7 @@ export function TrainingProfileEdit({ trainingId, initialData, onSave, onCancel 
         { label: "Scope", isCompleted: scope.trim().length > 0 },
         { label: "Attendance Requirement", isCompleted: hasSetAttendanceRequirement },
         { label: "Assessment Result Requirement", isCompleted: hasSetAssessmentResult },
-        { label: "Professional Background", isCompleted: professionalBackground.trim().length > 0 },
+        { label: "Competency Outcomes", isCompleted: professionalBackground.trim().length > 0 },
         { label: "Alignment With Standard", isCompleted: selectedAlignmentStandards.length > 0 }
       ]
     },
@@ -427,7 +427,7 @@ export function TrainingProfileEdit({ trainingId, initialData, onSave, onCancel 
       case "Professional Background":
         return (
           <div className="space-y-1 ">
-            <h3 className="text-lg font-medium">Professional Background</h3>
+            <h3 className="text-lg font-medium">Competency Outcomes</h3>
           <p className="text-[12.5px] text-[#99948E] pb-2">Enter the professional background for the target audience of this training.</p>
           <p className="text-[11px] text-[#667085] pb-4">Tip: Use • or - at the start of lines to create bullet points</p>
           <Textarea

@@ -18,8 +18,8 @@ function ContentLinkCell({ content }: { content: Content }) {
   const [showApprovalModal, setShowApprovalModal] = useState(false)
   const { mutate: addLink, isPending } = useAddContentLink()
   
-  const { isContentDeveloper, isIcogAdmin } = useUserRole()
-  const canOnlyView = isContentDeveloper || isIcogAdmin
+  const { isContentDeveloper, isIcogAdmin, isTrainer } = useUserRole()
+  const canOnlyView = isContentDeveloper || isIcogAdmin || isTrainer
 
   const handleAddLink = (data: { link: string; referenceLink: string }) => {
     addLink({ contentId: content.id, ...data })

@@ -313,7 +313,7 @@ export function TrainingProfileView({ trainingProfile, onEdit }: TrainingProfile
           <AccordionItem value="professionalBackground" className="border-[0.5px] border-[#CED4DA] rounded-md">
             <AccordionTrigger className="bg-white data-[state=open]:bg-[#f7fbff] rounded-lg p-6 flex items-center justify-between hover:no-underline group">
               <div className="flex items-center gap-3">
-                <span className="font-semibold text-md md:text-xl">Professional Background</span>
+                <span className="font-semibold text-md md:text-xl">Competency Outcomes</span>
               </div>
               <div className="text-gray-400 flex gap-2">
                 {canEdit && (
