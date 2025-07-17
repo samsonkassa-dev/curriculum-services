@@ -68,7 +68,7 @@ export function RegistrationLinkGenerateModal({
       
       // The response structure has id nested inside registrationLink
       const linkId = response.registrationLink.id
-      const fullLink = `https://student-registration-blue.vercel.app/register/${linkId}`
+      const fullLink = `https://data-contributors-registration-blue.vercel.app/register/${linkId}`
       setGeneratedLink(fullLink)
     } catch (error) {
       console.log("Failed to generate registration link:", error)
