@@ -32,32 +32,50 @@ export interface Language {
   id: string
   name: string
   description: string
+  alternateNames?: {
+    [key: string]: string
+  }
 }
 
 export interface AcademicLevel {
   id: string
   name: string
   description: string
+  alternateNames?: {
+    [key: string]: string
+  }
 }
 
 export interface Disability {
   id: string
   name: string
   description: string
+  alternateNames?: {
+    [key: string]: string
+  }
 }
 
 export interface Zone {
   id: string
   name: string
   description: string
+  alternateNames?: {
+    [key: string]: string
+  }
   region: {
     id: string
     name: string
     description: string
+    alternateNames?: {
+      [key: string]: string
+    }
     country: {
       id: string
       name: string
       description: string
+      alternateNames?: {
+        [key: string]: string
+      }
     }
   }
 }
@@ -72,7 +90,7 @@ export interface Student {
   dateOfBirth: string
   gender: string
   zone: Zone | null
-  city: City
+  city: City | null
   woreda: string
   houseNumber: string
   language: Language
@@ -86,6 +104,15 @@ export interface Student {
   emergencyContactRelationship: string
   disabilities: Disability[]
   marginalizedGroups: any[]
+  // New fields from the provided JSON
+  didSignConsentForm: boolean | null
+  consentFormUrl: string | null
+  pendingTraineeId: string | null
+  idType: string | null
+  frontIdUrl: string | null
+  backIdUrl: string | null
+  signatureUrl: string | null
+  selfRegistered: boolean
 }
 
 export interface CreateStudentData {
@@ -400,6 +427,46 @@ export function useBulkDeleteStudents() {
     },
     onError: (error: any) => {
       toast.error(error.response?.data?.message || 'Failed to delete students')
+    }
+  })
+}
+
+export function useUploadConsentForm() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ 
+      id, 
+      consentFormFile 
+    }: { 
+      id: string, 
+      consentFormFile: File 
+    }) => {
+      const token = getCookie('token')
+      
+      // Create form data for the file upload
+      const formData = new FormData()
+      formData.append('consent-form-photo', consentFormFile)
+      
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_API}/trainee/${id}/consent-form`,
+        formData,
+        {
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data'
+          }
+        }
+      )
+      return { responseData: response.data, id }
+    },
+    onSuccess: ({ id }) => {
+      toast.success('Consent form uploaded successfully')
+      queryClient.invalidateQueries({ queryKey: ['student', id] })
+      queryClient.invalidateQueries({ queryKey: ['students'] })
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to upload consent form')
     }
   })
 }

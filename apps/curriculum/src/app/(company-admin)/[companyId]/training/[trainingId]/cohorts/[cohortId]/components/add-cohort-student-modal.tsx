@@ -103,54 +103,56 @@ function MultipleSelect({ options, selected, onChange, placeholder, disabled = f
   const hasSelection = selected.length > 0;
 
   return (
-    <Select open={open} onOpenChange={setOpen}>
-      <SelectTrigger 
-        className={cn(
-          "h-9 text-sm transition-colors", 
-          hasSelection && "border-blue-500 bg-blue-50 text-blue-700"
-        )}
+    <div className="relative">
+      <button
+        type="button"
         disabled={disabled}
         onClick={() => setOpen(!open)}
+        className={cn(
+          "flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
+          hasSelection && "border-blue-500 bg-blue-50 text-blue-700"
+        )}
       >
-        <SelectValue placeholder={placeholder}>
-          <span className="truncate">{getDisplayText()}</span>
-        </SelectValue>
-      </SelectTrigger>
-      <SelectContent className="w-[var(--radix-select-trigger-width)]">
-        <ScrollArea className="max-h-[200px]">
-          {options.length > 0 ? (
-            options.map((option) => (
-              <div
-                key={option.id}
-                className="flex items-center space-x-2 px-2 py-1.5 cursor-pointer hover:bg-gray-100"
-                onClick={(e) => {
-                  e.preventDefault();
-                  handleToggle(option.id);
-                }}
-              >
-                <Checkbox
-                  id={`select-${option.id}`}
-                  checked={selected.includes(option.id)}
-                  onChange={() => handleToggle(option.id)}
-                  className="h-4 w-4 rounded border-gray-300"
-                />
-                <Label 
-                  htmlFor={`select-${option.id}`}
-                  className="text-sm font-normal cursor-pointer flex-1 truncate"
-                  title={option.name}
+        <span className="truncate">{getDisplayText()}</span>
+        <span className="ml-1">{open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}</span>
+      </button>
+      {open && (
+        <div className="absolute z-50 mt-1 max-h-[200px] w-full overflow-auto rounded-md border bg-popover text-popover-foreground shadow-md">
+          <ScrollArea className="max-h-[200px]">
+            {options.length > 0 ? (
+              options.map((option) => (
+                <div
+                  key={option.id}
+                  className="flex items-center space-x-2 px-2 py-1.5 cursor-pointer hover:bg-gray-100"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleToggle(option.id);
+                  }}
                 >
-                  {option.name}
-                </Label>
+                  <Checkbox
+                    id={`select-${option.id}`}
+                    checked={selected.includes(option.id)}
+                    onCheckedChange={() => handleToggle(option.id)}
+                    className="h-4 w-4 rounded border-gray-300"
+                  />
+                  <Label 
+                    htmlFor={`select-${option.id}`}
+                    className="text-sm font-normal cursor-pointer flex-1 truncate"
+                    title={option.name}
+                  >
+                    {option.name}
+                  </Label>
+                </div>
+              ))
+            ) : (
+              <div className="px-2 py-1.5 text-sm text-gray-500">
+                No options available
               </div>
-            ))
-          ) : (
-            <div className="px-2 py-1.5 text-sm text-gray-500">
-              No options available
-            </div>
-          )}
-        </ScrollArea>
-      </SelectContent>
-    </Select>
+            )}
+          </ScrollArea>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -195,22 +197,16 @@ function AddCohortStudentModalComponent({
     countries,
     regions,
     zones
-  } = useSingleCascadingLocation();
+  } = useSingleCascadingLocation(selectedCountryId, selectedRegionId);
 
-  // Filter data based on selections (client-side filtering for hierarchical relationships)
+  // Remove client-side filtering - we'll get properly filtered data from the hook
   const availableRegions = useMemo(() => {
-    if (!selectedCountryId || !regions) return [];
-    return (regions as Region[]).filter((region: Region) => 
-      region.country.id === selectedCountryId
-    );
-  }, [regions, selectedCountryId]);
+    return regions || [];
+  }, [regions]);
 
   const availableZones = useMemo(() => {
-    if (!selectedRegionId || !zones) return [];
-    return (zones as Zone[]).filter((zone: Zone) => 
-      zone.region.id === selectedRegionId
-    );
-  }, [zones, selectedRegionId]);
+    return zones || [];
+  }, [zones]);
 
   // Handle cascading selection changes
   const handleCountryChange = (countryId: string) => {
@@ -434,12 +430,14 @@ function AddCohortStudentModalComponent({
                      disabled={!selectedCountryId}
                    >
                      <SelectTrigger className="h-9 text-sm">
-                       <SelectValue placeholder={!selectedCountryId ? "Select country first" : "Select region"} />
+                       <SelectValue placeholder={!selectedCountryId ? "Select country first" : "Select region"}>
+                         <span className="truncate block">{selectedRegionId ? availableRegions.find(r => r.id === selectedRegionId)?.name : ""}</span>
+                       </SelectValue>
                      </SelectTrigger>
                      <SelectContent>
                        {availableRegions.map((region: Region) => (
                          <SelectItem key={region.id} value={region.id}>
-                           {region.name}
+                           <span className="truncate block">{region.name}</span>
                          </SelectItem>
                        ))}
                      </SelectContent>

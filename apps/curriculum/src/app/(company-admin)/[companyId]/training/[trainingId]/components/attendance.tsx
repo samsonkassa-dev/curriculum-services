@@ -9,16 +9,9 @@ import { createAttendanceColumns } from "../attendance/components/attendance-col
 import { AttendanceDataTable } from "../attendance/components/attendance-data-table"
 import { CohortSessionTabs } from "../attendance/components/cohort-session-tabs"
 import { useSubmitAttendance, useSubmitBulkAttendance, useSessionAttendance } from "@/lib/hooks/useAttendance"
-import { Student } from "@/lib/hooks/useStudents"
 import { toast } from "sonner"
 
-// Extended Student type to include attendance information from API
-interface StudentWithAttendance extends Student {
-  isPresent: boolean | null;
-  comment?: string;
-  attendanceId?: string;
-  answerFileLink?: string | null;
-}
+
 
 interface AttendanceComponentProps {
   trainingId: string
@@ -100,9 +93,7 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
 
   const attendanceData = attendanceState.data
   const hasUnsavedChanges = attendanceState.dirty
-  const unsavedStudentId = attendanceState.pendingId
 
-  const previousSessionIdRef = useRef<string>("");
   const isInitializedRef = useRef(false)
 
   // Local helpers for network UI states
@@ -325,6 +316,10 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
       comment: effectiveComment,
       attendanceId: attendanceRecord?.id || studentAttendance?.attendanceId,
       answerFileLink: null, // We'll handle assessments separately
+      // Add ID document related fields from student data
+      idType: student.idType,
+      frontIdUrl: student.frontIdUrl,
+      backIdUrl: student.backIdUrl,
       _onAttendanceChange: handleAttendanceChange,
       _onCommentChange: handleCommentChange,
       _onSelectionChange: handleStudentSelection,

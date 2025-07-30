@@ -11,7 +11,7 @@ import { Plus, Upload, ArrowLeft, Trash2 } from "lucide-react"
 import Image from "next/image"
 import { Input } from "@/components/ui/input"
 import { useDebounce } from "@/lib/hooks/useDebounce"
-import { studentColumns, createActionsColumn, createStudentColumnsWithSelection } from "./students/student-columns"
+import { studentColumns, createActionsColumn, createStudentColumnsWithSelection, createConsentFormColumn } from "./students/student-columns"
 import { StudentDataTable } from "./students/student-data-table"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -536,6 +536,11 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
     const baseColumns = hasEditPermission 
       ? createStudentColumnsWithSelection()
       : [...studentColumns];
+    
+    // Add the consent form column only for project managers and training admins
+    if (isProjectManager || isTrainingAdmin) {
+      baseColumns.push(createConsentFormColumn());
+    }
     
     // Add the actions column only if user has appropriate permissions
     if (hasEditPermission) {

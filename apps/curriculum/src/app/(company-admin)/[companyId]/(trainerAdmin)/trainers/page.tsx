@@ -31,37 +31,24 @@ export default function TrainersPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const debouncedSearch = useDebounce(searchQuery, 500)
 
-  // Note: useTrainers hook seems to fetch paginated data server-side based on its args (currentPage, pageSize)
-  // We will perform client-side filtering *on top* of the fetched page for now.
-  // Ideally, the `debouncedSearch` would be passed to `useTrainers` for server-side search.
+  // Fetch data from server with pagination
   const { data: trainersData, isLoading, error } = useTrainers(page, pageSize)
 
-  // Extract trainers list and pagination info, provide defaults
-  const allFetchedTrainers = trainersData?.trainers || []
+  // Extract trainers list and pagination info from API response
+  const trainers = trainersData?.trainers || []
+  const totalPages = trainersData?.totalPages || 0
+  const totalElements = trainersData?.totalElements || 0
+  const currentPage = trainersData?.currentPage || page
 
-  const filteredTrainers = allFetchedTrainers.filter(trainer => 
+  // Client-side filtering only for search
+  const filteredTrainers = trainers.filter(trainer => 
     trainer?.firstName?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
     trainer?.lastName?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
     trainer?.email?.toLowerCase().includes(debouncedSearch.toLowerCase())
   ) || []
 
-  // Recalculate pagination based on filtered results
-  const totalElements = filteredTrainers.length 
-  const totalPages = Math.ceil(totalElements / pageSize)
-
-  if (page > totalPages && totalPages > 0) {
-     setPage(1); 
-  }
-  
-  // Get the data for the current page from the filtered list
-   const paginatedTrainers = filteredTrainers.slice(
-     (page - 1) * pageSize,
-     page * pageSize
-   )
-
   const handlePageChange = (newPage: number) => {
     setPage(newPage)
-    // Optional: Scroll to top or handle other side effects
   }
 
   const handlePageSizeChange = (size: number) => {
@@ -71,14 +58,14 @@ export default function TrainersPage() {
 
   const paginationProps = {
     totalPages,
-    currentPage: page,
+    currentPage,
     setPage: handlePageChange,
     pageSize,
     setPageSize: handlePageSizeChange,
-    totalElements // Pass total *filtered* elements
+    totalElements
   }
   
-  // Construct the add trainer link - change /create to /add
+  // Construct the add trainer link
   const addTrainerHref = `/${companyId}/trainers/add`
 
   const handleViewTrainer = (trainer: Trainer) => {
@@ -115,7 +102,8 @@ export default function TrainersPage() {
     )
   }
 
-  const noTrainersAvailable = filteredTrainers.length === 0;
+  // Check if we have trainers to display (either all or filtered)
+  const noTrainersAvailable = debouncedSearch ? filteredTrainers.length === 0 : trainers.length === 0;
 
   // Empty State 
   if (noTrainersAvailable && !debouncedSearch && !isLoading) {
@@ -178,7 +166,6 @@ export default function TrainersPage() {
               value={searchQuery}
               onChange={(e) => {
                 setSearchQuery(e.target.value);
-                setPage(1); // Reset to page 1 when search query changes
               }}
             />
           </div>
@@ -203,7 +190,7 @@ export default function TrainersPage() {
         
         {!noTrainersAvailable && (
           <TrainerDataTable
-            data={paginatedTrainers}
+            data={debouncedSearch ? filteredTrainers : trainers}
             isLoading={isLoading}
             pagination={paginationProps}
             languages={languages || []}

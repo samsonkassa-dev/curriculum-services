@@ -2,7 +2,7 @@
 
 import { ColumnDef } from "@tanstack/react-table"
 import { Button } from "@/components/ui/button"
-import { Check, X, MessageSquare, X as CloseIcon, CheckCircle, AlertCircle, Edit2, Save, XCircle } from "lucide-react"
+import { Check, X, MessageSquare, X as CloseIcon, CheckCircle, AlertCircle, Edit2, Save, XCircle, CreditCard } from "lucide-react"
 import { formatDateToDisplay } from "@/lib/utils"
 import { useState } from "react"
 import { 
@@ -17,6 +17,8 @@ import { Textarea } from "@/components/ui/textarea"
 import AssessmentModal from "./assessment-modal"
 import { Session } from "@/lib/hooks/useSession"
 import { SurveyButton } from "./survey-button"
+import { IdUploadModal } from "./id-upload-modal"
+import { Student } from "@/lib/hooks/useStudents"
 
 // Define the student type for attendance
 export interface AttendanceStudent {
@@ -29,6 +31,9 @@ export interface AttendanceStudent {
   attendanceId?: string
   sessionDate: string
   answerFileLink?: string | null
+  idType?: string | null
+  frontIdUrl?: string | null
+  backIdUrl?: string | null
   _onAttendanceChange?: (id: string, status: 'present' | 'absent') => void
   _onCommentChange?: (id: string, comment: string) => void
   _isProcessing?: boolean
@@ -168,9 +173,9 @@ export const createAttendanceColumns = (
         const student = row.original
         return (
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-[rgba(11,117,255,0.6)] flex items-center justify-center text-white">
+            {/* <div className="w-8 h-8 rounded-full bg-[rgba(11,117,255,0.6)] flex items-center justify-center text-white">
               {student.firstName?.[0]}{student.lastName?.[0]}
-            </div>
+            </div> */}
             <span className="text-sm">{student.firstName} {student.lastName}</span>
           </div>
         )
@@ -211,119 +216,195 @@ export const createAttendanceColumns = (
           : ""
         
         return (
-          <div className={`flex gap-2 items-center w-80 px-4 py-2 ${attendanceContainerClass} ${hasSubmittedAttendance && !isEditing ? 'opacity-75' : ''} ${isEditing ? 'ring-2 ring-blue-300 bg-blue-50 rounded-lg' : ''}`}>
-            <button 
-              className={`w-7 h-7 rounded-full ${
-                student.attendance === 'present' 
-                  ? 'bg-[#ECFDF3] ring-2 ring-[#037847] shadow-sm' 
-                  : 'bg-[#F2F4F7]'
-              } flex items-center justify-center transition-all flex-shrink-0 ${isDisabled ? 'cursor-not-allowed' : ''}`}
-              aria-label={`Mark ${student.firstName} ${student.lastName} as present`}
-              onClick={() => {
-                if (!isDisabled && row.original._onAttendanceChange) {
-                  row.original._onAttendanceChange(student.id, 'present')
-                }
-              }}
-              disabled={isDisabled}
-            >
-              <Check size={14} className={`${student.attendance === 'present' ? 'text-[#037847] font-bold' : 'text-gray-400'}`} />
-            </button>
-            <button 
-              className={`w-7 h-7 rounded-full ${
-                student.attendance === 'absent' 
-                  ? 'bg-[rgba(243,88,88,0.47)] ring-2 ring-[#D03710] shadow-sm' 
-                  : 'bg-[#F2F4F7]'
-              } flex items-center justify-center transition-all flex-shrink-0 ${isDisabled ? 'cursor-not-allowed' : ''}`}
-              aria-label={`Mark ${student.firstName} ${student.lastName} as absent`}
-              onClick={() => {
-                if (!isDisabled && row.original._onAttendanceChange) {
-                  row.original._onAttendanceChange(student.id, 'absent')
-                }
-              }}
-              disabled={isDisabled}
-            >
-              <X size={14} className={`${student.attendance === 'absent' ? 'text-[#D03710] font-bold' : 'text-gray-400'}`} />
-            </button>
-            
-            {/* Status indicator */}
-            {hasAttendance && (
-              <div className="ml-1 text-xs font-medium flex items-center gap-1.5">
-                {student.attendance === 'present' ? (
-                  <span className="text-green-700 text-xs font-medium">Present</span>
-                ) : (
-                  <span className="text-red-700 text-xs font-medium">Absent</span>
-                )}
-                {isEditing && (
-                  <span className="text-[10px] text-blue-600 bg-blue-100 px-2 py-1 rounded-full leading-none font-medium">
-                    Editing
+          <div className={`flex items-center gap-1 ${hasSubmittedAttendance && !isEditing ? 'w-52 px-2 py-1' : 'w-64 px-3 py-2'} ${attendanceContainerClass} ${hasSubmittedAttendance && !isEditing ? 'opacity-90' : ''} ${isEditing ? 'ring-2 ring-blue-300 bg-blue-50 rounded-lg' : ''}`}>
+            {/* Submitted attendance is shown in a more compact format */}
+            {hasSubmittedAttendance && !isEditing ? (
+              <>
+                {/* Compact view for submitted attendance */}
+                <div className={`w-5 h-5 rounded-full flex-shrink-0 flex items-center justify-center
+                  ${student.attendance === 'present' 
+                    ? 'bg-[#ECFDF3] ring-1 ring-[#037847]' 
+                    : 'bg-[rgba(243,88,88,0.35)] ring-1 ring-[#D03710]'}`
+                }>
+                  {student.attendance === 'present' 
+                    ? <Check size={12} className="text-[#037847]" />
+                    : <X size={12} className="text-[#D03710]" />
+                  }
+                </div>
+                <span className={`text-xs font-medium ml-1 ${student.attendance === 'present' ? 'text-green-700' : 'text-red-700'}`}>
+                  {student.attendance === 'present' ? 'Present' : 'Absent'}
+                </span>
+
+                {/* Comment indicator if exists */}
+                {student.comment && (
+                  <span className="ml-1 text-xs flex-shrink-0 text-gray-500 border border-gray-200 rounded-full px-1.5 py-0.5">
+                    <MessageSquare size={10} className="inline mr-1" /> Has note
                   </span>
                 )}
-                {hasSubmittedAttendance && !isEditing && (
-                  <span className="text-[10px] text-gray-500 bg-gray-100 px-2 py-1 rounded-full leading-none font-medium">
-                    Submitted
-                  </span>
-                )}
-              </div>
-            )}
-            
-            {/* Comment button with dialog */}
-            {row.original._onCommentChange && (
-              <CommentDialog 
-                student={student} 
-                comment={student.comment}
-                onCommentChange={(comment) => {
-                  row.original._onCommentChange?.(student.id, comment)
-                }}
-                disabled={isDisabled}
-              />
-            )}
-            
-            {/* Edit/Cancel/Save buttons - only show if attendance exists and can edit */}
-            {hasAttendance && hasSubmittedAttendance && row.original._onEditModeChange && (
-              <div className="ml-2 flex gap-1">
-                {isEditing ? (
-                  <>
-                    {/* Save button - only show if there are unsaved changes */}
-                    {student._hasUnsavedChanges && onSaveIndividualAttendance && (
-                      <button
-                        className="w-7 h-7 rounded-full bg-green-50 text-green-600 flex items-center justify-center hover:bg-green-100 transition-colors flex-shrink-0"
-                        aria-label={`Save changes for ${student.firstName} ${student.lastName}`}
-                        onClick={() => {
-                          onSaveIndividualAttendance(student.id)
-                        }}
-                      >
-                        <Save size={14} />
-                      </button>
-                    )}
-                    {/* Cancel button */}
-                    <button
-                      className="w-7 h-7 rounded-full bg-red-50 text-red-600 flex items-center justify-center hover:bg-red-100 transition-colors flex-shrink-0"
-                      aria-label={`Cancel editing ${student.firstName} ${student.lastName}`}
-                      onClick={() => {
-                        row.original._onEditModeChange?.(student.id, false)
-                      }}
-                    >
-                      <XCircle size={14} />
-                    </button>
-                  </>
-                ) : (
+                
+                {/* Extra space */}
+                <div className="flex-grow"></div>
+                
+                {/* Edit button */}
+                {row.original._onEditModeChange && (
                   <button
-                    className="w-7 h-7 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-100 transition-colors flex-shrink-0"
+                    className="w-6 h-6 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center hover:bg-blue-100 transition-colors flex-shrink-0"
                     aria-label={`Edit attendance for ${student.firstName} ${student.lastName}`}
                     onClick={() => {
                       row.original._onEditModeChange?.(student.id, true)
                     }}
                   >
-                    <Edit2 size={14} />
+                    <Edit2 size={12} />
                   </button>
                 )}
-              </div>
+              </>
+            ) : (
+              <>
+                {/* Regular expanded view for editing or initial marking */}
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <button 
+                    className={`w-7 h-7 rounded-full ${
+                      student.attendance === 'present' 
+                        ? 'bg-[#ECFDF3] ring-2 ring-[#037847] shadow-sm' 
+                        : 'bg-[#F2F4F7]'
+                    } flex items-center justify-center transition-all flex-shrink-0 ${isDisabled ? 'cursor-not-allowed' : ''}`}
+                    aria-label={`Mark ${student.firstName} ${student.lastName} as present`}
+                    onClick={() => {
+                      if (!isDisabled && row.original._onAttendanceChange) {
+                        row.original._onAttendanceChange(student.id, 'present')
+                      }
+                    }}
+                    disabled={isDisabled}
+                  >
+                    <Check size={14} className={`${student.attendance === 'present' ? 'text-[#037847] font-bold' : 'text-gray-400'}`} />
+                  </button>
+                  <button 
+                    className={`w-7 h-7 rounded-full ${
+                      student.attendance === 'absent' 
+                        ? 'bg-[rgba(243,88,88,0.47)] ring-2 ring-[#D03710] shadow-sm' 
+                        : 'bg-[#F2F4F7]'
+                    } flex items-center justify-center transition-all flex-shrink-0 ${isDisabled ? 'cursor-not-allowed' : ''}`}
+                    aria-label={`Mark ${student.firstName} ${student.lastName} as absent`}
+                    onClick={() => {
+                      if (!isDisabled && row.original._onAttendanceChange) {
+                        row.original._onAttendanceChange(student.id, 'absent')
+                      }
+                    }}
+                    disabled={isDisabled}
+                  >
+                    <X size={14} className={`${student.attendance === 'absent' ? 'text-[#D03710] font-bold' : 'text-gray-400'}`} />
+                  </button>
+                </div>
+                
+                {/* Status indicator */}
+                {hasAttendance && (
+                  <div className="ml-1 text-xs font-medium flex items-center gap-1.5">
+                    {student.attendance === 'present' ? (
+                      <span className="text-green-700 text-xs font-medium whitespace-nowrap">Present</span>
+                    ) : (
+                      <span className="text-red-700 text-xs font-medium whitespace-nowrap">Absent</span>
+                    )}
+                    {isEditing && (
+                      <span className="text-[10px] text-blue-600 bg-blue-100 px-1.5 py-0.5 rounded-full leading-none font-medium whitespace-nowrap">
+                        Editing
+                      </span>
+                    )}
+                  </div>
+                )}
+                
+                {/* Right side controls */}
+                <div className="flex items-center gap-1 ml-auto">
+                  {/* Comment button with dialog */}
+                  {row.original._onCommentChange && (
+                    <CommentDialog 
+                      student={student} 
+                      comment={student.comment}
+                      onCommentChange={(comment) => {
+                        row.original._onCommentChange?.(student.id, comment)
+                      }}
+                      disabled={isDisabled}
+                    />
+                  )}
+                  
+                  {/* Edit/Cancel/Save buttons - only show in edit mode */}
+                  {isEditing && onSaveIndividualAttendance && (
+                    <div className="flex gap-1">
+                      {/* Save button - only show if there are unsaved changes */}
+                      {student._hasUnsavedChanges && (
+                        <button
+                          className="w-7 h-7 rounded-full bg-green-50 text-green-600 flex items-center justify-center hover:bg-green-100 transition-colors flex-shrink-0"
+                          aria-label={`Save changes for ${student.firstName} ${student.lastName}`}
+                          onClick={() => {
+                            onSaveIndividualAttendance(student.id)
+                          }}
+                        >
+                          <Save size={14} />
+                        </button>
+                      )}
+                      {/* Cancel button */}
+                      <button
+                        className="w-7 h-7 rounded-full bg-red-50 text-red-600 flex items-center justify-center hover:bg-red-100 transition-colors flex-shrink-0"
+                        aria-label={`Cancel editing ${student.firstName} ${student.lastName}`}
+                        onClick={() => {
+                          row.original._onEditModeChange?.(student.id, false)
+                        }}
+                      >
+                        <XCircle size={14} />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </>
             )}
           </div>
         )
       },
     },
   ];
+
+  // Add ID column for first session only
+  if (session && session.first === true) {
+    columns.push({
+      accessorKey: "id",
+      header: "ID Document",
+      cell: ({ row }) => {
+        const student = row.original;
+        const fullName = `${student.firstName} ${student.lastName}`;
+        const hasId = student.idType && student.frontIdUrl;
+        
+        return (
+          <div className="flex items-center justify-center w-32">
+            <IdUploadModal
+              studentId={student.id}
+              studentName={fullName}
+              idType={student.idType}
+              frontIdUrl={student.frontIdUrl}
+              backIdUrl={student.backIdUrl}
+              trigger={
+                              <Button 
+                variant="outline"
+                className={`h-9 ${hasId ? "bg-green-100 text-green-700 hover:bg-green-200 border-green-300" : ""} whitespace-nowrap`}
+                size="sm"
+              >
+                {hasId ? (
+                  <span className="text-sm flex items-center gap-1">
+                    <Edit2 className="h-4 w-4" />
+                    Edit ID Document
+                  </span>
+                ) : (
+                  <span className="text-sm flex items-center gap-1">
+                    <CreditCard className="h-4 w-4" />
+                    Add ID Document
+                  </span>
+                )}
+              </Button>
+              }
+            />
+          </div>
+        );
+      },
+    });
+  }
 
   // Add survey column
   if (session && trainingId) {
@@ -340,13 +421,15 @@ export const createAttendanceColumns = (
           const isPreSession = session.first === true;
           
           return (
-            <SurveyButton 
-              trainingId={trainingId}
-              studentId={student.id}
-              studentName={fullName}
-              isPreSession={isPreSession}
-              disabled={false}
-            />
+            <div className="flex items-center justify-center w-32">
+              <SurveyButton 
+                trainingId={trainingId}
+                studentId={student.id}
+                studentName={fullName}
+                isPreSession={isPreSession}
+                disabled={false}
+              />
+            </div>
           );
         },
       });
@@ -363,14 +446,18 @@ export const createAttendanceColumns = (
         const fullName = `${student.firstName} ${student.lastName}`;
         
         // Add a SessionAssessmentWrapper component to handle fetching assessments
-        return <SessionAssessmentCell 
-          sessionId={sessionId} 
-          student={student}
-          canEditAssessment={canEditAssessment}
-          isDisabled={false}
-          session={session}
-          trainingId={trainingId}
-        />;
+        return (
+          <div className="flex items-center justify-center w-32">
+            <SessionAssessmentCell 
+              sessionId={sessionId} 
+              student={student}
+              canEditAssessment={canEditAssessment}
+              isDisabled={false}
+              session={session}
+              trainingId={trainingId}
+            />
+          </div>
+        );
       },
     });
   }

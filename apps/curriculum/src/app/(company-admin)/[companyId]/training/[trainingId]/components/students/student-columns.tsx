@@ -1,10 +1,13 @@
 "use client"
 
 import { ColumnDef } from "@tanstack/react-table"
-import { Student } from "@/lib/hooks/useStudents"
+import { Student, useUploadConsentForm } from "@/lib/hooks/useStudents"
 import { format } from "date-fns"
 import { Button } from "@/components/ui/button"
-import { Pencil, Trash2 } from "lucide-react"
+import { Pencil, Trash2, Upload, FileText, Loader2 } from "lucide-react"
+import { useState, useRef } from "react"
+import { cn } from "@/lib/utils"
+import { toast } from "sonner"
 
 // Base student columns without selection - for when selection is not needed
 export const studentColumnsBase: ColumnDef<Student>[] = [
@@ -172,6 +175,104 @@ export const createActionsColumn = (
 })
 
 // Creates a remove column specifically for removing students from cohorts
+// ConsentFormCell component for handling upload and display
+interface ConsentFormCellProps {
+  student: Student;
+}
+
+export const ConsentFormCell = ({ student }: ConsentFormCellProps) => {
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { mutateAsync: uploadConsentForm } = useUploadConsentForm();
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file is an image
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please upload an image file');
+      return;
+    }
+
+    try {
+      setIsUploading(true);
+      await uploadConsentForm({ id: student.id, consentFormFile: file });
+    } catch (error) {
+      console.error('Error uploading consent form:', error);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const triggerFileInput = () => {
+    fileInputRef.current?.click();
+  };
+
+  // If student already has a consent form
+  if (student.consentFormUrl) {
+    return (
+      <div className="flex items-center">
+        <a 
+          href={student.consentFormUrl} 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="flex items-center gap-1.5 text-blue-600 hover:text-blue-800 underline"
+        >
+          <FileText className="h-4 w-4" />
+          <span>View Form</span>
+        </a>
+      </div>
+    );
+  }
+
+  // If no consent form uploaded yet
+  return (
+    <div className="flex items-center">
+      <input 
+        type="file" 
+        ref={fileInputRef} 
+        onChange={handleFileChange} 
+        accept="image/*"
+        className="hidden"
+        aria-label="Upload consent form" 
+        title="Upload consent form"
+      />
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={triggerFileInput}
+        disabled={isUploading}
+        className={cn(
+          "flex items-center gap-1.5 text-gray-600 hover:text-blue-600",
+          isUploading && "opacity-70 cursor-not-allowed"
+        )}
+      >
+        {isUploading ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <span>Uploading...</span>
+          </>
+        ) : (
+          <>
+            <Upload className="h-4 w-4" />
+            <span>Upload Consent</span>
+          </>
+        )}
+      </Button>
+    </div>
+  );
+};
+
+// Create a column for the consent form
+export const createConsentFormColumn = (): ColumnDef<Student> => ({
+  id: "consentForm",
+  header: "Consent Form",
+  cell: ({ row }) => {
+    return <ConsentFormCell student={row.original} />;
+  }
+});
+
 export const createRemoveFromCohortColumn = (
   handleRemoveStudent: (student: Student) => void,
   hasRemovePermission: boolean,

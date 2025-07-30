@@ -19,12 +19,12 @@ import {
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
 import { useState } from "react"
-import { ChevronLeft, ChevronRight, Loader2, Search, Filter, AlertCircle } from "lucide-react"
+import { ChevronLeft, ChevronRight, Loader2, Search,  AlertCircle } from "lucide-react"
 import { AttendanceStudent } from "./attendance-columns"
 import { cn } from "@/lib/utils"
 import { Input } from "@/components/ui/input"
 import { AddReportButton } from "./add-report-button"
-import { useUserRole } from "@/lib/hooks/useUserRole"
+
 
 interface AttendanceDataTableProps<TData> {
   columns: ColumnDef<TData, unknown>[]
@@ -142,13 +142,13 @@ export function AttendanceDataTable({
               />
             </div>
             
-            {/* Filter button only visible to trainers who can edit */}
+            {/* Filter button only visible to trainers who can edit
             {canEditAttendance && (
               <button className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-[#344054] h-9 whitespace-nowrap">
                 <Filter className="h-4 w-4" />
                 <span>Filters</span>
               </button>
-            )}
+            )} */}
             
             {/* Report button visible to all, but enabled only for trainers */}
             <AddReportButton 
@@ -158,61 +158,66 @@ export function AttendanceDataTable({
           </div>
         </div>
         
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id} className="bg-[#FCFCFD] border-b border-[#EAECF0]">
-                {headerGroup.headers.map((header) => (
-                  <TableHead
-                    key={header.id}
-                    className="p-3 text-left text-xs font-medium text-[#667085]"
-                  >
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                  </TableHead>
+        {/* Add a container with horizontal scrolling */}
+        <div className="overflow-x-auto min-w-full">
+          <div className="min-w-[1100px]">
+            <Table>
+              <TableHeader>
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <TableRow key={headerGroup.id} className="bg-[#FCFCFD] border-b border-[#EAECF0]">
+                    {headerGroup.headers.map((header) => (
+                      <TableHead
+                        key={header.id}
+                        className="p-3 text-left text-xs font-medium text-[#667085] whitespace-nowrap"
+                      >
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(
+                              header.column.columnDef.header,
+                              header.getContext()
+                            )}
+                      </TableHead>
+                    ))}
+                  </TableRow>
                 ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell colSpan={columns.length} className="h-24">
-                  <div className="flex items-center justify-center gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span>Loading...</span>
-                  </div>
-                </TableCell>
-              </TableRow>
-            ) : data && data.length > 0 ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id} className="border-b border-[#EAECF0]">
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className="p-3">
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={columns.length} className="h-24">
+                      <div className="flex items-center justify-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span>Loading...</span>
+                      </div>
                     </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
-                  No students found.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+                  </TableRow>
+                ) : data && data.length > 0 ? (
+                  table.getRowModel().rows.map((row) => (
+                    <TableRow key={row.id} className="border-b border-[#EAECF0]">
+                      {row.getVisibleCells().map((cell) => (
+                        <TableCell key={cell.id} className="p-3">
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                          )}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell
+                      colSpan={columns.length}
+                      className="h-24 text-center"
+                    >
+                      No students found.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
       </div>
       
       {/* Pagination */}

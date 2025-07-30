@@ -7,6 +7,14 @@ import { toast } from "sonner";
 import { getCookie } from "@curriculum-services/auth";
 import { Student } from "./useStudents";
 
+// ID Types for ID upload functionality
+export const ID_TYPES = [
+  { id: 'passport', name: 'Passport', requiresBack: false },
+  { id: 'national_id', name: 'National ID', requiresBack: false },
+  { id: 'kebele_id', name: 'Resident (Kebele) ID', requiresBack: true },
+  { id: 'driving_license', name: 'Driving License', requiresBack: true },
+]
+
 // Types for attendance
 interface AttendanceRecord {
   id: string;
@@ -26,6 +34,13 @@ interface AttendanceSubmission {
   sessionId: string;
   comment: string;
   present: boolean;
+}
+
+interface StudentIdSubmission {
+  pendingTraineeId: string; // the student id
+  idType: string;
+  idFrontFile: File;
+  idBackFile?: File;
 }
 
 interface ApiErrorResponse {
@@ -156,6 +171,69 @@ export function useSubmitBulkAttendance() {
     },
     onError: (error: AxiosError<ApiErrorResponse>) => {
       let errorMessage = "Failed to submit attendance records. Please try again.";
+      
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      toast.error("Error", {
+        description: errorMessage
+      });
+    }
+  });
+}
+
+// Hook to upload student ID documents
+export function useSubmitStudentId() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (data: StudentIdSubmission) => {
+      const token = getCookie("token");
+      const formData = new FormData();
+      
+      // Add student ID to formData
+      formData.append("pendingTraineeId", data.pendingTraineeId);
+      formData.append("idType", data.idType);
+      
+      // Add front ID image
+      formData.append("idFrontFile", data.idFrontFile);
+      
+      // Add back ID image if required and provided
+      if (data.idBackFile) {
+        formData.append("idBackFile", data.idBackFile);
+      }
+      
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_API}/pending-trainee/update-id`,
+        formData,
+        {
+          headers: { 
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${token}` 
+          }
+        }
+      );
+      
+      return response.data;
+    },
+    onSuccess: (data) => {
+      toast.success("Success", { 
+        description: data.message || "ID documents uploaded successfully" 
+      });
+      
+      // Invalidate the student data query to refresh with new ID info
+      queryClient.invalidateQueries({ 
+        queryKey: ["students"] 
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["student", data.pendingTraineeId]
+      });
+    },
+    onError: (error: AxiosError<ApiErrorResponse>) => {
+      let errorMessage = "Failed to upload ID documents. Please try again.";
       
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;

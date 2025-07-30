@@ -3,7 +3,6 @@
 
 import * as React from "react"
 import {
-  ColumnDef,
   ColumnFiltersState,
   SortingState,
   VisibilityState,
@@ -198,10 +197,10 @@ export function TrainerDataTable({
                     pagination.setPageSize(Number(value))
                   }}
                 >
-                  <SelectTrigger className="h-8 w-[70px] bg-white border rounded-md md:text-sm text-xs md:px-2 px-2 py-1">
+                  <SelectTrigger className="h-8 w-[60px] bg-white border rounded-md md:text-sm text-xs md:px-2 px-2 py-1">
                     <SelectValue placeholder={pagination.pageSize} />
                   </SelectTrigger>
-                  <SelectContent side="top">
+                  <SelectContent side="top" className="w-[60px]">
                     {[10, 20, 30, 50].map((size) => (
                       <SelectItem key={size} value={`${size}`}>
                         {size}
