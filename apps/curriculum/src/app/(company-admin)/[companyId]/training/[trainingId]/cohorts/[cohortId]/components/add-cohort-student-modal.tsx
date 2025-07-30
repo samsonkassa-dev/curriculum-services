@@ -117,8 +117,8 @@ function MultipleSelect({ options, selected, onChange, placeholder, disabled = f
         <span className="ml-1">{open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}</span>
       </button>
       {open && (
-        <div className="absolute z-50 mt-1 max-h-[200px] w-full overflow-auto rounded-md border bg-popover text-popover-foreground shadow-md">
-          <ScrollArea className="max-h-[200px]">
+        <div className="absolute z-50 mt-1 w-full rounded-md border bg-popover text-popover-foreground shadow-md">
+          <div className="max-h-[250px] overflow-y-auto">
             {options.length > 0 ? (
               options.map((option) => (
                 <div
@@ -149,7 +149,7 @@ function MultipleSelect({ options, selected, onChange, placeholder, disabled = f
                 No options available
               </div>
             )}
-          </ScrollArea>
+          </div>
         </div>
       )}
     </div>
