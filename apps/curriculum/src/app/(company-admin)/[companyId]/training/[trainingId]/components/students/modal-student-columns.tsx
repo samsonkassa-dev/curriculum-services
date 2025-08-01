@@ -48,9 +48,9 @@ export const modalStudentColumns: ColumnDef<Student>[] = [
   },
   // Email Column
   {
-    accessorKey: "email",
-    header: "Email",
-    cell: ({ row }) => <div className="truncate">{row.original.email || "-"}</div>,
+    accessorKey: "contactPhone",
+    header: "Phone Number",
+    cell: ({ row }) => <div className="truncate">{row.original.contactPhone || "-"}</div>,
   },
   // Status Column
   {

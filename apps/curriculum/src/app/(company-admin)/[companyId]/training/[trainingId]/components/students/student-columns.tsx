@@ -46,10 +46,10 @@ export const studentColumnsBase: ColumnDef<Student>[] = [
     }
   },
   {
-    accessorKey: "email",
-    header: "Email",
+    accessorKey: "contactPhone",
+    header: "Phone Number",
     cell: ({ row }) => {
-      return <span className="text-gray-500">{row.original.email || "N/A"}</span>
+      return <span className="text-gray-500">{row.original.contactPhone || "N/A"}</span>
     }
   },
   {

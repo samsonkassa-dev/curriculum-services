@@ -33,6 +33,7 @@ export interface AttendanceStudent {
   frontIdUrl?: string | null
   backIdUrl?: string | null
   signatureUrl?: string | null
+  pendingTraineeId?: string | null
   _onAttendanceChange?: (id: string, status: 'present' | 'absent') => void
   _onCommentChange?: (id: string, comment: string) => void
   _isProcessing?: boolean
@@ -409,7 +410,7 @@ export const createAttendanceColumns = (
                     )}
                   </div>
                   <IdUploadModal
-                    studentId={student.id}
+                    studentId={student.pendingTraineeId || student.id}
                     studentName={fullName}
                     idType={student.idType}
                     frontIdUrl={student.frontIdUrl}
@@ -427,7 +428,7 @@ export const createAttendanceColumns = (
             ) : (
               <div className="flex items-center justify-center">
                 <IdUploadModal
-                  studentId={student.id}
+                  studentId={student.pendingTraineeId || student.id}
                   studentName={fullName}
                   idType={student.idType}
                   frontIdUrl={student.frontIdUrl}
