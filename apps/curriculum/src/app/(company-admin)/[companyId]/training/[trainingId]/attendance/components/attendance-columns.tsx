@@ -14,9 +14,7 @@ import {
   DialogClose
 } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
-import AssessmentModal from "./assessment-modal"
 import { Session } from "@/lib/hooks/useSession"
-import { SurveyButton } from "./survey-button"
 import { IdUploadModal } from "./id-upload-modal"
 import { Student } from "@/lib/hooks/useStudents"
 
@@ -34,6 +32,7 @@ export interface AttendanceStudent {
   idType?: string | null
   frontIdUrl?: string | null
   backIdUrl?: string | null
+  signatureUrl?: string | null
   _onAttendanceChange?: (id: string, status: 'present' | 'absent') => void
   _onCommentChange?: (id: string, comment: string) => void
   _isProcessing?: boolean
@@ -117,7 +116,6 @@ function CommentDialog({
 
 export const createAttendanceColumns = (
   sessionId: string,
-  canEditAssessment: boolean = false,
   session?: Session,
   trainingId?: string,
   extras: ColumnDef<AttendanceStudent>[] = [],
@@ -216,7 +214,7 @@ export const createAttendanceColumns = (
           : ""
         
         return (
-          <div className={`flex items-center gap-1 ${hasSubmittedAttendance && !isEditing ? 'w-52 px-2 py-1' : 'w-64 px-3 py-2'} ${attendanceContainerClass} ${hasSubmittedAttendance && !isEditing ? 'opacity-90' : ''} ${isEditing ? 'ring-2 ring-blue-300 bg-blue-50 rounded-lg' : ''}`}>
+          <div className={`flex items-center gap-1 ${hasSubmittedAttendance && !isEditing ? 'w-52 px-2 py-1' : isEditing ? 'w-80 px-3 py-2' : 'w-64 px-3 py-2'} ${attendanceContainerClass} ${hasSubmittedAttendance && !isEditing ? 'opacity-90' : ''} ${isEditing ? 'ring-2 ring-blue-300 bg-blue-50 rounded-lg' : ''}`}>
             {/* Submitted attendance is shown in a more compact format */}
             {hasSubmittedAttendance && !isEditing ? (
               <>
@@ -313,7 +311,7 @@ export const createAttendanceColumns = (
                 )}
                 
                 {/* Right side controls */}
-                <div className="flex items-center gap-1 ml-auto">
+                <div className={`flex items-center gap-1 ${hasAttendance ? 'ml-auto' : 'ml-2'}`}>
                   {/* Comment button with dialog */}
                   {row.original._onCommentChange && (
                     <CommentDialog 
@@ -328,28 +326,28 @@ export const createAttendanceColumns = (
                   
                   {/* Edit/Cancel/Save buttons - only show in edit mode */}
                   {isEditing && onSaveIndividualAttendance && (
-                    <div className="flex gap-1">
+                    <div className="flex gap-1 flex-shrink-0">
                       {/* Save button - only show if there are unsaved changes */}
                       {student._hasUnsavedChanges && (
                         <button
-                          className="w-7 h-7 rounded-full bg-green-50 text-green-600 flex items-center justify-center hover:bg-green-100 transition-colors flex-shrink-0"
+                          className="w-6 h-6 rounded-full bg-green-50 text-green-600 flex items-center justify-center hover:bg-green-100 transition-colors flex-shrink-0"
                           aria-label={`Save changes for ${student.firstName} ${student.lastName}`}
                           onClick={() => {
                             onSaveIndividualAttendance(student.id)
                           }}
                         >
-                          <Save size={14} />
+                          <Save size={12} />
                         </button>
                       )}
                       {/* Cancel button */}
                       <button
-                        className="w-7 h-7 rounded-full bg-red-50 text-red-600 flex items-center justify-center hover:bg-red-100 transition-colors flex-shrink-0"
+                        className="w-6 h-6 rounded-full bg-red-50 text-red-600 flex items-center justify-center hover:bg-red-100 transition-colors flex-shrink-0"
                         aria-label={`Cancel editing ${student.firstName} ${student.lastName}`}
                         onClick={() => {
                           row.original._onEditModeChange?.(student.id, false)
                         }}
                       >
-                        <XCircle size={14} />
+                        <XCircle size={12} />
                       </button>
                     </div>
                   )}
@@ -373,94 +371,90 @@ export const createAttendanceColumns = (
         const hasId = student.idType && student.frontIdUrl;
         
         return (
-          <div className="flex items-center justify-center w-32">
-            <IdUploadModal
-              studentId={student.id}
-              studentName={fullName}
-              idType={student.idType}
-              frontIdUrl={student.frontIdUrl}
-              backIdUrl={student.backIdUrl}
-              trigger={
-                              <Button 
-                variant="outline"
-                className={`h-9 ${hasId ? "bg-green-100 text-green-700 hover:bg-green-200 border-green-300" : ""} whitespace-nowrap`}
-                size="sm"
-              >
-                {hasId ? (
-                  <span className="text-sm flex items-center gap-1">
-                    <Edit2 className="h-4 w-4" />
-                    Edit ID Document
-                  </span>
-                ) : (
-                  <span className="text-sm flex items-center gap-1">
-                    <CreditCard className="h-4 w-4" />
-                    Add ID Document
-                  </span>
-                )}
-              </Button>
-              }
-            />
+          <div className="flex flex-col gap-1 min-w-36">
+            {hasId ? (
+              <>
+                {/* Document Links and Edit Button */}
+                <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap gap-1">
+                    {student.frontIdUrl && (
+                      <a
+                        href={student.frontIdUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-blue-600 hover:text-blue-800 hover:underline"
+                      >
+                        📄 Front
+                      </a>
+                    )}
+                    {student.backIdUrl && (
+                      <a
+                        href={student.backIdUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-blue-600 hover:text-blue-800 hover:underline"
+                      >
+                        📄 Back
+                      </a>
+                    )}
+                    {student.signatureUrl && (
+                      <a
+                        href={student.signatureUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs text-blue-600 hover:text-blue-800 hover:underline"
+                      >
+                        ✍️ Signature
+                      </a>
+                    )}
+                  </div>
+                  <IdUploadModal
+                    studentId={student.id}
+                    studentName={fullName}
+                    idType={student.idType}
+                    frontIdUrl={student.frontIdUrl}
+                    backIdUrl={student.backIdUrl}
+                    signatureUrl={student.signatureUrl}
+                    trigger={
+                      <button className="text-xs text-gray-500 hover:text-blue-600 flex items-center gap-1 px-1 py-0.5 rounded hover:bg-blue-50 transition-colors">
+                        <Edit2 className="h-3 w-3" />
+                        Edit
+                      </button>
+                    }
+                  />
+                </div>
+              </>
+            ) : (
+              <div className="flex items-center justify-center">
+                <IdUploadModal
+                  studentId={student.id}
+                  studentName={fullName}
+                  idType={student.idType}
+                  frontIdUrl={student.frontIdUrl}
+                  backIdUrl={student.backIdUrl}
+                  signatureUrl={student.signatureUrl}
+                  trigger={
+                    <Button 
+                      variant="outline"
+                      className="h-8 px-3 text-xs"
+                      size="sm"
+                    >
+                      <CreditCard className="h-3 w-3 mr-1" />
+                      Add ID
+                    </Button>
+                  }
+                />
+              </div>
+            )}
           </div>
         );
       },
     });
   }
 
-  // Add survey column
-  if (session && trainingId) {
-    // Only add survey column if session is first or last
-    if (session.first || session.last) {
-      columns.push({
-        accessorKey: "survey",
-        header: "Survey",
-        cell: ({ row }) => {
-          const student = row.original;
-          const fullName = `${student.firstName} ${student.lastName}`;
-          
-          // Determine if this is a pre or post session survey
-          const isPreSession = session.first === true;
-          
-          return (
-            <div className="flex items-center justify-center w-32">
-              <SurveyButton 
-                trainingId={trainingId}
-                studentId={student.id}
-                studentName={fullName}
-                isPreSession={isPreSession}
-                disabled={false}
-              />
-            </div>
-          );
-        },
-      });
-    }
-  }
 
-  // Only add assessment column if session has first or last flag
-  if (session && (session.first || session.last)) {
-    columns.push({
-      accessorKey: "assessment",
-      header: "Assessment",
-      cell: ({ row }) => {
-        const student = row.original;
-        const fullName = `${student.firstName} ${student.lastName}`;
-        
-        // Add a SessionAssessmentWrapper component to handle fetching assessments
-        return (
-          <div className="flex items-center justify-center w-32">
-            <SessionAssessmentCell 
-              sessionId={sessionId} 
-              student={student}
-              canEditAssessment={canEditAssessment}
-              isDisabled={false}
-              session={session}
-              trainingId={trainingId}
-            />
-          </div>
-        );
-      },
-    });
-  }
+
+
   
   // Append any extra columns provided (future-proofing for new inline forms)
   if (extras.length) {
@@ -470,81 +464,7 @@ export const createAttendanceColumns = (
   return columns;
 };
 
-// New component to handle assessment display with data fetching
-function SessionAssessmentCell({ 
-  sessionId, 
-  student, 
-  canEditAssessment,
-  isDisabled,
-  session,
-  trainingId
-}: { 
-  sessionId: string;
-  student: AttendanceStudent;
-  canEditAssessment: boolean;
-  isDisabled: boolean;
-  session?: Session;
-  trainingId?: string;
-}) {
-  const fullName = `${student.firstName} ${student.lastName}`;
-  
-  if (!sessionId || !session) {
-    return <span className="text-xs text-gray-400">Session not available</span>;
-  }
-  
-  if (!canEditAssessment) {
-    return null; // Don't show anything for non-authorized roles
-  }
 
-  // Determine assessment type based on session flags
-  const isFirstSession = session.first;
-  const isLastSession = session.last;
-  
-  // If session is neither first nor last, don't show assessment
-  if (!isFirstSession && !isLastSession) {
-    return null;
-  }
-  
-  // Check if the student has filled any assessment
-  const hasFilledAssessment = typeof student.answerFileLink === 'string' && student.answerFileLink;
-  
-  // Use the passed trainingId or fallback
-  const effectiveTrainingId = trainingId || '';
-  
-  // Determine the assessment type and labels
-  const assessmentType = isFirstSession ? 'PRE' : 'POST';
-  const assessmentTypeLabel = isFirstSession ? 'Pre' : 'Post';
-  const filledLabel = isFirstSession ? 'Pre-assessment filled' : 'Post-assessment filled';
-  const buttonLabel = hasFilledAssessment 
-    ? `View/Edit ${assessmentTypeLabel}` 
-    : `Add ${assessmentTypeLabel}-Assessment`;
-    
-  return (
-    <div className="flex items-center gap-2">
-      {hasFilledAssessment && (
-        <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full">
-          {filledLabel}
-        </span>
-      )}
-      
-      <AssessmentModal
-        trainingId={effectiveTrainingId}
-        studentId={student.id}
-        studentName={fullName}
-        assessmentType={assessmentType}
-        trigger={
-                  <Button
-          variant="outline"
-          className="text-blue-600 border-blue-600 text-xs h-7 px-2 hover:bg-blue-50"
-          disabled={false}
-        >
-          {buttonLabel}
-        </Button>
-        }
-      />
-    </div>
-  );
-}
 
 // Export a static version for compatibility with existing code
 export const attendanceColumns = createAttendanceColumns(""); 

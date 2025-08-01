@@ -77,7 +77,7 @@ function attendanceReducer(state: AttendanceState, action: AttendanceAction): At
 export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
   const { isProjectManager, isTrainingAdmin, isTrainer, isLoading: isLoadingAuth } = useUserRole()
   const [isInitialLoadComplete, setIsInitialLoadComplete] = useState(false)
-  const canEditAssessment = !isLoadingAuth && (isTrainer || isTrainingAdmin || isProjectManager) && isInitialLoadComplete
+  const canEditAttendance = !isLoadingAuth && (isTrainer || isTrainingAdmin || isProjectManager) && isInitialLoadComplete
   const [activeCohortId, setActiveCohortId] = useState<string>("")
   const [activeSessionId, setActiveSessionId] = useState<string>("")
   const [studentPage, setStudentPage] = useState(1)
@@ -171,8 +171,7 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
   } = useCohortTrainees(
     activeCohortId,
     studentPage,
-    studentPageSize,
-    { noCohorts: true }
+    studentPageSize
   )
 
   // Fetch attendance data for the active session
@@ -320,6 +319,7 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
       idType: student.idType,
       frontIdUrl: student.frontIdUrl,
       backIdUrl: student.backIdUrl,
+      signatureUrl: student.signatureUrl,
       _onAttendanceChange: handleAttendanceChange,
       _onCommentChange: handleCommentChange,
       _onSelectionChange: handleStudentSelection,
@@ -561,8 +561,8 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
 
   // Memoize the attendance columns to prevent recreation on each render
   const memoizedColumns = useMemo(() => 
-    createAttendanceColumns(activeSessionId, canEditAssessment, currentSession, trainingId, [], hasUnsavedChanges, submittedAttendanceIds, handleSaveIndividualAttendance),
-    [activeSessionId, canEditAssessment, currentSession, trainingId, hasUnsavedChanges, submittedAttendanceIds, handleSaveIndividualAttendance, isLoadingAuth]
+    createAttendanceColumns(activeSessionId, currentSession, trainingId, [], hasUnsavedChanges, submittedAttendanceIds, handleSaveIndividualAttendance),
+    [activeSessionId, currentSession, trainingId, hasUnsavedChanges, submittedAttendanceIds, handleSaveIndividualAttendance]
   );
 
   // Comprehensive loading states
@@ -754,7 +754,7 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
           unsavedStudentId={null}
           studentsWithChanges={studentsWithChanges}
           isInitialLoadComplete={isInitialLoadComplete}
-          canEditAttendance={canEditAssessment}
+          canEditAttendance={canEditAttendance}
         />
       )}
     </div>

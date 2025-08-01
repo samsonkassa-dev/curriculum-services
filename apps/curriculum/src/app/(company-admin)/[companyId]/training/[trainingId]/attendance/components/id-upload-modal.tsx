@@ -15,6 +15,7 @@ interface IdUploadModalProps {
   idType?: string | null
   frontIdUrl?: string | null
   backIdUrl?: string | null
+  signatureUrl?: string | null
   trigger: React.ReactNode
 }
 
@@ -24,9 +25,10 @@ export function IdUploadModal({
   idType: existingIdType,
   frontIdUrl,
   backIdUrl,
+  signatureUrl,
   trigger
 }: IdUploadModalProps) {
-  const [selectedIdType, setSelectedIdType] = useState<string>(existingIdType || "")
+  const [selectedIdType, setSelectedIdType] = useState<string>(existingIdType?.toLowerCase() || "")
   const [frontIdFile, setFrontIdFile] = useState<File | null>(null)
   const [backIdFile, setBackIdFile] = useState<File | null>(null)
   const [frontIdPreview, setFrontIdPreview] = useState<string | null>(frontIdUrl || null)
@@ -165,7 +167,7 @@ export function IdUploadModal({
                   if (!backIdUrl) setBackIdPreview(null)
                 }
               }}
-              disabled={existingIdType !== null && existingIdType !== undefined}
+              disabled={false}
             >
               <SelectTrigger id="id-type" className="w-full">
                 <SelectValue placeholder="Select ID type" />
@@ -178,11 +180,7 @@ export function IdUploadModal({
                 ))}
               </SelectContent>
             </Select>
-            {existingIdType && (
-              <p className="text-xs text-muted-foreground mt-1">
-                ID type cannot be changed after upload
-              </p>
-            )}
+
           </div>
           
           {/* Front ID Upload */}
@@ -287,6 +285,27 @@ export function IdUploadModal({
                     </label>
                   </>
                 )}
+              </div>
+            </div>
+          )}
+
+          {/* Signature Display (if exists) */}
+          {signatureUrl && (
+            <div className="space-y-2">
+              <Label>Digital Signature</Label>
+              <div className="flex items-center justify-between border rounded-md p-3 bg-green-50">
+                <div className="flex items-center gap-2">
+                  <Check size={16} className="text-green-600" />
+                  <span className="text-sm text-green-700">Signature available</span>
+                </div>
+                <a
+                  href={signatureUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1"
+                >
+                  ✍️ View Signature
+                </a>
               </div>
             </div>
           )}
