@@ -8,35 +8,84 @@ interface ApiErrorResponse {
   message?: string;
 }
 
-// Define types based on the API structure
-export interface SurveyQuestion {
+// Define types based on the new API structure
+export type QuestionType = 'TEXT' | 'RADIO' | 'CHECKBOX' | 'GRID';
+export type SurveyType = 'BASELINE' | 'ENDLINE' | 'OTHER';
+
+// For GET API - viewing survey details
+export interface SurveyEntry {
+  id?: string; // Optional for creation, required for existing entries
   question: string;
+  questionType: QuestionType;
   choices: string[];
+  allowMultipleAnswers: boolean;
+  allowOtherAnswer: boolean;
+  rows: string[];
+  required: boolean;
+  answer?: string | null; // For trainee responses
 }
 
-export interface SurveyEntry {
-  id: string;
+// For POST API - creating surveys (sections.surveyEntries)
+export interface CreateSurveyEntry {
   question: string;
+  questionType: QuestionType;
   choices: string[];
-  answer: string | null;
+  allowTextAnswer: boolean;
+  rows: string[];
+  required: boolean;
+}
+
+// For PATCH API - updating individual questions
+export interface UpdateSurveyEntryData {
+  question: string;
+  questionType: QuestionType;
+  isRequired: boolean;
+  choices: string[];
+  allowOtherAnswer: boolean;
+  rows: string[];
+}
+
+// For POST API - adding new questions to section
+export interface AddSurveyEntryData {
+  question: string;
+  questionType: QuestionType;
+  choices: string[];
+  allowTextAnswer: boolean;
+  rows: string[];
+  required: boolean;
+}
+
+// For GET API - viewing survey details (sections.questions)
+export interface SurveySection {
+  id?: string; // Optional for creation
+  title: string;
+  questions: SurveyEntry[];
+}
+
+// For POST API - creating surveys (sections.surveyEntries)
+export interface CreateSurveySection {
+  title: string;
+  surveyEntries: CreateSurveyEntry[];
 }
 
 export interface Survey {
   id: string;
   name: string;
+  type: SurveyType | null;
   description: string;
-  sessionId: string | null;
-  sessionName: string | null;
+  sectionCount: number;
 }
 
 export interface SurveyDetail {
   id: string;
   name: string;
+  type: SurveyType | null;
   description: string;
-  sessionId: string | null;
-  sessionName: string | null;
-  surveyEntries: SurveyEntry[];
+  sections: SurveySection[];
+  sessions: null;
 }
+
+
 
 export interface SurveysResponse {
   code: string;
@@ -52,12 +101,14 @@ export interface SurveyDetailResponse {
 
 export interface CreateSurveyData {
   name: string;
+  type: SurveyType;
   description: string;
-  surveyQuestions: SurveyQuestion[];
+  sections: CreateSurveySection[];
 }
 
 export interface UpdateSurveyData {
   name: string;
+  type: SurveyType;
   description: string;
 }
 
@@ -66,10 +117,20 @@ export interface SubmitAnswerData {
   traineeId: string;
 }
 
-export interface UpdateQuestionData {
-  question: string;
-  choices: string[];
+// Interface for survey sections response from GET /api/survey-section/survey/{surveyId}
+export interface SurveySectionsResponse {
+  code: string;
+  message: string;
+  sections: SurveySection[];
 }
+
+// Interface for adding a section with questions
+export interface AddSectionData {
+  title: string;
+  surveyEntries: CreateSurveyEntry[];
+}
+
+
 
 // Define query keys
 const surveyQueryKeys = {
@@ -77,6 +138,7 @@ const surveyQueryKeys = {
   training: (trainingId: string) => ['surveys', 'training', trainingId] as const,
   detail: (surveyId: string, traineeId?: string) => ['surveys', 'detail', surveyId, traineeId] as const,
   session: (sessionId: string) => ['surveys', 'session', sessionId] as const,
+  sections: (surveyId: string) => ['surveys', 'sections', surveyId] as const,
 };
 
 /**
@@ -156,7 +218,7 @@ export function useSurveysBySession(sessionId: string) {
 }
 
 /**
- * Hook for creating a new survey with questions
+ * Hook for creating a new survey with sections and questions
  */
 export function useCreateSurvey(trainingId: string) {
   const queryClient = useQueryClient();
@@ -164,6 +226,7 @@ export function useCreateSurvey(trainingId: string) {
   const createSurveyMutation = useMutation({
     mutationFn: async (surveyData: CreateSurveyData) => {
       const token = getCookie("token");
+      // Using the new API endpoint structure from the documentation
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_API}/survey/training/${trainingId}`,
         surveyData,
@@ -263,109 +326,27 @@ export function useDeleteSurvey() {
   };
 }
 
-/**
- * Hook for adding a single question to an existing survey
- */
-export function useAddQuestionToSurvey() {
-  const queryClient = useQueryClient();
 
-  const addQuestionMutation = useMutation({
-    mutationFn: async ({
-      surveyId,
-      questionData,
-    }: {
-      surveyId: string;
-      questionData: SurveyQuestion;
-    }) => {
-      const token = getCookie("token");
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API}/survey/${surveyId}/question`,
-        questionData,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      return { responseData: response.data, surveyId };
-    },
-    onSuccess: ({ responseData, surveyId }) => {
-      toast.success(responseData.message || "Question added successfully");
-      queryClient.invalidateQueries({ queryKey: surveyQueryKeys.all });
-      queryClient.invalidateQueries({ queryKey: surveyQueryKeys.detail(surveyId) });
-    },
-    onError: (error: AxiosError<ApiErrorResponse>) => {
-      toast.error(error.response?.data?.message || "Failed to add question");
-    },
-  });
 
-  return {
-    addQuestion: addQuestionMutation.mutate,
-    isLoading: addQuestionMutation.isPending,
-    isSuccess: addQuestionMutation.isSuccess,
-    isError: addQuestionMutation.isError,
-    error: addQuestionMutation.error,
-  };
-}
+
 
 /**
- * Hook for adding multiple questions to an existing survey
+ * Hook for updating a specific question (survey entry) - NEW API
  */
-export function useAddQuestionsToSurvey() {
+export function useUpdateSurveyEntry() {
   const queryClient = useQueryClient();
 
-  const addQuestionsMutation = useMutation({
-    mutationFn: async ({
-      surveyId,
-      questions,
-    }: {
-      surveyId: string;
-      questions: SurveyQuestion[];
-    }) => {
-      const token = getCookie("token");
-      const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API}/survey/${surveyId}/questions`,
-        questions,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-      return { responseData: response.data, surveyId };
-    },
-    onSuccess: ({ responseData, surveyId }) => {
-      toast.success(responseData.message || "Questions added successfully");
-      queryClient.invalidateQueries({ queryKey: surveyQueryKeys.all });
-      queryClient.invalidateQueries({ queryKey: surveyQueryKeys.detail(surveyId) });
-    },
-    onError: (error: AxiosError<ApiErrorResponse>) => {
-      toast.error(error.response?.data?.message || "Failed to add questions");
-    },
-  });
-
-  return {
-    addQuestions: addQuestionsMutation.mutate,
-    isLoading: addQuestionsMutation.isPending,
-    isSuccess: addQuestionsMutation.isSuccess,
-    isError: addQuestionsMutation.isError,
-    error: addQuestionsMutation.error,
-  };
-}
-
-/**
- * Hook for updating a specific question (survey entry)
- */
-export function useUpdateSurveyQuestion() {
-  const queryClient = useQueryClient();
-
-  const updateQuestionMutation = useMutation({
+  const updateSurveyEntryMutation = useMutation({
     mutationFn: async ({
       surveyEntryId,
       questionData,
     }: {
       surveyEntryId: string;
-      questionData: UpdateQuestionData;
+      questionData: UpdateSurveyEntryData;
     }) => {
       const token = getCookie("token");
       const response = await axios.patch(
-        `${process.env.NEXT_PUBLIC_API}/survey/entry/${surveyEntryId}/question`,
+        `${process.env.NEXT_PUBLIC_API}/survey-entry/${surveyEntryId}`,
         questionData,
         {
           headers: { Authorization: `Bearer ${token}` },
@@ -383,13 +364,124 @@ export function useUpdateSurveyQuestion() {
   });
 
   return {
-    updateQuestion: updateQuestionMutation.mutate,
-    isLoading: updateQuestionMutation.isPending,
-    isSuccess: updateQuestionMutation.isSuccess,
-    isError: updateQuestionMutation.isError,
-    error: updateQuestionMutation.error,
+    updateSurveyEntry: updateSurveyEntryMutation.mutate,
+    isLoading: updateSurveyEntryMutation.isPending,
+    isSuccess: updateSurveyEntryMutation.isSuccess,
+    isError: updateSurveyEntryMutation.isError,
+    error: updateSurveyEntryMutation.error,
   };
 }
+
+/**
+ * Hook for adding a new question to a section - NEW API
+ */
+export function useAddQuestionToSection() {
+  const queryClient = useQueryClient();
+
+  const addQuestionToSectionMutation = useMutation({
+    mutationFn: async ({
+      sectionId,
+      questionData,
+    }: {
+      sectionId: string;
+      questionData: AddSurveyEntryData;
+    }) => {
+      const token = getCookie("token");
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_API}/survey-entry/survey-section/${sectionId}`,
+        questionData,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      return response.data;
+    },
+    onSuccess: (data) => {
+      toast.success(data.message || "Question added successfully");
+      queryClient.invalidateQueries({ queryKey: surveyQueryKeys.all });
+    },
+    onError: (error: AxiosError<ApiErrorResponse>) => {
+      toast.error(error.response?.data?.message || "Failed to add question");
+    },
+  });
+
+  return {
+    addQuestionToSection: addQuestionToSectionMutation.mutate,
+    isLoading: addQuestionToSectionMutation.isPending,
+    isSuccess: addQuestionToSectionMutation.isSuccess,
+    isError: addQuestionToSectionMutation.isError,
+    error: addQuestionToSectionMutation.error,
+  };
+}
+
+/**
+ * Hook to fetch survey sections for editing
+ */
+export function useSurveySections(surveyId: string) {
+  return useQuery({
+    queryKey: surveyQueryKeys.sections(surveyId),
+    queryFn: async () => {
+      try {
+        const token = getCookie("token");
+        const response = await axios.get(
+          `${process.env.NEXT_PUBLIC_API}/survey-section/survey/${surveyId}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
+        return response.data as SurveySectionsResponse;
+      } catch (error: unknown) {
+        const axiosError = error as AxiosError<ApiErrorResponse>;
+        throw new Error(axiosError?.response?.data?.message || "Failed to load survey sections");
+      }
+    },
+    enabled: !!surveyId,
+  });
+}
+
+/**
+ * Hook for adding a new section to an existing survey
+ */
+export function useAddSectionToSurvey() {
+  const queryClient = useQueryClient();
+
+  const addSectionMutation = useMutation({
+    mutationFn: async ({
+      surveyId,
+      sectionData,
+    }: {
+      surveyId: string;
+      sectionData: AddSectionData;
+    }) => {
+      const token = getCookie("token");
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_API}/survey-section/survey/${surveyId}`,
+        sectionData,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      return response.data;
+    },
+    onSuccess: (data) => {
+      toast.success(data.message || "Section added successfully");
+      queryClient.invalidateQueries({ queryKey: surveyQueryKeys.all });
+    },
+    onError: (error: AxiosError<ApiErrorResponse>) => {
+      toast.error(error.response?.data?.message || "Failed to add section");
+    },
+  });
+
+  return {
+    addSection: addSectionMutation.mutate,
+    isLoading: addSectionMutation.isPending,
+    isSuccess: addSectionMutation.isSuccess,
+    isError: addSectionMutation.isError,
+    error: addSectionMutation.error,
+  };
+}
+
+
 
 /**
  * Hook for deleting a specific survey entry (question)
@@ -503,3 +595,172 @@ export function useAssignSurveyToSession() {
     error: assignSurveyMutation.error,
   };
 }
+
+// Utility functions for question validation based on type
+export const getDefaultQuestionFields = (questionType: QuestionType): Partial<CreateSurveyEntry> => {
+  switch (questionType) {
+    case 'TEXT':
+      return {
+        choices: [],
+        allowTextAnswer: true,
+        rows: [],
+      };
+    case 'RADIO':
+      return {
+        choices: ['', ''],
+        allowTextAnswer: false,
+        rows: [],
+      };
+    case 'CHECKBOX':
+      return {
+        choices: ['', ''],
+        allowTextAnswer: false,
+        rows: [],
+      };
+    case 'GRID':
+      return {
+        choices: ['', ''],
+        allowTextAnswer: false,
+        rows: ['', ''],
+      };
+    default:
+      return {
+        choices: [],
+        allowTextAnswer: false,
+        rows: [],
+      };
+  }
+};
+
+// Utility function for default fields when adding individual questions
+export const getDefaultAddQuestionFields = (questionType: QuestionType): Partial<AddSurveyEntryData> => {
+  switch (questionType) {
+    case 'TEXT':
+      return {
+        choices: [],
+        allowTextAnswer: true,
+        rows: [],
+      };
+    case 'RADIO':
+      return {
+        choices: ['', ''],
+        allowTextAnswer: false,
+        rows: [],
+      };
+    case 'CHECKBOX':
+      return {
+        choices: ['', ''],
+        allowTextAnswer: false,
+        rows: [],
+      };
+    case 'GRID':
+      return {
+        choices: ['', ''],
+        allowTextAnswer: false,
+        rows: ['', ''],
+      };
+    default:
+      return {
+        choices: [],
+        allowTextAnswer: false,
+        rows: [],
+      };
+  }
+};
+
+export const validateSurveyEntry = (entry: SurveyEntry): { isValid: boolean; errors: string[] } => {
+  const errors: string[] = [];
+
+  // Check required question text
+  if (!entry.question.trim()) {
+    errors.push('Question text is required');
+  }
+
+  // Validate based on question type
+  switch (entry.questionType) {
+    case 'TEXT':
+      // TEXT questions don't need choices or rows
+      break;
+      
+    case 'RADIO':
+    case 'CHECKBOX':
+      // RADIO and CHECKBOX need at least 2 choices
+      if (entry.choices.length < 2) {
+        errors.push('At least 2 choices are required');
+      }
+      if (entry.choices.some(choice => !choice.trim())) {
+        errors.push('All choices must have text');
+      }
+      break;
+      
+    case 'GRID':
+      // GRID needs both choices (columns) and rows
+      if (entry.choices.length < 2) {
+        errors.push('At least 2 column choices are required for grid questions');
+      }
+      if (entry.rows.length < 2) {
+        errors.push('At least 2 rows are required for grid questions');
+      }
+      if (entry.choices.some(choice => !choice.trim())) {
+        errors.push('All column choices must have text');
+      }
+      if (entry.rows.some(row => !row.trim())) {
+        errors.push('All row options must have text');
+      }
+      break;
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
+};
+
+// Validation function for CreateSurveyEntry (for form creation)
+export const validateCreateSurveyEntry = (entry: CreateSurveyEntry): { isValid: boolean; errors: string[] } => {
+  const errors: string[] = [];
+
+  // Check required question text
+  if (!entry.question.trim()) {
+    errors.push('Question text is required');
+  }
+
+  // Validate based on question type
+  switch (entry.questionType) {
+    case 'TEXT':
+      // TEXT questions don't need choices or rows
+      break;
+      
+    case 'RADIO':
+    case 'CHECKBOX':
+      // RADIO and CHECKBOX need at least 2 choices
+      if (entry.choices.length < 2) {
+        errors.push('At least 2 choices are required');
+      }
+      if (entry.choices.some(choice => !choice.trim())) {
+        errors.push('All choices must have text');
+      }
+      break;
+      
+    case 'GRID':
+      // GRID needs both choices (columns) and rows
+      if (entry.choices.length < 2) {
+        errors.push('At least 2 column choices are required for grid questions');
+      }
+      if (entry.rows.length < 2) {
+        errors.push('At least 2 rows are required for grid questions');
+      }
+      if (entry.choices.some(choice => !choice.trim())) {
+        errors.push('All column choices must have text');
+      }
+      if (entry.rows.some(row => !row.trim())) {
+        errors.push('All row options must have text');
+      }
+      break;
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors
+  };
+};

@@ -130,7 +130,7 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
   useEffect(() => {
     if (!isInitializedRef.current && cohorts.length > 0) {
       setActiveCohortId(cohorts[0].id)
-      isInitializedRef.current = true
+      isInitializedRef.current = true 
     }
   }, [cohorts.length])
 
@@ -309,7 +309,7 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
       id: student.id,
       firstName: student.firstName || '',
       lastName: student.lastName || '',
-      email: student.email || '',
+      contactPhone: student.contactPhone || '',
       sessionDate: sessions.find(s => s.id === activeSessionId)?.startDate || '',
       attendance: effectiveAttendance,
       comment: effectiveComment,
@@ -352,7 +352,7 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
       ? attendanceStudents.filter(student => 
           student?.firstName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
           student?.lastName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          student?.email?.toLowerCase().includes(searchQuery.toLowerCase())
+          student?.contactPhone?.toLowerCase().includes(searchQuery.toLowerCase())
         )
       : attendanceStudents,
     [attendanceStudents, searchQuery]

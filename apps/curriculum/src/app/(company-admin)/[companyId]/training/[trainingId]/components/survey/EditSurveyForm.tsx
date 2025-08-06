@@ -6,26 +6,30 @@ import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { SurveyType } from "@/lib/hooks/useSurvey"
 import { toast } from "sonner"
 
 interface EditSurveyFormProps {
   surveyId: string
   initialName: string
+  initialType: SurveyType
   initialDescription: string
   onCancel: () => void
-  onSubmit: (data: { surveyId: string; data: { name: string; description: string } }) => void
+  onSubmit: (data: { surveyId: string; data: { name: string; type: SurveyType; description: string } }) => void
   isSubmitting: boolean
 }
 
 export function EditSurveyForm({
   surveyId,
   initialName,
+  initialType,
   initialDescription,
   onCancel,
   onSubmit,
   isSubmitting
 }: EditSurveyFormProps) {
   const [surveyName, setSurveyName] = useState(initialName)
+  const [surveyType, setSurveyType] = useState<SurveyType>(initialType)
   const [surveyDescription, setSurveyDescription] = useState(initialDescription)
 
   const validateSurveyDetails = () => {
@@ -49,6 +53,7 @@ export function EditSurveyForm({
       surveyId,
       data: {
         name: surveyName,
+        type: surveyType,
         description: surveyDescription
       }
     })
@@ -91,6 +96,28 @@ export function EditSurveyForm({
                 placeholder="Enter survey name"
                 className="w-full mt-1"
               />
+            </div>
+            
+            <div>
+              <Label htmlFor="surveyType">Survey Type</Label>
+              <div className="grid grid-cols-3 gap-3 mt-1">
+                {(['BASELINE', 'ENDLINE', 'OTHER'] as SurveyType[]).map((type) => (
+                  <Button
+                    key={type}
+                    variant={surveyType === type ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setSurveyType(type)}
+                    className={`h-auto p-3 font-semibold transition-all duration-200 ${
+                      surveyType === type 
+                        ? "bg-blue-600 text-white hover:bg-blue-700 shadow-md" 
+                        : "border-2 border-gray-300 text-gray-700 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50"
+                    }`}
+                    type="button"
+                  >
+                    {type}
+                  </Button>
+                ))}
+              </div>
             </div>
             
             <div>

@@ -6,13 +6,19 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Card } from "@/components/ui/card"
 import { Plus, Trash2 } from "lucide-react"
-import { SurveyQuestion } from "@/lib/hooks/useSessionAssesment"
+import { 
+  SurveyEntry, 
+  QuestionType,
+  getDefaultQuestionFields,
+  validateSurveyEntry
+} from "@/lib/hooks/useSurvey"
+import { Label } from "@/components/ui/label"
 import { toast } from "sonner"
 
 interface AddQuestionFormProps {
   surveyId: string
   onCancel: () => void
-  onSubmit: (data: { surveyId: string; questionData: SurveyQuestion }) => void
+  onSubmit: (data: { surveyId: string; questionData: SurveyEntry }) => void
   isSubmitting: boolean
 }
 
@@ -22,13 +28,27 @@ export function AddQuestionForm({
   onSubmit,
   isSubmitting
 }: AddQuestionFormProps) {
-  const [question, setQuestion] = useState<SurveyQuestion>({
+  const [question, setQuestion] = useState<SurveyEntry>({
     question: "",
-    choices: ["", ""]
+    questionType: "RADIO",
+    choices: ["", ""],
+    allowMultipleAnswers: false,
+    allowOtherAnswer: false,
+    rows: [],
+    required: true
   })
 
   const updateQuestionText = (text: string) => {
     setQuestion(prev => ({ ...prev, question: text }))
+  }
+
+  const updateQuestionType = (questionType: QuestionType) => {
+    const defaults = getDefaultQuestionFields(questionType)
+    setQuestion(prev => ({ ...prev, questionType, ...defaults }))
+  }
+
+  const updateRequired = (required: boolean) => {
+    setQuestion(prev => ({ ...prev, required }))
   }
 
   const addChoice = () => {
@@ -54,22 +74,35 @@ export function AddQuestionForm({
     }))
   }
 
+  const addRow = () => {
+    if (question.rows.length >= 8) return
+    setQuestion(prev => ({
+      ...prev,
+      rows: [...prev.rows, ""]
+    }))
+  }
+
+  const removeRow = (index: number) => {
+    if (question.rows.length <= 2) return
+    setQuestion(prev => ({
+      ...prev,
+      rows: prev.rows.filter((_, i) => i !== index)
+    }))
+  }
+
+  const updateRow = (index: number, value: string) => {
+    setQuestion(prev => ({
+      ...prev,
+      rows: prev.rows.map((r, i) => i === index ? value : r)
+    }))
+  }
+
   const validateQuestion = () => {
-    if (!question.question.trim()) {
-      toast.error("Please enter a question")
+    const validation = validateSurveyEntry(question)
+    if (!validation.isValid) {
+      toast.error(validation.errors[0])
       return false
     }
-    
-    if (question.choices.length < 2) {
-      toast.error("Please add at least 2 choices")
-      return false
-    }
-    
-    if (question.choices.some(c => !c.trim())) {
-      toast.error("Please fill in all choices")
-      return false
-    }
-    
     return true
   }
 
@@ -82,15 +115,169 @@ export function AddQuestionForm({
     })
   }
 
-  // Component for preview choice
-  const PreviewChoice = ({ choice, index }: { choice: string; index: number }) => (
-    <div className="flex items-center gap-2">
-      <div className="w-5 h-5 rounded-full border flex items-center justify-center text-xs">
-        {String.fromCharCode(65 + index)}
+  // Question Type Selector Component
+  const QuestionTypeSelector = ({ 
+    questionType, 
+    onChange 
+  }: { 
+    questionType: QuestionType; 
+    onChange: (type: QuestionType) => void 
+  }) => {
+    const getIconSrc = (type: QuestionType) => {
+      switch (type) {
+        case 'TEXT': return '/question-type-text.svg'
+        case 'RADIO': return '/question-type-radio.svg'
+        case 'CHECKBOX': return '/question-type-checkbox.svg'
+        case 'GRID': return '/question-type-grid.svg'
+        default: return '/question-type-text.svg'
+      }
+    }
+
+    return (
+      <div className="space-y-2">
+        <Label>Question Type</Label>
+        <div className="grid grid-cols-2 gap-3">
+          {([
+            { type: 'TEXT' as const, label: 'Text Answer', desc: 'Free text input' },
+            { type: 'RADIO' as const, label: 'Single Choice', desc: 'Select one option' },
+            { type: 'CHECKBOX' as const, label: 'Multiple Choice', desc: 'Select multiple' },
+            { type: 'GRID' as const, label: 'Grid/Matrix', desc: 'Rate multiple items' }
+          ]).map(({ type, label, desc }) => (
+            <Button
+              key={type}
+              variant={questionType === type ? "default" : "outline"}
+              size="sm"
+              onClick={() => onChange(type)}
+              className={`h-auto p-4 flex flex-col items-start transition-all duration-200 ${
+                questionType === type 
+                  ? "bg-blue-600 text-white hover:bg-blue-700 shadow-lg border-0" 
+                  : "border-2 border-gray-300 text-gray-700 hover:border-blue-400 hover:text-blue-600 hover:bg-blue-50"
+              }`}
+              type="button"
+            >
+              <div className="flex items-center gap-2 mb-1">
+                <img 
+                  src={getIconSrc(type)} 
+                  alt={`${type} icon`}
+                  className={`w-5 h-5 ${
+                    questionType === type ? "text-white" : "text-gray-600"
+                  }`}
+                />
+                <span className={`font-semibold text-sm ${
+                  questionType === type ? "text-white" : ""
+                }`}>{label}</span>
+              </div>
+              <span className={`text-xs leading-tight ${
+                questionType === type ? "text-blue-100" : "text-gray-500"
+              }`}>{desc}</span>
+            </Button>
+          ))}
+        </div>
       </div>
-      <span>{choice || `Choice ${index + 1} will appear here`}</span>
-    </div>
-  )
+    )
+  }
+
+  // Preview Components for Different Question Types
+  const QuestionPreview = () => {
+    const renderPreview = () => {
+      switch (question.questionType) {
+        case 'TEXT':
+          return (
+            <div className="mt-3">
+              <Textarea
+                placeholder="Trainee will type their answer here..."
+                disabled
+                className="bg-gray-50 border-gray-200 text-gray-500"
+                rows={3}
+              />
+            </div>
+          )
+          
+        case 'RADIO':
+          return (
+            <div className="mt-3 space-y-2">
+              {question.choices.map((choice, index) => (
+                <div key={index} className="flex items-start gap-2">
+                  <div className="w-4 h-4 rounded-full border-2 border-gray-300 mt-0.5 flex-shrink-0"></div>
+                  <span className="text-gray-700 break-words whitespace-normal">{choice || `Option ${index + 1}`}</span>
+                </div>
+              ))}
+            </div>
+          )
+          
+        case 'CHECKBOX':
+          return (
+            <div className="mt-3 space-y-2">
+              {question.choices.map((choice, index) => (
+                <div key={index} className="flex items-start gap-2">
+                  <div className="w-4 h-4 border-2 border-gray-300 rounded mt-0.5 flex-shrink-0"></div>
+                  <span className="text-gray-700 break-words whitespace-normal">{choice || `Option ${index + 1}`}</span>
+                </div>
+              ))}
+            </div>
+          )
+          
+        case 'GRID':
+          return (
+            <div className="mt-3 overflow-x-auto">
+              <table className="min-w-full border border-gray-200 bg-white">
+                <thead>
+                  <tr className="bg-gray-50">
+                    <th className="border border-gray-200 p-3 text-left text-sm font-medium text-gray-900"></th>
+                    {question.choices.map((choice, index) => (
+                      <th key={index} className="border border-gray-200 p-3 text-center text-sm font-medium text-gray-900 break-words">
+                        {choice || `Column ${index + 1}`}
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {question.rows.map((row, rowIndex) => (
+                    <tr key={rowIndex} className={rowIndex % 2 === 0 ? "bg-white" : "bg-gray-50"}>
+                      <td className="border border-gray-200 p-3 text-sm font-medium text-gray-900 break-words">
+                        {row || `Row ${rowIndex + 1}`}
+                      </td>
+                      {question.choices.map((_, colIndex) => (
+                        <td key={colIndex} className="border border-gray-200 p-3 text-center">
+                          <div className="w-4 h-4 rounded-full border-2 border-gray-300 mx-auto"></div>
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )
+          
+        default:
+          return <div className="text-gray-500 mt-3">Unsupported question type</div>
+      }
+    }
+
+    return (
+      <div className="border-l-4 border-blue-200 pl-4 py-3">
+        <div className="flex items-start gap-3 mb-2">
+          <span className="inline-flex items-center justify-center w-7 h-7 bg-blue-100 text-blue-600 rounded-full text-sm font-medium shrink-0">
+            1
+          </span>
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded-full font-medium">
+                {question.questionType}
+              </span>
+              {question.required && (
+                <span className="text-red-500 text-sm font-medium">Required</span>
+              )}
+            </div>
+            <p className="font-medium text-gray-900 text-base leading-relaxed break-words whitespace-normal">
+              {question.question || "Your question will appear here"}
+            </p>
+          </div>
+        </div>
+        {renderPreview()}
+      </div>
+    )
+  }
 
   return (
     <div className="px-[7%] py-8">
@@ -98,7 +285,7 @@ export function AddQuestionForm({
         <div>
           <h2 className="text-2xl font-bold">Add New Question</h2>
           <p className="text-gray-600 mt-1">
-            Add a new multiple-choice question to this survey
+            Create a question with multiple question types available
           </p>
         </div>
         
@@ -110,7 +297,8 @@ export function AddQuestionForm({
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Left Column: Form */}
         <div className="space-y-6">
           <Card className="p-6">
             <div className="mb-4">
@@ -118,56 +306,165 @@ export function AddQuestionForm({
             </div>
             
             <div className="space-y-6">
+              {/* Question Type Selector */}
+              <QuestionTypeSelector
+                questionType={question.questionType}
+                onChange={updateQuestionType}
+              />
+
+              {/* Question Text */}
               <div>
-                <label className="block text-sm font-medium mb-2">Question</label>
+                <Label>Question</Label>
                 <Textarea
                   value={question.question}
                   onChange={(e) => updateQuestionText(e.target.value)}
                   placeholder="Enter your question"
-                  className="w-full"
+                  className="mt-1"
                   rows={3}
                 />
               </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-2">Answer Choices</label>
-                <div className="space-y-3">
-                  {question.choices.map((choice, index) => (
-                    <div key={index} className="flex items-center gap-2">
-                      <div className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center text-xs font-medium shrink-0">
-                        {String.fromCharCode(65 + index)}
-                      </div>
-                      <Input
-                        value={choice}
-                        onChange={(e) => updateChoice(index, e.target.value)}
-                        placeholder={`Choice ${index + 1}`}
-                        className="flex-1"
-                      />
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeChoice(index)}
-                        disabled={question.choices.length <= 2}
-                        className="p-1 h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                  
-                  {question.choices.length < 6 && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={addChoice}
-                      className="flex items-center gap-1"
-                    >
-                      <Plus className="h-3.5 w-3.5" />
-                      Add Choice
-                    </Button>
-                  )}
-                </div>
+              {/* Required Toggle */}
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="required-question"
+                  checked={question.required}
+                  onChange={(e) => updateRequired(e.target.checked)}
+                  className="rounded"
+                  aria-label="Mark as required question"
+                />
+                <Label htmlFor="required-question">
+                  Required question
+                </Label>
               </div>
+
+              {/* Question Type Specific Fields */}
+              {(question.questionType === 'RADIO' || question.questionType === 'CHECKBOX') && (
+                <div>
+                  <Label>Answer Choices</Label>
+                  <div className="space-y-3 mt-2">
+                    {question.choices.map((choice, index) => (
+                      <div key={index} className="flex items-center gap-2">
+                        <div className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center text-xs font-medium shrink-0">
+                          {String.fromCharCode(65 + index)}
+                        </div>
+                        <Input
+                          value={choice}
+                          onChange={(e) => updateChoice(index, e.target.value)}
+                          placeholder={`Choice ${index + 1}`}
+                          className="flex-1"
+                        />
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeChoice(index)}
+                          disabled={question.choices.length <= 2}
+                          className="p-1 h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                    
+                    {question.choices.length < 6 && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={addChoice}
+                        className="flex items-center gap-1"
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                        Add Choice
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {question.questionType === 'GRID' && (
+                <div className="space-y-4">
+                  <div>
+                    <Label>Column Headers (Rating Scale)</Label>
+                    <div className="space-y-3 mt-2">
+                      {question.choices.map((choice, index) => (
+                        <div key={index} className="flex items-center gap-2">
+                          <div className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center text-xs font-medium shrink-0">
+                            {String.fromCharCode(65 + index)}
+                          </div>
+                          <Input
+                            value={choice}
+                            onChange={(e) => updateChoice(index, e.target.value)}
+                            placeholder={`Column ${index + 1}`}
+                            className="flex-1"
+                          />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeChoice(index)}
+                            disabled={question.choices.length <= 2}
+                            className="p-1 h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                      
+                      {question.choices.length < 6 && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={addChoice}
+                          className="flex items-center gap-1"
+                        >
+                          <Plus className="h-3.5 w-3.5" />
+                          Add Column
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label>Row Options (Items to Rate)</Label>
+                    <div className="space-y-3 mt-2">
+                      {question.rows.map((row, index) => (
+                        <div key={index} className="flex items-center gap-2">
+                          <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center text-xs font-medium shrink-0">
+                            {index + 1}
+                          </div>
+                          <Input
+                            value={row}
+                            onChange={(e) => updateRow(index, e.target.value)}
+                            placeholder={`Row option ${index + 1}`}
+                            className="flex-1"
+                          />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeRow(index)}
+                            disabled={question.rows.length <= 2}
+                            className="p-1 h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                      
+                      {question.rows.length < 8 && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={addRow}
+                          className="flex items-center gap-1"
+                        >
+                          <Plus className="h-3.5 w-3.5" />
+                          Add Row
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
               
               <div className="flex justify-end gap-2 pt-4">
                 <Button 
@@ -188,38 +485,14 @@ export function AddQuestionForm({
           </Card>
         </div>
 
-        {/* Preview Section */}
+        {/* Right Column: Preview */}
         <div>
           <Card className="p-6">
             <div className="mb-4">
-              <h3 className="text-xl font-semibold">Preview</h3>
+              <h3 className="text-xl font-semibold">Question Preview</h3>
             </div>
-            <div className="space-y-6">
-              {/* Question Preview */}
-              <Card className="bg-gray-50 border p-6">
-                <h3 className="text-lg font-medium mb-4">
-                  <span className="inline-flex items-center justify-center w-7 h-7 bg-blue-100 text-blue-600 rounded-full mr-2 text-sm">
-                    1
-                  </span>
-                  {question.question || "Your question will appear here"}
-                </h3>
-                <div className="space-y-3 pl-9">
-                  {question.choices.map((choice, choiceIdx) => (
-                    <PreviewChoice 
-                      key={choiceIdx} 
-                      choice={choice} 
-                      index={choiceIdx} 
-                    />
-                  ))}
-                </div>
-              </Card>
-
-              {question.choices.length === 0 && (
-                <div className="text-center py-8 text-gray-500">
-                  Add choices to see them previewed here
-                </div>
-              )}
-            </div>
+            
+            <QuestionPreview />
           </Card>
         </div>
       </div>

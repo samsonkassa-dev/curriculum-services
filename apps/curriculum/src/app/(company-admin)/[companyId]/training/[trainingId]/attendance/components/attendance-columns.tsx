@@ -11,19 +11,18 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogClose
 } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
 import { Session } from "@/lib/hooks/useSession"
 import { IdUploadModal } from "./id-upload-modal"
-import { Student } from "@/lib/hooks/useStudents"
+
 
 // Define the student type for attendance
 export interface AttendanceStudent {
   id: string
   firstName: string
   lastName: string
-  email: string
+  contactPhone: string
   attendance?: 'present' | 'absent'
   comment?: string
   attendanceId?: string
@@ -181,10 +180,10 @@ export const createAttendanceColumns = (
       },
     },
     {
-      accessorKey: "email",
-      header: "Email",
+      accessorKey: "contactPhone",
+      header: "Phone Number",
       cell: ({ row }) => {
-        return <span className="text-sm text-[#667085]">{row.original.email}</span>
+        return <span className="text-sm text-[#667085]">{row.original.contactPhone}</span>
       },
     },
     {
@@ -426,7 +425,7 @@ export const createAttendanceColumns = (
                 </div>
               </>
             ) : (
-              <div className="flex items-center justify-center">
+              <div className="flex items-center justify-start">
                 <IdUploadModal
                   studentId={student.pendingTraineeId || student.id}
                   studentName={fullName}

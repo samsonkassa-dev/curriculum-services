@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter, useParams } from "next/navigation"
 import { Loading } from "@/components/ui/loading"
 import { AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -11,9 +10,11 @@ import {
   useSurveyDetail,
   useUpdateSurvey,
   useDeleteSurvey,
-  useAddQuestionToSurvey,
-  SurveyQuestion
-} from "@/lib/hooks/useSessionAssesment"
+
+
+  CreateSurveyData,
+  SurveyType
+} from "@/lib/hooks/useSurvey"
 import { 
   SurveyList,
   CreateSurveyForm,
@@ -27,11 +28,9 @@ interface SurveyComponentProps {
 }
 
 export function SurveyComponent({ trainingId }: SurveyComponentProps) {
-  const router = useRouter()
-  const params = useParams()
   
   // UI state
-  const [viewMode, setViewMode] = useState<'list' | 'create' | 'view' | 'edit' | 'add-question'>('list')
+  const [viewMode, setViewMode] = useState<'list' | 'create' | 'view' | 'edit'>('list')
   const [currentSurveyId, setCurrentSurveyId] = useState<string | null>(null)
   
   // Fetch existing surveys for this training
@@ -53,7 +52,7 @@ export function SurveyComponent({ trainingId }: SurveyComponentProps) {
   const { createSurvey, isLoading: isCreatingSurvey } = useCreateSurvey(trainingId)
   const { deleteSurvey, isLoading: isDeletingSurvey } = useDeleteSurvey()
   const { updateSurvey, isLoading: isUpdatingSurvey } = useUpdateSurvey()
-  const { addQuestion, isLoading: isAddingQuestion } = useAddQuestionToSurvey()
+
 
   // Extract survey data
   const surveys = surveyData?.surveys || []
@@ -75,10 +74,23 @@ export function SurveyComponent({ trainingId }: SurveyComponentProps) {
     setCurrentSurveyId(surveyId)
   }
 
-  const handleAddQuestion = (surveyId: string) => {
-    setViewMode('add-question')
+  const handleEditSurveyStructure = (surveyId: string, options?: {
+    focusSection?: {
+      sectionId?: string
+      action: 'add-question' | 'add-section'
+    }
+  }) => {
+    setViewMode('create')
     setCurrentSurveyId(surveyId)
+    setFocusSection(options?.focusSection)
   }
+
+  const [focusSection, setFocusSection] = useState<{
+    sectionId?: string
+    action: 'add-question' | 'add-section'
+  } | undefined>(undefined)
+
+
 
   const handleBackToList = () => {
     setViewMode('list')
@@ -94,7 +106,7 @@ export function SurveyComponent({ trainingId }: SurveyComponentProps) {
   }
 
   // Form submission handlers
-  const handleCreateSubmit = (data: { name: string; description: string; surveyQuestions: SurveyQuestion[] }) => {
+  const handleCreateSubmit = (data: CreateSurveyData) => {
     createSurvey(data, {
       onSuccess: () => {
         refetchSurveys()
@@ -103,7 +115,7 @@ export function SurveyComponent({ trainingId }: SurveyComponentProps) {
     })
   }
 
-  const handleUpdateSubmit = (data: { surveyId: string; data: { name: string; description: string } }) => {
+  const handleUpdateSubmit = (data: { surveyId: string; data: { name: string; type: SurveyType; description: string } }) => {
     updateSurvey(data, {
       onSuccess: () => {
         refetchSurveys()
@@ -113,14 +125,7 @@ export function SurveyComponent({ trainingId }: SurveyComponentProps) {
     })
   }
 
-  const handleAddQuestionSubmit = (data: { surveyId: string; questionData: SurveyQuestion }) => {
-    addQuestion(data, {
-      onSuccess: () => {
-        refetchSurveyDetails()
-        handleBackToView()
-      }
-    })
-  }
+
 
   const handleDeleteSurvey = (surveyId: string) => {
     deleteSurvey(surveyId, {
@@ -167,9 +172,17 @@ export function SurveyComponent({ trainingId }: SurveyComponentProps) {
     case 'create':
       return (
         <CreateSurveyForm
-          onCancel={handleBackToList}
+          onCancel={() => {
+            handleBackToList()
+            setFocusSection(undefined) // Clear focus when canceling
+          }}
           onSubmit={handleCreateSubmit}
           isSubmitting={isCreatingSurvey}
+          editingSurveyId={currentSurveyId || undefined}
+          initialSurveyName={surveyDetail?.name}
+          initialSurveyType={surveyDetail?.type || undefined}
+          initialSurveyDescription={surveyDetail?.description}
+          focusSection={focusSection}
         />
       )
     
@@ -180,7 +193,7 @@ export function SurveyComponent({ trainingId }: SurveyComponentProps) {
           surveyDetail={surveyDetail}
           onBackToList={handleBackToList}
           onEditSurvey={handleEditSurvey}
-          onAddQuestion={handleAddQuestion}
+          onEditSurveyStructure={handleEditSurveyStructure}
           onRefreshDetails={refetchSurveyDetails}
         />
       )
@@ -191,6 +204,7 @@ export function SurveyComponent({ trainingId }: SurveyComponentProps) {
         <EditSurveyForm
           surveyId={surveyDetail.id}
           initialName={surveyDetail.name}
+          initialType={surveyDetail.type || 'OTHER'}
           initialDescription={surveyDetail.description}
           onCancel={handleBackToView}
           onSubmit={handleUpdateSubmit}
@@ -198,16 +212,7 @@ export function SurveyComponent({ trainingId }: SurveyComponentProps) {
         />
       )
     
-    case 'add-question':
-      if (!currentSurveyId) return <Loading />
-      return (
-        <AddQuestionForm
-          surveyId={currentSurveyId}
-          onCancel={handleBackToView}
-          onSubmit={handleAddQuestionSubmit}
-          isSubmitting={isAddingQuestion}
-        />
-      )
+
     
     case 'list':
     default:
