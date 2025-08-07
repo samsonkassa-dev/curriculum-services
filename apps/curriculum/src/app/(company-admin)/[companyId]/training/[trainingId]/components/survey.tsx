@@ -10,9 +10,13 @@ import {
   useSurveyDetail,
   useUpdateSurvey,
   useDeleteSurvey,
-
-
+  useAddQuestionToSection,
+  useAddSectionToSurvey,
+  useDeleteSurveyEntry,
+  useDeleteSurveySection,
   CreateSurveyData,
+  CreateSurveySection,
+  CreateSurveyEntry,
   SurveyType
 } from "@/lib/hooks/useSurvey"
 import { 
@@ -52,6 +56,11 @@ export function SurveyComponent({ trainingId }: SurveyComponentProps) {
   const { createSurvey, isLoading: isCreatingSurvey } = useCreateSurvey(trainingId)
   const { deleteSurvey, isLoading: isDeletingSurvey } = useDeleteSurvey()
   const { updateSurvey, isLoading: isUpdatingSurvey } = useUpdateSurvey()
+  const { addQuestionToSection, isLoading: isAddingQuestion } = useAddQuestionToSection()
+  const { addSection, isLoading: isAddingSection } = useAddSectionToSurvey()
+  const { deleteSurveyEntry, isLoading: isDeletingQuestion } = useDeleteSurveyEntry()
+  const { deleteSurveySection, isLoading: isDeletingSection } = useDeleteSurveySection()
+ // const { updateSurveySection, isLoading: isUpdatingSection } = useUpdateSurveySection()
 
 
   // Extract survey data
@@ -77,7 +86,7 @@ export function SurveyComponent({ trainingId }: SurveyComponentProps) {
   const handleEditSurveyStructure = (surveyId: string, options?: {
     focusSection?: {
       sectionId?: string
-      action: 'add-question' | 'add-section'
+      action: 'add-question' | 'add-section' | 'edit-questions'
     }
   }) => {
     setViewMode('create')
@@ -87,7 +96,7 @@ export function SurveyComponent({ trainingId }: SurveyComponentProps) {
 
   const [focusSection, setFocusSection] = useState<{
     sectionId?: string
-    action: 'add-question' | 'add-section'
+    action: 'add-question' | 'add-section' | 'edit-questions'
   } | undefined>(undefined)
 
 
@@ -115,6 +124,84 @@ export function SurveyComponent({ trainingId }: SurveyComponentProps) {
     })
   }
 
+  const handleEditSubmit = (data: CreateSurveyData & { 
+    editMetadata?: {
+      newSections: CreateSurveySection[]
+      newQuestionsPerSection: { sectionIndex: number; sectionId?: string; newQuestions: CreateSurveyEntry[] }[]
+    }
+  }) => {
+    if (!currentSurveyId) return;
+
+    const { editMetadata } = data;
+    
+    if (!editMetadata) {
+      // No changes detected, just refresh and return to view
+      refetchSurveyDetails();
+      handleBackToView();
+      return;
+    }
+
+    let pendingOperations = 0;
+    let completedOperations = 0;
+
+    const checkCompletion = () => {
+      completedOperations++;
+      if (completedOperations === pendingOperations) {
+        // All operations completed
+        refetchSurveyDetails();
+        handleBackToView();
+        setFocusSection(undefined);
+      }
+    };
+
+    // Handle new questions in existing sections
+    if (editMetadata.newQuestionsPerSection.length > 0) {
+      editMetadata.newQuestionsPerSection.forEach(({ sectionId, newQuestions }) => {
+        if (sectionId) {
+          newQuestions.forEach(question => {
+            pendingOperations++;
+            addQuestionToSection({
+              sectionId,
+              questionData: question
+            }, {
+              onSuccess: checkCompletion,
+              onError: () => {
+                // Still count as completed to avoid hanging
+                checkCompletion();
+              }
+            });
+          });
+        }
+      });
+    }
+
+    // Handle new sections
+    if (editMetadata.newSections.length > 0) {
+      editMetadata.newSections.forEach(newSection => {
+        pendingOperations++;
+        addSection({
+          surveyId: currentSurveyId,
+          sectionData: {
+            title: newSection.title,
+            surveyEntries: newSection.surveyEntries
+          }
+        }, {
+          onSuccess: checkCompletion,
+          onError: () => {
+            // Still count as completed to avoid hanging
+            checkCompletion();
+          }
+        });
+      });
+    }
+
+    // If no operations were queued, just refresh and return
+    if (pendingOperations === 0) {
+      refetchSurveyDetails();
+      handleBackToView();
+    }
+  }
+
   const handleUpdateSubmit = (data: { surveyId: string; data: { name: string; type: SurveyType; description: string } }) => {
     updateSurvey(data, {
       onSuccess: () => {
@@ -131,6 +218,22 @@ export function SurveyComponent({ trainingId }: SurveyComponentProps) {
     deleteSurvey(surveyId, {
       onSuccess: () => {
         refetchSurveys()
+      }
+    })
+  }
+
+  const handleDeleteQuestion = (questionId: string) => {
+    deleteSurveyEntry(questionId, {
+      onSuccess: () => {
+        refetchSurveyDetails()
+      }
+    })
+  }
+
+  const handleDeleteSection = (sectionId: string) => {
+    deleteSurveySection(sectionId, {
+      onSuccess: () => {
+        refetchSurveyDetails()
       }
     })
   }
@@ -176,13 +279,15 @@ export function SurveyComponent({ trainingId }: SurveyComponentProps) {
             handleBackToList()
             setFocusSection(undefined) // Clear focus when canceling
           }}
-          onSubmit={handleCreateSubmit}
-          isSubmitting={isCreatingSurvey}
+          onSubmit={currentSurveyId ? handleEditSubmit : handleCreateSubmit}
+          isSubmitting={currentSurveyId ? (isAddingQuestion || isAddingSection || isDeletingQuestion || isDeletingSection) : isCreatingSurvey}
           editingSurveyId={currentSurveyId || undefined}
           initialSurveyName={surveyDetail?.name}
           initialSurveyType={surveyDetail?.type || undefined}
           initialSurveyDescription={surveyDetail?.description}
           focusSection={focusSection}
+          onDeleteQuestion={handleDeleteQuestion}
+          onDeleteSection={handleDeleteSection}
         />
       )
     

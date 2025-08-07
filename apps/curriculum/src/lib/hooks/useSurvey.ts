@@ -493,7 +493,7 @@ export function useDeleteSurveyEntry() {
     mutationFn: async (surveyEntryId: string) => {
       const token = getCookie("token");
       const response = await axios.delete(
-        `${process.env.NEXT_PUBLIC_API}/survey/entry/${surveyEntryId}`,
+        `${process.env.NEXT_PUBLIC_API}/survey-entry/${surveyEntryId}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -515,6 +515,74 @@ export function useDeleteSurveyEntry() {
     isSuccess: deleteSurveyEntryMutation.isSuccess,
     isError: deleteSurveyEntryMutation.isError,
     error: deleteSurveyEntryMutation.error,
+  };
+}
+
+/**
+ * Hook for deleting a survey section
+ */
+export function useUpdateSurveySection() {
+  const queryClient = useQueryClient();
+
+  const updateSurveySectionMutation = useMutation({
+    mutationFn: async ({ sectionId, title }: { sectionId: string; title: string }) => {
+      const token = getCookie("token");
+      const response = await axios.put(
+        `${process.env.NEXT_PUBLIC_API}/survey-section/${sectionId}`,
+        { title },
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      return response.data;
+    },
+    onSuccess: (data) => {
+      toast.success(data.message || "Section updated successfully");
+      queryClient.invalidateQueries({ queryKey: surveyQueryKeys.all });
+    },
+    onError: (error: AxiosError<ApiErrorResponse>) => {
+      toast.error(error.response?.data?.message || "Failed to update section");
+    },
+  });
+
+  return {
+    updateSurveySection: updateSurveySectionMutation.mutate,
+    isLoading: updateSurveySectionMutation.isPending,
+    isSuccess: updateSurveySectionMutation.isSuccess,
+    isError: updateSurveySectionMutation.isError,
+    error: updateSurveySectionMutation.error,
+  };
+}
+
+export function useDeleteSurveySection() {
+  const queryClient = useQueryClient();
+
+  const deleteSurveySectionMutation = useMutation({
+    mutationFn: async (sectionId: string) => {
+      const token = getCookie("token");
+      const response = await axios.delete(
+        `${process.env.NEXT_PUBLIC_API}/survey-section/${sectionId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+      return response.data;
+    },
+    onSuccess: (data) => {
+      toast.success(data.message || "Section deleted successfully");
+      queryClient.invalidateQueries({ queryKey: surveyQueryKeys.all });
+    },
+    onError: (error: AxiosError<ApiErrorResponse>) => {
+      toast.error(error.response?.data?.message || "Failed to delete section");
+    },
+  });
+
+  return {
+    deleteSurveySection: deleteSurveySectionMutation.mutate,
+    isLoading: deleteSurveySectionMutation.isPending,
+    isSuccess: deleteSurveySectionMutation.isSuccess,
+    isError: deleteSurveySectionMutation.isError,
+    error: deleteSurveySectionMutation.error,
   };
 }
 

@@ -1,9 +1,12 @@
 "use client"
 
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { PencilIcon, Plus, FileText, CheckCircle, Square, Grid3X3 } from "lucide-react"
-import { SurveyDetail, SurveyEntry, QuestionType } from "@/lib/hooks/useSurvey"
+import { Input } from "@/components/ui/input"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { PencilIcon, Plus, FileText, CheckCircle, Square, Grid3X3, Trash2, Check, X, Edit, ChevronDown, ChevronRight } from "lucide-react"
+import { SurveyDetail, SurveyEntry, QuestionType, useUpdateSurveySection, useDeleteSurveySection } from "@/lib/hooks/useSurvey"
 
 interface ViewSurveyDetailsProps {
   surveyDetail: SurveyDetail
@@ -12,7 +15,7 @@ interface ViewSurveyDetailsProps {
   onEditSurveyStructure: (surveyId: string, options?: {
     focusSection?: {
       sectionId?: string
-      action: 'add-question' | 'add-section'
+      action: 'add-question' | 'add-section' | 'edit-questions'
     }
   }) => void
   onRefreshDetails: () => void
@@ -25,6 +28,68 @@ export function ViewSurveyDetails({
   onEditSurveyStructure,
   onRefreshDetails
 }: ViewSurveyDetailsProps) {
+  const { updateSurveySection, isLoading: isUpdatingSection } = useUpdateSurveySection()
+  const { deleteSurveySection, isLoading: isDeletingSection } = useDeleteSurveySection()
+  
+  const [editingSectionId, setEditingSectionId] = useState<string | null>(null)
+  const [editingSectionTitle, setEditingSectionTitle] = useState("")
+  const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set())
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [sectionToDelete, setSectionToDelete] = useState<{ id: string; title: string } | null>(null)
+
+  const handleEditSectionTitle = (sectionId: string, currentTitle: string) => {
+    setEditingSectionId(sectionId)
+    setEditingSectionTitle(currentTitle)
+  }
+
+  const handleSaveSectionTitle = (sectionId: string) => {
+    if (!editingSectionTitle.trim()) return
+    
+    updateSurveySection({ 
+      sectionId, 
+      title: editingSectionTitle.trim() 
+    }, {
+      onSuccess: () => {
+        setEditingSectionId(null)
+        setEditingSectionTitle("")
+        onRefreshDetails()
+      }
+    })
+  }
+
+  const handleCancelEdit = () => {
+    setEditingSectionId(null)
+    setEditingSectionTitle("")
+  }
+
+  const handleDeleteSection = (sectionId: string, sectionTitle: string) => {
+    setSectionToDelete({ id: sectionId, title: sectionTitle })
+    setDeleteDialogOpen(true)
+  }
+
+  const confirmDeleteSection = () => {
+    if (sectionToDelete) {
+      deleteSurveySection(sectionToDelete.id, {
+        onSuccess: () => {
+          onRefreshDetails()
+          setDeleteDialogOpen(false)
+          setSectionToDelete(null)
+        }
+      })
+    }
+  }
+
+  const toggleSectionCollapse = (sectionId: string) => {
+    setCollapsedSections(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(sectionId)) {
+        newSet.delete(sectionId)
+      } else {
+        newSet.add(sectionId)
+      }
+      return newSet
+    })
+  }
   
   // Question Type Icon Component
   const QuestionTypeIcon = ({ type }: { type: QuestionType }) => {
@@ -160,58 +225,148 @@ export function ViewSurveyDetails({
             }
             
             return (
-              <Card key={sectionIndex} className="p-4">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      Section {sectionIndex + 1}: {section.title}
-                    </h3>
-                    <p className="text-gray-500 text-sm">
-                      {section.questions.length} question{section.questions.length !== 1 ? 's' : ''}
-                    </p>
+              <Card key={sectionIndex} className="overflow-hidden">
+                <div className="p-4 border-b bg-gray-50/50">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3 flex-1">
+                      <Button
+                        onClick={() => toggleSectionCollapse(section.id || `section-${sectionIndex}`)}
+                        variant="ghost"
+                        size="sm"
+                        className="p-1 h-6 w-6"
+                      >
+                        {collapsedSections.has(section.id || `section-${sectionIndex}`) ? (
+                          <ChevronRight className="h-4 w-4" />
+                        ) : (
+                          <ChevronDown className="h-4 w-4" />
+                        )}
+                      </Button>
+                      
+                      {editingSectionId === (section.id || `section-${sectionIndex}`) ? (
+                        <div className="flex items-center gap-2 flex-1">
+                          <Input
+                            value={editingSectionTitle}
+                            onChange={(e) => setEditingSectionTitle(e.target.value)}
+                            className="text-lg font-semibold"
+                            placeholder="Section title"
+                            disabled={isUpdatingSection}
+                          />
+                          <Button
+                            onClick={() => handleSaveSectionTitle(section.id || `section-${sectionIndex}`)}
+                            size="sm"
+                            variant="default"
+                            disabled={!editingSectionTitle.trim() || isUpdatingSection}
+                          >
+                            <Check className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            onClick={handleCancelEdit}
+                            size="sm"
+                            variant="outline"
+                            disabled={isUpdatingSection}
+                          >
+                            <X className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2 flex-1">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <h3 className="text-lg font-semibold text-gray-900">
+                                Section {sectionIndex + 1}: {section.title}
+                              </h3>
+                              <Button
+                                onClick={() => handleEditSectionTitle(section.id || `section-${sectionIndex}`, section.title)}
+                                size="sm"
+                                variant="ghost"
+                                className="p-1 h-5 w-5 text-gray-400 hover:text-gray-600"
+                              >
+                                <PencilIcon className="h-3 w-3" />
+                              </Button>
+                            </div>
+                            <p className="text-gray-500 text-sm">
+                              {section.questions.length} question{section.questions.length !== 1 ? 's' : ''}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="flex items-center gap-1">
+                      {section.questions.length > 0 && (
+                        <Button
+                          onClick={() => onEditSurveyStructure(surveyDetail.id, {
+                            focusSection: {
+                              sectionId: section.id || `section-${sectionIndex}`,
+                              action: 'edit-questions'
+                            }
+                          })}
+                          variant="outline"
+                          size="sm"
+                          className="h-8 px-3"
+                        >
+                          <Edit className="h-3 w-3 mr-1" />
+                          Edit
+                        </Button>
+                      )}
+                      <Button
+                        onClick={() => onEditSurveyStructure(surveyDetail.id, {
+                          focusSection: {
+                            sectionId: section.id || `section-${sectionIndex}`,
+                            action: 'add-question'
+                          }
+                        })}
+                        variant="outline"
+                        size="sm"
+                        className="h-8 px-3"
+                      >
+                        <Plus className="h-3 w-3 mr-1" />
+                        Add
+                      </Button>
+                      <Button
+                        onClick={() => handleDeleteSection(section.id || `section-${sectionIndex}`, section.title)}
+                        variant="outline"
+                        size="sm"
+                        className="h-8 px-3 text-red-500 hover:text-red-700 hover:bg-red-50"
+                        disabled={isDeletingSection}
+                      >
+                        <Trash2 className="h-3 w-3" />
+                      </Button>
+                    </div>
                   </div>
-                  <Button
-                    onClick={() => onEditSurveyStructure(surveyDetail.id, {
-                      focusSection: {
-                        sectionId: section.id,
-                        action: 'add-question'
-                      }
-                    })}
-                    variant="outline"
-                    size="sm"
-                    className="flex items-center gap-1"
-                  >
-                    <Plus className="h-4 w-4" />
-                    Add Question
-                  </Button>
                 </div>
                 
-                {section.questions.length > 0 ? (
-                  <div className="space-y-2">
-                    {section.questions.map((entry, questionIndex) => (
-                      <QuestionPreview
-                        key={entry.id || questionIndex}
-                        question={entry}
-                        questionNumber={questionCounter + questionIndex + 1}
-                      />
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-6 text-gray-500 border-2 border-dashed border-gray-200 rounded-lg">
-                    <p className="text-sm">No questions in this section yet.</p>
-                    <Button
-                      onClick={() => onEditSurveyStructure(surveyDetail.id, {
-                        focusSection: {
-                          sectionId: section.id,
-                          action: 'add-question'
-                        }
-                      })}
-                      variant="outline"
-                      size="sm"
-                      className="mt-2"
-                    >
-                      Add First Question
-                    </Button>
+                {!collapsedSections.has(section.id || `section-${sectionIndex}`) && (
+                  <div className="p-4">
+                    {section.questions.length > 0 ? (
+                      <div className="space-y-2">
+                        {section.questions.map((entry, questionIndex) => (
+                          <QuestionPreview
+                            key={entry.id || questionIndex}
+                            question={entry}
+                            questionNumber={questionCounter + questionIndex + 1}
+                          />
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="text-center py-6 text-gray-500 border-2 border-dashed border-gray-200 rounded-lg">
+                        <p className="text-sm">No questions in this section yet.</p>
+                        <Button
+                          onClick={() => onEditSurveyStructure(surveyDetail.id, {
+                            focusSection: {
+                              sectionId: section.id || `section-${sectionIndex}`,
+                              action: 'add-question'
+                            }
+                          })}
+                          variant="outline"
+                          size="sm"
+                          className="mt-2"
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add First Question
+                        </Button>
+                      </div>
+                    )}
                   </div>
                 )}
               </Card>
@@ -237,6 +392,35 @@ export function ViewSurveyDetails({
           </div>
         </Card>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Section</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete the section "{sectionToDelete?.title}"? 
+              All questions in this section will also be permanently deleted. This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => setDeleteDialogOpen(false)}
+              disabled={isDeletingSection}
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={confirmDeleteSection}
+              disabled={isDeletingSection}
+            >
+              {isDeletingSection ? "Deleting..." : "Delete Section"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 } 
