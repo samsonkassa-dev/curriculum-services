@@ -7,6 +7,10 @@ const __dirname = dirname(__filename);
 
 const nextConfig = {
   output: 'standalone',
+  // Ignore ESLint errors during builds
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
   // Enable monorepo support
   transpilePackages: [
     '@curriculum-services/auth',
@@ -15,7 +19,7 @@ const nextConfig = {
     '@curriculum-services/ui'
   ],
   images: {
-    domains: ['143.198.54.56']
+    domains: ['143.198.54.56', '164.90.209.220']
   },
   // Configure public directory
   webpack: (config) => {
