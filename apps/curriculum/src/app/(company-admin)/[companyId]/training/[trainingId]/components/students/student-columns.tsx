@@ -1,11 +1,12 @@
 "use client"
 
 import { ColumnDef } from "@tanstack/react-table"
+import { useQueryClient } from "@tanstack/react-query"
 import { Student, useUploadConsentForm } from "@/lib/hooks/useStudents"
 import { format } from "date-fns"
 import { Button } from "@/components/ui/button"
 import { Pencil, Trash2, Upload, FileText, Loader2 } from "lucide-react"
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 
@@ -61,7 +62,7 @@ export const studentColumnsBase: ColumnDef<Student>[] = [
       
       try {
         return <span className="text-gray-500">{format(new Date(dob), "dd MMM yyyy")}</span>
-      } catch (error) {
+      } catch {
         return <span className="text-gray-500">Invalid date</span>
       }
     }
@@ -135,8 +136,8 @@ export const studentColumns = studentColumnsBase
 
 // Creates the actions column with passed-in handler functions
 export const createActionsColumn = (
-  handleEditStudent: (student: Student) => void,
-  handleDeleteStudent: (student: Student) => void,
+  handleEditStudent: (_: Student) => void,
+  handleDeleteStudent: (_: Student) => void,
   hasEditPermission: boolean
 ): ColumnDef<Student> => ({
   id: "actions",
@@ -182,28 +183,45 @@ interface ConsentFormCellProps {
 
 export const ConsentFormCell = ({ student }: ConsentFormCellProps) => {
   const [isUploading, setIsUploading] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { mutateAsync: uploadConsentForm } = useUploadConsentForm();
+  const queryClient = useQueryClient();
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate file is an image
-    if (!file.type.startsWith('image/')) {
-      toast.error('Please upload an image file');
+    // Validate file is an image or PDF
+    const isImage = file.type.startsWith('image/');
+    const isPdf = file.type === 'application/pdf';
+    if (!isImage && !isPdf) {
+      toast.error('Please upload an image or PDF file');
       return;
     }
 
     try {
       setIsUploading(true);
       await uploadConsentForm({ id: student.id, consentFormFile: file });
+      // Show a refreshing state until the parent table refetches and provides the updated URL
+      setIsRefreshing(true);
+      // Proactively refetch the students list (and this student) to reflect the change ASAP
+      queryClient.invalidateQueries({ queryKey: ['students'] });
+      queryClient.invalidateQueries({ queryKey: ['student', student.id] });
+      await queryClient.refetchQueries({ queryKey: ['students'] });
     } catch (error) {
       console.error('Error uploading consent form:', error);
     } finally {
       setIsUploading(false);
     }
   };
+
+  // Turn off refreshing once the consentFormUrl becomes available from parent data
+  useEffect(() => {
+    if (student.consentFormUrl) {
+      setIsRefreshing(false);
+    }
+  }, [student.consentFormUrl]);
 
   const triggerFileInput = () => {
     fileInputRef.current?.click();
@@ -226,25 +244,31 @@ export const ConsentFormCell = ({ student }: ConsentFormCellProps) => {
           type="file" 
           ref={fileInputRef} 
           onChange={handleFileChange} 
-          accept="image/*"
+          accept="image/*,application/pdf"
           className="hidden"
           aria-label="Edit consent form" 
           title="Edit consent form"
         />
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={triggerFileInput}
-          disabled={isUploading}
-          className="h-8 w-8 p-0"
-          title="Edit Consent Form"
-        >
-          {isUploading ? (
+        {isRefreshing ? (
+          <div className="h-8 w-8 flex items-center justify-center" title="Refreshing">
             <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Pencil className="h-4 w-4 text-gray-500" />
-          )}
-        </Button>
+          </div>
+        ) : (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={triggerFileInput}
+            disabled={isUploading}
+            className="h-8 w-8 p-0"
+            title="Edit Consent Form"
+          >
+            {isUploading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Pencil className="h-4 w-4 text-gray-500" />
+            )}
+          </Button>
+        )}
       </div>
     );
   }
@@ -256,33 +280,40 @@ export const ConsentFormCell = ({ student }: ConsentFormCellProps) => {
         type="file" 
         ref={fileInputRef} 
         onChange={handleFileChange} 
-        accept="image/*"
+        accept="image/*,application/pdf"
         className="hidden"
         aria-label="Upload consent form" 
         title="Upload consent form"
       />
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={triggerFileInput}
-        disabled={isUploading}
-        className={cn(
-          "flex items-center gap-1.5 text-gray-600 hover:text-blue-600",
-          isUploading && "opacity-70 cursor-not-allowed"
-        )}
-      >
-        {isUploading ? (
-          <>
-            <Loader2 className="h-4 w-4 animate-spin" />
-            <span>Uploading...</span>
-          </>
-        ) : (
-          <>
-            <Upload className="h-4 w-4" />
-            <span>Upload Consent</span>
-          </>
-        )}
-      </Button>
+      {isRefreshing ? (
+        <div className="flex items-center gap-1.5 text-gray-600">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          <span>Refreshing...</span>
+        </div>
+      ) : (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={triggerFileInput}
+          disabled={isUploading}
+          className={cn(
+            "flex items-center gap-1.5 text-gray-600 hover:text-blue-600",
+            isUploading && "opacity-70 cursor-not-allowed"
+          )}
+        >
+          {isUploading ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Uploading...</span>
+            </>
+          ) : (
+            <>
+              <Upload className="h-4 w-4" />
+              <span>Upload Consent</span>
+            </>
+          )}
+        </Button>
+      )}
     </div>
   );
 };
@@ -297,7 +328,7 @@ export const createConsentFormColumn = (): ColumnDef<Student> => ({
 });
 
 export const createRemoveFromCohortColumn = (
-  handleRemoveStudent: (student: Student) => void,
+  handleRemoveStudent: (_: Student) => void,
   hasRemovePermission: boolean,
   isRemoving?: boolean
 ): ColumnDef<Student> => ({
