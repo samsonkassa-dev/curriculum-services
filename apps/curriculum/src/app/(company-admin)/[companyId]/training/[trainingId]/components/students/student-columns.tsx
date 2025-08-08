@@ -212,7 +212,7 @@ export const ConsentFormCell = ({ student }: ConsentFormCellProps) => {
   // If student already has a consent form
   if (student.consentFormUrl) {
     return (
-      <div className="flex items-center">
+      <div className="flex items-center gap-2">
         <a 
           href={student.consentFormUrl} 
           target="_blank" 
@@ -222,6 +222,29 @@ export const ConsentFormCell = ({ student }: ConsentFormCellProps) => {
           <FileText className="h-4 w-4" />
           <span>View Form</span>
         </a>
+        <input 
+          type="file" 
+          ref={fileInputRef} 
+          onChange={handleFileChange} 
+          accept="image/*"
+          className="hidden"
+          aria-label="Edit consent form" 
+          title="Edit consent form"
+        />
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={triggerFileInput}
+          disabled={isUploading}
+          className="h-8 w-8 p-0"
+          title="Edit Consent Form"
+        >
+          {isUploading ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Pencil className="h-4 w-4 text-gray-500" />
+          )}
+        </Button>
       </div>
     );
   }
