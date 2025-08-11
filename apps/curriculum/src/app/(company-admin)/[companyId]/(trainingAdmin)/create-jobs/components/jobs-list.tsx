@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter, useParams } from "next/navigation"
 import { useJobs, useDeleteJob } from "@/lib/hooks/useJobs"
 import { useUserRole } from "@/lib/hooks/useUserRole"
 import { Button } from "@/components/ui/button"
@@ -26,10 +25,6 @@ import {
 } from "@/components/ui/alert-dialog"
 
 export function JobsList() {
-  const router = useRouter()
-  const params = useParams()
-  const companyId = params.companyId as string
-
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
   const [searchQuery, setSearchQuery] = useState("")
@@ -102,18 +97,15 @@ export function JobsList() {
     setPage(1)
   }
 
-  const filteredJobs = (data?.jobs || []).filter(job => 
+  const serverJobs = data?.jobs || []
+  const filteredJobs = serverJobs.filter(job => 
     job?.title?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
     job?.description?.toLowerCase().includes(debouncedSearch.toLowerCase()) 
   )
+  const displayedJobs = debouncedSearch ? filteredJobs : serverJobs
 
-  const totalElements = filteredJobs.length
-  const totalPages = Math.ceil(totalElements / pageSize)
-
-  const paginatedJobs = filteredJobs.slice(
-    (page - 1) * pageSize,
-    page * pageSize
-  )
+  const totalElements = data?.totalElements ?? 0
+  const totalPages = Math.max(1, Math.ceil(totalElements / pageSize))
 
   // Create columns with the handlers
   const jobColumns = createJobColumns(handleViewDetails, handleEditJob, handleDeleteJob)
@@ -138,7 +130,7 @@ export function JobsList() {
     )
   }
 
-  const noJobsAvailable = filteredJobs.length === 0;
+  const noJobsAvailable = !debouncedSearch && serverJobs.length === 0;
 
   if (noJobsAvailable && !debouncedSearch && !isLoading) {
     return (
@@ -223,7 +215,7 @@ export function JobsList() {
           )}
         </div>
 
-        {noJobsAvailable && debouncedSearch && !isLoading && (
+        {debouncedSearch && filteredJobs.length === 0 && !isLoading && (
           <div className="text-center py-20 bg-gray-50 rounded-lg border">
             <h3 className="text-lg font-medium mb-2">No Jobs Found</h3>
             <p className="text-gray-500 text-sm">
@@ -235,7 +227,7 @@ export function JobsList() {
         {!noJobsAvailable && (
           <JobDataTable
             columns={jobColumns}
-            data={paginatedJobs}
+            data={displayedJobs}
             isLoading={isLoading}
             pagination={{
               totalPages,
