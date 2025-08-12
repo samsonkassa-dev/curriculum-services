@@ -44,30 +44,9 @@ export function Login({ onSuccess }: LoginProps) {
     }
   };
 
+  // Google sign-in disabled per project requirements
   const handleGoogleSignIn = async () => {
-    if (typeof window !== 'undefined' && window.google?.accounts?.oauth2) {
-      const auth2 = window.google.accounts.oauth2.initTokenClient({
-        client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID!,
-        scope: 'email profile openid',
-        callback: async (response: GoogleTokenResponse) => {
-          if (response.access_token) {
-            const result = await loginWithGoogle(response.access_token);
-            
-            if (result.success) {
-              toast.success('Successfully logged in with Google');
-              if (onSuccess) onSuccess();
-            } else if (result.error) {
-              toast.error(result.error);
-            }
-          }
-        },
-      });
-  
-      auth2.requestAccessToken();
-    } else {
-      // Fallback if Google API is not available
-      window.location.href = '/api/auth/google';
-    }
+    toast.message('Google sign-in is disabled');
   };
 
   const handleModalClose = () => {
@@ -158,30 +137,7 @@ export function Login({ onSuccess }: LoginProps) {
                 </button>
               </form>
 
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-background px-2 text-muted-foreground">
-                    or
-                  </span>
-                </div>
-              </div>
-
-              <button 
-                onClick={handleGoogleSignIn}
-                disabled={isLoading}
-                className="flex w-full items-center justify-center gap-2 rounded-md border border-input bg-background px-4 py-4 text-sm font-medium hover:bg-accent hover:text-accent-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-              >
-                <img
-                  src="/google.svg"
-                  alt="Google logo"
-                  width={16}
-                  height={16}
-                />
-                Continue with Google
-              </button>
+              {/* Google sign-in disabled */}
             </div>
           </div>
         </div>

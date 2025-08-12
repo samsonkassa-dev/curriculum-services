@@ -3,7 +3,7 @@
 import { memo, useState, useCallback } from "react"
 import { useRouter, useParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Users, Tag, Edit2, Trash2 } from "lucide-react"
+import { Tag, Edit2, Trash2 } from "lucide-react"
 import { Cohort, useDeleteCohort } from "@/lib/hooks/useCohorts"
 import { useUserRole } from "@/lib/hooks/useUserRole"
 import { DeleteCohortDialog } from "./delete-cohort-dialog"
@@ -143,6 +143,4 @@ function CohortCardComponent({ cohort, onEditCohort }: CohortCardProps) {
     </div>
   )
 }
-
-// Memoize the component to prevent unnecessary re-renders
 export const CohortCard = memo(CohortCardComponent) 

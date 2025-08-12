@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { cn } from "@/lib/utils";
+// Local simple cn util to avoid consumer path alias issues
+const cn = (...classes: (string | false | null | undefined)[]) => classes.filter(Boolean).join(" ");
 import Image from "next/image";
 
 interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {

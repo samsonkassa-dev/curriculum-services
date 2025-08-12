@@ -77,13 +77,17 @@ export function SurveyNavigation({
                 <div className="flex items-center gap-2 flex-1">
                   <span className="text-green-600 text-lg">📁</span>
                   <div className="flex-1">
+                    {/** Allow editing section titles for newly added sections in edit mode */}
+                    {/** Existing sections (index < originalSectionsCount) remain read-only in edit mode */}
+                    {/** In create mode, all are editable */}
+                    {/** This preserves the smart edit mode from the README */}
                     <Input
                       value={section.title}
                       onChange={(e) => onUpdateSectionTitle(sectionIndex, e.target.value)}
                       placeholder={`Section ${sectionIndex + 1}`}
-                      readOnly={isEditMode} // All section titles are read-only in edit mode
+                      readOnly={isEditMode && sectionIndex < originalSectionsCount}
                       className={`text-sm h-9 border-0 px-3 py-2 font-medium bg-transparent transition-all duration-200 ${
-                        isEditMode
+                        isEditMode && sectionIndex < originalSectionsCount
                           ? 'cursor-not-allowed opacity-60 bg-gray-50'
                           : 'hover:bg-gray-50 focus:bg-white focus:border focus:border-blue-300 focus:rounded'
                       }`}

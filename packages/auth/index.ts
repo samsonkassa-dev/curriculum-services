@@ -9,3 +9,6 @@ export { getCookie, setCookie, deleteCookie } from './utils/cookies';
 // Export hooks
 export { useLogin } from './hooks/useLogin';
 export { useAuth } from './components/AuthProvider';
+// Re-export cn if needed by consumers
+// Note: adjust the path if utility is elsewhere
+// export { cn } from './components/lib/utils';

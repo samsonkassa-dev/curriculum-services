@@ -1,12 +1,13 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { 
   CreateSurveyData, 
   CreateSurveySection, 
   CreateSurveyEntry, 
+  QuestionType,
   SurveyType,
   getDefaultQuestionFields,
   validateCreateSurveyEntry,
@@ -27,6 +28,11 @@ interface CreateSurveyFormProps {
     editMetadata?: {
       newSections: CreateSurveySection[]
       newQuestionsPerSection: { sectionIndex: number; sectionId?: string; newQuestions: CreateSurveyEntry[] }[]
+      // new fields for update tracking
+      updatedQuestions?: { sectionIndex: number; questionIndex: number; questionId: string; updates: {
+        question: string; questionType: QuestionType; isRequired: boolean; choices: string[]; allowOtherAnswer: boolean; rows: string[]; 
+      } }[]
+      updatedSectionTitles?: { sectionIndex: number; sectionId: string; title: string }[]
     }
   }) => void
   isSubmitting: boolean
@@ -82,6 +88,7 @@ export function CreateSurveyForm({
   const [sectionsLoaded, setSectionsLoaded] = useState(false)
   const [originalSectionsCount, setOriginalSectionsCount] = useState(0)
   const [originalQuestionCounts, setOriginalQuestionCounts] = useState<number[]>([])
+  const [originalSectionsSnapshot, setOriginalSectionsSnapshot] = useState<CreateSurveySection[]>([])
   
   // Navigation state
   const [selectedSection, setSelectedSection] = useState(0)
@@ -113,6 +120,7 @@ export function CreateSurveyForm({
       // Track original counts for change detection BEFORE adding focus section items
       setOriginalSectionsCount(convertedSections.length)
       setOriginalQuestionCounts(convertedSections.map(section => section.surveyEntries.length))
+      setOriginalSectionsSnapshot(convertedSections.map(s => ({ title: s.title, surveyEntries: s.surveyEntries.map(e => ({...e})) })))
 
       // Handle focus section logic AFTER tracking original counts
       if (focusSection?.action === 'add-question' && focusSection.sectionId) {
@@ -261,6 +269,71 @@ export function CreateSurveyForm({
     ))
   }
 
+  // Compute changed items for edit mode
+  const editChanges = useMemo(() => {
+    if (!isEditMode || !existingSectionsData?.sections) return null
+    const updatedSectionTitles: { sectionIndex: number; sectionId: string; title: string }[] = []
+    const updatedQuestions: { sectionIndex: number; questionIndex: number; questionId: string; updates: { question: string; questionType: QuestionType; isRequired: boolean; choices: string[]; allowOtherAnswer: boolean; rows: string[] } }[] = []
+
+    // Existing sections only
+    for (let i = 0; i < Math.min(originalSectionsCount, sections.length); i++) {
+      const current = sections[i]
+      const original = originalSectionsSnapshot[i]
+      const existingSection = existingSectionsData.sections[i]
+      // Section title change
+      if (current?.title !== original?.title && existingSection?.id) {
+        updatedSectionTitles.push({ sectionIndex: i, sectionId: existingSection.id, title: current.title })
+      }
+      // Questions inside existing section (only up to original count; extras are handled as new)
+      const originalQCount = originalQuestionCounts[i] || 0
+      for (let q = 0; q < Math.min(originalQCount, current.surveyEntries.length); q++) {
+        const currQ = current.surveyEntries[q]
+        const origQ = original.surveyEntries[q]
+        const existingQ = existingSection?.questions[q]
+        if (!existingQ?.id) continue
+        const changed = (
+          currQ.question !== origQ.question ||
+          currQ.questionType !== origQ.questionType ||
+          currQ.required !== origQ.required ||
+          JSON.stringify(currQ.choices) !== JSON.stringify(origQ.choices) ||
+          JSON.stringify(currQ.rows) !== JSON.stringify(origQ.rows)
+        )
+        if (changed) {
+          updatedQuestions.push({
+            sectionIndex: i,
+            questionIndex: q,
+            questionId: existingQ.id,
+            updates: {
+              question: currQ.question,
+              questionType: currQ.questionType as QuestionType,
+              isRequired: currQ.required,
+              choices: currQ.choices,
+              allowOtherAnswer: currQ.allowTextAnswer ?? false,
+              rows: currQ.rows,
+            },
+          })
+        }
+      }
+    }
+
+    // Detect newly added sections
+    const newSections = sections.length > originalSectionsCount ? sections.slice(originalSectionsCount) : []
+
+    // Detect new questions in existing sections
+    const newQuestionsPerSection: { sectionIndex: number; sectionId?: string; newQuestions: CreateSurveyEntry[] }[] = []
+    for (let i = 0; i < Math.min(originalSectionsCount, sections.length); i++) {
+      const current = sections[i]
+      const originalQCount = originalQuestionCounts[i] || 0
+      if (current.surveyEntries.length > originalQCount) {
+        const extras = current.surveyEntries.slice(originalQCount)
+        const sectionId = existingSectionsData.sections[i]?.id
+        newQuestionsPerSection.push({ sectionIndex: i, sectionId, newQuestions: extras })
+      }
+    }
+
+    return { updatedSectionTitles, updatedQuestions, newSections, newQuestionsPerSection }
+  }, [isEditMode, sections, originalSectionsCount, originalQuestionCounts, originalSectionsSnapshot, existingSectionsData])
+
   // Navigation functions
   const selectSurveySettings = () => {
     setEditMode('survey')
@@ -318,44 +391,20 @@ export function CreateSurveyForm({
     }
 
     // In edit mode, we need to detect what's new and pass that information
-    let newSections: CreateSurveySection[] = []
-    const newQuestionsPerSection: { sectionIndex: number; sectionId?: string; newQuestions: CreateSurveyEntry[] }[] = []
-    
-    if (isEditMode) {
-      // Detect new sections (sections beyond the original count)
-      if (sections.length > originalSectionsCount) {
-        newSections = sections.slice(originalSectionsCount)
-      }
-      
-      // Detect new questions in existing sections
-      sections.forEach((section, sectionIndex) => {
-        if (sectionIndex < originalSectionsCount) { // Only check existing sections
-          const originalQuestionCount = originalQuestionCounts[sectionIndex] || 0
-          if (section.surveyEntries.length > originalQuestionCount) {
-            const newQuestions = section.surveyEntries.slice(originalQuestionCount)
-            const sectionId = existingSectionsData?.sections[sectionIndex]?.id
-            
-            newQuestionsPerSection.push({
-              sectionIndex,
-              sectionId,
-              newQuestions
-            })
-          }
-        }
-      })
-    }
+    const changes = isEditMode ? editChanges : null
 
     onSubmit({
       name: surveyName,
       type: surveyType,
       description: surveyDescription,
       sections: sections,
-      // Pass additional metadata for edit mode
-      ...(isEditMode && {
+      ...(isEditMode && changes && {
         editMetadata: {
-          newSections,
-          newQuestionsPerSection
-        }
+          newSections: changes.newSections,
+          newQuestionsPerSection: changes.newQuestionsPerSection,
+          updatedQuestions: changes.updatedQuestions,
+          updatedSectionTitles: changes.updatedSectionTitles,
+        },
       })
     })
   }

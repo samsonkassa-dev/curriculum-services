@@ -4,6 +4,7 @@ import { useState } from "react"
 import { Loading } from "@/components/ui/loading"
 import { AlertCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { toast } from "sonner"
 import { 
   useCreateSurvey, 
   useSurveys,
@@ -14,17 +15,19 @@ import {
   useAddSectionToSurvey,
   useDeleteSurveyEntry,
   useDeleteSurveySection,
+  useUpdateSurveyEntry,
+  useUpdateSurveySection,
   CreateSurveyData,
   CreateSurveySection,
   CreateSurveyEntry,
-  SurveyType
+  SurveyType,
+  QuestionType
 } from "@/lib/hooks/useSurvey"
 import { 
   SurveyList,
   CreateSurveyForm,
   ViewSurveyDetails,
-  EditSurveyForm,
-  AddQuestionForm
+  EditSurveyForm
 } from "./survey/index"
 
 interface SurveyComponentProps {
@@ -60,7 +63,8 @@ export function SurveyComponent({ trainingId }: SurveyComponentProps) {
   const { addSection, isLoading: isAddingSection } = useAddSectionToSurvey()
   const { deleteSurveyEntry, isLoading: isDeletingQuestion } = useDeleteSurveyEntry()
   const { deleteSurveySection, isLoading: isDeletingSection } = useDeleteSurveySection()
- // const { updateSurveySection, isLoading: isUpdatingSection } = useUpdateSurveySection()
+  const { updateSurveyEntry } = useUpdateSurveyEntry()
+  const { updateSurveySection } = useUpdateSurveySection()
 
 
   // Extract survey data
@@ -128,6 +132,10 @@ export function SurveyComponent({ trainingId }: SurveyComponentProps) {
     editMetadata?: {
       newSections: CreateSurveySection[]
       newQuestionsPerSection: { sectionIndex: number; sectionId?: string; newQuestions: CreateSurveyEntry[] }[]
+      updatedQuestions?: { sectionIndex: number; questionIndex: number; questionId: string; updates: {
+        question: string; questionType: QuestionType; isRequired: boolean; choices: string[]; allowOtherAnswer: boolean; rows: string[]; 
+      } }[]
+      updatedSectionTitles?: { sectionIndex: number; sectionId: string; title: string }[]
     }
   }) => {
     if (!currentSurveyId) return;
@@ -143,11 +151,20 @@ export function SurveyComponent({ trainingId }: SurveyComponentProps) {
 
     let pendingOperations = 0;
     let completedOperations = 0;
+    let successCount = 0;
+    let failureCount = 0;
 
     const checkCompletion = () => {
       completedOperations++;
       if (completedOperations === pendingOperations) {
         // All operations completed
+        if (failureCount === 0) {
+          toast.success(`All changes saved (${successCount})`)
+        } else if (successCount > 0) {
+          toast.error(`${failureCount} change(s) failed, ${successCount} succeeded`)
+        } else {
+          toast.error(`All ${failureCount} change(s) failed`)
+        }
         refetchSurveyDetails();
         handleBackToView();
         setFocusSection(undefined);
@@ -164,10 +181,10 @@ export function SurveyComponent({ trainingId }: SurveyComponentProps) {
               sectionId,
               questionData: question
             }, {
-              onSuccess: checkCompletion,
+              onSuccess: () => { successCount++; checkCompletion() },
               onError: () => {
                 // Still count as completed to avoid hanging
-                checkCompletion();
+                failureCount++; checkCompletion();
               }
             });
           });
@@ -186,17 +203,40 @@ export function SurveyComponent({ trainingId }: SurveyComponentProps) {
             surveyEntries: newSection.surveyEntries
           }
         }, {
-          onSuccess: checkCompletion,
+          onSuccess: () => { successCount++; checkCompletion() },
           onError: () => {
             // Still count as completed to avoid hanging
-            checkCompletion();
+            failureCount++; checkCompletion();
           }
         });
       });
     }
 
+    // Handle updated section titles
+    if (editMetadata.updatedSectionTitles && editMetadata.updatedSectionTitles.length > 0) {
+      editMetadata.updatedSectionTitles.forEach(({ sectionId, title }) => {
+        pendingOperations++;
+        updateSurveySection({ sectionId, title }, {
+          onSuccess: () => { successCount++; checkCompletion() },
+          onError: () => { failureCount++; checkCompletion() }
+        })
+      })
+    }
+
+    // Handle updated questions
+    if (editMetadata.updatedQuestions && editMetadata.updatedQuestions.length > 0) {
+      editMetadata.updatedQuestions.forEach(({ questionId, updates }) => {
+        pendingOperations++;
+        updateSurveyEntry({ surveyEntryId: questionId, questionData: updates }, {
+          onSuccess: () => { successCount++; checkCompletion() },
+          onError: () => { failureCount++; checkCompletion() }
+        })
+      })
+    }
+
     // If no operations were queued, just refresh and return
     if (pendingOperations === 0) {
+      toast.message('No changes to save')
       refetchSurveyDetails();
       handleBackToView();
     }

@@ -257,7 +257,7 @@ export function ViewSurveyDetails({
                             variant="default"
                             disabled={!editingSectionTitle.trim() || isUpdatingSection}
                           >
-                            <Check className="h-3 w-3" />
+                            <Check className="h-3 w-3 text-white" />
                           </Button>
                           <Button
                             onClick={handleCancelEdit}
@@ -273,7 +273,7 @@ export function ViewSurveyDetails({
                           <div className="flex-1">
                             <div className="flex items-center gap-2">
                               <h3 className="text-lg font-semibold text-gray-900">
-                                Section {sectionIndex + 1}: {section.title}
+                         {section.title}
                               </h3>
                               <Button
                                 onClick={() => handleEditSectionTitle(section.id || `section-${sectionIndex}`, section.title)}
@@ -399,7 +399,7 @@ export function ViewSurveyDetails({
           <DialogHeader>
             <DialogTitle>Delete Section</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete the section "{sectionToDelete?.title}"? 
+              Are you sure you want to delete the section &quot;{sectionToDelete?.title}&quot;? 
               All questions in this section will also be permanently deleted. This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
