@@ -10,7 +10,7 @@
   "scripts": {
     "dev": "turbo run dev ",
     "dev:curriculum": "turbo run dev --filter=curriculum",
-    "dev:training": "turbo run dev --filter=training-management",
+    "dev:survey": "turbo run dev --filter=survey-portal",
     "build": "turbo run build",
     "start": "turbo run start",
     "lint": "turbo run lint"

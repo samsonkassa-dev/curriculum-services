@@ -173,6 +173,64 @@ importers:
         specifier: ^5
         version: 5.6.3
 
+  apps/survey-portal:
+    dependencies:
+      '@curriculum-services/auth':
+        specifier: workspace:*
+        version: link:../../packages/auth
+      '@tanstack/react-query':
+        specifier: ^5.51.17
+        version: 5.62.2(react@19.0.0-rc-66855b96-20241106)
+      axios:
+        specifier: ^1.7.7
+        version: 1.8.4
+      clsx:
+        specifier: ^2.1.1
+        version: 2.1.1
+      lucide-react:
+        specifier: ^0.460.0
+        version: 0.460.0(react@19.0.0-rc-66855b96-20241106)
+      next:
+        specifier: 15.3.1
+        version: 15.3.1(react-dom@19.0.0-rc-66855b96-20241106(react@19.0.0-rc-66855b96-20241106))(react@19.0.0-rc-66855b96-20241106)
+      react:
+        specifier: 19.0.0-rc-66855b96-20241106
+        version: 19.0.0-rc-66855b96-20241106
+      react-dom:
+        specifier: 19.0.0-rc-66855b96-20241106
+        version: 19.0.0-rc-66855b96-20241106(react@19.0.0-rc-66855b96-20241106)
+      sonner:
+        specifier: ^1.5.0
+        version: 1.7.0(react-dom@19.0.0-rc-66855b96-20241106(react@19.0.0-rc-66855b96-20241106))(react@19.0.0-rc-66855b96-20241106)
+      zod:
+        specifier: ^3.24.0
+        version: 3.24.0
+    devDependencies:
+      '@types/node':
+        specifier: ^20.14.10
+        version: 20.17.6
+      '@types/react':
+        specifier: ^18.2.66
+        version: 18.3.12
+      '@types/react-dom':
+        specifier: ^18.2.22
+        version: 18.3.1
+      autoprefixer:
+        specifier: ^10.4.20
+        version: 10.4.21(postcss@8.4.49)
+      eslint:
+        specifier: ^8.57.0
+        version: 8.57.1
+      postcss:
+        specifier: ^8.4.47
+        version: 8.4.49
+      tailwindcss:
+        specifier: ^3.4.10
+        version: 3.4.15(ts-node@10.9.1(@types/node@20.17.6)(typescript@5.6.3))
+      typescript:
+        specifier: ^5.5.4
+        version: 5.6.3
+
   packages/auth:
     dependencies:
       '@hookform/resolvers':
