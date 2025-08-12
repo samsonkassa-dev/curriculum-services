@@ -12,7 +12,12 @@
     "dev:curriculum": "turbo run dev --filter=curriculum",
     "dev:survey": "turbo run dev --filter=survey-portal",
     "build": "turbo run build",
+    "build:all": "turbo run build",
+    "build:curriculum": "turbo run build --filter=curriculum",
+    "build:survey": "turbo run build --filter=survey-portal",
     "start": "turbo run start",
+    "start:curriculum": "turbo run start --filter=curriculum",
+    "start:survey": "turbo run start --filter=survey-portal",
     "lint": "turbo run lint"
   },
   "devDependencies": {
