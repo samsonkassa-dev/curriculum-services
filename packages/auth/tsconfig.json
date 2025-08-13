@@ -1,11 +1,15 @@
 {
+  "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "baseUrl": ".",
-    "strict": true,
+    "moduleResolution": "bundler",
+    "noEmit": true,
     "paths": {
       "@/*": ["./src/*"]
     }
-  }
+  },
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules"]
 }
 
 
