@@ -74,7 +74,7 @@ export function useCreateCohortAnswerLinks() {
       toast.success(data?.message || "Links generated for cohort");
       qc.invalidateQueries({ queryKey: ["survey", "answer-links"] });
     },
-    onError: (e: AxiosError<any>) => {
+    onError: (e: AxiosError<{ message?: string }>) => {
       toast.error(e.response?.data?.message || "Failed to generate links");
     },
   });
@@ -93,7 +93,7 @@ export function useCreateTraineeAnswerLinks() {
       toast.success(data?.message || "Links generated");
       qc.invalidateQueries({ queryKey: ["survey", "answer-links"] });
     },
-    onError: (e: AxiosError<any>) => {
+    onError: (e: AxiosError<{ message?: string }>) => {
       toast.error(e.response?.data?.message || "Failed to generate links");
     },
   });
@@ -112,14 +112,14 @@ export function useExtendAnswerLink() {
       toast.success(data?.message || "Link updated");
       qc.invalidateQueries({ queryKey: ["survey", "answer-links"] });
     },
-    onError: (e: AxiosError<any>) => {
+    onError: (e: AxiosError<{ message?: string }>) => {
       toast.error(e.response?.data?.message || "Failed to update link");
     },
   });
 }
 
 export const buildPortalLink = (relativeLink: string): string => {
-  const base = process.env.NEXT_PUBLIC_SURVEY_PORTAL_URL || "http://localhost:3001";
+  const base = process.env.NEXT_PUBLIC_SURVEY_PORTAL_URL || "https://curriculum-services-survey-portal.vercel.app";
   return `${base}${relativeLink}`;
 };
 
