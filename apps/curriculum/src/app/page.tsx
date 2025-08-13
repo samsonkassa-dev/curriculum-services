@@ -20,6 +20,10 @@ export default function Home() {
     <Login onSuccess={() => {
       try {
         const r = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('redirect') : null
+        if (r && /^https?:\/\//i.test(r)) {
+          window.location.href = r
+          return
+        }
         router.replace(r || '/')
       } catch {
         router.replace('/')

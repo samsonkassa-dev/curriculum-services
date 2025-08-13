@@ -139,36 +139,32 @@ export function middleware(req: NextRequest) {
       const companyData = companyInfo ? JSON.parse(companyInfo) : null;
       const profileId = decoded.companyProfileId ?? companyData?.id;
 
-      // Allow access to company profile page only if profile isn't filled
-      if (pathname === '/company-profile' && (decoded.profileStatus === "REJECTED" || !decoded.isProfileFilled)) {
-        return NextResponse.next({
-          request: { headers: requestHeaders }
-        });
-      }
-
-      // If profile is not filled or no profileId, redirect to company-profile for any route
+      // If no profile information yet, gate everything to company-profile
       if (!decoded.isProfileFilled || !profileId) {
-        return NextResponse.redirect(new URL('/company-profile', req.url), {
-          headers: requestHeaders
-        });
+        if (pathname !== '/company-profile') {
+          return NextResponse.redirect(new URL('/company-profile', req.url), {
+            headers: requestHeaders,
+          });
+        }
+        return NextResponse.next({ request: { headers: requestHeaders } });
       }
 
-      // If at root with filled profile, redirect to dashboard
+      // If at root, send to company dashboard
       if (pathname === '/') {
         return NextResponse.redirect(new URL(`/${profileId}/dashboard`, req.url), {
-          headers: requestHeaders
+          headers: requestHeaders,
         });
       }
 
-      // Check if trying to access company routes (including training import pages)
-      const isCompanyRoute = pathname.startsWith(`/${profileId}/`) || 
-                            (pathname.includes('/training/') && pathname.includes('/students/import'));
-      
-      if (!isCompanyRoute) {
-        return NextResponse.redirect(new URL('/unauthorized', req.url), {
-          headers: requestHeaders
-        });
+      // Allow any route under the company scope
+      const isCompanyScoped = pathname.startsWith(`/${profileId}/`);
+      if (isCompanyScoped) {
+        return NextResponse.next({ request: { headers: requestHeaders } });
       }
+
+      // For non-company scoped paths (e.g., other role routes), redirect to company dashboard rather than unauthorized
+      const redirectUrl = new URL(`/${profileId}/dashboard`, req.url);
+      return NextResponse.redirect(redirectUrl, { headers: requestHeaders });
     }
 
     return NextResponse.next({
