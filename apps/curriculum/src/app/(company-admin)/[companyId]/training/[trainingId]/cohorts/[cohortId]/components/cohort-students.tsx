@@ -144,6 +144,7 @@ export function CohortStudents({ cohortId, trainingId }: CohortStudentsProps) {
     setExpiryUnit,
     surveys,
     answeredIds,
+    answeredLoading,
     traineeIdToMeta,
     linksLoading,
     refetchAnswered,
@@ -462,8 +463,10 @@ export function CohortStudents({ cohortId, trainingId }: CohortStudentsProps) {
       ) : (
         <StudentDataTable
           columns={columnsWithRemove}
-          data={viewMode === 'answered' && selectedSurveyId ? filteredStudents.filter(s => s.id && answeredIds.has(s.id)) : filteredStudents}
-          isLoading={isLoading}
+          data={viewMode === 'answered' && selectedSurveyId
+            ? (answeredLoading ? [] : filteredStudents.filter(s => s.id && answeredIds.has(s.id)))
+            : filteredStudents}
+          isLoading={isLoading || (viewMode === 'answered' && Boolean(selectedSurveyId) && answeredLoading)}
           pagination={{
             totalPages,
             currentPage: page,

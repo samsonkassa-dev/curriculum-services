@@ -14,33 +14,7 @@ import {
 
 export type ViewMode = 'all' | 'answered'
 
-interface CohortSurveyLinksHook {
-  selectedSurveyId: string
-  setSelectedSurveyId: (id: string) => void
-  viewMode: ViewMode
-  setViewMode: (m: ViewMode) => void
-  expiryValue: number
-  setExpiryValue: (v: number) => void
-  expiryUnit: 'minutes' | 'hours' | 'days' | 'weeks'
-  setExpiryUnit: (u: 'minutes' | 'hours' | 'days' | 'weeks') => void
-
-  surveys: { id: string; name: string }[]
-  answeredIds: Set<string>
-
-  traineeIdToMeta: Record<string, { fullLink: string; linkId: string; expiryDate?: string; valid: boolean }>
-  linksLoading: boolean
-  refetchAnswered: () => void
-  refetchLinks: () => void
-
-  generateForCohort: (cohortId: string) => void
-  generateForTrainee: (traineeId: string) => void
-  extendLink: (args: { linkId: string; byValue: number; byUnit: 'minutes'|'hours'|'days'|'weeks' }) => void
-  deleteLink: (linkId: string) => void
-
-  getAnswersLink: (surveyId: string | undefined, traineeId: string | undefined) => string | undefined
-}
-
-export function useCohortSurveyLinks(trainingId: string, traineeIds: string[]): CohortSurveyLinksHook {
+export function useCohortSurveyLinks(trainingId: string, traineeIds: string[]) {
   const [selectedSurveyId, setSelectedSurveyId] = useState("")
   const [viewMode, setViewMode] = useState<ViewMode>('all')
   const [expiryValue, setExpiryValue] = useState<number>(1)
@@ -53,7 +27,7 @@ export function useCohortSurveyLinks(trainingId: string, traineeIds: string[]): 
   const answeredIds = useMemo(() => new Set((answeredQuery.data?.trainees || []).map(t => t.id)), [answeredQuery.data])
 
   const linksQuery = useGetAnswerLinks(selectedSurveyId || undefined, (traineeIds?.length ? traineeIds : undefined))
-  const traineeIdToMeta: CohortSurveyLinksHook['traineeIdToMeta'] = {}
+  const traineeIdToMeta: Record<string, { fullLink: string; linkId: string; expiryDate?: string; valid: boolean }> = {}
   if (linksQuery.data?.surveyLinks) {
     for (const l of linksQuery.data.surveyLinks) {
       if (l.traineeId && l.link) {
@@ -115,6 +89,7 @@ export function useCohortSurveyLinks(trainingId: string, traineeIds: string[]): 
     setExpiryUnit,
     surveys,
     answeredIds,
+    answeredLoading: answeredQuery.isLoading,
     traineeIdToMeta,
     linksLoading: linksQuery.isLoading,
     refetchAnswered: answeredQuery.refetch,
