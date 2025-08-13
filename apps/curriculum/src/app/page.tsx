@@ -17,6 +17,13 @@ export default function Home() {
   }, []);
 
   return (
-    <Login onSuccess={() => router.replace(redirect)} />
+    <Login onSuccess={() => {
+      try {
+        const r = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('redirect') : null
+        router.replace(r || '/')
+      } catch {
+        router.replace('/')
+      }
+    }} />
   );
 }
