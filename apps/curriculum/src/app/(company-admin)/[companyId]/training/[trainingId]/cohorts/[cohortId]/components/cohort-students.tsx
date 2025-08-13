@@ -5,7 +5,7 @@ import { useState } from "react"
 import { useParams } from "next/navigation"
 import { useUserRole } from "@/lib/hooks/useUserRole"
 import { Button } from "@/components/ui/button"
-import { Plus, Loader2, ChevronDown } from "lucide-react"
+import { Plus, Loader2, ChevronDown, Trash2 } from "lucide-react"
 import { useCohortTrainees, useRemoveTraineesFromCohort } from "@/lib/hooks/useCohorts"
 import { Input } from "@/components/ui/input"
 import { useDebounce } from "@/lib/hooks/useDebounce"
@@ -13,14 +13,14 @@ import { Loading } from "@/components/ui/loading"
 import { StudentDataTable } from "../../../components/students/student-data-table"
 import { studentColumns, createRemoveFromCohortColumn } from "../../../components/students/student-columns"
 import { ColumnDef } from "@tanstack/react-table"
-import { useState as useReactState } from "react"
+import { useState as useReactState, useEffect } from "react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { useSurveys } from "@/lib/hooks/useSurvey"
-import { useCreateCohortAnswerLinks, useCreateTraineeAnswerLinks, toExpiryMinutes, buildPortalLink, useGetAnswerLinks, useExtendAnswerLink } from "@/lib/hooks/useSurveyLinks"
+import { useCohortSurveyLinks } from "@/lib/hooks/useCohortSurveyLinks"
 import { Copy } from "lucide-react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { AddCohortStudentModal } from "./add-cohort-student-modal"
 import { Student } from "@/lib/hooks/useStudents"
+ 
 import { toast } from "sonner"
 import Image from "next/image"
 import {
@@ -33,7 +33,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { useAnsweredTrainees } from "@/lib/hooks/useSurveyAnswers"
+import { DeleteLinkDialog } from "./DeleteLinkDialog"
 
 interface CohortStudentsProps {
   cohortId: string
@@ -132,31 +132,28 @@ export function CohortStudents({ cohortId, trainingId }: CohortStudentsProps) {
   // Get assigned student IDs for the modal (to filter out already assigned students)
   const assignedStudentIds = students.map(student => student.id)
 
-  // Survey select + expiry inputs state
-  const [selectedSurveyId, setSelectedSurveyId] = useReactState<string>("")
-  const [expiryValue, setExpiryValue] = useReactState<number>(1)
-  const [expiryUnit, setExpiryUnit] = useReactState<"minutes" | "hours" | "days" | "weeks">("days")
-
-  const { data: surveysRes } = useSurveys(trainingId)
-  const surveys = surveysRes?.surveys ?? []
-
-  const { mutate: createCohortLinks, isPending: isCreatingCohort } = useCreateCohortAnswerLinks()
-  const { mutate: createTraineeLinks, isPending: isCreatingTrainee } = useCreateTraineeAnswerLinks()
-  const { mutate: extendLink, mutateAsync: extendLinkAsync, isPending: isExtending } = useExtendAnswerLink()
-
-  // Optionally fetch links for visible students to show copy buttons
   const traineeIds = filteredStudents.map(s => s.id).filter(Boolean) as string[]
-  const { data: linksRes, isLoading: linksLoading } = useGetAnswerLinks(selectedSurveyId || undefined, traineeIds.length ? traineeIds : undefined)
-  const traineeIdToMeta: Record<string, { fullLink: string; linkId: string; expiryDate?: string; valid: boolean }> = {}
-  if (linksRes?.surveyLinks) {
-    for (const l of linksRes.surveyLinks) {
-      if (l.traineeId && l.link) {
-        const full = buildPortalLink(l.link)
-        const id = (l.link.split("/survey/answer/")[1] || "").split("/")[0]
-        traineeIdToMeta[l.traineeId] = { fullLink: full, linkId: id, expiryDate: l.expiryDate, valid: Boolean(l.valid) }
-      }
-    }
-  }
+  const {
+    selectedSurveyId,
+    setSelectedSurveyId,
+    viewMode,
+    setViewMode,
+    expiryValue,
+    setExpiryValue,
+    expiryUnit,
+    setExpiryUnit,
+    surveys,
+    answeredIds,
+    traineeIdToMeta,
+    linksLoading,
+    refetchAnswered,
+    refetchLinks,
+    generateForCohort,
+    generateForTrainee,
+    extendLink,
+    deleteLink,
+    getAnswersLink,
+  } = useCohortSurveyLinks(trainingId, traineeIds)
 
   // Extend modal state
   const [extendOpen, setExtendOpen] = useReactState(false)
@@ -164,6 +161,9 @@ export function CohortStudents({ cohortId, trainingId }: CohortStudentsProps) {
   const [extendByUnit, setExtendByUnit] = useReactState<"minutes" | "hours" | "days" | "weeks">("days")
   const [extendingLinkId, setExtendingLinkId] = useReactState<string>("")
   const [extendContext, setExtendContext] = useReactState<{ linkId: string; traineeName?: string; currentExpiry?: string } | null>(null)
+  // Delete link dialog state
+  const [linkToDelete, setLinkToDelete] = useReactState<{ linkId: string; traineeName?: string } | null>(null)
+  const [isDeleteLinkDialogOpen, setIsDeleteLinkDialogOpen] = useReactState(false)
 
   // Bulk extend modal state
   const [bulkExtendOpen, setBulkExtendOpen] = useReactState(false)
@@ -173,10 +173,6 @@ export function CohortStudents({ cohortId, trainingId }: CohortStudentsProps) {
 
   // Toggle for survey tools panel
   const [showSurveyTools, setShowSurveyTools] = useReactState(false)
-  // View mode: all (manage links) vs answered (view answers only)
-  const [viewMode, setViewMode] = useReactState<'all' | 'answered'>("all")
-  const { data: answeredRes, isLoading: answeredLoading } = useAnsweredTrainees(selectedSurveyId || undefined)
-  const answeredIds = new Set((answeredRes?.trainees || []).map(t => t.id))
 
   // Columns: extend with "Survey Link" column
   const formatRemaining = (expiry?: string): string => {
@@ -198,12 +194,9 @@ export function CohortStudents({ cohortId, trainingId }: CohortStudentsProps) {
     header: "Survey Link",
     cell: ({ row }) => {
       const student = row.original
-      const base = process.env.NEXT_PUBLIC_SURVEY_PORTAL_URL || "https://curriculum-services-survey-portal.vercel.app"
       const isAnswersMode = viewMode === 'answered' && Boolean(selectedSurveyId)
       const meta = student.id ? traineeIdToMeta[student.id] : undefined
-      const link = isAnswersMode
-        ? (student.id ? `${base}/survey/answers/${selectedSurveyId}/${student.id}` : undefined)
-        : meta?.fullLink
+      const link = isAnswersMode ? getAnswersLink(selectedSurveyId, student.id) : meta?.fullLink
       const linkId = isAnswersMode ? "" : (meta?.linkId || "")
       const remaining = isAnswersMode ? "" : formatRemaining(meta?.expiryDate)
       const copy = async () => {
@@ -222,25 +215,47 @@ export function CohortStudents({ cohortId, trainingId }: CohortStudentsProps) {
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : link ? (
             <>
-              <a href={link} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline truncate max-w-[180px] inline-block" title={link}>
+              <a href={link} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline truncate max-w-[180px] inline-block" title={link}
+                 onClick={(e) => {
+                   // If answers mode, open in a popup so we can receive postMessage on submit
+                   if (isAnswersMode) {
+                     e.preventDefault()
+                     try { window.open(link, '_blank', 'noopener,noreferrer,width=1200,height=800') } catch {}
+                   }
+                 }}
+              >
                 {link}
               </a>
               <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={copy} title="Copy link">
                 <Copy className="h-4 w-4" />
               </Button>
               {!!linkId && !isAnswersMode && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 px-2"
-                  title="Extend expiry"
-                  onClick={() => {
-                    setExtendContext({ linkId, traineeName: `${student.firstName} ${student.lastName}`.trim(), currentExpiry: meta?.expiryDate })
-                    setExtendOpen(true)
-                  }}
-                >
-                  {extendingLinkId === linkId ? "Extending..." : "Extend"}
-                </Button>
+                <div className="flex items-center">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 px-2"
+                    title="Extend expiry"
+                    onClick={() => {
+                      setExtendContext({ linkId, traineeName: `${student.firstName} ${student.lastName}`.trim(), currentExpiry: meta?.expiryDate })
+                      setExtendOpen(true)
+                    }}
+                  >
+                    {extendingLinkId === linkId ? "Extending..." : "Extend"}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0 text-red-500"
+                    title="Delete link"
+                    onClick={() => {
+                      setLinkToDelete({ linkId, traineeName: `${student.firstName} ${student.lastName}`.trim() })
+                      setIsDeleteLinkDialogOpen(true)
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               )}
               {!!remaining && !isAnswersMode && <span className="text-xs text-gray-500">Expires in {remaining}</span>}
             </>
@@ -252,14 +267,13 @@ export function CohortStudents({ cohortId, trainingId }: CohortStudentsProps) {
                   variant="ghost"
                   size="sm"
                   className="h-8 px-2"
-                  disabled={!selectedSurveyId || isCreatingTrainee}
+                  disabled={!selectedSurveyId}
                   onClick={() => {
                     if (!student.id || !selectedSurveyId) return
-                    const expiryMinutes = toExpiryMinutes(expiryValue, expiryUnit)
-                    createTraineeLinks({ surveyId: selectedSurveyId, traineeIds: [student.id], expiryMinutes })
+                    generateForTrainee(student.id)
                   }}
                 >
-                  {isCreatingTrainee ? "Generating..." : "Generate"}
+                  Generate
                 </Button>
               )}
             </>
@@ -268,6 +282,18 @@ export function CohortStudents({ cohortId, trainingId }: CohortStudentsProps) {
       )
     }
   }
+
+  // Listen for survey-answered postMessage to refresh links/answered list without polling
+  useEffect(() => {
+    const handler = (event: MessageEvent) => {
+      const d = event.data as { type?: string; surveyId?: string; traineeId?: string }
+      if (d?.type === 'survey-answered') {
+        refetch()
+      }
+    }
+    window.addEventListener('message', handler)
+    return () => window.removeEventListener('message', handler)
+  }, [refetch])
 
   const columnsWithRemove = [
     ...studentColumns,
@@ -347,7 +373,19 @@ export function CohortStudents({ cohortId, trainingId }: CohortStudentsProps) {
                 ))}
               </SelectContent>
             </Select>
-            <Select value={viewMode} onValueChange={(v)=> setViewMode(v as any)} disabled={!selectedSurveyId || answeredLoading}>
+            <Select
+              value={viewMode}
+              onValueChange={(v)=> {
+                setViewMode(v as any)
+                // Proactively refetch when switching mode
+                if (v === 'answered') {
+                  refetchAnswered()
+                } else {
+                  refetchLinks()
+                }
+              }}
+              disabled={!selectedSurveyId}
+            >
               <SelectTrigger className="w-[200px] h-10">
                 <SelectValue placeholder="Mode" />
               </SelectTrigger>
@@ -380,20 +418,17 @@ export function CohortStudents({ cohortId, trainingId }: CohortStudentsProps) {
               <>
                 <Button
                   className="bg-[#0B75FF] hover:bg-[#0B75FF]/90 text-white h-10"
-                  disabled={!selectedSurveyId || isCreatingCohort}
-                  onClick={() => {
-                    const expiryMinutes = toExpiryMinutes(expiryValue, expiryUnit)
-                    createCohortLinks({ surveyId: selectedSurveyId, cohortId, expiryMinutes })
-                  }}
+                  disabled={!selectedSurveyId}
+                  onClick={() => generateForCohort(cohortId)}
                 >
-                  {isCreatingCohort ? "Generating..." : "Generate for Cohort"}
+                  Generate for Cohort
                 </Button>
                 <Button
                   className="bg-amber-600 hover:bg-amber-600/90 text-white h-10"
-                  disabled={!selectedSurveyId || !(linksRes?.surveyLinks?.length) || isBulkExtending}
+                  disabled={!selectedSurveyId || !(Object.keys(traineeIdToMeta).length) || isBulkExtending}
                   onClick={() => setBulkExtendOpen(true)}
                 >
-                  {isBulkExtending ? "Extending..." : `Extend all (${linksRes?.surveyLinks?.length || 0})`}
+                  {isBulkExtending ? "Extending..." : `Extend all (${Object.keys(traineeIdToMeta).length || 0})`}
                 </Button>
               </>
             )}
@@ -517,15 +552,13 @@ export function CohortStudents({ cohortId, trainingId }: CohortStudentsProps) {
               disabled={!extendContext?.linkId}
               onClick={() => {
                 if (!extendContext?.linkId) return
-                const expiryMinutes = toExpiryMinutes(extendByValue, extendByUnit)
                 setExtendingLinkId(extendContext.linkId)
-                extendLink(
-                  { linkId: extendContext.linkId, expiryMinutes },
-                  {
-                    onSettled: () => setExtendingLinkId(""),
-                    onSuccess: () => setExtendOpen(false)
-                  }
-                )
+                try {
+                  extendLink({ linkId: extendContext.linkId, byValue: extendByValue, byUnit: extendByUnit })
+                  setExtendOpen(false)
+                } finally {
+                  setExtendingLinkId("")
+                }
               }}
             >
               {extendingLinkId ? "Extending..." : "Extend"}
@@ -540,7 +573,7 @@ export function CohortStudents({ cohortId, trainingId }: CohortStudentsProps) {
             <DialogTitle>Extend all links</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
-            <div className="text-sm text-gray-600">{linksRes?.surveyLinks?.length || 0} links will be extended.</div>
+            <div className="text-sm text-gray-600">{Object.keys(traineeIdToMeta).length || 0} links will be extended.</div>
             <div className="flex items-center gap-2">
               <span className="text-sm">Extend by</span>
               <input
@@ -567,14 +600,12 @@ export function CohortStudents({ cohortId, trainingId }: CohortStudentsProps) {
             <Button variant="outline" onClick={()=> setBulkExtendOpen(false)}>Cancel</Button>
             <Button
               className="bg-amber-600 hover:bg-amber-600/90 text-white"
-              disabled={!selectedSurveyId || !(linksRes?.surveyLinks?.length) || isBulkExtending}
+              disabled={!selectedSurveyId || !(Object.keys(traineeIdToMeta).length) || isBulkExtending}
               onClick={async () => {
-                if (!linksRes?.surveyLinks?.length) return
-                const expiryMinutes = toExpiryMinutes(bulkExtendValue, bulkExtendUnit)
-                const ids = linksRes.surveyLinks.map(l => (l.link.split("/survey/answer/")[1] || "").split("/")[0]).filter(Boolean)
+                const ids = Object.values(traineeIdToMeta).map(m => m.linkId).filter(Boolean)
                 setIsBulkExtending(true)
                 try {
-                  await Promise.allSettled(ids.map(id => extendLinkAsync({ linkId: id, expiryMinutes })))
+                  ids.forEach(id => extendLink({ linkId: id, byValue: bulkExtendValue, byUnit: bulkExtendUnit }))
                   setBulkExtendOpen(false)
                 } finally {
                   setIsBulkExtending(false)
@@ -586,6 +617,19 @@ export function CohortStudents({ cohortId, trainingId }: CohortStudentsProps) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <DeleteLinkDialog
+        isOpen={isDeleteLinkDialogOpen}
+        traineeName={linkToDelete?.traineeName}
+        isDeleting={false}
+        onCancel={() => setIsDeleteLinkDialogOpen(false)}
+        onConfirm={() => {
+          if (!linkToDelete?.linkId) return
+          deleteLink(linkToDelete.linkId)
+          setIsDeleteLinkDialogOpen(false)
+          setLinkToDelete(null)
+        }}
+      />
     </div>
   )
 } 

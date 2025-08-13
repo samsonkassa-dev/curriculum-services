@@ -50,7 +50,7 @@ export async function POST(request: Request) {
     }
 
     return res
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'An unexpected error occurred during login' },
       { status: 500 }

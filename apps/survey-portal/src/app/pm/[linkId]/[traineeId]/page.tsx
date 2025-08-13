@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query"
 import { getSurveyById, checkLinkValidity, fetchSurveyAnswers } from "@/lib/surveys"
 import { decodeJWT, isTokenExpired } from "@curriculum-services/auth"
 
-type AnswerRow = { questionId: string; question: string; answer: string | string[] }
+// Removed unused AnswerRow type
 
 export default function PMAnswersPage() {
   const params = useParams<{ linkId: string; traineeId: string }>()

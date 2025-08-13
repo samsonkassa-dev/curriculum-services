@@ -1,105 +1,24 @@
 "use client"
-import { useMemo, useState } from "react"
-import { useParams, useRouter } from "next/navigation"
-import { useQuery, useMutation } from "@tanstack/react-query"
-import { toast } from "sonner"
-import { checkLinkValidity, submitSurveyAnswers, SurveyDetailDto } from "@/lib/surveys"
-
-type AnswerMap = Record<string, { selectedChoices?: string[]; textAnswer?: string; gridAnswers?: Record<string, string[]> }>
+import Link from "next/link"
+import { useParams } from "next/navigation"
+import { useSurveyAnswer } from "@/lib/hooks/useSurveyAnswer"
 
 export default function SurveyAnswerPage() {
   const { linkId } = useParams<{ linkId: string }>()
-  const router = useRouter()
-
-  const validity = useQuery({
-    queryKey: ['survey', 'link-validity', linkId],
-    queryFn: async () => await checkLinkValidity(linkId),
-    enabled: Boolean(linkId),
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
-    refetchOnWindowFocus: false,
-  })
-
-  const embeddedSurvey: SurveyDetailDto | undefined = validity.data?.surveyLink?.survey
-  const linkMeta = validity.data?.surveyLink
-
-  const [answers, setAnswers] = useState<AnswerMap>({})
-  const [showErrors, setShowErrors] = useState(false)
-
-  const setText = (entryId: string, value: string) => setAnswers(p => ({ ...p, [entryId]: { ...(p[entryId]||{}), textAnswer: value } }))
-  const toggleChoice = (entryId: string, choice: string, multiple: boolean) => setAnswers(p => {
-    const prev = p[entryId]?.selectedChoices || []
-    const next = multiple ? (prev.includes(choice) ? prev.filter(c=>c!==choice) : [...prev, choice]) : [choice]
-    return { ...p, [entryId]: { ...(p[entryId]||{}), selectedChoices: next } }
-  })
-  const setGrid = (entryId: string, row: string, col: string) => setAnswers(p => {
-    const grid = p[entryId]?.gridAnswers || {}
-    // single selection per row
-    grid[row] = [col]
-    return { ...p, [entryId]: { ...(p[entryId]||{}), gridAnswers: { ...grid } } }
-  })
-
-  const sections = embeddedSurvey?.sections ?? []
-  const allEntries = useMemo(()=> sections.flatMap(s=>s.questions), [sections])
-
-  const canSubmit = useMemo(()=> {
-    if (!allEntries.length) return false
-    for (const q of allEntries) {
-      const a = answers[q.id]
-      if (q.required) {
-        if (q.questionType === 'TEXT') {
-          if (!a?.textAnswer?.trim()) return false
-        } else if (q.questionType === 'RADIO') {
-          if (!a?.selectedChoices || a.selectedChoices.length === 0) return false
-        } else if (q.questionType === 'CHECKBOX') {
-          if (!a?.selectedChoices || a.selectedChoices.length === 0) return false
-        } else if (q.questionType === 'GRID') {
-          const rows = q.rows || []
-          if (!a?.gridAnswers) return false
-          for (const r of rows) {
-            if (!a.gridAnswers[r] || a.gridAnswers[r].length === 0) return false
-          }
-        }
-      }
-    }
-    return true
-  }, [answers, allEntries])
-
-  const submit = useMutation({
-    mutationFn: () => submitSurveyAnswers(linkId, {
-      surveyAnswers: allEntries.map(q => ({
-        surveyEntryId: q.id,
-        selectedChoices: answers[q.id]?.selectedChoices,
-        textAnswer: answers[q.id]?.textAnswer,
-        gridAnswers: answers[q.id]?.gridAnswers,
-      }))
-    }),
-    onSuccess: () => {
-      toast.success("Survey submitted successfully")
-      if (typeof window !== 'undefined') {
-        try { sessionStorage.setItem('surveySubmitted', '1') } catch {}
-      }
-      router.push("/")
-    },
-    onError: (e: unknown) => {
-      const err = e as { classification?: { message?: string }, message?: string }
-      toast.error(err?.classification?.message ?? err?.message ?? "Failed to submit survey")
-    }
-  })
-
-  const isAnswered = (q: typeof allEntries[number]): boolean => {
-    const a = answers[q.id]
-    if (!q.required) return true
-    if (q.questionType === 'TEXT') return Boolean(a?.textAnswer && a.textAnswer.trim() !== '')
-    if (q.questionType === 'RADIO') return Boolean(a?.selectedChoices && a.selectedChoices.length > 0)
-    if (q.questionType === 'CHECKBOX') return Boolean(a?.selectedChoices && a.selectedChoices.length > 0)
-    if (q.questionType === 'GRID') {
-      const rows = q.rows || []
-      if (!a?.gridAnswers) return false
-      return rows.every(r => Array.isArray(a.gridAnswers?.[r]) && a.gridAnswers[r].length > 0)
-    }
-    return true
-  }
+  const {
+    validity,
+    embeddedSurvey,
+    linkMeta,
+    answers,
+    setText,
+    toggleChoice,
+    setGrid,
+    isAnswered,
+    showErrors,
+    submit,
+    submitWithValidation,
+    alreadySubmitted,
+  } = useSurveyAnswer(linkId)
 
   if (validity.isLoading) {
     return (
@@ -116,7 +35,21 @@ export default function SurveyAnswerPage() {
       </main>
     )
   }
-  const survey: SurveyDetailDto | undefined = embeddedSurvey
+  if (alreadySubmitted) {
+    return (
+      <main className="min-h-screen flex items-center justify-center p-6">
+        <div className="bg-white border rounded-lg shadow-sm px-6 py-8 text-center max-w-md">
+          <div className="mx-auto mb-3 w-10 h-10 rounded-full bg-green-100 flex items-center justify-center">
+            <span className="text-green-600 text-xl">✓</span>
+          </div>
+          <h2 className="text-lg font-semibold mb-1">You already submitted this survey</h2>
+          <p className="text-sm text-gray-600">Thank you! Your response has been recorded.</p>
+          <Link href="/" className="inline-block mt-3 text-sm text-blue-600 underline">Go back to home</Link>
+        </div>
+      </main>
+    )
+  }
+  const survey = embeddedSurvey
   if (!survey) {
     return (
       <main className="min-h-screen flex items-center justify-center p-6">
@@ -248,12 +181,7 @@ export default function SurveyAnswerPage() {
           disabled={submit.isPending}
           className="px-5 py-2 rounded bg-blue-600 text-white disabled:opacity-60 shadow-sm"
           onClick={() => {
-            if (!canSubmit) {
-              setShowErrors(true)
-              toast.error('Please answer all required questions')
-              return
-            }
-            submit.mutate()
+            submitWithValidation()
           }}
         >
           {submit.isPending ? 'Submitting...' : 'Submit'}

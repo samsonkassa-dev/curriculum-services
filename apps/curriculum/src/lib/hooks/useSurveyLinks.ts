@@ -123,4 +123,23 @@ export const buildPortalLink = (relativeLink: string): string => {
   return `${base}${relativeLink}`;
 };
 
+export function useDeleteAnswerLink() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (args: { linkId: string }) => {
+      const headers = getAuthHeaders();
+      const url = `${process.env.NEXT_PUBLIC_API}/survey/answer-links/${args.linkId}`;
+      const res = await axios.delete(url, { headers });
+      return res.data;
+    },
+    onSuccess: (data) => {
+      toast.success(data?.message || "Link deleted");
+      qc.invalidateQueries({ queryKey: ["survey", "answer-links"] });
+    },
+    onError: (e: AxiosError<{ message?: string }>) => {
+      toast.error(e.response?.data?.message || "Failed to delete link");
+    },
+  });
+}
+
 
