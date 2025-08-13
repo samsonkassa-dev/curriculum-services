@@ -2,12 +2,17 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --bg: #f8fafc;
-}
-
-body {
-  background: var(--bg);
+@layer base {
+  :root {
+    --background: 210 40% 98%;
+    --foreground: 222.2 47.4% 11.2%;
+    --brand: #0B75FF;
+    --brand-dark: #0a66da;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 215 20.2% 65.1%;
+  }
+  body { @apply bg-[hsl(var(--background))] text-[hsl(var(--foreground))]; }
 }
 
 

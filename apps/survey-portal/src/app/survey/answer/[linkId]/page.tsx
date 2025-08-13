@@ -76,6 +76,9 @@ export default function SurveyAnswerPage() {
     }),
     onSuccess: () => {
       toast.success("Survey submitted successfully")
+      if (typeof window !== 'undefined') {
+        try { sessionStorage.setItem('surveySubmitted', '1') } catch {}
+      }
       router.push("/")
     },
     onError: (e: unknown) => {

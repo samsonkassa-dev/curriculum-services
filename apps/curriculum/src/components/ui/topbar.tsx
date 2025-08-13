@@ -48,7 +48,9 @@ export default function Topbar() {
   const handleBackClick = () => {
     if (params.companyId) {
       router.push(`/${params.companyId}/training`)
+      return
     }
+    router.back()
   }
 
   useEffect(() => {

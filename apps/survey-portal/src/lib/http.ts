@@ -2,22 +2,24 @@ import axios from "axios"
 
 export const http = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API,
-  withCredentials: true,
+  // Avoid credentialed requests globally; use bearer token only
+  withCredentials: false,
 })
 
 http.interceptors.request.use((config) => {
   // Skip auth header for public survey endpoints
   const url = config.url || ''
-  const isPublicSurveyEndpoint = url.includes('/survey/check-link-validity') || url.includes('/survey/submit-survey-answers')
+  const isPublicSurveyEndpoint = (
+    url.includes('/survey/check-link-validity') ||
+    url.includes('/survey/submit-survey-answers')
+  )
 
   if (!isPublicSurveyEndpoint && typeof document !== 'undefined') {
     const token = document.cookie.split('; ').find(c => c.startsWith('token='))?.split('=')[1]
     if (token) config.headers.Authorization = `Bearer ${token}`
   }
-  if (isPublicSurveyEndpoint) {
-    // remove credentials to avoid CORS with wildcard origins
-    config.withCredentials = false
-  }
+  // Always avoid browser credentials; rely solely on bearer token
+  config.withCredentials = false
   return config
 })
 

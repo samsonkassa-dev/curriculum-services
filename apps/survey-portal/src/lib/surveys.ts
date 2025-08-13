@@ -49,6 +49,25 @@ export interface SurveyDetailResponse {
   message: string
 }
 
+export interface SurveyAnswersResponse {
+  surveyId: string
+  code: string
+  count: number
+  surveyAnswers: Array<{
+    surveyAnswerId: string
+    traineeId: string
+    traineeName: string
+    surveyEntryId: string
+    question: string
+    questionType: QuestionType
+    selectedChoices: string[]
+    textAnswer: string | null
+    gridAnswers: Record<string, string[]>
+  }>
+  message: string
+  traineeId: string
+}
+
 export async function checkLinkValidity(linkId: string) {
   const { data } = await http.get<LinkValidityResponse>(`/survey/check-link-validity/${linkId}`)
   return data
@@ -71,6 +90,11 @@ export async function submitSurveyAnswers(
   }
 ) {
   const { data } = await http.post(`/survey/submit-survey-answers/${linkId}`, payload)
+  return data
+}
+
+export async function fetchSurveyAnswers(surveyId: string, traineeId: string) {
+  const { data } = await http.get<SurveyAnswersResponse>(`/survey/${surveyId}/answers/${traineeId}`)
   return data
 }
 

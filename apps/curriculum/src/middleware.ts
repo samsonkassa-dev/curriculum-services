@@ -4,6 +4,14 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { decodeJWT, isTokenExpired } from "@curriculum-services/auth";
 
+function buildLoginRedirect(req: NextRequest) {
+  const url = req.nextUrl.clone();
+  const redirect = encodeURIComponent(url.pathname + (url.search || ""));
+  url.pathname = "/";
+  url.search = `?redirect=${redirect}`;
+  return NextResponse.redirect(url);
+}
+
 export function middleware(req: NextRequest) {
   // console.log('Middleware running for path:', req.nextUrl.pathname);
   const token = req.cookies.get('token')?.value;
@@ -18,25 +26,19 @@ export function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // If no token, redirect to root for login
+  // If no token, redirect to root login with return url
   if (!token) {
-    // console.log('Middleware: No token found in cookies, redirecting to login');
-    return pathname === '/' 
+    return pathname === '/'
       ? NextResponse.next()
-      : NextResponse.redirect(new URL('/', req.url));
+      : buildLoginRedirect(req);
   }
 
   try {
     const decoded = decodeJWT(token);
-  
-  
-    // If token is invalid or expired, clear cookies and redirect to login
+
+    // If token is invalid or expired, redirect to login with return url (do not delete cookies here)
     if (!decoded || isTokenExpired(decoded)) {
-      // console.log('Token is invalid or expired, redirecting to login');
-      const response = NextResponse.redirect(new URL('/', req.url));
-      response.cookies.delete('token'); // Clear the token cookie
-      response.cookies.delete('company_info'); // Clear any other auth-related cookies
-      return response;
+      return buildLoginRedirect(req);
     }
 
     // Add the user info to request headers for server components
@@ -86,7 +88,7 @@ export function middleware(req: NextRequest) {
       ];
 
       // Allow access to training routes and their nested routes
-      if (pathname.startsWith(`/${baseRoute}/training`) || pathname.includes('/training/')) {
+      if (pathname.startsWith(`/${baseRoute}/training`) || pathname.includes('/training')) {
         return NextResponse.next({
           request: { headers: requestHeaders }
         });

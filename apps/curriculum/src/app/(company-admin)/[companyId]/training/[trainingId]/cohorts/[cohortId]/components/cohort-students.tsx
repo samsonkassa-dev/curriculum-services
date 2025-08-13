@@ -4,13 +4,20 @@ import { useState } from "react"
 import { useParams } from "next/navigation"
 import { useUserRole } from "@/lib/hooks/useUserRole"
 import { Button } from "@/components/ui/button"
-import { Plus, Loader2  } from "lucide-react"
+import { Plus, Loader2, ChevronDown } from "lucide-react"
 import { useCohortTrainees, useRemoveTraineesFromCohort } from "@/lib/hooks/useCohorts"
 import { Input } from "@/components/ui/input"
 import { useDebounce } from "@/lib/hooks/useDebounce"
 import { Loading } from "@/components/ui/loading"
 import { StudentDataTable } from "../../../components/students/student-data-table"
 import { studentColumns, createRemoveFromCohortColumn } from "../../../components/students/student-columns"
+import { ColumnDef } from "@tanstack/react-table"
+import { useState as useReactState } from "react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { useSurveys } from "@/lib/hooks/useSurvey"
+import { useCreateCohortAnswerLinks, useCreateTraineeAnswerLinks, toExpiryMinutes, buildPortalLink, useGetAnswerLinks, useExtendAnswerLink } from "@/lib/hooks/useSurveyLinks"
+import { Copy } from "lucide-react"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { AddCohortStudentModal } from "./add-cohort-student-modal"
 import { Student } from "@/lib/hooks/useStudents"
 import { toast } from "sonner"
@@ -25,6 +32,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { useAnsweredTrainees } from "@/lib/hooks/useSurveyAnswers"
 
 interface CohortStudentsProps {
   cohortId: string
@@ -123,9 +131,146 @@ export function CohortStudents({ cohortId, trainingId }: CohortStudentsProps) {
   // Get assigned student IDs for the modal (to filter out already assigned students)
   const assignedStudentIds = students.map(student => student.id)
 
-  // Create columns with remove action
+  // Survey select + expiry inputs state
+  const [selectedSurveyId, setSelectedSurveyId] = useReactState<string>("")
+  const [expiryValue, setExpiryValue] = useReactState<number>(1)
+  const [expiryUnit, setExpiryUnit] = useReactState<"minutes" | "hours" | "days" | "weeks">("days")
+
+  const { data: surveysRes } = useSurveys(trainingId)
+  const surveys = surveysRes?.surveys ?? []
+
+  const { mutate: createCohortLinks, isPending: isCreatingCohort } = useCreateCohortAnswerLinks()
+  const { mutate: createTraineeLinks, isPending: isCreatingTrainee } = useCreateTraineeAnswerLinks()
+  const { mutate: extendLink, mutateAsync: extendLinkAsync, isPending: isExtending } = useExtendAnswerLink()
+
+  // Optionally fetch links for visible students to show copy buttons
+  const traineeIds = filteredStudents.map(s => s.id).filter(Boolean) as string[]
+  const { data: linksRes, isLoading: linksLoading } = useGetAnswerLinks(selectedSurveyId || undefined, traineeIds.length ? traineeIds : undefined)
+  const traineeIdToMeta: Record<string, { fullLink: string; linkId: string; expiryDate?: string; valid: boolean }> = {}
+  if (linksRes?.surveyLinks) {
+    for (const l of linksRes.surveyLinks) {
+      if (l.traineeId && l.link) {
+        const full = buildPortalLink(l.link)
+        const id = (l.link.split("/survey/answer/")[1] || "").split("/")[0]
+        traineeIdToMeta[l.traineeId] = { fullLink: full, linkId: id, expiryDate: l.expiryDate, valid: Boolean(l.valid) }
+      }
+    }
+  }
+
+  // Extend modal state
+  const [extendOpen, setExtendOpen] = useReactState(false)
+  const [extendByValue, setExtendByValue] = useReactState<number>(1)
+  const [extendByUnit, setExtendByUnit] = useReactState<"minutes" | "hours" | "days" | "weeks">("days")
+  const [extendingLinkId, setExtendingLinkId] = useReactState<string>("")
+  const [extendContext, setExtendContext] = useReactState<{ linkId: string; traineeName?: string; currentExpiry?: string } | null>(null)
+
+  // Bulk extend modal state
+  const [bulkExtendOpen, setBulkExtendOpen] = useReactState(false)
+  const [bulkExtendValue, setBulkExtendValue] = useReactState<number>(1)
+  const [bulkExtendUnit, setBulkExtendUnit] = useReactState<"minutes" | "hours" | "days" | "weeks">("days")
+  const [isBulkExtending, setIsBulkExtending] = useReactState(false)
+
+  // Toggle for survey tools panel
+  const [showSurveyTools, setShowSurveyTools] = useReactState(false)
+  // View mode: all (manage links) vs answered (view answers only)
+  const [viewMode, setViewMode] = useReactState<'all' | 'answered'>("all")
+  const { data: answeredRes, isLoading: answeredLoading } = useAnsweredTrainees(selectedSurveyId || undefined)
+  const answeredIds = new Set((answeredRes?.trainees || []).map(t => t.id))
+
+  // Columns: extend with "Survey Link" column
+  const formatRemaining = (expiry?: string): string => {
+    if (!expiry) return "";
+    const expiryMs = new Date(expiry).getTime();
+    const now = Date.now();
+    const diff = Math.max(0, expiryMs - now);
+    const minutes = Math.floor(diff / (60 * 1000));
+    const days = Math.floor(minutes / (60 * 24));
+    const hours = Math.floor((minutes % (60 * 24)) / 60);
+    const mins = minutes % 60;
+    if (days > 0) return `${days}d ${hours}h ${mins}m`;
+    if (hours > 0) return `${hours}h ${mins}m`;
+    return `${mins}m`;
+  }
+
+  const linkColumn: ColumnDef<Student> = {
+    id: "surveyLink",
+    header: "Survey Link",
+    cell: ({ row }) => {
+      const student = row.original
+      const base = process.env.NEXT_PUBLIC_SURVEY_PORTAL_URL || "http://localhost:3001"
+      const isAnswersMode = viewMode === 'answered' && Boolean(selectedSurveyId)
+      const meta = student.id ? traineeIdToMeta[student.id] : undefined
+      const link = isAnswersMode
+        ? (student.id ? `${base}/survey/answers/${selectedSurveyId}/${student.id}` : undefined)
+        : meta?.fullLink
+      const linkId = isAnswersMode ? "" : (meta?.linkId || "")
+      const remaining = isAnswersMode ? "" : formatRemaining(meta?.expiryDate)
+      const copy = async () => {
+        if (link) {
+          try {
+            await navigator.clipboard.writeText(link)
+            toast.success("Link copied")
+          } catch {
+            toast.error("Failed to copy")
+          }
+        }
+      }
+      return (
+        <div className="flex items-center gap-2">
+          {(!isAnswersMode && linksLoading) ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : link ? (
+            <>
+              <a href={link} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline truncate max-w-[180px] inline-block" title={link}>
+                {link}
+              </a>
+              <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={copy} title="Copy link">
+                <Copy className="h-4 w-4" />
+              </Button>
+              {!!linkId && !isAnswersMode && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 px-2"
+                  title="Extend expiry"
+                  onClick={() => {
+                    setExtendContext({ linkId, traineeName: `${student.firstName} ${student.lastName}`.trim(), currentExpiry: meta?.expiryDate })
+                    setExtendOpen(true)
+                  }}
+                >
+                  {extendingLinkId === linkId ? "Extending..." : "Extend"}
+                </Button>
+              )}
+              {!!remaining && !isAnswersMode && <span className="text-xs text-gray-500">Expires in {remaining}</span>}
+            </>
+          ) : (
+            <>
+              <span className="text-gray-400">No link</span>
+              {!isAnswersMode && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 px-2"
+                  disabled={!selectedSurveyId || isCreatingTrainee}
+                  onClick={() => {
+                    if (!student.id || !selectedSurveyId) return
+                    const expiryMinutes = toExpiryMinutes(expiryValue, expiryUnit)
+                    createTraineeLinks({ surveyId: selectedSurveyId, traineeIds: [student.id], expiryMinutes })
+                  }}
+                >
+                  {isCreatingTrainee ? "Generating..." : "Generate"}
+                </Button>
+              )}
+            </>
+          )}
+        </div>
+      )
+    }
+  }
+
   const columnsWithRemove = [
     ...studentColumns,
+    linkColumn,
     createRemoveFromCohortColumn(
       handleRemoveStudent,
       isProjectManager || isTrainingAdmin,
@@ -145,6 +290,17 @@ export function CohortStudents({ cohortId, trainingId }: CohortStudentsProps) {
           {isLoading && (
             <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
           )}
+          <Button
+            variant="outline"
+            size="sm"
+            className="ml-2 h-8"
+            onClick={() => setShowSurveyTools((v)=>!v)}
+            title="Show survey link tools"
+          >
+            <ChevronDown className={`h-4 w-4 mr-1 transition-transform ${showSurveyTools ? "rotate-180" : "rotate-0"}`} />
+            <span className="hidden sm:inline">Survey link tools</span>
+            <span className="sm:hidden">Survey tools</span>
+          </Button>
         </div>
         <div className="flex items-center gap-4">
           <div className="relative md:w-[300px]">
@@ -177,6 +333,73 @@ export function CohortStudents({ cohortId, trainingId }: CohortStudentsProps) {
         </div>
       </div>
 
+      {showSurveyTools && (
+        <div className="mb-4 rounded-md border border-gray-200 bg-white p-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <Select value={selectedSurveyId} onValueChange={setSelectedSurveyId}>
+              <SelectTrigger className="w-[220px] h-10">
+                <SelectValue placeholder="Select survey" />
+              </SelectTrigger>
+              <SelectContent>
+                {surveys.map(s => (
+                  <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={viewMode} onValueChange={(v)=> setViewMode(v as any)} disabled={!selectedSurveyId || answeredLoading}>
+              <SelectTrigger className="w-[200px] h-10">
+                <SelectValue placeholder="Mode" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Manage links</SelectItem>
+                <SelectItem value="answered">View answers</SelectItem>
+              </SelectContent>
+            </Select>
+            <input
+              type="number"
+              min={1}
+              value={expiryValue}
+              onChange={(e)=> setExpiryValue(Number(e.target.value))}
+              className="w-24 h-10 border rounded px-2 text-sm"
+              placeholder="Expiry"
+              title="Expiry value"
+            />
+            <Select value={expiryUnit} onValueChange={(v)=> setExpiryUnit(v as any)}>
+              <SelectTrigger className="w-[120px] h-10">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="minutes">Minutes</SelectItem>
+                <SelectItem value="hours">Hours</SelectItem>
+                <SelectItem value="days">Days</SelectItem>
+                <SelectItem value="weeks">Weeks</SelectItem>
+              </SelectContent>
+            </Select>
+            {viewMode === 'all' && (
+              <>
+                <Button
+                  className="bg-[#0B75FF] hover:bg-[#0B75FF]/90 text-white h-10"
+                  disabled={!selectedSurveyId || isCreatingCohort}
+                  onClick={() => {
+                    const expiryMinutes = toExpiryMinutes(expiryValue, expiryUnit)
+                    createCohortLinks({ surveyId: selectedSurveyId, cohortId, expiryMinutes })
+                  }}
+                >
+                  {isCreatingCohort ? "Generating..." : "Generate for Cohort"}
+                </Button>
+                <Button
+                  className="bg-amber-600 hover:bg-amber-600/90 text-white h-10"
+                  disabled={!selectedSurveyId || !(linksRes?.surveyLinks?.length) || isBulkExtending}
+                  onClick={() => setBulkExtendOpen(true)}
+                >
+                  {isBulkExtending ? "Extending..." : `Extend all (${linksRes?.surveyLinks?.length || 0})`}
+                </Button>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
       {error ? (
         <div className="text-center py-20 bg-[#fbfbfb] rounded-lg border-[0.1px]">
           <h3 className="text-lg font-medium mb-2">Error Loading Students</h3>
@@ -203,7 +426,7 @@ export function CohortStudents({ cohortId, trainingId }: CohortStudentsProps) {
       ) : (
         <StudentDataTable
           columns={columnsWithRemove}
-          data={filteredStudents}
+          data={viewMode === 'answered' && selectedSurveyId ? filteredStudents.filter(s => s.id && answeredIds.has(s.id)) : filteredStudents}
           isLoading={isLoading}
           pagination={{
             totalPages,
@@ -248,6 +471,120 @@ export function CohortStudents({ cohortId, trainingId }: CohortStudentsProps) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Extend Link Modal */}
+      <Dialog open={extendOpen} onOpenChange={setExtendOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Extend link {extendContext?.traineeName ? `for ${extendContext.traineeName}` : ''}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            {extendContext?.currentExpiry && (
+              <div className="text-sm text-gray-600">Current expiry: {new Date(extendContext.currentExpiry).toLocaleString()} ({formatRemaining(extendContext.currentExpiry)} remaining)</div>
+            )}
+            <div className="flex items-center gap-2">
+              <span className="text-sm">Extend by</span>
+              <input
+                type="number"
+                min={1}
+                value={extendByValue}
+                onChange={(e)=> setExtendByValue(Number(e.target.value))}
+                className="w-24 h-9 border rounded px-2 text-sm"
+              />
+              <Select value={extendByUnit} onValueChange={(v)=> setExtendByUnit(v as any)}>
+                <SelectTrigger className="w-[120px] h-9">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="minutes">Minutes</SelectItem>
+                  <SelectItem value="hours">Hours</SelectItem>
+                  <SelectItem value="days">Days</SelectItem>
+                  <SelectItem value="weeks">Weeks</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={()=> setExtendOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              className="bg-[#0B75FF] hover:bg-[#0B75FF]/90 text-white"
+              disabled={!extendContext?.linkId}
+              onClick={() => {
+                if (!extendContext?.linkId) return
+                const expiryMinutes = toExpiryMinutes(extendByValue, extendByUnit)
+                setExtendingLinkId(extendContext.linkId)
+                extendLink(
+                  { linkId: extendContext.linkId, expiryMinutes },
+                  {
+                    onSettled: () => setExtendingLinkId(""),
+                    onSuccess: () => setExtendOpen(false)
+                  }
+                )
+              }}
+            >
+              {extendingLinkId ? "Extending..." : "Extend"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      {/* Bulk Extend Modal */}
+      <Dialog open={bulkExtendOpen} onOpenChange={setBulkExtendOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Extend all links</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="text-sm text-gray-600">{linksRes?.surveyLinks?.length || 0} links will be extended.</div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm">Extend by</span>
+              <input
+                type="number"
+                min={1}
+                value={bulkExtendValue}
+                onChange={(e)=> setBulkExtendValue(Number(e.target.value))}
+                className="w-24 h-9 border rounded px-2 text-sm"
+              />
+              <Select value={bulkExtendUnit} onValueChange={(v)=> setBulkExtendUnit(v as any)}>
+                <SelectTrigger className="w-[120px] h-9">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="minutes">Minutes</SelectItem>
+                  <SelectItem value="hours">Hours</SelectItem>
+                  <SelectItem value="days">Days</SelectItem>
+                  <SelectItem value="weeks">Weeks</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={()=> setBulkExtendOpen(false)}>Cancel</Button>
+            <Button
+              className="bg-amber-600 hover:bg-amber-600/90 text-white"
+              disabled={!selectedSurveyId || !(linksRes?.surveyLinks?.length) || isBulkExtending}
+              onClick={async () => {
+                if (!linksRes?.surveyLinks?.length) return
+                const expiryMinutes = toExpiryMinutes(bulkExtendValue, bulkExtendUnit)
+                const ids = linksRes.surveyLinks.map(l => (l.link.split("/survey/answer/")[1] || "").split("/")[0]).filter(Boolean)
+                setIsBulkExtending(true)
+                try {
+                  await Promise.allSettled(ids.map(id => extendLinkAsync({ linkId: id, expiryMinutes })))
+                  setBulkExtendOpen(false)
+                } finally {
+                  setIsBulkExtending(false)
+                }
+              }}
+            >
+              {isBulkExtending ? "Extending..." : "Extend"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 } 

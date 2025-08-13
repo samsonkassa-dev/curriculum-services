@@ -43,27 +43,29 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   useEffect(() => {
     const token = getCookie('token');
-    if (token) {
-      const decoded = decodeJWT(token);
-      if (decoded && !isTokenExpired(decoded)) {
-        setUser({
-          id: decoded.sub,
-          email: decoded.email,
-          role: decoded.role,
-          isProfileFilled: decoded.isProfileFilled,
-          companyProfileId: decoded.companyProfileId,
-          profileStatus: decoded.profileStatus,
-        });
-      } else {
-        deleteCookie('token');
-        deleteCookie('company_info');
-      }
+    if (!token) {
+      setIsLoading(false);
+      return;
     }
+    const decoded = decodeJWT(token);
+    if (decoded && !isTokenExpired(decoded)) {
+      setUser({
+        id: decoded.sub,
+        email: decoded.email,
+        role: decoded.role,
+        isProfileFilled: decoded.isProfileFilled,
+        companyProfileId: decoded.companyProfileId,
+        profileStatus: decoded.profileStatus,
+      });
+      setIsLoading(false);
+      return;
+    }
+    // If expired/invalid, keep the cookie; UI/middleware will handle redirect without hard deleting cookie here.
     setIsLoading(false);
   }, []);
 
   const login = (token: string) => {
-    setCookie('token', token, 7); // Store token for 7 days
+    setCookie('token', token, 1); // Store token for 1 day
     const decoded = decodeJWT(token);
     if (decoded) {
       setUser({

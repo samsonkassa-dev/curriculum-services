@@ -2,6 +2,12 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios, { AxiosError } from "axios";
 import { getCookie } from "@curriculum-services/auth";
 import { toast } from "sonner";
+export { 
+  getDefaultQuestionFields, 
+  getDefaultAddQuestionFields, 
+  validateSurveyEntry, 
+  validateCreateSurveyEntry 
+} from "@/lib/utils/survey";
 
 // Define error interface for API responses
 interface ApiErrorResponse {
@@ -195,27 +201,27 @@ export function useSurveyDetail(surveyId: string, traineeId?: string) {
 /**
  * Hook to fetch surveys by session
  */
-export function useSurveysBySession(sessionId: string) {
-  return useQuery({
-    queryKey: surveyQueryKeys.session(sessionId),
-    queryFn: async () => {
-      try {
-        const token = getCookie("token");
-        const response = await axios.get(
-          `${process.env.NEXT_PUBLIC_API}/survey/session/${sessionId}`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-        return response.data;
-      } catch (error: unknown) {
-        const axiosError = error as AxiosError<ApiErrorResponse>;
-        throw new Error(axiosError?.response?.data?.message || "Failed to load session surveys");
-      }
-    },
-    enabled: !!sessionId,
-  });
-}
+// export function useSurveysBySession(sessionId: string) {
+//   return useQuery({
+//     queryKey: surveyQueryKeys.session(sessionId),
+//     queryFn: async () => {
+//       try {
+//         const token = getCookie("token");
+//         const response = await axios.get(
+//           `${process.env.NEXT_PUBLIC_API}/survey/session/${sessionId}`,
+//           {
+//             headers: { Authorization: `Bearer ${token}` },
+//           }
+//         );
+//         return response.data;
+//       } catch (error: unknown) {
+//         const axiosError = error as AxiosError<ApiErrorResponse>;
+//         throw new Error(axiosError?.response?.data?.message || "Failed to load session surveys");
+//       }
+//     },
+//     enabled: !!sessionId,
+//   });
+// }
 
 /**
  * Hook for creating a new survey with sections and questions
@@ -664,171 +670,4 @@ export function useAssignSurveyToSession() {
   };
 }
 
-// Utility functions for question validation based on type
-export const getDefaultQuestionFields = (questionType: QuestionType): Partial<CreateSurveyEntry> => {
-  switch (questionType) {
-    case 'TEXT':
-      return {
-        choices: [],
-        allowTextAnswer: true,
-        rows: [],
-      };
-    case 'RADIO':
-      return {
-        choices: ['', ''],
-        allowTextAnswer: false,
-        rows: [],
-      };
-    case 'CHECKBOX':
-      return {
-        choices: ['', ''],
-        allowTextAnswer: false,
-        rows: [],
-      };
-    case 'GRID':
-      return {
-        choices: ['', ''],
-        allowTextAnswer: false,
-        rows: ['', ''],
-      };
-    default:
-      return {
-        choices: [],
-        allowTextAnswer: false,
-        rows: [],
-      };
-  }
-};
-
-// Utility function for default fields when adding individual questions
-export const getDefaultAddQuestionFields = (questionType: QuestionType): Partial<AddSurveyEntryData> => {
-  switch (questionType) {
-    case 'TEXT':
-      return {
-        choices: [],
-        allowTextAnswer: true,
-        rows: [],
-      };
-    case 'RADIO':
-      return {
-        choices: ['', ''],
-        allowTextAnswer: false,
-        rows: [],
-      };
-    case 'CHECKBOX':
-      return {
-        choices: ['', ''],
-        allowTextAnswer: false,
-        rows: [],
-      };
-    case 'GRID':
-      return {
-        choices: ['', ''],
-        allowTextAnswer: false,
-        rows: ['', ''],
-      };
-    default:
-      return {
-        choices: [],
-        allowTextAnswer: false,
-        rows: [],
-      };
-  }
-};
-
-export const validateSurveyEntry = (entry: SurveyEntry): { isValid: boolean; errors: string[] } => {
-  const errors: string[] = [];
-
-  // Check required question text
-  if (!entry.question.trim()) {
-    errors.push('Question text is required');
-  }
-
-  // Validate based on question type
-  switch (entry.questionType) {
-    case 'TEXT':
-      // TEXT questions don't need choices or rows
-      break;
-      
-    case 'RADIO':
-    case 'CHECKBOX':
-      // RADIO and CHECKBOX need at least 2 choices
-      if (entry.choices.length < 2) {
-        errors.push('At least 2 choices are required');
-      }
-      if (entry.choices.some(choice => !choice.trim())) {
-        errors.push('All choices must have text');
-      }
-      break;
-      
-    case 'GRID':
-      // GRID needs both choices (columns) and rows
-      if (entry.choices.length < 2) {
-        errors.push('At least 2 column choices are required for grid questions');
-      }
-      if (entry.rows.length < 2) {
-        errors.push('At least 2 rows are required for grid questions');
-      }
-      if (entry.choices.some(choice => !choice.trim())) {
-        errors.push('All column choices must have text');
-      }
-      if (entry.rows.some(row => !row.trim())) {
-        errors.push('All row options must have text');
-      }
-      break;
-  }
-
-  return {
-    isValid: errors.length === 0,
-    errors
-  };
-};
-
-// Validation function for CreateSurveyEntry (for form creation)
-export const validateCreateSurveyEntry = (entry: CreateSurveyEntry): { isValid: boolean; errors: string[] } => {
-  const errors: string[] = [];
-
-  // Check required question text
-  if (!entry.question.trim()) {
-    errors.push('Question text is required');
-  }
-
-  // Validate based on question type
-  switch (entry.questionType) {
-    case 'TEXT':
-      // TEXT questions don't need choices or rows
-      break;
-      
-    case 'RADIO':
-    case 'CHECKBOX':
-      // RADIO and CHECKBOX need at least 2 choices
-      if (entry.choices.length < 2) {
-        errors.push('At least 2 choices are required');
-      }
-      if (entry.choices.some(choice => !choice.trim())) {
-        errors.push('All choices must have text');
-      }
-      break;
-      
-    case 'GRID':
-      // GRID needs both choices (columns) and rows
-      if (entry.choices.length < 2) {
-        errors.push('At least 2 column choices are required for grid questions');
-      }
-      if (entry.rows.length < 2) {
-        errors.push('At least 2 rows are required for grid questions');
-      }
-      if (entry.choices.some(choice => !choice.trim())) {
-        errors.push('All column choices must have text');
-      }
-      if (entry.rows.some(row => !row.trim())) {
-        errors.push('All row options must have text');
-      }
-      break;
-  }
-
-  return {
-    isValid: errors.length === 0,
-    errors
-  };
-};
+// utility exports re-exported above

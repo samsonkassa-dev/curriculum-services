@@ -36,12 +36,7 @@ export function useLogin() {
 
       // Set the token in the auth context
       login(data.token);
-      
-      // Reload the page to trigger middleware routing
-      if (typeof window !== 'undefined') {
-        window.location.href = '/';
-      }
-      
+
       return { success: true };
     } catch (err) {
       const errorMessage = (err as ApiError).response?.data?.error || 
@@ -73,12 +68,7 @@ export function useLogin() {
       }
       
       login(data.token);
-      
-      // Reload the page to trigger middleware routing
-      if (typeof window !== 'undefined') {
-        window.location.href = '/';
-      }
-      
+
       return { success: true };
     } catch (err) {
       const errorMessage = (err as ApiError).response?.data?.error || 
