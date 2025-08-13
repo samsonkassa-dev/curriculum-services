@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 
 import { useState } from "react"
@@ -197,7 +198,7 @@ export function CohortStudents({ cohortId, trainingId }: CohortStudentsProps) {
     header: "Survey Link",
     cell: ({ row }) => {
       const student = row.original
-      const base = process.env.NEXT_PUBLIC_SURVEY_PORTAL_URL || "http://localhost:3001"
+      const base = process.env.NEXT_PUBLIC_SURVEY_PORTAL_URL || "https://curriculum-services-survey-portal.vercel.app"
       const isAnswersMode = viewMode === 'answered' && Boolean(selectedSurveyId)
       const meta = student.id ? traineeIdToMeta[student.id] : undefined
       const link = isAnswersMode
