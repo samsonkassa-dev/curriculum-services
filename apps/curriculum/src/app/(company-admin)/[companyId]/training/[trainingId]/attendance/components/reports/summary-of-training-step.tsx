@@ -10,9 +10,10 @@ import { cn } from "@/lib/utils"
 
 interface SummaryOfTrainingStepProps {
   form: UseFormReturn<SessionReportFormValues>
+  readOnly?: boolean
 }
 
-export function SummaryOfTrainingStep({ form }: SummaryOfTrainingStepProps) {
+export function SummaryOfTrainingStep({ form, readOnly = false }: SummaryOfTrainingStepProps) {
   const { register, formState: { errors }, watch, setValue } = form
   
   const topicsCovered = watch("topicsCovered")
@@ -57,10 +58,11 @@ export function SummaryOfTrainingStep({ form }: SummaryOfTrainingStepProps) {
                   "border border-[#E4E4E4] rounded-md",
                   errors.topicsCovered?.[index] && "border-red-500"
                 )}
+                disabled={readOnly}
               />
             </div>
 
-            {topicsCovered.length > 1 && (
+            {topicsCovered.length > 1 && !readOnly && (
               <Button
                 type="button"
                 variant="ghost"
@@ -74,6 +76,7 @@ export function SummaryOfTrainingStep({ form }: SummaryOfTrainingStepProps) {
           </div>
         ))}
 
+        {!readOnly && (
         <Button
           type="button"
           variant="ghost"
@@ -83,6 +86,7 @@ export function SummaryOfTrainingStep({ form }: SummaryOfTrainingStepProps) {
           <Plus className="h-4 w-4 mr-2" />
           Add more
         </Button>
+        )}
       </div>
 
       <div className="space-y-4 w-full">
@@ -104,10 +108,11 @@ export function SummaryOfTrainingStep({ form }: SummaryOfTrainingStepProps) {
                   "border border-[#E4E4E4] rounded-md",
                   errors.significantObservations?.[index] && "border-red-500"
                 )}
+                disabled={readOnly}
               />
             </div>
 
-            {significantObservations.length > 1 && (
+            {significantObservations.length > 1 && !readOnly && (
               <Button
                 type="button"
                 variant="ghost"
@@ -121,6 +126,7 @@ export function SummaryOfTrainingStep({ form }: SummaryOfTrainingStepProps) {
           </div>
         ))}
 
+        {!readOnly && (
         <Button
           type="button"
           variant="ghost"
@@ -130,6 +136,7 @@ export function SummaryOfTrainingStep({ form }: SummaryOfTrainingStepProps) {
           <Plus className="h-4 w-4 mr-2" />
           Add more
         </Button>
+        )}
       </div>
     </div>
   );

@@ -8,9 +8,10 @@ import { cn } from "@/lib/utils"
 
 interface RecommendationsStepProps {
   form: UseFormReturn<SessionReportFormValues>
+  readOnly?: boolean
 }
 
-export function RecommendationsStep({ form }: RecommendationsStepProps) {
+export function RecommendationsStep({ form, readOnly = false }: RecommendationsStepProps) {
   const { register, formState: { errors } } = form
 
   return (
@@ -31,6 +32,7 @@ export function RecommendationsStep({ form }: RecommendationsStepProps) {
             "border border-[#DCDCDC] rounded-md resize-none h-32",
             errors.curriculumRecommendations && "border-red-500"
           )}
+          disabled={readOnly}
         />
         
         {errors.curriculumRecommendations && (
@@ -56,6 +58,7 @@ export function RecommendationsStep({ form }: RecommendationsStepProps) {
             "border border-[#DCDCDC] rounded-md resize-none h-32",
             errors.deliveryMethodRecommendations && "border-red-500"
           )}
+          disabled={readOnly}
         />
         
         {errors.deliveryMethodRecommendations && (
@@ -81,6 +84,7 @@ export function RecommendationsStep({ form }: RecommendationsStepProps) {
             "border border-[#DCDCDC] rounded-md resize-none h-32",
             errors.assessmentRecommendations && "border-red-500"
           )}
+          disabled={readOnly}
         />
         
         {errors.assessmentRecommendations && (
@@ -106,6 +110,7 @@ export function RecommendationsStep({ form }: RecommendationsStepProps) {
             "border border-[#DCDCDC] rounded-md resize-none h-32",
             errors.learnerSupportRecommendations && "border-red-500"
           )}
+          disabled={readOnly}
         />
         
         {errors.learnerSupportRecommendations && (
@@ -131,6 +136,7 @@ export function RecommendationsStep({ form }: RecommendationsStepProps) {
             "border border-[#DCDCDC] rounded-md resize-none h-32",
             errors.otherRecommendations && "border-red-500"
           )}
+          disabled={readOnly}
         />
         
         {errors.otherRecommendations && (

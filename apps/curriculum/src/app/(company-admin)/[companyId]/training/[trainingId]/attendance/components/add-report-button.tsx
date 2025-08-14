@@ -9,9 +9,10 @@ import { CheckCircle, Loader2 } from "lucide-react"
 interface AddReportButtonProps {
   sessionId: string
   disabled?: boolean
+  readOnly?: boolean
 }
 
-export function AddReportButton({ sessionId, disabled = false }: AddReportButtonProps) {
+export function AddReportButton({ sessionId, disabled = false, readOnly = false }: AddReportButtonProps) {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [hasReport, setHasReport] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -49,14 +50,14 @@ export function AddReportButton({ sessionId, disabled = false }: AddReportButton
     setIsSubmitting(true)
   }
   
-  // Combine disabled state: component is disabled if explicitly disabled, or if report exists, or during loading/submitting
-  const isButtonDisabled = disabled || hasReport || isLoading || isSubmitting
+  // Enable button for editors always; for read-only users, only when a report exists
+  const isButtonDisabled = disabled || isLoading || isSubmitting || (readOnly ? !hasReport : false)
   
   return (
     <>
       <Button 
         variant="outline"
-        className={`h-9 ${hasReport ? "bg-green-100 text-green-700 hover:bg-green-200 border-green-300" : ""} ${disabled && !hasReport ? "opacity-60" : ""}`}
+        className={`h-9 ${hasReport ? "bg-green-100 text-green-700 hover:bg-green-200 border-green-300" : ""} ${isButtonDisabled ? "opacity-60" : ""}`}
         onClick={handleOpenModal}
         disabled={isButtonDisabled}
       >
@@ -73,10 +74,10 @@ export function AddReportButton({ sessionId, disabled = false }: AddReportButton
         ) : hasReport ? (
           <span className="text-sm flex items-center gap-1">
             <CheckCircle className="h-4 w-4" />
-            Report Added
+            View Report
           </span>
         ) : (
-          <span className="text-sm">Add Report</span>
+          <span className="text-sm">{readOnly ? "No Report" : "Add Report"}</span>
         )}
       </Button>
       
@@ -87,6 +88,7 @@ export function AddReportButton({ sessionId, disabled = false }: AddReportButton
           sessionId={sessionId}
           onReportStatusChange={handleReportStatusChange}
           onSubmitStart={handleSubmitStart}
+          readOnly={readOnly}
         />
       )}
     </>

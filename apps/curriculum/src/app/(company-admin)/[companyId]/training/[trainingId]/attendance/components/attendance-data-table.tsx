@@ -150,10 +150,11 @@ export function AttendanceDataTable({
               </button>
             )} */}
             
-            {/* Report button visible to all, but enabled only for trainers */}
+            {/* Report button should open for everyone (trainers can submit; others can view) */}
             <AddReportButton 
               sessionId={sessionId} 
-              disabled={!canEditAttendance}
+              disabled={false}
+              readOnly={!canEditAttendance}
             />
           </div>
         </div>

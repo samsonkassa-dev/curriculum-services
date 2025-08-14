@@ -18,9 +18,16 @@ import { useBaseData } from "@/lib/hooks/useBaseData"
 
 interface SupportingDocumentsStepProps {
   form: UseFormReturn<SessionReportFormValues>
+  existingFiles?: Array<{
+    id: string
+    reportFileTypeId: string
+    fileUrl: string
+    fileName: string
+  }>
+  readOnly?: boolean
 }
 
-export function SupportingDocumentsStep({ form }: SupportingDocumentsStepProps) {
+export function SupportingDocumentsStep({ form, existingFiles = [], readOnly = false }: SupportingDocumentsStepProps) {
   const { formState: { errors }, watch, setValue } = form
   const [selectedFileType, setSelectedFileType] = useState("")
   const [error, setError] = useState<string | null>(null)
@@ -95,6 +102,32 @@ export function SupportingDocumentsStep({ form }: SupportingDocumentsStepProps) 
 
   return (
     <div className="space-y-6">
+      {existingFiles.length > 0 && (
+        <div className="space-y-4">
+          <Label className="text-base font-medium text-[#414554]">Existing Uploaded Documents</Label>
+          <div className="space-y-3">
+            {existingFiles.map((file) => (
+              <div key={file.id} className="flex items-center justify-between p-4 border border-[#DCDCDC] rounded-md">
+                <div className="flex flex-col">
+                  <span className="font-medium">{file.fileName}</span>
+                  <span className="text-xs text-[#0B75FF]">{getFileTypeName(file.reportFileTypeId)}</span>
+                </div>
+                <div>
+                  <a
+                    href={file.fileUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#0B75FF] hover:underline text-sm"
+                  >
+                    View
+                  </a>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      {!readOnly && (
       <div className="flex gap-4 mb-4">
         <div className="flex-1">
           <Select 
@@ -126,18 +159,20 @@ export function SupportingDocumentsStep({ form }: SupportingDocumentsStepProps) 
           onChange={handleFileChange}
         />
       </div>
+      )}
 
-      {error && (
+      {!readOnly && error && (
         <p className="text-sm text-red-500 mt-1">{error}</p>
       )}
       
-      {errors.sessionReportFiles && (
+      {!readOnly && errors.sessionReportFiles && (
         <p className="text-sm text-red-500 mt-1">
           {errors.sessionReportFiles.message}
         </p>
       )}
 
       {/* Display uploaded files */}
+      {!readOnly && (
       <div className="space-y-4 mt-6">
         {sessionReportFiles.length > 0 ? (
           sessionReportFiles.map((fileInfo, index) => {
@@ -204,6 +239,7 @@ export function SupportingDocumentsStep({ form }: SupportingDocumentsStepProps) 
           </div>
         )}
       </div>
+      )}
     </div>
   )
 } 

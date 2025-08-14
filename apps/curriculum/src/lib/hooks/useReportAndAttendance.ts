@@ -90,7 +90,7 @@ export function useGetSessionReport(sessionId: string) {
       try {
         const token = getCookie('token');
         const response = await axios.get<SessionReportResponse>(
-          `${process.env.NEXT_PUBLIC_API}/session/${sessionId || ''}/report`.replace(/\/+/g, '/').replace(/^(https?:\/)/, '$1/'),
+          `${process.env.NEXT_PUBLIC_API}/session/${sessionId || ''}/report`,
           {
             headers: {
               Authorization: `Bearer ${token}`
@@ -160,9 +160,10 @@ export function useSubmitSessionReport() {
       
       return response.data;
     },
-    onSuccess: (data) => {
+    onSuccess: (data, variables) => {
       toast.success("Success", { description: data.message || "Session report submitted successfully" });
-      queryClient.invalidateQueries({ queryKey: ["session-reports"] });
+      // Refetch the specific session report so caller sees "View Report"
+      queryClient.invalidateQueries({ queryKey: ["session-report", variables.sessionId] });
     },
     onError: (error: AxiosError<ApiErrorResponse>) => {
       let errorMessage = "Failed to submit session report. Please try again.";

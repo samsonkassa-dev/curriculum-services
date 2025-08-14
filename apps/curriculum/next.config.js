@@ -1,9 +1,4 @@
 /** @type {import('next').NextConfig} */
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 const nextConfig = {
   output: 'standalone',
@@ -20,11 +15,6 @@ const nextConfig = {
   ],
   images: {
     domains: ['143.198.54.56', '164.90.209.220']
-  },
-  // Configure public directory
-  webpack: (config) => {
-    config.resolve.alias.public = join(__dirname, '../../public');
-    return config;
   },
   // any other Next.js config options you need
 }

@@ -20,9 +20,10 @@ interface SessionReportModalProps {
   sessionId: string
   onReportStatusChange?: (hasReport: boolean) => void
   onSubmitStart?: () => void
+  readOnly?: boolean
 }
 
-export function SessionReportModal({ isOpen, onClose, sessionId, onReportStatusChange, onSubmitStart }: SessionReportModalProps) {
+export function SessionReportModal({ isOpen, onClose, sessionId, onReportStatusChange, onSubmitStart, readOnly = false }: SessionReportModalProps) {
   const [step, setStep] = useState<number>(1)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const formInitialized = useRef(false)
@@ -51,14 +52,11 @@ export function SessionReportModal({ isOpen, onClose, sessionId, onReportStatusC
   })
 
   const { data: sessionReport, isLoading: isLoadingReport } = useGetSessionReport(sessionId)
+  // Read-only when consumer requests it, or when a report already exists (no edit option)
+  const isReadOnly = !!sessionReport?.report || readOnly
   const { mutateAsync: submitSessionReport } = useSubmitSessionReport()
 
-  // Notify parent component when report exists
-  useEffect(() => {
-    if (sessionReport?.report && onReportStatusChange) {
-      onReportStatusChange(true)
-    }
-  }, [sessionReport, onReportStatusChange])
+  // Do not notify parent when merely viewing an existing report to avoid auto-closing the modal
 
   // Populate form with existing data if available
   useEffect(() => {
@@ -99,6 +97,14 @@ export function SessionReportModal({ isOpen, onClose, sessionId, onReportStatusC
   const MAX_STEPS = 5
 
   const handleNext = async () => {
+    if (isReadOnly) {
+      if (step < MAX_STEPS) {
+        setStep(step + 1)
+      } else {
+        onClose()
+      }
+      return
+    }
     // Get field names for current step to validate
     const fieldNamesForStep: Record<number, string[]> = {
       1: ["topicsCovered", "significantObservations"],
@@ -202,7 +208,7 @@ export function SessionReportModal({ isOpen, onClose, sessionId, onReportStatusC
       <DialogContent className="sm:max-w-[1000px] max-h-[90vh] overflow-y-auto">
         <DialogHeader className="text-center mb-8">
           <DialogTitle className="text-xl font-bold text-[#4D5464] pb-8">
-            {isLoadingReport ? "Loading Report..." : (sessionReport?.report ? "View/Edit Session Report" : "Session Report")}
+            {isLoadingReport ? "Loading Report..." : (isReadOnly ? "View Session Report" : "Session Report")}
           </DialogTitle>
           
           <div className="flex items-center justify-center mt-6 pb-8">
@@ -242,11 +248,17 @@ export function SessionReportModal({ isOpen, onClose, sessionId, onReportStatusC
             <div className="text-center py-8">Loading report data...</div>
           ) : (
             <>
-              {step === 1 && <SummaryOfTrainingStep form={form} />}
-              {step === 2 && <LearnerFeedbackStep form={form} />}
-              {step === 3 && <SelfReflectionStep form={form} />}
-              {step === 4 && <RecommendationsStep form={form} />}
-              {step === 5 && <SupportingDocumentsStep form={form} />}
+              {step === 1 && <SummaryOfTrainingStep form={form} readOnly={isReadOnly} />}
+              {step === 2 && <LearnerFeedbackStep form={form} readOnly={isReadOnly} />}
+              {step === 3 && <SelfReflectionStep form={form} readOnly={isReadOnly} />}
+              {step === 4 && <RecommendationsStep form={form} readOnly={isReadOnly} />}
+              {step === 5 && (
+                <SupportingDocumentsStep 
+                  form={form} 
+                  existingFiles={sessionReport?.report?.sessionReportFiles || []}
+                  readOnly={isReadOnly}
+                />
+              )}
             </>
           )}
         </div>
@@ -269,7 +281,7 @@ export function SessionReportModal({ isOpen, onClose, sessionId, onReportStatusC
             className="bg-[#0B75FF] hover:bg-blue-700 text-white px-8"
             disabled={isSubmitting || isLoadingReport}
           >
-            {step === MAX_STEPS ? "Submit Report" : "Continue"}
+            {isReadOnly ? (step === MAX_STEPS ? "Close" : "Next") : (step === MAX_STEPS ? "Submit Report" : "Continue")}
           </Button>
         </div>
       </DialogContent>

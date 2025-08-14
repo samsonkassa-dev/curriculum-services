@@ -15,9 +15,10 @@ import {
 
 interface LearnerFeedbackStepProps {
   form: UseFormReturn<SessionReportFormValues>
+  readOnly?: boolean
 }
 
-export function LearnerFeedbackStep({ form }: LearnerFeedbackStepProps) {
+export function LearnerFeedbackStep({ form, readOnly = false }: LearnerFeedbackStepProps) {
   const { register, formState: { errors }, setValue, watch } = form
   
   const satisfactionScore = watch("overallSatisfactionScore")
@@ -34,7 +35,8 @@ export function LearnerFeedbackStep({ form }: LearnerFeedbackStepProps) {
         
         <Select 
           onValueChange={(value) => setValue("overallSatisfactionScore", parseInt(value))}
-          defaultValue={satisfactionScore ? satisfactionScore.toString() : undefined}
+          value={satisfactionScore ? satisfactionScore.toString() : undefined}
+          disabled={readOnly}
         >
           <SelectTrigger className="w-full border border-[#E4E4E4]">
             <SelectValue placeholder="Select" />
@@ -71,6 +73,7 @@ export function LearnerFeedbackStep({ form }: LearnerFeedbackStepProps) {
             "border border-[#DCDCDC] rounded-md resize-none h-32",
             errors.learnerFeedbackSummary && "border-red-500"
           )}
+          disabled={readOnly}
         />
         
         {errors.learnerFeedbackSummary && (
@@ -96,6 +99,7 @@ export function LearnerFeedbackStep({ form }: LearnerFeedbackStepProps) {
             "border border-[#DCDCDC] rounded-md resize-none h-32",
             errors.positiveFeedback && "border-red-500"
           )}
+          disabled={readOnly}
         />
         
         {errors.positiveFeedback && (
@@ -121,6 +125,7 @@ export function LearnerFeedbackStep({ form }: LearnerFeedbackStepProps) {
             "border border-[#DCDCDC] rounded-md resize-none h-32",
             errors.areasForImprovement && "border-red-500"
           )}
+          disabled={readOnly}
         />
         
         {errors.areasForImprovement && (
@@ -146,6 +151,7 @@ export function LearnerFeedbackStep({ form }: LearnerFeedbackStepProps) {
             "border border-[#DCDCDC] rounded-md resize-none h-32",
             errors.specificFeedbackExamples && "border-red-500"
           )}
+          disabled={readOnly}
         />
         
         {errors.specificFeedbackExamples && (

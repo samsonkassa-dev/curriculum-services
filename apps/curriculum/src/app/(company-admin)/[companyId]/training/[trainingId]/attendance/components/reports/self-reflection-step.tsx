@@ -15,9 +15,10 @@ import {
 
 interface SelfReflectionStepProps {
   form: UseFormReturn<SessionReportFormValues>
+  readOnly?: boolean
 }
 
-export function SelfReflectionStep({ form }: SelfReflectionStepProps) {
+export function SelfReflectionStep({ form, readOnly = false }: SelfReflectionStepProps) {
   const { register, formState: { errors }, setValue, watch } = form
   
   const teachingMethodEffectiveness = watch("teachingMethodEffectiveness")
@@ -34,7 +35,8 @@ export function SelfReflectionStep({ form }: SelfReflectionStepProps) {
         
         <Select 
           onValueChange={(value) => setValue("teachingMethodEffectiveness", parseInt(value))}
-          defaultValue={teachingMethodEffectiveness ? teachingMethodEffectiveness.toString() : undefined}
+          value={teachingMethodEffectiveness ? teachingMethodEffectiveness.toString() : undefined}
+          disabled={readOnly}
         >
           <SelectTrigger className="w-full border border-[#E4E4E4]">
             <SelectValue placeholder="Select" />
@@ -71,6 +73,7 @@ export function SelfReflectionStep({ form }: SelfReflectionStepProps) {
             "border border-[#DCDCDC] rounded-md resize-none h-32",
             errors.trainerStrengths && "border-red-500"
           )}
+          disabled={readOnly}
         />
         
         {errors.trainerStrengths && (
@@ -96,6 +99,7 @@ export function SelfReflectionStep({ form }: SelfReflectionStepProps) {
             "border border-[#DCDCDC] rounded-md resize-none h-32",
             errors.trainerAreasForGrowth && "border-red-500"
           )}
+          disabled={readOnly}
         />
         
         {errors.trainerAreasForGrowth && (
@@ -121,6 +125,7 @@ export function SelfReflectionStep({ form }: SelfReflectionStepProps) {
             "border border-[#DCDCDC] rounded-md resize-none h-32",
             errors.trainerProfessionalGoals && "border-red-500"
           )}
+          disabled={readOnly}
         />
         
         {errors.trainerProfessionalGoals && (
