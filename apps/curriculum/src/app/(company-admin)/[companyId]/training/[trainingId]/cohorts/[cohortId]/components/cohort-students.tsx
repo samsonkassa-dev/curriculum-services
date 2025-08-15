@@ -5,7 +5,7 @@ import { useState } from "react"
 import { useParams } from "next/navigation"
 import { useUserRole } from "@/lib/hooks/useUserRole"
 import { Button } from "@/components/ui/button"
-import { Plus, Loader2, ChevronDown, Trash2 } from "lucide-react"
+import { Plus, ChevronDown, Trash2 } from "lucide-react"
 import { useCohortTrainees, useRemoveTraineesFromCohort } from "@/lib/hooks/useCohorts"
 import { Input } from "@/components/ui/input"
 import { useDebounce } from "@/lib/hooks/useDebounce"
@@ -13,10 +13,13 @@ import { Loading } from "@/components/ui/loading"
 import { StudentDataTable } from "../../../components/students/student-data-table"
 import { studentColumns, createRemoveFromCohortColumn } from "../../../components/students/student-columns"
 import { ColumnDef } from "@tanstack/react-table"
-import { useState as useReactState, useEffect } from "react"
+import { useState as useReactState, useEffect, useRef } from "react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useCohortSurveyLinks } from "@/lib/hooks/useCohortSurveyLinks"
-import { Copy } from "lucide-react"
+import { Copy, FileText, Loader2, Pencil, Upload } from "lucide-react"
+import { useUploadConsentForm } from "@/lib/hooks/useStudents"
+import { useQueryClient } from "@tanstack/react-query"
+import { cn } from "@/lib/utils"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { AddCohortStudentModal } from "./add-cohort-student-modal"
 import { Student } from "@/lib/hooks/useStudents"
@@ -34,6 +37,157 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { DeleteLinkDialog } from "./DeleteLinkDialog"
+
+// Cohort-specific ConsentFormCell component that invalidates cohort queries
+interface CohortConsentFormCellProps {
+  student: Student;
+  cohortId: string;
+}
+
+export const CohortConsentFormCell = ({ student, cohortId }: CohortConsentFormCellProps) => {
+  const [isUploading, setIsUploading] = useReactState(false);
+  const [isRefreshing, setIsRefreshing] = useReactState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { mutateAsync: uploadConsentForm } = useUploadConsentForm();
+  const queryClient = useQueryClient();
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file is an image or PDF
+    const isImage = file.type.startsWith('image/');
+    const isPdf = file.type === 'application/pdf';
+    if (!isImage && !isPdf) {
+      toast.error('Please upload an image or PDF file');
+      return;
+    }
+
+    try {
+      setIsUploading(true);
+      await uploadConsentForm({ id: student.id, consentFormFile: file });
+      // Show a refreshing state until the parent table refetches and provides the updated URL
+      setIsRefreshing(true);
+      // Invalidate cohort trainees queries instead of student queries
+      queryClient.invalidateQueries({ queryKey: ['cohortTrainees', cohortId] });
+      await queryClient.refetchQueries({ queryKey: ['cohortTrainees', cohortId] });
+    } catch (error) {
+      console.error('Error uploading consent form:', error);
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  // Turn off refreshing once the consentFormUrl becomes available from parent data
+  useEffect(() => {
+    if (student.consentFormUrl) {
+      setIsRefreshing(false);
+    }
+  }, [student.consentFormUrl]);
+
+  const triggerFileInput = () => {
+    fileInputRef.current?.click();
+  };
+
+  // If student already has a consent form
+  if (student.consentFormUrl) {
+    return (
+      <div className="flex items-center gap-2">
+        <a 
+          href={student.consentFormUrl} 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="flex items-center gap-1.5 text-blue-600 hover:text-blue-800 underline"
+        >
+          <FileText className="h-4 w-4" />
+          <span>View Form</span>
+        </a>
+        <input 
+          type="file" 
+          ref={fileInputRef} 
+          onChange={handleFileChange} 
+          accept="image/*,application/pdf"
+          className="hidden"
+          aria-label="Edit consent form" 
+          title="Edit consent form"
+        />
+        {isRefreshing ? (
+          <div className="h-8 w-8 flex items-center justify-center" title="Refreshing">
+            <Loader2 className="h-4 w-4 animate-spin" />
+          </div>
+        ) : (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={triggerFileInput}
+            disabled={isUploading}
+            className="h-8 w-8 p-0"
+            title="Edit Consent Form"
+          >
+            {isUploading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Pencil className="h-4 w-4 text-gray-500" />
+            )}
+          </Button>
+        )}
+      </div>
+    );
+  }
+
+  // If no consent form uploaded yet
+  return (
+    <div className="flex items-center">
+      <input 
+        type="file" 
+        ref={fileInputRef} 
+        onChange={handleFileChange} 
+        accept="image/*,application/pdf"
+        className="hidden"
+        aria-label="Upload consent form" 
+        title="Upload consent form"
+      />
+      {isRefreshing ? (
+        <div className="flex items-center gap-1.5 text-gray-600">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          <span>Refreshing...</span>
+        </div>
+      ) : (
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={triggerFileInput}
+          disabled={isUploading}
+          className={cn(
+            "flex items-center gap-1.5 text-gray-600 hover:text-blue-600",
+            isUploading && "opacity-70 cursor-not-allowed"
+          )}
+        >
+          {isUploading ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Uploading...</span>
+            </>
+          ) : (
+            <>
+              <Upload className="h-4 w-4" />
+              <span>Upload Consent</span>
+            </>
+          )}
+        </Button>
+      )}
+    </div>
+  );
+};
+
+// Create a cohort-specific consent form column
+const createCohortConsentFormColumn = (cohortId: string): ColumnDef<Student> => ({
+  id: "consentForm",
+  header: "Consent Form",
+  cell: ({ row }) => {
+    return <CohortConsentFormCell student={row.original} cohortId={cohortId} />;
+  }
+});
 
 interface CohortStudentsProps {
   cohortId: string
@@ -298,6 +452,7 @@ export function CohortStudents({ cohortId, trainingId }: CohortStudentsProps) {
 
   const columnsWithRemove = [
     ...studentColumns,
+    createCohortConsentFormColumn(cohortId),
     linkColumn,
     createRemoveFromCohortColumn(
       handleRemoveStudent,
