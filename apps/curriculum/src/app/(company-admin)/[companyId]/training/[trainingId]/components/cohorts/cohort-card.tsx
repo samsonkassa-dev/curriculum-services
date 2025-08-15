@@ -80,17 +80,19 @@ function CohortCardComponent({ cohort, onEditCohort }: CohortCardProps) {
 
         <div className="flex flex-col gap-1 col-span-1">
           <span className="text-[#525252] font-bold text-xs">Tags</span>
-          <div className="flex flex-wrap gap-1">
-            {cohort.tags && cohort.tags.length > 0 ? (
-              cohort.tags.slice(0, 2).map((tag, index) => (
-                <div key={index} className="flex items-center gap-1 bg-[#ECF4FF] text-[#0B75FF] px-2 py-0.5 rounded-full">
-                  <Tag className="h-2 w-2" />
-                  <span className="text-xs font-medium">{tag}</span>
-                </div>
-              ))
-            ) : (
-              <span className="text-[#667085] text-xs italic">No tags</span>
-            )}
+          <div className="flex flex-col gap-1">
+            <div className="flex flex-wrap gap-1">
+              {cohort.tags && cohort.tags.length > 0 ? (
+                cohort.tags.slice(0, 2).map((tag, index) => (
+                  <div key={index} className="flex items-center gap-1 bg-[#ECF4FF] text-[#0B75FF] px-2 py-0.5 rounded-full">
+                    <Tag className="h-2 w-2 flex-shrink-0" />
+                    <span className="text-xs font-medium break-words">{tag}</span>
+                  </div>
+                ))
+              ) : (
+                <span className="text-[#667085] text-xs italic">No tags</span>
+              )}
+            </div>
             {cohort.tags && cohort.tags.length > 2 && (
               <span className="text-[#667085] text-xs">+{cohort.tags.length - 2} more</span>
             )}
