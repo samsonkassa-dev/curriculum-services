@@ -40,7 +40,7 @@ interface AddAlternateNameDialogProps {
   itemId: string;
   itemName: string;
   type: BaseDataType;
-  onAddAlternateName: (data: { itemId: string; languageData: AlternateLanguageName }) => void;
+  onAddAlternateName: (data: { itemId: string; languageData: AlternateLanguageName }, onSuccess?: () => void) => void;
   isLoading?: boolean;
   existingLanguages?: string[];
 }
@@ -54,12 +54,12 @@ export function AddAlternateNameDialog({
   existingLanguages = [],
 }: AddAlternateNameDialogProps) {
   const [languageCode, setLanguageCode] = useState("");
-  const [alternateName, setAlternateName] = useState("");
+  const [otherLanguageName, setOtherLanguageName] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const resetForm = () => {
     setLanguageCode("");
-    setAlternateName("");
+    setOtherLanguageName("");
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -68,16 +68,18 @@ export function AddAlternateNameDialog({
       itemId,
       languageData: {
         languageCode,
-        alternateName,
+        otherLanguageName,
       },
+    }, () => {
+      // Only close modal and reset form on success
+      resetForm();
+      setDialogOpen(false);
     });
-    resetForm();
-    setDialogOpen(false);
   };
 
   const isSubmitDisabled = () => {
     if (isLoading) return true;
-    if (!languageCode || !alternateName) return true;
+    if (!languageCode || !otherLanguageName) return true;
     if (existingLanguages.includes(languageCode)) return true;
     return false;
   };
@@ -130,11 +132,11 @@ export function AddAlternateNameDialog({
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="alternateName">Alternate Name</Label>
+            <Label htmlFor="otherLanguageName">Alternate Name</Label>
             <Input
-              id="alternateName"
-              value={alternateName}
-              onChange={(e) => setAlternateName(e.target.value)}
+              id="otherLanguageName"
+              value={otherLanguageName}
+              onChange={(e) => setOtherLanguageName(e.target.value)}
               placeholder="Enter alternate name"
               className="h-9"
             />

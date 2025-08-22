@@ -259,11 +259,14 @@ export function useBaseData(type: BaseDataType, options?: BaseDataOptions) {
       
       try {
         const token = getCookie('token');
-        const response = await api.post(`/${type}/add-other-language-name`, {
+        // API expects an array of language objects
+        const payload = [{
           id: itemId,
           languageCode: languageData.languageCode,
-          alternateName: languageData.alternateName
-        }, {
+          otherLanguageName: languageData.otherLanguageName
+        }];
+        
+        const response = await api.post(`/${type}/add-other-language-name`, payload, {
           headers: { Authorization: `Bearer ${token}` }
         });
         return response.data;

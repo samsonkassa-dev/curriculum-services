@@ -55,10 +55,11 @@ export const LOCALIZABLE_TYPES: BaseDataType[] = [
   "academic-level"
 ];
 
-// Interface for adding alternate language names
+// Interface for adding alternate language names (API structure)
 export interface AlternateLanguageName {
+  id?: string;
   languageCode: string;
-  alternateName: string;
+  otherLanguageName: string;
 }
 
 export const BASE_DATA_CONFIG: Record<BaseDataType, { label: string }> = {

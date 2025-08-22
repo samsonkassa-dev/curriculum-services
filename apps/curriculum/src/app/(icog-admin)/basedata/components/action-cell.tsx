@@ -54,8 +54,16 @@ export function ActionCell({ row, activeTab }: { row: any; activeTab: string }) 
     setShowDeleteDialog(false);
   }
 
-  const handleAddAlternateName = async (data: { itemId: string; languageData: { languageCode: string; alternateName: string } }) => {
-    await addAlternateName(data);
+  const handleAddAlternateName = (data: { itemId: string; languageData: { languageCode: string; otherLanguageName: string } }, onSuccess?: () => void) => {
+    addAlternateName(data, {
+      onSuccess: () => {
+        onSuccess?.();
+      },
+      onError: (error) => {
+        console.error('Failed to add alternate name:', error);
+        // Modal stays open on error so user can retry
+      }
+    });
   }
 
   const existingLanguages = item.alternateNames ? Object.keys(item.alternateNames) : [];
