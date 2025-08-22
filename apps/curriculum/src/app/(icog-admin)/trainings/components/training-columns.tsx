@@ -9,14 +9,14 @@ export const trainingColumns: ColumnDef<Training>[] = [
     accessorKey: "title",
     header: "Title",
   },
-  {
-    accessorKey: "cities",
-    header: "City",
-    cell: ({ row }) => {
-      const cities = row.getValue<Training["cities"]>("cities");
-      return cities.map((city) => city.name).join(", ");
-    },
-  },
+  // {
+  //   accessorKey: "cities",
+  //   header: "City",
+  //   cell: ({ row }) => {
+  //     const cities = row.getValue<Training["cities"]>("cities");
+  //     return cities.map((city) => city.name).join(", ");
+  //   },
+  // },
   {
     accessorKey: "duration",
     header: "Duration",

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { BaseDataItem, BaseDataType } from '@/types/base-data';
+import { BaseDataItem, BaseDataType, LOCALIZABLE_TYPES, AlternateLanguageName } from '@/types/base-data';
 import { toast } from 'sonner';
 import axios, { AxiosError } from 'axios';
 import { getCookie } from '@curriculum-services/auth';
@@ -250,6 +250,39 @@ export function useBaseData(type: BaseDataType, options?: BaseDataOptions) {
     },
   });
 
+  // Mutation for adding alternate language names (only for localizable types)
+  const addAlternateNameMutation = useMutation({
+    mutationFn: async ({ itemId, languageData }: { itemId: string; languageData: AlternateLanguageName }) => {
+      if (!LOCALIZABLE_TYPES.includes(type)) {
+        throw new Error(`${type} does not support localization`);
+      }
+      
+      try {
+        const token = getCookie('token');
+        const response = await api.post(`/${type}/add-other-language-name`, {
+          id: itemId,
+          languageCode: languageData.languageCode,
+          alternateName: languageData.alternateName
+        }, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        return response.data;
+      } catch (error) {
+        const axiosError = error as AxiosError<{ message: string }>;
+        const errorMessage = axiosError.response?.data?.message || 'Failed to add alternate language name';
+        toast.error(errorMessage);
+        throw error;
+      }
+    },
+    onSuccess: (response) => {
+      queryClient.invalidateQueries({ queryKey: ['base-data', type] });
+      toast.success(response.message || 'Alternate language name added successfully');
+    },
+    onError: (error: any) => {
+      console.log('Add alternate name error:', error);
+    },
+  });
+
   return {
     data: query.data?.data,
     pagination: {
@@ -264,8 +297,11 @@ export function useBaseData(type: BaseDataType, options?: BaseDataOptions) {
     add: addMutation,
     update: updateMutation.mutate,
     remove: deleteMutation.mutate,
+    addAlternateName: addAlternateNameMutation.mutate,
     isAddLoading: addMutation.isPending,
     isUpdateLoading: updateMutation.isPending,
     isDeleteLoading: deleteMutation.isPending,
+    isAddingAlternateName: addAlternateNameMutation.isPending,
+    canLocalize: LOCALIZABLE_TYPES.includes(type),
   };
 }

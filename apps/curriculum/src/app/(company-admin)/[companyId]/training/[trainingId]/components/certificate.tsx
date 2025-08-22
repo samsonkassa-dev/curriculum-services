@@ -1,7 +1,6 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { useParams } from "next/navigation"
 import { useGetCertificates, Certificate } from "@/lib/hooks/useCertificate"
 import { Button } from "@/components/ui/button"
 import { Loading } from "@/components/ui/loading"

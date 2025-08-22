@@ -2,6 +2,9 @@ export interface BaseDataItem {
   id: string;
   name: string;
   description: string;
+  alternateNames?: {
+    [languageCode: string]: string;
+  };
 }
 
 export interface BaseDataOptions {
@@ -41,6 +44,22 @@ export type BaseDataType =
 | "training-tag"
 | "zone"
 | "region";
+
+// Types that support localization (alternate language names)
+export const LOCALIZABLE_TYPES: BaseDataType[] = [
+  "zone",
+  "region", 
+  "language",
+  "marginalized-group",
+  "disability",
+  "academic-level"
+];
+
+// Interface for adding alternate language names
+export interface AlternateLanguageName {
+  languageCode: string;
+  alternateName: string;
+}
 
 export const BASE_DATA_CONFIG: Record<BaseDataType, { label: string }> = {
   "academic-level": { label: "Academic Level" },

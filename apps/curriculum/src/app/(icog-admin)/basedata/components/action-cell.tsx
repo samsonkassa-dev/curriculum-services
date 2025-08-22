@@ -5,9 +5,10 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { DeleteDialog } from "./delete-dialog"
 import { AddDataDialog } from "../add-data-dialog"
+import { AddAlternateNameDialog } from "./add-alternate-name-dialog"
 import { BaseData } from "../columns"
 import { useBaseData } from "@/lib/hooks/useBaseData"
-import { BaseDataType } from "@/types/base-data"
+import { BaseDataType, LOCALIZABLE_TYPES } from "@/types/base-data"
 
 // Constants
 const ICON_PATHS = {
@@ -26,7 +27,15 @@ export function ActionCell({ row, activeTab }: { row: any; activeTab: string }) 
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const [showEditDialog, setShowEditDialog] = useState(false)
   const item = row.original as ExtendedBaseData
-  const { update, remove, isUpdateLoading, isDeleteLoading } = useBaseData(activeTab as BaseDataType)
+  const { 
+    update, 
+    remove, 
+    addAlternateName,
+    isUpdateLoading, 
+    isDeleteLoading,
+    isAddingAlternateName,
+    canLocalize 
+  } = useBaseData(activeTab as BaseDataType)
 
   const handleUpdate = async (data: { 
     name: string; 
@@ -45,9 +54,25 @@ export function ActionCell({ row, activeTab }: { row: any; activeTab: string }) 
     setShowDeleteDialog(false);
   }
 
+  const handleAddAlternateName = async (data: { itemId: string; languageData: { languageCode: string; alternateName: string } }) => {
+    await addAlternateName(data);
+  }
+
+  const existingLanguages = item.alternateNames ? Object.keys(item.alternateNames) : [];
+
   return (
     <>
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-1">
+        {canLocalize && (
+          <AddAlternateNameDialog
+            itemId={item.id}
+            itemName={item.name}
+            type={activeTab as BaseDataType}
+            onAddAlternateName={handleAddAlternateName}
+            isLoading={isAddingAlternateName}
+            existingLanguages={existingLanguages}
+          />
+        )}
         <Button 
           variant="ghost" 
           className="h-8 w-8 p-0"
