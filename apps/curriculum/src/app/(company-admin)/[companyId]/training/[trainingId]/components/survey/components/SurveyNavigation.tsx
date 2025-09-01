@@ -1,9 +1,12 @@
 "use client"
 
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import { Trash2 } from "lucide-react"
 import { CreateSurveySection, SurveyType } from "@/lib/hooks/useSurvey"
+import { SurveyDeleteDialog } from "../SurveyDeleteDialog"
 
 interface SurveyNavigationProps {
   sections: CreateSurveySection[]
@@ -17,6 +20,7 @@ interface SurveyNavigationProps {
   onSelectSurveySettings: () => void
   onSelectQuestion: (sectionIndex: number, questionIndex: number) => void
   onUpdateSectionTitle: (sectionIndex: number, title: string) => void
+  onUpdateSectionDescription: (sectionIndex: number, description: string) => void
   onDeleteSection: (sectionIndex: number) => void
   onDeleteQuestion: (sectionIndex: number, questionIndex: number) => void
   onAddQuestion: (sectionIndex: number) => void
@@ -35,11 +39,38 @@ export function SurveyNavigation({
   onSelectSurveySettings,
   onSelectQuestion,
   onUpdateSectionTitle,
+  onUpdateSectionDescription,
   onDeleteSection,
   onDeleteQuestion,
   onAddQuestion,
   onAddSection
 }: SurveyNavigationProps) {
+  const [deleteDialog, setDeleteDialog] = useState<{
+    isOpen: boolean;
+    sectionIndex: number;
+    questionIndex: number;
+    questionText: string;
+  }>({
+    isOpen: false,
+    sectionIndex: -1,
+    questionIndex: -1,
+    questionText: ""
+  });
+
+  const handleDeleteClick = (sectionIndex: number, questionIndex: number, questionText: string) => {
+    setDeleteDialog({
+      isOpen: true,
+      sectionIndex,
+      questionIndex,
+      questionText
+    });
+  };
+
+  const handleDeleteConfirm = () => {
+    onDeleteQuestion(deleteDialog.sectionIndex, deleteDialog.questionIndex);
+    setDeleteDialog({ isOpen: false, sectionIndex: -1, questionIndex: -1, questionText: "" });
+  };
+
   return (
     <div className="bg-white rounded-lg border shadow-sm sticky top-8">
       <div className="p-4 border-b">
@@ -81,17 +112,31 @@ export function SurveyNavigation({
                     {/** Existing sections (index < originalSectionsCount) remain read-only in edit mode */}
                     {/** In create mode, all are editable */}
                     {/** This preserves the smart edit mode from the README */}
-                    <Input
-                      value={section.title}
-                      onChange={(e) => onUpdateSectionTitle(sectionIndex, e.target.value)}
-                      placeholder={`Section ${sectionIndex + 1}`}
-                      readOnly={isEditMode && sectionIndex < originalSectionsCount}
-                      className={`text-sm h-9 border-0 px-3 py-2 font-medium bg-transparent transition-all duration-200 ${
-                        isEditMode && sectionIndex < originalSectionsCount
-                          ? 'cursor-not-allowed opacity-60 bg-gray-50'
-                          : 'hover:bg-gray-50 focus:bg-white focus:border focus:border-blue-300 focus:rounded'
-                      }`}
-                    />
+                    <div className="space-y-2">
+                      <Input
+                        value={section.title}
+                        onChange={(e) => onUpdateSectionTitle(sectionIndex, e.target.value)}
+                        placeholder={`Section ${sectionIndex + 1}`}
+                        readOnly={isEditMode && sectionIndex < originalSectionsCount}
+                        className={`text-sm h-9 border-0 px-3 py-2 font-medium bg-transparent transition-all duration-200 ${
+                          isEditMode && sectionIndex < originalSectionsCount
+                            ? 'cursor-not-allowed opacity-60 bg-gray-50'
+                            : 'hover:bg-gray-50 focus:bg-white focus:border focus:border-blue-300 focus:rounded'
+                        }`}
+                      />
+                      <Textarea
+                        value={section.description || ""}
+                        onChange={(e) => onUpdateSectionDescription(sectionIndex, e.target.value)}
+                        placeholder="Section description (optional)"
+                        readOnly={isEditMode && sectionIndex < originalSectionsCount}
+                        className={`text-xs h-16 border-0 px-3 py-2 bg-transparent resize-none transition-all duration-200 ${
+                          isEditMode && sectionIndex < originalSectionsCount
+                            ? 'cursor-not-allowed opacity-60 bg-gray-50'
+                            : 'hover:bg-gray-50 focus:bg-white focus:border focus:border-blue-300 focus:rounded'
+                        }`}
+                        rows={2}
+                      />
+                    </div>
                   </div>
                 </div>
                 {sections.length > 1 && (
@@ -126,6 +171,9 @@ export function SurveyNavigation({
                         className="w-4 h-4 text-gray-600"
                       />
                       <span className="text-sm font-medium">Q{questionIndex + 1}</span>
+                      {questionIndex === 0 && (
+                        <span className="text-[10px] text-gray-500">(Parent)</span>
+                      )}
                     </div>
                     {section.surveyEntries.length > 1 && (
                       <Button
@@ -133,7 +181,7 @@ export function SurveyNavigation({
                         size="sm"
                         onClick={(e) => {
                           e.stopPropagation()
-                          onDeleteQuestion(sectionIndex, questionIndex)
+                          handleDeleteClick(sectionIndex, questionIndex, entry.question || `Question ${questionIndex + 1}`)
                         }}
                         className="p-1 h-5 w-5 text-red-500 hover:text-red-700 hover:bg-red-50"
                       >
@@ -168,6 +216,14 @@ export function SurveyNavigation({
           + Add Section
         </Button>
       </div>
+
+      <SurveyDeleteDialog
+        isOpen={deleteDialog.isOpen}
+        onClose={() => setDeleteDialog({ isOpen: false, sectionIndex: -1, questionIndex: -1, questionText: "" })}
+        onConfirm={handleDeleteConfirm}
+        surveyName={`Question: ${deleteDialog.questionText}`}
+        isDeleting={false}
+      />
     </div>
   )
 }

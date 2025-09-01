@@ -9,12 +9,6 @@ import { Loading } from "@/components/ui/loading"
 import { useBaseData } from "@/lib/hooks/useBaseData"
 import { useUserRole } from "@/lib/hooks/useUserRole"
 
-interface BaseItem {
-  id: string
-  name: string
-  description: string
-}
-
 
 
 interface AudienceProfileProps {

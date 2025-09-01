@@ -44,33 +44,44 @@ export function AddQuestionForm({
 
   const updateQuestionType = (questionType: QuestionType) => {
     const defaults = getDefaultQuestionFields(questionType)
-    setQuestion(prev => ({ ...prev, questionType, ...defaults }))
+    // Convert CreateSurveyChoice[] to string[] for SurveyEntry
+    const normalizedChoices = Array.isArray(defaults.choices) 
+      ? defaults.choices.map((c: any) => typeof c === 'string' ? c : c.choice || '') 
+      : []
+    
+    setQuestion(prev => ({ 
+      ...prev, 
+      questionType,
+      choices: normalizedChoices,
+      allowMultipleAnswers: defaults.allowTextAnswer ?? false,
+      rows: defaults.rows ?? []
+    }))
   }
 
   const updateRequired = (required: boolean) => {
     setQuestion(prev => ({ ...prev, required }))
   }
 
-  const addChoice = () => {
+  const handleAddChoice = () => {
     if (question.choices.length >= 6) return
     setQuestion(prev => ({
       ...prev,
-      choices: [...prev.choices, ""]
+      choices: [...(prev.choices as string[]), ""]
     }))
   }
 
-  const removeChoice = (index: number) => {
+  const handleRemoveChoice = (index: number) => {
     if (question.choices.length <= 2) return
     setQuestion(prev => ({
       ...prev,
-      choices: prev.choices.filter((_, i) => i !== index)
+      choices: (prev.choices as string[]).filter((_, i) => i !== index)
     }))
   }
 
   const updateChoice = (index: number, value: string) => {
     setQuestion(prev => ({
       ...prev,
-      choices: prev.choices.map((c, i) => i === index ? value : c)
+      choices: (prev.choices as string[]).map((c, i) => i === index ? value : c)
     }))
   }
 
@@ -199,7 +210,7 @@ export function AddQuestionForm({
               {question.choices.map((choice, index) => (
                 <div key={index} className="flex items-start gap-2">
                   <div className="w-4 h-4 rounded-full border-2 border-gray-300 mt-0.5 flex-shrink-0"></div>
-                  <span className="text-gray-700 break-words whitespace-normal">{choice || `Option ${index + 1}`}</span>
+                  <span className="text-gray-700 break-words whitespace-normal">{typeof choice === 'string' ? choice : choice.choiceText || `Option ${index + 1}`}</span>
                 </div>
               ))}
             </div>
@@ -211,7 +222,7 @@ export function AddQuestionForm({
               {question.choices.map((choice, index) => (
                 <div key={index} className="flex items-start gap-2">
                   <div className="w-4 h-4 border-2 border-gray-300 rounded mt-0.5 flex-shrink-0"></div>
-                  <span className="text-gray-700 break-words whitespace-normal">{choice || `Option ${index + 1}`}</span>
+                  <span className="text-gray-700 break-words whitespace-normal">{typeof choice === 'string' ? choice : choice.choiceText || `Option ${index + 1}`}</span>
                 </div>
               ))}
             </div>
@@ -226,7 +237,7 @@ export function AddQuestionForm({
                     <th className="border border-gray-200 p-3 text-left text-sm font-medium text-gray-900"></th>
                     {question.choices.map((choice, index) => (
                       <th key={index} className="border border-gray-200 p-3 text-center text-sm font-medium text-gray-900 break-words">
-                        {choice || `Column ${index + 1}`}
+                        {typeof choice === 'string' ? choice : choice.choiceText || `Column ${index + 1}`}
                       </th>
                     ))}
                   </tr>
@@ -350,7 +361,7 @@ export function AddQuestionForm({
                           {String.fromCharCode(65 + index)}
                         </div>
                         <Input
-                          value={choice}
+                          value={typeof choice === 'string' ? choice : choice.choiceText || ''}
                           onChange={(e) => updateChoice(index, e.target.value)}
                           placeholder={`Choice ${index + 1}`}
                           className="flex-1"
@@ -358,7 +369,7 @@ export function AddQuestionForm({
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => removeChoice(index)}
+                          onClick={() => handleRemoveChoice(index)}
                           disabled={question.choices.length <= 2}
                           className="p-1 h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
                         >
@@ -371,7 +382,7 @@ export function AddQuestionForm({
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={addChoice}
+                        onClick={handleAddChoice}
                         className="flex items-center gap-1"
                       >
                         <Plus className="h-3.5 w-3.5" />
@@ -393,7 +404,7 @@ export function AddQuestionForm({
                             {String.fromCharCode(65 + index)}
                           </div>
                           <Input
-                            value={choice}
+                            value={typeof choice === 'string' ? choice : choice.choiceText || ''}
                             onChange={(e) => updateChoice(index, e.target.value)}
                             placeholder={`Column ${index + 1}`}
                             className="flex-1"
@@ -401,7 +412,7 @@ export function AddQuestionForm({
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => removeChoice(index)}
+                            onClick={() => handleRemoveChoice(index)}
                             disabled={question.choices.length <= 2}
                             className="p-1 h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
                           >
@@ -414,7 +425,7 @@ export function AddQuestionForm({
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={addChoice}
+                          onClick={handleAddChoice}
                           className="flex items-center gap-1"
                         >
                           <Plus className="h-3.5 w-3.5" />

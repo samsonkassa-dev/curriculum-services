@@ -23,41 +23,92 @@ export interface SurveyEntry {
   id?: string; // Optional for creation, required for existing entries
   question: string;
   questionType: QuestionType;
-  choices: string[];
+  questionImage?: string; // For backward compatibility
+  questionImageUrl?: string; // From API response
+  choices: string[] | SurveyChoice[]; // Support both formats
   allowMultipleAnswers: boolean;
   allowOtherAnswer: boolean;
   rows: string[];
   required: boolean;
   answer?: string | null; // For trainee responses
+  // Follow-up support from API response
+  questionNumber?: number;
+  parentQuestionNumber?: number | null;
+  parentChoice?: string | null;
+  followUp?: boolean;
+}
+
+// For API response choices
+export interface SurveyChoice {
+  order: string; // A, B, C, etc.
+  choiceText: string;
+  choiceImageUrl?: string;
 }
 
 // For POST API - creating surveys (sections.surveyEntries)
+export interface CreateSurveyChoice {
+  choice: string;
+  choiceImage?: string;
+  // local-only field for uploads (not sent to API)
+  choiceImageFile?: File;
+}
+
 export interface CreateSurveyEntry {
   question: string;
+  questionImage?: string;
+  questionImageUrl?: string; // From API response
+  // local-only field for uploads (not sent to API)
+  questionImageFile?: File;
   questionType: QuestionType;
-  choices: string[];
+  choices: CreateSurveyChoice[];
   allowTextAnswer: boolean;
   rows: string[];
   required: boolean;
+  // follow-up support
+  questionNumber?: number;
+  parentQuestionNumber?: number;
+  parentChoice?: string;
+  followUp?: boolean;
 }
 
 // For PATCH API - updating individual questions
 export interface UpdateSurveyEntryData {
   question: string;
+  questionImage?: string;
+  questionImageFile?: File; // For multipart uploads
   questionType: QuestionType;
+  questionNumber?: number; // Add missing field
   isRequired: boolean;
-  choices: string[];
+  choices: {
+    choice: string;
+    choiceImage?: string;
+    choiceImageFile?: File; // For multipart uploads
+  }[];
   allowOtherAnswer: boolean;
   rows: string[];
+  // Follow-up fields (updated to match API)
+  isFollowUp?: boolean;
+  parentQuestionNumber?: number;
+  parentChoice?: string;
 }
 
 // For POST API - adding new questions to section
 export interface AddSurveyEntryData {
   question: string;
+  questionImage?: string;
+  questionImageFile?: File; // For multipart uploads
   questionType: QuestionType;
-  choices: string[];
+  questionNumber?: number; // Will be calculated automatically if not provided
+  choices: {
+    choice: string;
+    choiceImage?: string;
+    choiceImageFile?: File; // For multipart uploads
+  }[];
   allowTextAnswer: boolean;
   rows: string[];
+  parentQuestionNumber?: number;
+  parentChoice?: string;
+  followUp?: boolean;
   required: boolean;
 }
 
@@ -65,14 +116,18 @@ export interface AddSurveyEntryData {
 export interface SurveySection {
   id?: string; // Optional for creation
   title: string;
+  description?: string | null;
   questions: SurveyEntry[];
 }
 
 // For POST API - creating surveys (sections.surveyEntries)
 export interface CreateSurveySection {
   title: string;
+  description?: string;
   surveyEntries: CreateSurveyEntry[];
 }
+
+
 
 export interface Survey {
   id: string;
@@ -133,6 +188,7 @@ export interface SurveySectionsResponse {
 // Interface for adding a section with questions
 export interface AddSectionData {
   title: string;
+  description?: string;
   surveyEntries: CreateSurveyEntry[];
 }
 
@@ -232,12 +288,62 @@ export function useCreateSurvey(trainingId: string) {
   const createSurveyMutation = useMutation({
     mutationFn: async (surveyData: CreateSurveyData) => {
       const token = getCookie("token");
-      // Using the new API endpoint structure from the documentation
+
+      // Build multipart form data: send all fields as individual multipart keys (no JSON payload)
+      const formData = new FormData();
+
+      // Top-level fields
+      formData.append('name', surveyData.name ?? '');
+      formData.append('type', surveyData.type);
+      formData.append('description', surveyData.description ?? '');
+
+      // Nested fields (sections, surveyEntries, choices, rows)
+      surveyData.sections.forEach((sec, si) => {
+        formData.append(`sections[${si}].title`, sec.title ?? '');
+        if (sec.description) formData.append(`sections[${si}].description`, sec.description);
+
+        sec.surveyEntries.forEach((entry, ei) => {
+          formData.append(`sections[${si}].surveyEntries[${ei}].question`, entry.question ?? '');
+          formData.append(`sections[${si}].surveyEntries[${ei}].questionType`, entry.questionType);
+          if (entry.questionNumber != null) formData.append(`sections[${si}].surveyEntries[${ei}].questionNumber`, String(entry.questionNumber));
+          if (entry.parentQuestionNumber != null) formData.append(`sections[${si}].surveyEntries[${ei}].parentQuestionNumber`, String(entry.parentQuestionNumber));
+          if (entry.parentChoice) formData.append(`sections[${si}].surveyEntries[${ei}].parentChoice`, entry.parentChoice);
+          if (entry.followUp != null) formData.append(`sections[${si}].surveyEntries[${ei}].followUp`, String(!!entry.followUp));
+          formData.append(`sections[${si}].surveyEntries[${ei}].allowTextAnswer`, String(!!entry.allowTextAnswer));
+          formData.append(`sections[${si}].surveyEntries[${ei}].required`, String(!!entry.required));
+
+          // Rows
+          (entry.rows || []).forEach((row, ri) => {
+            formData.append(`sections[${si}].surveyEntries[${ei}].rows[${ri}]`, row ?? '');
+          });
+
+          // Choices (text or image)
+          (entry.choices || []).forEach((c, ci) => {
+            formData.append(`sections[${si}].surveyEntries[${ei}].choices[${ci}].choice`, c.choice ?? '');
+            if (c.choiceImageFile instanceof File) {
+              formData.append(`sections[${si}].surveyEntries[${ei}].choices[${ci}].choiceImage`, c.choiceImageFile);
+            } else if (c.choiceImage) {
+              formData.append(`sections[${si}].surveyEntries[${ei}].choices[${ci}].choiceImage`, c.choiceImage);
+            }
+          });
+
+          // Question image (file or existing URL)
+          if (entry.questionImageFile instanceof File) {
+            formData.append(`sections[${si}].surveyEntries[${ei}].questionImage`, entry.questionImageFile);
+          } else if (entry.questionImage) {
+            formData.append(`sections[${si}].surveyEntries[${ei}].questionImage`, entry.questionImage);
+          }
+        });
+      });
+
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_API}/survey/training/${trainingId}`,
-        surveyData,
+        formData,
         {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { 
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${token}` 
+          },
         }
       );
       return response.data;
@@ -351,11 +457,62 @@ export function useUpdateSurveyEntry() {
       questionData: UpdateSurveyEntryData;
     }) => {
       const token = getCookie("token");
+      
+      // Always use multipart form data
+      const formData = new FormData();
+      
+      // Add basic fields
+      formData.append('question', questionData.question);
+      formData.append('questionType', questionData.questionType);
+      formData.append('allowOtherAnswer', String(!!questionData.allowOtherAnswer));
+      formData.append('isRequired', String(!!questionData.isRequired));
+      
+     // Add question number if provided
+      // if (questionData.questionNumber != null) {
+      //   formData.append('questionNumber', String(questionData.questionNumber));
+      // }
+      
+      // Add follow-up fields if provided
+      if (questionData.parentQuestionNumber != null) {
+        formData.append('parentQuestionNumber', String(questionData.parentQuestionNumber));
+      }
+      if (questionData.parentChoice) {
+        formData.append('parentChoice', questionData.parentChoice);
+      }
+      if (questionData.isFollowUp != null) {
+        formData.append('isFollowUp', String(!!questionData.isFollowUp));
+      }
+      
+      // Add rows
+      questionData.rows.forEach((row, i) => {
+        formData.append(`rows[${i}]`, row);
+      });
+      
+      // Add choices
+      questionData.choices.forEach((choice, i) => {
+        formData.append(`choices[${i}].choice`, choice.choice);
+        if (choice.choiceImageFile instanceof File) {
+          formData.append(`choices[${i}].choiceImage`, choice.choiceImageFile);
+        } else if (choice.choiceImage) {
+          formData.append(`choices[${i}].choiceImage`, choice.choiceImage);
+        }
+      });
+      
+      // Add question image
+      if (questionData.questionImageFile instanceof File) {
+        formData.append('questionImage', questionData.questionImageFile);
+      } else if (questionData.questionImage) {
+        formData.append('questionImage', questionData.questionImage);
+      }
+      
       const response = await axios.patch(
         `${process.env.NEXT_PUBLIC_API}/survey-entry/${surveyEntryId}`,
-        questionData,
+        formData,
         {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${token}`
+          },
         }
       );
       return response.data;
@@ -393,11 +550,62 @@ export function useAddQuestionToSection() {
       questionData: AddSurveyEntryData;
     }) => {
       const token = getCookie("token");
+      
+      // Always use multipart form data
+      const formData = new FormData();
+      
+      // Add basic fields
+      formData.append('question', questionData.question);
+      formData.append('questionType', questionData.questionType);
+      formData.append('allowTextAnswer', String(!!questionData.allowTextAnswer));
+      formData.append('required', String(!!questionData.required));
+      
+      // Add question number if provided
+      if (questionData.questionNumber != null) {
+        formData.append('questionNumber', String(questionData.questionNumber));
+      }
+      
+      // Add optional follow-up fields
+      if (questionData.parentQuestionNumber != null) {
+        formData.append('parentQuestionNumber', String(questionData.parentQuestionNumber));
+      }
+      if (questionData.parentChoice) {
+        formData.append('parentChoice', questionData.parentChoice);
+      }
+      if (questionData.followUp != null) {
+        formData.append('followUp', String(!!questionData.followUp));
+      }
+      
+      // Add rows
+      questionData.rows.forEach((row, i) => {
+        formData.append(`rows[${i}]`, row);
+      });
+      
+      // Add choices
+      questionData.choices.forEach((choice, i) => {
+        formData.append(`choices[${i}].choice`, choice.choice);
+        if (choice.choiceImageFile instanceof File) {
+          formData.append(`choices[${i}].choiceImage`, choice.choiceImageFile);
+        } else if (choice.choiceImage) {
+          formData.append(`choices[${i}].choiceImage`, choice.choiceImage);
+        }
+      });
+      
+      // Add question image
+      if (questionData.questionImageFile instanceof File) {
+        formData.append('questionImage', questionData.questionImageFile);
+      } else if (questionData.questionImage) {
+        formData.append('questionImage', questionData.questionImage);
+      }
+      
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_API}/survey-entry/survey-section/${sectionId}`,
-        questionData,
+        formData,
         {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${token}`
+          },
         }
       );
       return response.data;
@@ -531,11 +739,11 @@ export function useUpdateSurveySection() {
   const queryClient = useQueryClient();
 
   const updateSurveySectionMutation = useMutation({
-    mutationFn: async ({ sectionId, title }: { sectionId: string; title: string }) => {
+    mutationFn: async ({ sectionId, title, description }: { sectionId: string; title: string; description?: string }) => {
       const token = getCookie("token");
       const response = await axios.put(
         `${process.env.NEXT_PUBLIC_API}/survey-section/${sectionId}`,
-        { title },
+        { title, description },
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -635,6 +843,108 @@ export function useSubmitSurveyAnswer() {
 }
 
 /**
+ * Hook for adding a choice to an existing survey question
+ */
+export function useAddChoice() {
+  const queryClient = useQueryClient();
+
+  const addChoiceMutation = useMutation({
+    mutationFn: async ({
+      surveyEntryId,
+      choiceData,
+    }: {
+      surveyEntryId: string;
+      choiceData: {
+        choice: string;
+        choiceImage?: string;
+        choiceImageFile?: File;
+      };
+    }) => {
+      const token = getCookie("token");
+      
+      // Use multipart form data for potential image uploads
+      const formData = new FormData();
+      formData.append('choice', choiceData.choice);
+      
+      if (choiceData.choiceImageFile instanceof File) {
+        formData.append('choiceImage', choiceData.choiceImageFile);
+      } else if (choiceData.choiceImage) {
+        formData.append('choiceImage', choiceData.choiceImage);
+      }
+      
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_API}/survey-entry/${surveyEntryId}/add-choice`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+            Authorization: `Bearer ${token}`
+          },
+        }
+      );
+      return response.data;
+    },
+    onSuccess: (data) => {
+      toast.success(data.message || "Choice added successfully");
+      queryClient.invalidateQueries({ queryKey: surveyQueryKeys.all });
+    },
+    onError: (error: AxiosError<ApiErrorResponse>) => {
+      toast.error(error.response?.data?.message || "Failed to add choice");
+    },
+  });
+
+  return {
+    addChoice: addChoiceMutation.mutate,
+    isLoading: addChoiceMutation.isPending,
+    isSuccess: addChoiceMutation.isSuccess,
+    isError: addChoiceMutation.isError,
+    error: addChoiceMutation.error,
+  };
+}
+
+/**
+ * Hook for removing a choice from an existing survey question
+ */
+export function useRemoveChoice() {
+  const queryClient = useQueryClient();
+
+  const removeChoiceMutation = useMutation({
+    mutationFn: async ({
+      surveyEntryId,
+      order,
+    }: {
+      surveyEntryId: string;
+      order: string;
+    }) => {
+      const token = getCookie("token");
+      const response = await axios.delete(
+        `${process.env.NEXT_PUBLIC_API}/survey-entry/${surveyEntryId}/remove-choice`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+          params: { order }
+        }
+      );
+      return response.data;
+    },
+    onSuccess: (data) => {
+      toast.success(data.message || "Choice removed successfully");
+      queryClient.invalidateQueries({ queryKey: surveyQueryKeys.all });
+    },
+    onError: (error: AxiosError<ApiErrorResponse>) => {
+      toast.error(error.response?.data?.message || "Failed to remove choice");
+    },
+  });
+
+  return {
+    removeChoice: removeChoiceMutation.mutate,
+    isLoading: removeChoiceMutation.isPending,
+    isSuccess: removeChoiceMutation.isSuccess,
+    isError: removeChoiceMutation.isError,
+    error: removeChoiceMutation.error,
+  };
+}
+
+/**
  * Hook for assigning a survey to a session
  */
 export function useAssignSurveyToSession() {
@@ -671,3 +981,4 @@ export function useAssignSurveyToSession() {
 }
 
 // utility exports re-exported above
+

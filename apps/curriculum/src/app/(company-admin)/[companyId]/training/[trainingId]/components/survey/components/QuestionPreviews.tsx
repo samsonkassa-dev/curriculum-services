@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 
 import { Textarea } from "@/components/ui/textarea"
@@ -7,6 +8,9 @@ export const PreviewText = ({ question }: { question: CreateSurveyEntry }) => (
   <div className="space-y-3">
     <div>
       <p className="font-medium break-words whitespace-normal leading-relaxed">{question.question || "Text question will appear here"}</p>
+      {(question.questionImage || question.questionImageUrl) && (
+        <img src={question.questionImage || question.questionImageUrl} alt="question" className="mt-2 max-h-40 object-contain" />
+      )}
     </div>
     <div className="ml-4">
       <Textarea
@@ -23,12 +27,22 @@ export const PreviewRadio = ({ question }: { question: CreateSurveyEntry }) => (
   <div className="space-y-3">
     <div>
       <p className="font-medium break-words whitespace-normal leading-relaxed">{question.question || "Radio question will appear here"}</p>
+      {(question.questionImage || question.questionImageUrl) && (
+        <img src={question.questionImage || question.questionImageUrl} alt="question" className="mt-2 max-h-40 object-contain" />
+      )}
     </div>
     <div className="ml-4 space-y-2">
-      {question.choices.map((choice, index) => (
+      {question.choices.map((choice: any, index) => (
         <div key={index} className="flex items-start gap-2">
           <div className="w-4 h-4 rounded-full border-2 border-gray-300 mt-0.5 flex-shrink-0"></div>
-          <span className="break-words whitespace-normal">{choice || `Option ${index + 1}`}</span>
+          <div className="flex flex-col">
+            <span className="break-words whitespace-normal">
+              {(choice as any)?.choiceText || choice?.choice || (typeof choice === 'string' ? choice : `Option ${index + 1}`)}
+            </span>
+            {(choice?.choiceImage || (choice as any)?.choiceImageUrl) && (
+              <img src={choice.choiceImage || (choice as any).choiceImageUrl} alt="choice" className="mt-1 max-h-24 object-contain" />
+            )}
+          </div>
         </div>
       ))}
     </div>
@@ -39,12 +53,22 @@ export const PreviewCheckbox = ({ question }: { question: CreateSurveyEntry }) =
   <div className="space-y-3">
     <div>
       <p className="font-medium break-words whitespace-normal leading-relaxed">{question.question || "Checkbox question will appear here"}</p>
+      {(question.questionImage || question.questionImageUrl) && (
+        <img src={question.questionImage || question.questionImageUrl} alt="question" className="mt-2 max-h-40 object-contain" />
+      )}
     </div>
     <div className="ml-4 space-y-2">
-      {question.choices.map((choice, index) => (
+      {question.choices.map((choice: any, index) => (
         <div key={index} className="flex items-start gap-2">
           <div className="w-4 h-4 border-2 border-gray-300 mt-0.5 flex-shrink-0"></div>
-          <span className="break-words whitespace-normal">{choice || `Option ${index + 1}`}</span>
+          <div className="flex flex-col">
+            <span className="break-words whitespace-normal">
+              {(choice as any)?.choiceText || choice?.choice || (typeof choice === 'string' ? choice : `Option ${index + 1}`)}
+            </span>
+            {(choice?.choiceImage || (choice as any)?.choiceImageUrl) && (
+              <img src={choice.choiceImage || (choice as any).choiceImageUrl} alt="choice" className="mt-1 max-h-24 object-contain" />
+            )}
+          </div>
         </div>
       ))}
     </div>
@@ -55,6 +79,9 @@ export const PreviewGrid = ({ question }: { question: CreateSurveyEntry }) => (
   <div className="space-y-4">
     <div>
       <p className="font-medium break-words whitespace-normal leading-relaxed">{question.question || "Grid question will appear here"}</p>
+      {(question.questionImage || question.questionImageUrl) && (
+        <img src={question.questionImage || question.questionImageUrl} alt="question" className="mt-2 max-h-40 object-contain" />
+      )}
     </div>
     <div className="ml-4 overflow-x-auto">
       <table className="border-collapse border border-gray-300">
@@ -63,7 +90,8 @@ export const PreviewGrid = ({ question }: { question: CreateSurveyEntry }) => (
             <th className="border border-gray-300 p-2 bg-gray-50 text-left text-sm font-medium"></th>
             {question.choices.map((choice, index) => (
               <th key={index} className="border border-gray-300 p-2 bg-gray-50 text-center text-sm font-medium min-w-20">
-                {choice || `Col ${index + 1}`}
+                {(choice as any)?.choiceText || choice?.choice || (typeof choice === 'string' ? choice : `Col ${index + 1}`)}
+                
               </th>
             ))}
           </tr>

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { PencilIcon, Plus, FileText, CheckCircle, Square, Grid3X3, Trash2, Check, X, Edit, ChevronDown, ChevronRight } from "lucide-react"
+import { PencilIcon, Plus, FileText, CheckCircle, Square, Grid3X3, Trash2, Check, X, Edit, ChevronDown, ChevronRight, ArrowRight } from "lucide-react"
 import { SurveyDetail, SurveyEntry, QuestionType, useUpdateSurveySection, useDeleteSurveySection } from "@/lib/hooks/useSurvey"
 
 interface ViewSurveyDetailsProps {
@@ -126,11 +126,14 @@ export function ViewSurveyDetails({
 
   // Compact Question Preview Component
   const QuestionPreview = ({ question, questionNumber }: { question: SurveyEntry; questionNumber: number }) => {
-    const getChoicesPreview = (choices: string[]) => {
-      if (choices.length <= 3) {
-        return choices.join(", ");
+    const getChoicesPreview = (choices: string[] | any[]) => {
+      const choiceTexts = choices.map(choice => 
+        typeof choice === 'string' ? choice : (choice?.choiceText || choice?.choice || 'Option')
+      );
+      if (choiceTexts.length <= 3) {
+        return choiceTexts.join(", ");
       }
-      return `${choices.slice(0, 2).join(", ")} and ${choices.length - 2} more...`;
+      return `${choiceTexts.slice(0, 2).join(", ")} and ${choiceTexts.length - 2} more...`;
     };
 
     const getQuestionDetails = () => {
@@ -149,8 +152,12 @@ export function ViewSurveyDetails({
     };
 
     return (
-      <div className="flex items-center gap-3 py-2 px-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-        <span className="inline-flex items-center justify-center w-6 h-6 bg-blue-100 text-blue-600 rounded-full text-xs font-medium shrink-0">
+      <div className={`flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-gray-100 transition-colors ${
+        question.followUp ? 'bg-amber-50 border-l-4 border-amber-400' : 'bg-gray-50'
+      }`}>
+        <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium shrink-0 ${
+          question.followUp ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-600'
+        }`}>
           {questionNumber}
         </span>
         <div className="flex-1 min-w-0">
@@ -159,13 +166,26 @@ export function ViewSurveyDetails({
             {question.required && (
               <span className="text-red-500 text-xs font-medium">Required</span>
             )}
+            {question.followUp && (
+              <span className="inline-flex items-center gap-1 px-2 py-1 bg-amber-100 text-amber-700 rounded-full text-xs font-medium">
+                <ArrowRight className="h-3 w-3" />
+                Follow-up
+              </span>
+            )}
           </div>
           <p className="font-medium text-gray-900 text-sm truncate mb-1">
             {question.question}
           </p>
-          <p className="text-xs text-gray-500">
-            {getQuestionDetails()}
-          </p>
+          <div className="space-y-1">
+            <p className="text-xs text-gray-500">
+              {getQuestionDetails()}
+            </p>
+            {question.followUp && question.parentQuestionNumber && question.parentChoice && (
+              <p className="text-xs text-amber-600 font-medium">
+                ↳ Follows Q{question.parentQuestionNumber} → Choice "{question.parentChoice}"
+              </p>
+            )}
+          </div>
         </div>
       </div>
     )

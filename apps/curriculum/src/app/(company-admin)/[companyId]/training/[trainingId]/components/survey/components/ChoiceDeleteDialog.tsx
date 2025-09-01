@@ -11,29 +11,31 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 
-interface SurveyDeleteDialogProps {
+interface ChoiceDeleteDialogProps {
   isOpen: boolean
   onClose: () => void
   onConfirm: () => void
-  surveyName: string
+  choiceText: string
+  choiceOrder: string
   isDeleting: boolean
 }
 
-export function SurveyDeleteDialog({
+export function ChoiceDeleteDialog({
   isOpen,
   onClose,
   onConfirm,
-  surveyName,
+  choiceText,
+  choiceOrder,
   isDeleting
-}: SurveyDeleteDialogProps) {
+}: ChoiceDeleteDialogProps) {
   return (
     <AlertDialog open={isOpen} onOpenChange={onClose}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Delete Survey</AlertDialogTitle>
+          <AlertDialogTitle>Remove Choice</AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to delete the survey <span className="font-semibold">&quot;{surveyName}&quot;</span>? 
-            This action cannot be undone and will remove all questions and responses associated with this survey.
+            Are you sure you want to remove choice <span className="font-semibold">{choiceOrder}</span>: &quot;{choiceText || 'Empty choice'}&quot;? 
+            This action cannot be undone and may affect survey responses.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -43,7 +45,7 @@ export function SurveyDeleteDialog({
             disabled={isDeleting}
             className="bg-red-600 hover:bg-red-700 focus:ring-red-600 text-white"
           >
-            {isDeleting ? "Deleting..." : "Delete Survey"}
+            {isDeleting ? "Removing..." : "Remove Choice"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

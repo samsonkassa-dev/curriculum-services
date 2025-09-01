@@ -17,11 +17,13 @@ import {
   useDeleteSurveySection,
   useUpdateSurveyEntry,
   useUpdateSurveySection,
+  useAddChoice,
+  useRemoveChoice,
   CreateSurveyData,
   CreateSurveySection,
   CreateSurveyEntry,
-  SurveyType,
-  QuestionType
+  UpdateSurveyEntryData,
+  SurveyType
 } from "@/lib/hooks/useSurvey"
 import { 
   SurveyList,
@@ -132,9 +134,7 @@ export function SurveyComponent({ trainingId }: SurveyComponentProps) {
     editMetadata?: {
       newSections: CreateSurveySection[]
       newQuestionsPerSection: { sectionIndex: number; sectionId?: string; newQuestions: CreateSurveyEntry[] }[]
-      updatedQuestions?: { sectionIndex: number; questionIndex: number; questionId: string; updates: {
-        question: string; questionType: QuestionType; isRequired: boolean; choices: string[]; allowOtherAnswer: boolean; rows: string[]; 
-      } }[]
+      updatedQuestions?: { sectionIndex: number; questionIndex: number; questionId: string; updates: UpdateSurveyEntryData }[]
       updatedSectionTitles?: { sectionIndex: number; sectionId: string; title: string }[]
     }
   }) => {
@@ -179,7 +179,27 @@ export function SurveyComponent({ trainingId }: SurveyComponentProps) {
             pendingOperations++;
             addQuestionToSection({
               sectionId,
-              questionData: question
+              
+              questionData: {
+                question: question.question,
+                questionImage: question.questionImage,
+                questionImageFile: question.questionImageFile,
+                questionType: question.questionType,
+                choices: (Array.isArray(question.choices)
+                  ? (question.choices as (string | { choice: string; choiceImage?: string; choiceImageFile?: File })[]).map((c) => ({
+                      choice: typeof c === 'string' ? c : c.choice,
+                      choiceImage: typeof c === 'string' ? undefined : c.choiceImage,
+                      choiceImageFile: typeof c === 'string' ? undefined : c.choiceImageFile
+                    }))
+                  : []),
+                allowTextAnswer: !!question.allowTextAnswer,
+                rows: question.rows || [],
+                questionNumber: question.questionNumber,
+                parentQuestionNumber: question.parentQuestionNumber,
+                parentChoice: question.parentChoice,
+                followUp: question.followUp,
+                required: !!question.required,
+              }
             }, {
               onSuccess: () => { successCount++; checkCompletion() },
               onError: () => {
@@ -262,10 +282,11 @@ export function SurveyComponent({ trainingId }: SurveyComponentProps) {
     })
   }
 
-  const handleDeleteQuestion = (questionId: string) => {
+  const handleDeleteQuestion = (questionId: string, onSuccess?: () => void) => {
     deleteSurveyEntry(questionId, {
       onSuccess: () => {
         refetchSurveyDetails()
+        onSuccess?.()
       }
     })
   }
@@ -328,6 +349,7 @@ export function SurveyComponent({ trainingId }: SurveyComponentProps) {
           focusSection={focusSection}
           onDeleteQuestion={handleDeleteQuestion}
           onDeleteSection={handleDeleteSection}
+
         />
       )
     

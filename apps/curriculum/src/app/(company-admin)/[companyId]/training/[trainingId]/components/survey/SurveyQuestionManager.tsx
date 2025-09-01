@@ -31,6 +31,13 @@ interface EditingState {
   allowOtherAnswer: boolean
   rows: string[]
   required: boolean
+  // Additional fields for PATCH support
+  questionNumber?: number
+  questionImage?: string
+  questionImageFile?: File
+  parentQuestionNumber?: number
+  parentChoice?: string
+  followUp?: boolean
 }
 
 export function SurveyQuestionManager({ 
@@ -52,10 +59,17 @@ export function SurveyQuestionManager({
       entryId: entry.id || '',
       question: entry.question,
       questionType: entry.questionType,
-      choices: [...entry.choices],
+      choices: [...(entry.choices as string[])],
       allowOtherAnswer: entry.allowOtherAnswer,
       rows: [...entry.rows],
-      required: entry.required
+      required: entry.required,
+      // Initialize additional fields from SurveyEntry
+      questionNumber: entry.questionNumber,
+      questionImage: entry.questionImageUrl || undefined,
+      questionImageFile: undefined,
+      parentQuestionNumber: entry.parentQuestionNumber || undefined,
+      parentChoice: entry.parentChoice || undefined,
+      followUp: entry.followUp || false
     })
   }
 
@@ -83,10 +97,17 @@ export function SurveyQuestionManager({
       questionData: {
         question: editingEntry.question,
         questionType: editingEntry.questionType,
-        choices: editingEntry.choices,
+        choices: editingEntry.choices.map(choice => ({ choice, choiceImage: undefined })),
         allowOtherAnswer: editingEntry.allowOtherAnswer,
         rows: editingEntry.rows,
-        isRequired: editingEntry.required
+        isRequired: editingEntry.required,
+        // Add missing fields
+        questionNumber: editingEntry.questionNumber,
+        questionImage: editingEntry.questionImage || undefined,
+        questionImageFile: editingEntry.questionImageFile || undefined,
+        parentQuestionNumber: editingEntry.parentQuestionNumber || undefined,
+        parentChoice: editingEntry.parentChoice || undefined,
+        isFollowUp: editingEntry.followUp || false
       }
     }, {
       onSuccess: () => {
@@ -141,10 +162,17 @@ export function SurveyQuestionManager({
   const updateEditingQuestionType = (questionType: QuestionType) => {
     if (!editingEntry) return
     const defaults = getDefaultQuestionFields(questionType)
+    // Convert CreateSurveyChoice[] to string[] for SurveyEntry
+    const normalizedChoices = Array.isArray(defaults.choices) 
+      ? defaults.choices.map((c: any) => typeof c === 'string' ? c : c.choice || '') 
+      : []
+    
     setEditingEntry({ 
       ...editingEntry, 
       questionType,
-      ...defaults
+      choices: normalizedChoices,
+      allowOtherAnswer: defaults.allowTextAnswer ?? false,
+      rows: defaults.rows ?? []
     })
   }
 
@@ -517,7 +545,7 @@ export function SurveyQuestionManager({
                           <div className={`w-4 h-4 border-2 border-gray-300 ${
                             entry.questionType === 'RADIO' ? 'rounded-full' : 'rounded'
                           }`}></div>
-                          <span className="text-gray-700">{choice}</span>
+                          <span className="text-gray-700">{typeof choice === 'string' ? choice : choice.choiceText}</span>
                         </div>
                       ))}
                     </div>
@@ -531,7 +559,7 @@ export function SurveyQuestionManager({
                             <th className="border border-gray-200 p-3 text-left text-sm font-medium text-gray-900"></th>
                             {entry.choices.map((choice, index) => (
                               <th key={index} className="border border-gray-200 p-3 text-center text-sm font-medium text-gray-900">
-                                {choice}
+                                {typeof choice === 'string' ? choice : choice.choiceText}
                               </th>
                             ))}
                           </tr>
