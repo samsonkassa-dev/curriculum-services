@@ -350,7 +350,7 @@ export function useCreateSurvey(trainingId: string) {
     },
     onSuccess: (data) => {
       toast.success(data.message || "Survey created successfully");
-      queryClient.invalidateQueries({ queryKey: surveyQueryKeys.training(trainingId) });
+      queryClient.invalidateQueries({ queryKey: ["surveys", trainingId] });
     },
     onError: (error: AxiosError<ApiErrorResponse>) => {
       toast.error(error.response?.data?.message || "Failed to create survey");
@@ -386,8 +386,8 @@ export function useUpdateSurvey() {
     },
     onSuccess: ({ responseData, surveyId }) => {
       toast.success(responseData.message || "Survey updated successfully");
-      queryClient.invalidateQueries({ queryKey: surveyQueryKeys.all });
-      queryClient.invalidateQueries({ queryKey: surveyQueryKeys.detail(surveyId) });
+      queryClient.invalidateQueries({ queryKey: ["surveys"] });
+      queryClient.invalidateQueries({ queryKey: ["survey", surveyId] });
     },
     onError: (error: AxiosError<ApiErrorResponse>) => {
       toast.error(error.response?.data?.message || "Failed to update survey");
@@ -422,7 +422,7 @@ export function useDeleteSurvey() {
     },
     onSuccess: (data) => {
       toast.success(data.message || "Survey deleted successfully");
-      queryClient.invalidateQueries({ queryKey: surveyQueryKeys.all });
+      queryClient.invalidateQueries({ queryKey: ["surveys"] });
     },
     onError: (error: AxiosError<ApiErrorResponse>) => {
       toast.error(error.response?.data?.message || "Failed to delete survey");
@@ -454,18 +454,26 @@ export function useUpdateSurveyEntry() {
       questionData,
     }: {
       surveyEntryId: string;
-      questionData: UpdateSurveyEntryData;
+      questionData: Partial<UpdateSurveyEntryData>;
     }) => {
       const token = getCookie("token");
       
-      // Always use multipart form data
+      // Use multipart form data for selective updates
       const formData = new FormData();
       
-      // Add basic fields
-      formData.append('question', questionData.question);
-      formData.append('questionType', questionData.questionType);
-      formData.append('allowOtherAnswer', String(!!questionData.allowOtherAnswer));
-      formData.append('isRequired', String(!!questionData.isRequired));
+      // Only append fields that are defined (selective update)
+      if (questionData.question !== undefined) {
+        formData.append('question', questionData.question);
+      }
+      if (questionData.questionType !== undefined) {
+        formData.append('questionType', questionData.questionType);
+      }
+      if (questionData.allowOtherAnswer !== undefined) {
+        formData.append('allowOtherAnswer', String(!!questionData.allowOtherAnswer));
+      }
+      if (questionData.isRequired !== undefined) {
+        formData.append('isRequired', String(!!questionData.isRequired));
+      }
       
      // Add question number if provided
       // if (questionData.questionNumber != null) {
@@ -483,25 +491,29 @@ export function useUpdateSurveyEntry() {
         formData.append('isFollowUp', String(!!questionData.isFollowUp));
       }
       
-      // Add rows
-      questionData.rows.forEach((row, i) => {
-        formData.append(`rows[${i}]`, row);
-      });
+      // Add rows if provided
+      if (questionData.rows !== undefined) {
+        questionData.rows.forEach((row, i) => {
+          formData.append(`rows[${i}]`, row);
+        });
+      }
       
-      // Add choices
-      questionData.choices.forEach((choice, i) => {
-        formData.append(`choices[${i}].choice`, choice.choice);
-        if (choice.choiceImageFile instanceof File) {
-          formData.append(`choices[${i}].choiceImage`, choice.choiceImageFile);
-        } else if (choice.choiceImage) {
-          formData.append(`choices[${i}].choiceImage`, choice.choiceImage);
-        }
-      });
+      // Add choices if provided
+      if (questionData.choices !== undefined) {
+        questionData.choices.forEach((choice, i) => {
+          formData.append(`choices[${i}].choice`, choice.choice);
+          if (choice.choiceImageFile instanceof File) {
+            formData.append(`choices[${i}].choiceImage`, choice.choiceImageFile);
+          } else if (choice.choiceImage) {
+            formData.append(`choices[${i}].choiceImage`, choice.choiceImage);
+          }
+        });
+      }
       
-      // Add question image
+      // Add question image if provided
       if (questionData.questionImageFile instanceof File) {
         formData.append('questionImage', questionData.questionImageFile);
-      } else if (questionData.questionImage) {
+      } else if (questionData.questionImage !== undefined) {
         formData.append('questionImage', questionData.questionImage);
       }
       
@@ -519,7 +531,8 @@ export function useUpdateSurveyEntry() {
     },
     onSuccess: (data) => {
       toast.success(data.message || "Question updated successfully");
-      queryClient.invalidateQueries({ queryKey: surveyQueryKeys.all });
+      // Only invalidate survey list - specific survey details will be refetched by the component
+      queryClient.invalidateQueries({ queryKey: ["surveys"] });
     },
     onError: (error: AxiosError<ApiErrorResponse>) => {
       toast.error(error.response?.data?.message || "Failed to update question");
@@ -612,7 +625,7 @@ export function useAddQuestionToSection() {
     },
     onSuccess: (data) => {
       toast.success(data.message || "Question added successfully");
-      queryClient.invalidateQueries({ queryKey: surveyQueryKeys.all });
+      queryClient.invalidateQueries({ queryKey: ["surveys"] });
     },
     onError: (error: AxiosError<ApiErrorResponse>) => {
       toast.error(error.response?.data?.message || "Failed to add question");
@@ -679,7 +692,7 @@ export function useAddSectionToSurvey() {
     },
     onSuccess: (data) => {
       toast.success(data.message || "Section added successfully");
-      queryClient.invalidateQueries({ queryKey: surveyQueryKeys.all });
+      queryClient.invalidateQueries({ queryKey: ["surveys"] });
     },
     onError: (error: AxiosError<ApiErrorResponse>) => {
       toast.error(error.response?.data?.message || "Failed to add section");
@@ -716,7 +729,7 @@ export function useDeleteSurveyEntry() {
     },
     onSuccess: (data) => {
       toast.success(data.message || "Question deleted successfully");
-      queryClient.invalidateQueries({ queryKey: surveyQueryKeys.all });
+      queryClient.invalidateQueries({ queryKey: ["surveys"] });
     },
     onError: (error: AxiosError<ApiErrorResponse>) => {
       toast.error(error.response?.data?.message || "Failed to delete question");
@@ -752,7 +765,7 @@ export function useUpdateSurveySection() {
     },
     onSuccess: (data) => {
       toast.success(data.message || "Section updated successfully");
-      queryClient.invalidateQueries({ queryKey: surveyQueryKeys.all });
+      queryClient.invalidateQueries({ queryKey: ["surveys"] });
     },
     onError: (error: AxiosError<ApiErrorResponse>) => {
       toast.error(error.response?.data?.message || "Failed to update section");
@@ -784,7 +797,7 @@ export function useDeleteSurveySection() {
     },
     onSuccess: (data) => {
       toast.success(data.message || "Section deleted successfully");
-      queryClient.invalidateQueries({ queryKey: surveyQueryKeys.all });
+      queryClient.invalidateQueries({ queryKey: ["surveys"] });
     },
     onError: (error: AxiosError<ApiErrorResponse>) => {
       toast.error(error.response?.data?.message || "Failed to delete section");
@@ -826,7 +839,7 @@ export function useSubmitSurveyAnswer() {
     },
     onSuccess: (data) => {
       toast.success(data.message || "Answer submitted successfully");
-      queryClient.invalidateQueries({ queryKey: surveyQueryKeys.all });
+      queryClient.invalidateQueries({ queryKey: ["surveys"] });
     },
     onError: (error: AxiosError<ApiErrorResponse>) => {
       toast.error(error.response?.data?.message || "Failed to submit answer");
@@ -886,7 +899,7 @@ export function useAddChoice() {
     },
     onSuccess: (data) => {
       toast.success(data.message || "Choice added successfully");
-      queryClient.invalidateQueries({ queryKey: surveyQueryKeys.all });
+      queryClient.invalidateQueries({ queryKey: ["surveys"] });
     },
     onError: (error: AxiosError<ApiErrorResponse>) => {
       toast.error(error.response?.data?.message || "Failed to add choice");
@@ -917,23 +930,28 @@ export function useRemoveChoice() {
       order: string;
     }) => {
       const token = getCookie("token");
-      const response = await axios.delete(
-        `${process.env.NEXT_PUBLIC_API}/survey-entry/${surveyEntryId}/remove-choice`,
+
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_API}/survey-entry/${surveyEntryId}/remove-choice?order=${order}`,
+        "", // 👈 important: send empty string body (like curl -d '')
         {
-          headers: { Authorization: `Bearer ${token}` },
-          params: { order }
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         }
       );
+
       return response.data;
     },
     onSuccess: (data) => {
       toast.success(data.message || "Choice removed successfully");
-      queryClient.invalidateQueries({ queryKey: surveyQueryKeys.all });
+      queryClient.invalidateQueries({ queryKey: ["surveys"] });
     },
     onError: (error: AxiosError<ApiErrorResponse>) => {
       toast.error(error.response?.data?.message || "Failed to remove choice");
     },
   });
+  
 
   return {
     removeChoice: removeChoiceMutation.mutate,
@@ -943,6 +961,7 @@ export function useRemoveChoice() {
     error: removeChoiceMutation.error,
   };
 }
+
 
 /**
  * Hook for assigning a survey to a session
@@ -964,7 +983,7 @@ export function useAssignSurveyToSession() {
     },
     onSuccess: (data) => {
       toast.success(data.message || "Survey assigned to session successfully");
-      queryClient.invalidateQueries({ queryKey: surveyQueryKeys.all });
+      queryClient.invalidateQueries({ queryKey: ["surveys"] });
     },
     onError: (error: AxiosError<ApiErrorResponse>) => {
       toast.error(error.response?.data?.message || "Failed to assign survey to session");
@@ -979,6 +998,8 @@ export function useAssignSurveyToSession() {
     error: assignSurveyMutation.error,
   };
 }
+
+
 
 // utility exports re-exported above
 

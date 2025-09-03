@@ -43,9 +43,16 @@ export function ChoiceDeleteDialog({
           <AlertDialogAction
             onClick={onConfirm}
             disabled={isDeleting}
-            className="bg-red-600 hover:bg-red-700 focus:ring-red-600 text-white"
+            className="bg-red-600 hover:bg-red-700 focus:ring-red-600 text-white disabled:opacity-50"
           >
-            {isDeleting ? "Removing..." : "Remove Choice"}
+            {isDeleting ? (
+              <div className="flex items-center gap-2">
+                <div className="animate-spin rounded-full h-3 w-3 border-b border-white"></div>
+                <span>Removing...</span>
+              </div>
+            ) : (
+              "Remove Choice"
+            )}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

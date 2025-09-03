@@ -17,6 +17,7 @@ interface SingleQuestionEditorProps {
   isFirstInSection?: boolean
   isEditMode?: boolean
   surveyEntryId?: string // Required when in edit mode for immediate choice add/remove operations
+  onRefreshSurveyData?: () => void // For refreshing data after API operations
 }
 
 export function SingleQuestionEditor({ 
@@ -24,7 +25,8 @@ export function SingleQuestionEditor({
   onUpdateQuestion, 
   isFirstInSection = false, 
   isEditMode = false, 
-  surveyEntryId
+  surveyEntryId,
+  onRefreshSurveyData
 }: SingleQuestionEditorProps) {
   // API hooks for immediate choice add/remove operations only
   const { addChoice, isLoading: isAddingChoice } = useAddChoice()
@@ -121,7 +123,8 @@ export function SingleQuestionEditor({
           setShowAddChoiceInput(false)
           setNewChoiceText("")
           setNewChoiceImageFile(undefined)
-          // Survey data will auto-refresh via React Query invalidation
+          // Refresh survey data to update UI
+          onRefreshSurveyData?.()
         },
         onError: () => {
           // Keep input open on error so user can retry
@@ -174,7 +177,8 @@ export function SingleQuestionEditor({
         onSuccess: () => {
           // Only close dialog and reset state on success
           setDeleteDialog({ isOpen: false, choiceIndex: -1, choiceText: "", choiceOrder: "" })
-          // Survey data will auto-refresh via React Query invalidation
+          // Refresh survey data to update UI
+          onRefreshSurveyData?.()
         },
         onError: () => {
           // Keep dialog open on error so user can retry
@@ -330,18 +334,22 @@ export function SingleQuestionEditor({
                     variant="ghost"
                     size="sm"
                     onClick={() => handleRemoveChoiceClick(index)}
-                    disabled={isRemovingChoice || (isEditMode && !surveyEntryId)}
+                    disabled={isRemovingChoice}
                     className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                    title={isEditMode && !surveyEntryId ? "Save question first to modify choices" : "Remove this choice"}
+                    title="Remove this choice"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    {isRemovingChoice ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b border-red-500"></div>
+                    ) : (
+                      <Trash2 className="h-4 w-4" />
+                    )}
                   </Button>
                 )}
               </div>
             ))}
             
-            {/* Add choice input area - only for edit mode */}
-            {isEditMode && showAddChoiceInput ? (
+            {/* Add choice input area - only for existing questions in edit mode */}
+            {isEditMode && surveyEntryId && showAddChoiceInput ? (
               <div className="space-y-2 p-3 border-2 border-dashed border-blue-300 rounded-lg bg-blue-50">
                 <div className="flex items-center gap-2">
                   <Input
@@ -397,9 +405,16 @@ export function SingleQuestionEditor({
                       size="sm"
                       onClick={handleSubmitNewChoice}
                       disabled={(!newChoiceText.trim() && !newChoiceImageFile) || isAddingChoice}
-                      className="bg-blue-600 text-white hover:bg-blue-700"
+                      className="bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
                     >
-                      {isAddingChoice ? "Adding..." : <Send className="h-4 w-4" />}
+                      {isAddingChoice ? (
+                        <div className="flex items-center gap-2">
+                          <div className="animate-spin rounded-full h-3 w-3 border-b border-white"></div>
+                          <span>Adding...</span>
+                        </div>
+                      ) : (
+                        <Send className="h-4 w-4" />
+                      )}
                     </Button>
                     <Button
                       variant="ghost"
@@ -417,12 +432,11 @@ export function SingleQuestionEditor({
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={isEditMode ? handleShowAddChoiceInput : handleAddChoiceDirectly}
-                disabled={isEditMode && !surveyEntryId}
-                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={isEditMode && surveyEntryId ? handleShowAddChoiceInput : handleAddChoiceDirectly}
+                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
               >
                 <Plus className="h-4 w-4 mr-2" />
-                {isEditMode && !surveyEntryId ? "Save question first" : "Add Option"}
+                Add Option
               </Button>
             )}
           </div>

@@ -29,9 +29,13 @@ interface CreateSurveyFormProps {
       newSections: CreateSurveySection[]
       newQuestionsPerSection: { sectionIndex: number; sectionId?: string; newQuestions: CreateSurveyEntry[] }[]
       // new fields for update tracking
-      updatedQuestions?: { sectionIndex: number; questionIndex: number; questionId: string; updates: {
-        question: string; questionType: QuestionType; isRequired: boolean; choices: { choice: string; choiceImage?: string; }[]; allowOtherAnswer: boolean; rows: string[]; 
-      } }[]
+      updatedQuestions?: { 
+        sectionIndex: number; 
+        questionIndex: number; 
+        questionId: string; 
+        updates: Partial<UpdateSurveyEntryData>;
+        changeType: string;
+      }[]
       updatedSectionTitles?: { sectionIndex: number; sectionId: string; title: string }[]
     }
   }) => void
@@ -46,6 +50,7 @@ interface CreateSurveyFormProps {
   }
   onDeleteQuestion?: (questionId: string, onSuccess?: () => void) => void
   onDeleteSection?: (sectionId: string) => void
+  onRefreshSurveyData?: () => void
 }
 
 export function CreateSurveyForm({
@@ -58,7 +63,8 @@ export function CreateSurveyForm({
   initialSurveyDescription = "",
   focusSection,
   onDeleteQuestion,
-  onDeleteSection
+  onDeleteSection,
+  onRefreshSurveyData
 }: CreateSurveyFormProps) {
   const isEditMode = !!editingSurveyId
   
@@ -126,9 +132,25 @@ export function CreateSurveyForm({
     }
   }, [sections, isEditMode, existingSectionsData?.sections, originalQuestionCounts]);
 
-  // Load existing sections when data is available
+  // Track the last loaded data to detect changes
+  const [lastLoadedDataHash, setLastLoadedDataHash] = useState<string>("")
+
+  // Load existing sections when data is available or updated
   useEffect(() => {
-    if (isEditMode && existingSectionsData?.sections && !sectionsLoaded) {
+    if (isEditMode && existingSectionsData?.sections) {
+      // Create a simple hash of the data to detect changes
+      const dataHash = JSON.stringify(existingSectionsData.sections.map(s => ({
+        id: s.id,
+        title: s.title,
+        questions: s.questions.map(q => ({
+          id: q.id,
+          question: q.question,
+          choices: q.choices
+        }))
+      })))
+      
+      // Only update if this is the first load or if the data has actually changed
+      if (!sectionsLoaded || (sectionsLoaded && dataHash !== lastLoadedDataHash)) {
       // Convert existing sections to CreateSurveySection format
       const convertedSections: CreateSurveySection[] = existingSectionsData.sections.map(section => ({
         title: section.title,
@@ -155,7 +177,11 @@ export function CreateSurveyForm({
       // Track original counts for change detection BEFORE adding focus section items
       setOriginalSectionsCount(convertedSections.length)
       setOriginalQuestionCounts(convertedSections.map(section => section.surveyEntries.length))
-      setOriginalSectionsSnapshot(convertedSections.map(s => ({ title: s.title, surveyEntries: s.surveyEntries.map(e => ({...e})) })))
+      setOriginalSectionsSnapshot(convertedSections.map(s => ({ 
+        title: s.title, 
+        description: s.description,
+        surveyEntries: s.surveyEntries.map(e => ({...e})) 
+      })))
 
       // Handle focus section logic AFTER tracking original counts
       if (focusSection?.action === 'add-question' && focusSection.sectionId) {
@@ -207,10 +233,12 @@ export function CreateSurveyForm({
         setEditMode('question') // Switch to question editing mode
       }
 
-      setSections(convertedSections)
-      setSectionsLoaded(true)
+        setSections(convertedSections)
+        setSectionsLoaded(true)
+        setLastLoadedDataHash(dataHash)
+      }
     }
-  }, [existingSectionsData, isEditMode, sectionsLoaded, focusSection, getNextQuestionNumber])
+  }, [existingSectionsData, isEditMode, sectionsLoaded, focusSection, getNextQuestionNumber, lastLoadedDataHash])
 
   // Hook for adding sections to existing surveys
   const { isLoading: isAddingSection } = useAddSectionToSurvey()
@@ -361,7 +389,13 @@ export function CreateSurveyForm({
   const editChanges = useMemo(() => {
     if (!isEditMode || !existingSectionsData?.sections) return null
     const updatedSectionTitles: { sectionIndex: number; sectionId: string; title: string; description?: string }[] = []
-    const updatedQuestions: { sectionIndex: number; questionIndex: number; questionId: string; updates: { question: string; questionType: QuestionType; isRequired: boolean; choices: { choice: string; choiceImage?: string; }[]; allowOtherAnswer: boolean; rows: string[] } }[] = []
+    const updatedQuestions: { 
+      sectionIndex: number; 
+      questionIndex: number; 
+      questionId: string; 
+      updates: Partial<UpdateSurveyEntryData>;
+      changeType: string;
+    }[] = []
 
     // Existing sections only
     for (let i = 0; i < Math.min(originalSectionsCount, sections.length); i++) {
@@ -371,6 +405,7 @@ export function CreateSurveyForm({
       // Section title or description change
       const titleChanged = current?.title !== original?.title
       const descriptionChanged = current?.description !== original?.description
+      
       if ((titleChanged || descriptionChanged) && existingSection?.id) {
         updatedSectionTitles.push({ 
           sectionIndex: i, 
@@ -386,42 +421,67 @@ export function CreateSurveyForm({
         const origQ = original.surveyEntries[q]
         const existingQ = existingSection?.questions[q]
         if (!existingQ?.id) continue
-        const currChoicesStr = (currQ.choices || []).map((c) => ((c as unknown as { choice?: string }).choice ?? (c as unknown as string) ?? ""))
-        const origChoicesStr = (origQ as unknown as { choices?: (string | { choice: string })[] }).choices
-          ? ((origQ as unknown as { choices: (string | { choice: string })[] }).choices).map((c) => (typeof c === 'string' ? c : c.choice))
-          : []
-        const changed = (
-          currQ.question !== origQ.question ||
-          currQ.questionType !== origQ.questionType ||
-          currQ.required !== origQ.required ||
-          JSON.stringify(currChoicesStr) !== JSON.stringify(origChoicesStr) ||
-          JSON.stringify(currQ.rows) !== JSON.stringify(origQ.rows)
-        )
-        if (changed) {
+        // Detect all changes for this question and combine into single update
+        const questionChanges: Partial<UpdateSurveyEntryData> = {}
+        const changeTypes: string[] = []
+        let hasChanges = false
+        
+        // Check question text change
+        if (currQ.question !== origQ.question) {
+          questionChanges.question = currQ.question
+          changeTypes.push('text')
+          hasChanges = true
+        }
+        
+        // Check question image change
+        if (currQ.questionImage !== origQ.questionImage || currQ.questionImageFile !== origQ.questionImageFile) {
+          questionChanges.questionImage = currQ.questionImage
+          questionChanges.questionImageFile = currQ.questionImageFile
+          changeTypes.push('image')
+          hasChanges = true
+        }
+        
+        // Check required field change
+        if (currQ.required !== origQ.required) {
+          questionChanges.isRequired = currQ.required
+          changeTypes.push('required')
+          hasChanges = true
+        }
+        
+        // Check question type change (send type + choices since old choices get cleared)
+        if (currQ.questionType !== origQ.questionType) {
+          questionChanges.questionType = currQ.questionType as QuestionType
+          questionChanges.choices = (currQ.choices || []).map((c) => ({
+            choice: (c as unknown as { choice?: string }).choice ?? (c as unknown as string) ?? "",
+            choiceImage: (c as unknown as { choiceImage?: string }).choiceImage,
+            choiceImageFile: (c as unknown as { choiceImageFile?: File }).choiceImageFile
+          }))
+          changeTypes.push('type')
+          hasChanges = true
+        }
+        
+        // Check rows change (for GRID questions)
+        if (JSON.stringify(currQ.rows) !== JSON.stringify(origQ.rows)) {
+          questionChanges.rows = currQ.rows
+          changeTypes.push('rows')
+          hasChanges = true
+        }
+        
+        // Check allow other answer change
+        if (currQ.allowTextAnswer !== origQ.allowTextAnswer) {
+          questionChanges.allowOtherAnswer = currQ.allowTextAnswer ?? false
+          changeTypes.push('allowOther')
+          hasChanges = true
+        }
+        
+        // If any changes detected, create single combined update
+        if (hasChanges) {
           updatedQuestions.push({
             sectionIndex: i,
             questionIndex: q,
             questionId: existingQ.id,
-            updates: {
-              question: currQ.question,
-              questionType: currQ.questionType as QuestionType,
-              isRequired: currQ.required,
-              choices: (currQ.choices || []).map((c) => ({
-                choice: (c as unknown as { choice?: string }).choice ?? (c as unknown as string) ?? "",
-                choiceImage: (c as unknown as { choiceImage?: string }).choiceImage,
-                choiceImageFile: (c as unknown as { choiceImageFile?: File }).choiceImageFile
-              })),
-              allowOtherAnswer: currQ.allowTextAnswer ?? false,
-              rows: currQ.rows,
-              // Add missing fields for complete PATCH support - preserve original question number
-              questionNumber: existingQ.questionNumber,
-              questionImage: currQ.questionImage,
-              questionImageFile: currQ.questionImageFile,
-              // Preserve original follow-up fields for existing questions
-              parentQuestionNumber: existingQ.parentQuestionNumber,
-              parentChoice: existingQ.parentChoice,
-              followUp: existingQ.followUp ?? false
-            } as UpdateSurveyEntryData,
+            updates: questionChanges,
+            changeType: changeTypes.join('+') // Combined change types like "text+image+required"
           })
         }
       }
@@ -665,7 +725,7 @@ export function CreateSurveyForm({
                           ? existingSectionsData?.sections[selectedSection]?.questions[selectedQuestion]?.id
                           : undefined
                       }
-
+                      onRefreshSurveyData={onRefreshSurveyData}
                     />
                   )
                 )}

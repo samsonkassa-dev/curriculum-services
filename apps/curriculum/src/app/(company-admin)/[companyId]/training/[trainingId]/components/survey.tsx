@@ -134,7 +134,13 @@ export function SurveyComponent({ trainingId }: SurveyComponentProps) {
     editMetadata?: {
       newSections: CreateSurveySection[]
       newQuestionsPerSection: { sectionIndex: number; sectionId?: string; newQuestions: CreateSurveyEntry[] }[]
-      updatedQuestions?: { sectionIndex: number; questionIndex: number; questionId: string; updates: UpdateSurveyEntryData }[]
+      updatedQuestions?: { 
+        sectionIndex: number; 
+        questionIndex: number; 
+        questionId: string; 
+        updates: Partial<UpdateSurveyEntryData>;
+        changeType: string;
+      }[]
       updatedSectionTitles?: { sectionIndex: number; sectionId: string; title: string }[]
     }
   }) => {
@@ -143,9 +149,8 @@ export function SurveyComponent({ trainingId }: SurveyComponentProps) {
     const { editMetadata } = data;
     
     if (!editMetadata) {
-      // No changes detected, just refresh and return to view
-      refetchSurveyDetails();
-      handleBackToView();
+      // No changes detected, stay in builder
+      toast.message('No changes to save');
       return;
     }
 
@@ -157,7 +162,7 @@ export function SurveyComponent({ trainingId }: SurveyComponentProps) {
     const checkCompletion = () => {
       completedOperations++;
       if (completedOperations === pendingOperations) {
-        // All operations completed
+        // All operations completed - stay in builder
         if (failureCount === 0) {
           toast.success(`All changes saved (${successCount})`)
         } else if (successCount > 0) {
@@ -165,8 +170,8 @@ export function SurveyComponent({ trainingId }: SurveyComponentProps) {
         } else {
           toast.error(`All ${failureCount} change(s) failed`)
         }
-        refetchSurveyDetails();
-        handleBackToView();
+        // React Query invalidation will handle the refetch automatically
+        // Stay in builder - no redirect
         setFocusSection(undefined);
       }
     };
@@ -245,20 +250,28 @@ export function SurveyComponent({ trainingId }: SurveyComponentProps) {
 
     // Handle updated questions
     if (editMetadata.updatedQuestions && editMetadata.updatedQuestions.length > 0) {
-      editMetadata.updatedQuestions.forEach(({ questionId, updates }) => {
+      editMetadata.updatedQuestions.forEach(({ questionId, updates, changeType }) => {
         pendingOperations++;
+        console.log(`PATCH question ${questionId} - ${changeType}:`, updates);
         updateSurveyEntry({ surveyEntryId: questionId, questionData: updates }, {
-          onSuccess: () => { successCount++; checkCompletion() },
-          onError: () => { failureCount++; checkCompletion() }
+          onSuccess: () => { 
+            console.log(`✓ Successfully updated question ${questionId} (${changeType})`);
+            successCount++; 
+            checkCompletion() 
+          },
+          onError: () => { 
+            console.log(`✗ Failed to update question ${questionId} (${changeType})`);
+            failureCount++; 
+            checkCompletion() 
+          }
         })
       })
     }
 
-    // If no operations were queued, just refresh and return
+    // If no operations were queued, stay in builder
     if (pendingOperations === 0) {
       toast.message('No changes to save')
-      refetchSurveyDetails();
-      handleBackToView();
+      // Stay in builder - no redirect
     }
   }
 
@@ -328,7 +341,22 @@ export function SurveyComponent({ trainingId }: SurveyComponentProps) {
 
   // Show loading when fetching survey details
   if ((viewMode === 'view' || viewMode === 'edit') && isLoadingSurveyDetails) {
-    return <Loading />
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <p className="text-gray-600 font-medium">Loading survey details...</p>
+      </div>
+    )
+  }
+
+  // Show loading when fetching survey details for create mode (edit existing survey)
+  if (viewMode === 'create' && currentSurveyId && isLoadingSurveyDetails) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <p className="text-gray-600 font-medium">Loading survey builder...</p>
+      </div>
+    )
   }
 
   // Render different views based on state
@@ -349,7 +377,7 @@ export function SurveyComponent({ trainingId }: SurveyComponentProps) {
           focusSection={focusSection}
           onDeleteQuestion={handleDeleteQuestion}
           onDeleteSection={handleDeleteSection}
-
+          onRefreshSurveyData={refetchSurveyDetails}
         />
       )
     
