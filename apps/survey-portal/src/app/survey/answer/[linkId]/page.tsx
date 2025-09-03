@@ -18,6 +18,7 @@ export default function SurveyAnswerPage() {
     submit,
     submitWithValidation,
     alreadySubmitted,
+    visibleQuestions,
   } = useSurveyAnswer(linkId)
 
   if (validity.isLoading) {
@@ -80,22 +81,42 @@ export default function SurveyAnswerPage() {
       </header>
 
       <div className="space-y-6">
-        {survey.sections.map(section => (
-          <section key={section.id} className="space-y-4">
-            <div className="flex items-center gap-2">
-              <div className="w-1.5 h-5 bg-blue-600 rounded" />
-              <h2 className="text-lg font-semibold">{section.title}</h2>
-            </div>
-            {section.questions.map((q, idx) => (
-              <div key={q.id} className="bg-white border rounded-lg p-5 shadow-sm space-y-4">
-                <div className="flex items-start justify-between gap-4">
-                  <p className="font-medium leading-6">
-                    <span className="text-gray-500 mr-2">Q{idx + 1}.</span>
-                    {q.question}
-                    {q.required && <span className="text-red-500"> *</span>}
-                  </p>
-                  {!q.required && <span className="text-xs text-gray-500">Optional</span>}
-                </div>
+        {survey.sections.map(section => {
+          // Filter visible questions for this section
+          const sectionQuestions = visibleQuestions.filter(q => 
+            section.questions.some(sq => sq.id === q.id)
+          )
+          
+          if (sectionQuestions.length === 0) return null
+          
+          return (
+            <section key={section.id} className="space-y-4">
+              <div className="flex items-center gap-2">
+                <div className="w-1.5 h-5 bg-blue-600 rounded" />
+                <h2 className="text-lg font-semibold">{section.title}</h2>
+              </div>
+              {sectionQuestions.map((q) => (
+                <div key={q.id} className="bg-white border rounded-lg p-5 shadow-sm space-y-4">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <p className="font-medium leading-6">
+                        <span className="text-gray-500 mr-2">Q{q.questionNumber}.</span>
+                        {q.question}
+                        {q.required && <span className="text-red-500"> *</span>}
+                        {q.followUp && <span className="text-blue-600 text-sm ml-2">(Follow-up)</span>}
+                      </p>
+                      {q.questionImageUrl && (
+                        <div className="mt-3">
+                          <img 
+                            src={q.questionImageUrl} 
+                            alt="Question image" 
+                            className="max-w-full h-auto rounded border"
+                          />
+                        </div>
+                      )}
+                    </div>
+                    {!q.required && <span className="text-xs text-gray-500">Optional</span>}
+                  </div>
 
                 {q.questionType === 'TEXT' && (
                   <textarea
@@ -107,15 +128,27 @@ export default function SurveyAnswerPage() {
 
                 {q.questionType === 'RADIO' && (
                   <div className="grid sm:grid-cols-2 gap-2">
-                    {q.choices.map(c => (
-                      <label key={c} className="flex items-center gap-3 p-3 border rounded hover:bg-gray-50 cursor-pointer">
+                    {q.choices.sort((a, b) => a.order.localeCompare(b.order)).map(choice => (
+                      <label key={choice.order} className="flex items-center gap-3 p-3 border rounded hover:bg-gray-50 cursor-pointer">
                         <input
                           type="radio"
                           name={q.id}
                           className="h-5 w-5 accent-blue-600"
-                          onChange={()=>toggleChoice(q.id, c, false)}
+                          checked={answers[q.id]?.selectedChoices?.includes(choice.order)}
+                          onChange={()=>toggleChoice(q.id, choice.order, false)}
                         />
-                        <span className="text-sm">{c}</span>
+                        <div className="flex-1">
+                          <span className="text-sm">{choice.order}. {choice.choiceText}</span>
+                          {choice.choiceImageUrl && (
+                            <div className="mt-2">
+                              <img 
+                                src={choice.choiceImageUrl} 
+                                alt={`Choice ${choice.order} image`} 
+                                className="max-w-full h-auto rounded border"
+                              />
+                            </div>
+                          )}
+                        </div>
                       </label>
                     ))}
                   </div>
@@ -123,15 +156,26 @@ export default function SurveyAnswerPage() {
 
                 {q.questionType === 'CHECKBOX' && (
                   <div className="grid sm:grid-cols-2 gap-2">
-                    {q.choices.map(c => (
-                      <label key={c} className="flex items-center gap-3 p-3 border rounded hover:bg-gray-50 cursor-pointer">
+                    {q.choices.sort((a, b) => a.order.localeCompare(b.order)).map(choice => (
+                      <label key={choice.order} className="flex items-center gap-3 p-3 border rounded hover:bg-gray-50 cursor-pointer">
                         <input
                           type="checkbox"
                           className="h-5 w-5 accent-blue-600"
-                          checked={!!answers[q.id]?.selectedChoices?.includes(c)}
-                          onChange={()=>toggleChoice(q.id, c, true)}
+                          checked={!!answers[q.id]?.selectedChoices?.includes(choice.order)}
+                          onChange={()=>toggleChoice(q.id, choice.order, true)}
                         />
-                        <span className="text-sm">{c}</span>
+                        <div className="flex-1">
+                          <span className="text-sm">{choice.order}. {choice.choiceText}</span>
+                          {choice.choiceImageUrl && (
+                            <div className="mt-2">
+                              <img 
+                                src={choice.choiceImageUrl} 
+                                alt={`Choice ${choice.order} image`} 
+                                className="max-w-full h-auto rounded border"
+                              />
+                            </div>
+                          )}
+                        </div>
                       </label>
                     ))}
                   </div>
@@ -143,20 +187,24 @@ export default function SurveyAnswerPage() {
                       <thead className="bg-gray-50">
                         <tr>
                           <th className="border px-3 py-2 text-left text-sm font-medium text-gray-700">Row</th>
-                          {q.choices.map(c => <th key={c} className="border px-3 py-2 text-sm font-medium text-gray-700">{c}</th>)}
+                          {q.choices.sort((a, b) => a.order.localeCompare(b.order)).map(choice => 
+                            <th key={choice.order} className="border px-3 py-2 text-sm font-medium text-gray-700">
+                              {choice.order}. {choice.choiceText}
+                            </th>
+                          )}
                         </tr>
                       </thead>
                       <tbody>
                         {q.rows.map((r, ri) => (
                           <tr key={r} className={ri % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                             <td className="border px-3 py-2 text-sm text-gray-700">{r}</td>
-                            {q.choices.map(c => (
-                              <td key={c} className="border px-3 py-2 text-center">
+                            {q.choices.sort((a, b) => a.order.localeCompare(b.order)).map(choice => (
+                              <td key={choice.order} className="border px-3 py-2 text-center">
                                 <input
                                   type="radio"
                                   name={`${q.id}-${r}`}
                                   className="h-5 w-5 accent-blue-600"
-                                  onChange={()=>setGrid(q.id, r, c)}
+                                  onChange={()=>setGrid(q.id, r, choice.order)}
                                 />
                               </td>
                             ))}
@@ -170,10 +218,11 @@ export default function SurveyAnswerPage() {
                 {q.required && showErrors && !isAnswered(q) && (
                   <p className="text-sm text-red-600">This question is required.</p>
                 )}
-              </div>
-            ))}
-          </section>
-        ))}
+                </div>
+              ))}
+            </section>
+          )
+        })}
       </div>
 
       <div className="mt-8 flex justify-end">

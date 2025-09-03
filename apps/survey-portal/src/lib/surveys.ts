@@ -18,14 +18,25 @@ export interface LinkValidityResponse {
   message: string
 }
 
+export interface Choice {
+  order: string
+  choiceText: string
+  choiceImageUrl: string | null
+}
+
 export interface SurveyEntryDto {
   id: string
+  questionNumber: number
   question: string
   questionType: QuestionType
-  choices: string[]
+  questionImageUrl: string | null
+  choices: Choice[]
   allowMultipleAnswers: boolean
   allowOtherAnswer: boolean
   rows: string[]
+  parentQuestionNumber: number | null
+  parentChoice: string | null
+  followUp: boolean
   required: boolean
 }
 

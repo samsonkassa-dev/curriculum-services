@@ -24,16 +24,36 @@ export function useSurveyAnswer(linkId: string | undefined) {
   const embeddedSurvey: SurveyDetailDto | undefined = validity.data?.surveyLink?.survey
   const linkMeta = validity.data?.surveyLink
   const allEntries = useMemo(() => (embeddedSurvey?.sections ?? []).flatMap(s => s.questions), [embeddedSurvey])
+  
+  // Filter questions based on follow-up logic
+  const visibleQuestions = useMemo(() => {
+    if (!allEntries.length) return []
+    
+    return allEntries.filter(question => {
+      if (!question.followUp) return true
+      
+      // This is a follow-up question, check if parent answer matches
+      if (!question.parentQuestionNumber || !question.parentChoice) return true
+      
+      const parentQuestion = allEntries.find(q => q.questionNumber === question.parentQuestionNumber)
+      if (!parentQuestion) return true
+      
+      const parentAnswer = answers[parentQuestion.id]
+      if (!parentAnswer?.selectedChoices) return false
+      
+      return parentAnswer.selectedChoices.includes(question.parentChoice)
+    })
+  }, [allEntries, answers])
 
   const setText = (entryId: string, value: string) => setAnswers(p => ({ ...p, [entryId]: { ...(p[entryId]||{}), textAnswer: value } }))
-  const toggleChoice = (entryId: string, choice: string, multiple: boolean) => setAnswers(p => {
+  const toggleChoice = (entryId: string, choiceOrder: string, multiple: boolean) => setAnswers(p => {
     const prev = p[entryId]?.selectedChoices || []
-    const next = multiple ? (prev.includes(choice) ? prev.filter(c=>c!==choice) : [...prev, choice]) : [choice]
+    const next = multiple ? (prev.includes(choiceOrder) ? prev.filter(c=>c!==choiceOrder) : [...prev, choiceOrder]) : [choiceOrder]
     return { ...p, [entryId]: { ...(p[entryId]||{}), selectedChoices: next } }
   })
-  const setGrid = (entryId: string, row: string, col: string) => setAnswers(p => {
+  const setGrid = (entryId: string, row: string, choiceOrder: string) => setAnswers(p => {
     const grid = p[entryId]?.gridAnswers || {}
-    grid[row] = [col]
+    grid[row] = [choiceOrder]
     return { ...p, [entryId]: { ...(p[entryId]||{}), gridAnswers: { ...grid } } }
   })
 
@@ -52,8 +72,8 @@ export function useSurveyAnswer(linkId: string | undefined) {
   }
 
   const canSubmit = useMemo(()=> {
-    if (!allEntries.length) return false
-    for (const q of allEntries) {
+    if (!visibleQuestions.length) return false
+    for (const q of visibleQuestions) {
       const a = answers[q.id]
       if (q.required) {
         if (q.questionType === 'TEXT') {
@@ -72,11 +92,11 @@ export function useSurveyAnswer(linkId: string | undefined) {
       }
     }
     return true
-  }, [answers, allEntries])
+  }, [answers, visibleQuestions])
 
   const submit = useMutation({
     mutationFn: () => submitSurveyAnswers(linkId as string, {
-      surveyAnswers: allEntries.map(q => ({
+      surveyAnswers: visibleQuestions.map(q => ({
         surveyEntryId: q.id,
         selectedChoices: answers[q.id]?.selectedChoices,
         textAnswer: answers[q.id]?.textAnswer,
@@ -134,6 +154,8 @@ export function useSurveyAnswer(linkId: string | undefined) {
     submit,
     submitWithValidation,
     alreadySubmitted,
+    allEntries,
+    visibleQuestions,
   }
 }
 
