@@ -73,12 +73,7 @@ export function SingleQuestionEditor({
       // Also clear question image when switching type
       questionImageFile: undefined,
       questionImage: undefined,
-      // Clear follow-up settings when switching to GRID
-      ...(newType === 'GRID' && {
-        followUp: false,
-        parentQuestionNumber: undefined,
-        parentChoice: undefined
-      })
+      // GRID questions can be follow-ups, so don't clear follow-up settings when switching to GRID
     })
   }
 
@@ -491,8 +486,8 @@ export function SingleQuestionEditor({
         </Label>
       </div>
 
-      {/* Follow-up configuration (hidden for first question in a section and GRID questions) */}
-      {!isFirstInSection && question.questionType !== 'GRID' && (
+      {/* Follow-up configuration (hidden for first question in a section only) */}
+      {!isFirstInSection && (
         <div className="space-y-2">
           <div className="flex items-center space-x-2">
             <Checkbox

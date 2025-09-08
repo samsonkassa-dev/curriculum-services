@@ -81,7 +81,7 @@ export function CreateSurveyForm({
       surveyEntries: [
         {
           question: "",
-          questionImage: "",
+          questionImage: undefined,
           questionType: "RADIO",
           choices: [{ choice: "" }, { choice: "" }],
           allowTextAnswer: false,
@@ -157,7 +157,7 @@ export function CreateSurveyForm({
         description: section.description || "",
         surveyEntries: section.questions.map(question => ({
           question: question.question,
-          questionImage: question.questionImageUrl || "",
+          questionImage: question.questionImageUrl || undefined,
           questionType: question.questionType,
           choices: (question.choices || []).map(c => ({ 
             choice: typeof c === 'string' ? c : (c?.choiceText || ''),
@@ -190,7 +190,7 @@ export function CreateSurveyForm({
         if (sectionIndex !== -1) {
           convertedSections[sectionIndex].surveyEntries.push({
             question: "",
-            questionImage: "",
+            questionImage: undefined,
             questionType: "TEXT",
             choices: [],
             allowTextAnswer: false,
@@ -218,7 +218,7 @@ export function CreateSurveyForm({
           description: "",
           surveyEntries: [{
             question: "",
-            questionImage: "",
+            questionImage: undefined,
             questionType: "TEXT",
             choices: [],
             allowTextAnswer: false,
@@ -250,7 +250,7 @@ export function CreateSurveyForm({
       description: "",
       surveyEntries: [{
         question: "",
-        questionImage: "",
+        questionImage: undefined,
         questionType: "RADIO",
         choices: [{ choice: "" }, { choice: "" }],
         allowTextAnswer: false,
@@ -301,7 +301,7 @@ export function CreateSurveyForm({
               ...section, 
               surveyEntries: [...section.surveyEntries, {
                 question: "",
-                questionImage: "",
+                questionImage: undefined,
                 questionType: "RADIO",
                 choices: [{ choice: "" }, { choice: "" }],
                 allowTextAnswer: false,
