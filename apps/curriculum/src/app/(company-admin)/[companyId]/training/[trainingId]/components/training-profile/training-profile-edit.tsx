@@ -424,7 +424,7 @@ export function TrainingProfileEdit({ trainingId, initialData, onSave, onCancel 
             </div>
           </div>
         )
-      case "Professional Background":
+      case "Competency Outcomes":
         return (
           <div className="space-y-1 ">
             <h3 className="text-lg font-medium">Competency Outcomes</h3>
