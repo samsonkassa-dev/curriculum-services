@@ -36,6 +36,7 @@ export interface ModuleLessonsProps {
   lessons?: APILesson[]
   canEdit: boolean
   onEditLesson: (lesson: LessonFormData, module: Module, e: React.MouseEvent) => void
+  onDeleteLesson?: (lesson: LessonFormData, moduleId: string) => void
 }
 
 export interface SubModulesProps {

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useCallback, useEffect, useRef } from "react"
-import { ChevronRight, ChevronDown, MoreVertical, Ban } from "lucide-react"
+import { ChevronRight, ChevronDown, MoreVertical, Ban, Edit, Trash2 } from "lucide-react"
 import {
   Accordion,
   AccordionContent,
@@ -32,9 +32,8 @@ import { useParams } from "next/navigation"
 import { ModuleAddModal } from "./moduleAddModal"
 import { LessonAddModal } from "./lessonAddModal"
 import { useCreateModule, useModules, useUpdateModule, useDeleteModule } from "@/lib/hooks/useModule"
-import { useGetLessons, useUpdateLesson, Lesson as APILesson, InstructionalMethod, TechnologyIntegration } from "@/lib/hooks/useLesson"
+import { useGetLessons, useDeleteLesson, Lesson as APILesson, InstructionalMethod, TechnologyIntegration } from "@/lib/hooks/useLesson"
 import { useQueryClient } from "@tanstack/react-query"
-import { useUserRole } from "@/lib/hooks/useUserRole"
 
 // Type for the form data
 interface LessonFormData {
@@ -78,7 +77,9 @@ export function ModuleView({
   const queryClient = useQueryClient()
   const [isEditingSubModule, setIsEditingSubModule] = useState(false)
   const [moduleToDelete, setModuleToDelete] = useState<Module | null>(null);
+  const [lessonToDelete, setLessonToDelete] = useState<{ lesson: LessonFormData; moduleId: string } | null>(null);
   const { mutateAsync: deleteModule, isPending: isDeleting } = useDeleteModule();
+  const { mutateAsync: deleteLesson, isPending: isDeletingLesson } = useDeleteLesson();
   
   // permission check
   const effectiveCanEdit = canEdit
@@ -238,6 +239,20 @@ export function ModuleView({
     }
   };
 
+  const handleDeleteLesson = async () => {
+    if (!lessonToDelete) return;
+    
+    try {
+      await deleteLesson({
+        lessonId: lessonToDelete.lesson.id!,
+        moduleId: lessonToDelete.moduleId,
+      });
+      setLessonToDelete(null);
+    } catch (error) {
+      console.error("Failed to delete lesson:", error);
+    }
+  };
+
   const renderHeader = useCallback((title: string, module: Module) => (
     <div className="bg-white data-[state=open]:bg-[#f7fbff] rounded-lg m-6 flex items-center justify-between hover:no-underline group">
       <div 
@@ -291,11 +306,6 @@ export function ModuleView({
   ), [onEditClick, router, params.companyId, params.trainingId, effectiveCanEdit]);
 
   const renderLessons = useCallback((moduleId: string, isSubModule: boolean = false) => {
-    // Log for debugging
-    // console.log('Rendering lessons for moduleId:', moduleId, 'isSubModule:', isSubModule)
-    // console.log('Main module lessons:', mainModuleLessons)
-    // console.log('Sub module lessons:', subModuleLessons)
-
     const moduleLessons = isSubModule ? subModuleLessons : mainModuleLessons
     const isLoading = isSubModule ? isSubModuleLessonsLoading : isMainModuleLessonsLoading
     
@@ -337,31 +347,40 @@ export function ModuleView({
       return (
         <div
           key={lesson.id}
-          className="flex items-center justify-between p-4 bg-gray-50 rounded-md cursor-pointer hover:bg-gray-100"
-          onClick={(e) => handleEditLesson(transformedLesson, { id: moduleId } as Module, e)}
+          className="flex items-center justify-between p-4 bg-gray-50 rounded-md hover:bg-gray-100"
         >
-          <div className="flex flex-col">
+          <div 
+            className="flex flex-col flex-1 cursor-pointer"
+            onClick={(e) => handleEditLesson(transformedLesson, { id: moduleId } as Module, e)}
+          >
             <span className="font-medium">{lesson.name}</span>
             <span className="text-sm text-gray-500">{lesson.objective}</span>
           </div>
           {effectiveCanEdit && (
-            <DropdownMenu modal={false}>
-              <DropdownMenuTrigger asChild>
-                <div
-                  role="button"
-                  tabIndex={0}
-                  className="hover:bg-gray-100 h-8 w-8 p-0 rounded-md flex items-center justify-center cursor-pointer"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <MoreVertical className="h-4 w-4" />
-                </div>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={(e) => handleEditLesson(transformedLesson, { id: moduleId } as Module, e)}>
-                  Edit
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleEditLesson(transformedLesson, { id: moduleId } as Module, e);
+                }}
+                className="h-8 w-8 p-0 text-gray-600 hover:text-blue-600 hover:bg-blue-50"
+              >
+                <Edit className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setLessonToDelete({ lesson: transformedLesson, moduleId });
+                }}
+                className="h-8 w-8 p-0 text-gray-600 hover:text-red-600 hover:bg-red-50"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </div>
           )}
         </div>
       )
@@ -500,7 +519,7 @@ export function ModuleView({
           onValueChange={handleAccordionChange}
           value={expandedModules[0] || ""}
         >
-          {modules.map((module, index) => (
+          {modules.map((module) => (
             <AccordionItem
               key={module.id}
               value={module.id}
@@ -655,6 +674,27 @@ export function ModuleView({
               disabled={isDeleting}
             >
               {isDeleting ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!lessonToDelete} onOpenChange={() => setLessonToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you want to delete this lesson?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the lesson &ldquo;{lessonToDelete?.lesson.name}&rdquo; and all its associated data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700"
+              onClick={handleDeleteLesson}
+              disabled={isDeletingLesson}
+            >
+              {isDeletingLesson ? "Deleting..." : "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

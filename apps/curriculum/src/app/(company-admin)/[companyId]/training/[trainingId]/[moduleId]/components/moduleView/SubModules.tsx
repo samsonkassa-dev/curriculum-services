@@ -13,9 +13,11 @@ export function SubModules({
   onSubModuleClick,
   onLessonClick,
   onSubModuleExpand,
-  onEditLesson
+  onEditLesson,
+  onDeleteLesson
 }: SubModulesProps & {
   onEditLesson: (lesson: LessonFormData, module: Module, e: React.MouseEvent) => void
+  onDeleteLesson?: (lesson: LessonFormData, moduleId: string) => void
 }) {
   if (!moduleDetails || moduleDetails.module.id !== moduleId) return null
 
@@ -58,6 +60,7 @@ export function SubModules({
               isSubModule={true}
               canEdit={canEdit}
               onEditLesson={onEditLesson}
+              onDeleteLesson={onDeleteLesson}
             />
           </div>
         )}

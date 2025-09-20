@@ -1,10 +1,5 @@
-import { Ban, MoreVertical } from "lucide-react"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+import { Ban, Edit, Trash2 } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import { Module } from "@/types/module"
 import { ModuleLessonsProps, LessonFormData } from "./types"
 import { InstructionalMethod, TechnologyIntegration } from "@/lib/hooks/useLesson"
@@ -14,7 +9,8 @@ export function ModuleLessons({
   isSubModule = false,
   lessons = [],
   canEdit,
-  onEditLesson
+  onEditLesson,
+  onDeleteLesson
 }: ModuleLessonsProps) {
   if (lessons.length === 0) {
     return (
@@ -44,31 +40,42 @@ export function ModuleLessons({
         return (
           <div
             key={lesson.id}
-            className="flex items-center justify-between p-4 bg-gray-50 rounded-md cursor-pointer hover:bg-gray-100"
-            onClick={(e) => onEditLesson(transformedLesson, { id: moduleId } as Module, e)}
+            className="flex items-center justify-between p-4 bg-gray-50 rounded-md hover:bg-gray-100"
           >
-            <div className="flex flex-col">
+            <div 
+              className="flex flex-col flex-1 cursor-pointer"
+              onClick={(e) => onEditLesson(transformedLesson, { id: moduleId } as Module, e)}
+            >
               <span className="font-medium">{lesson.name}</span>
               <span className="text-sm text-gray-500">{lesson.objective}</span>
             </div>
             {canEdit && (
-              <DropdownMenu modal={false}>
-                <DropdownMenuTrigger asChild>
-                  <div
-                    role="button"
-                    tabIndex={0}
-                    className="hover:bg-gray-100 h-8 w-8 p-0 rounded-md flex items-center justify-center cursor-pointer"
-                    onClick={(e) => e.stopPropagation()}
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEditLesson(transformedLesson, { id: moduleId } as Module, e);
+                  }}
+                  className="h-8 w-8 p-0 text-gray-600 hover:text-blue-600 hover:bg-blue-50"
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+                {onDeleteLesson && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onDeleteLesson(transformedLesson, moduleId);
+                    }}
+                    className="h-8 w-8 p-0 text-gray-600 hover:text-red-600 hover:bg-red-50"
                   >
-                    <MoreVertical className="h-4 w-4" />
-                  </div>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={(e) => onEditLesson(transformedLesson, { id: moduleId } as Module, e)}>
-                    Edit
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                )}
+              </div>
             )}
           </div>
         )

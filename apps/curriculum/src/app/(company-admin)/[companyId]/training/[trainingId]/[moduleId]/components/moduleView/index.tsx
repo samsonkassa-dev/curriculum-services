@@ -9,10 +9,20 @@ import {
   AccordionItem,
 } from "@/components/ui/accordion"
 import { Button } from "@/components/ui/button"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 import { ModuleAddModal } from "../moduleAddModal"
 import { LessonAddModal } from "../lessonAddModal"
 import { useCreateModule, useModules } from "@/lib/hooks/useModule"
-import { useGetLessons } from "@/lib/hooks/useLesson"
+import { useGetLessons, useDeleteLesson } from "@/lib/hooks/useLesson"
 import { ModuleHeader } from "./ModuleHeader"
 import { ModuleLessons } from "./ModuleLessons"
 import { SubModules } from "./SubModules"
@@ -34,7 +44,9 @@ export function ModuleView({
   const [selectedLesson, setSelectedLesson] = useState<LessonFormData | null>(null)
   const [expandedModules, setExpandedModules] = useState<string[]>([])
   const [expandedSubModules, setExpandedSubModules] = useState<string[]>([])
+  const [lessonToDelete, setLessonToDelete] = useState<{ lesson: LessonFormData; moduleId: string } | null>(null);
   const { mutateAsync: createModule, isPending: isCreating } = useCreateModule()
+  const { mutateAsync: deleteLesson, isPending: isDeletingLesson } = useDeleteLesson()
 
   // Fetch module details when accordion is opened
   const { data: moduleDetails } = useModules(
@@ -46,9 +58,7 @@ export function ModuleView({
     expandedModules.length > 0 ? expandedModules[0] : ""
   )
 
-  // Fetch lessons for expanded sub-modules
-  const expandedSubModuleId = expandedSubModules[0]
-  const { data: subModuleLessons } = useGetLessons(expandedSubModuleId || "")
+  // Fetch lessons for expanded sub-modules is handled per sub-module
 
   const handleAccordionChange = (value: string) => {
     setExpandedModules(value ? [value] : [])
@@ -108,6 +118,24 @@ export function ModuleView({
       console.error("Failed to create sub-module:", error)
     }
   }
+
+  const handleDeleteLesson = useCallback((lesson: LessonFormData, moduleId: string) => {
+    setLessonToDelete({ lesson, moduleId })
+  }, [])
+
+  const confirmDeleteLesson = async () => {
+    if (!lessonToDelete) return;
+    
+    try {
+      await deleteLesson({
+        lessonId: lessonToDelete.lesson.id!,
+        moduleId: lessonToDelete.moduleId,
+      });
+      setLessonToDelete(null);
+    } catch (error) {
+      console.error("Failed to delete lesson:", error);
+    }
+  };
 
   if (error) {
     return <div className="text-red-500">Error loading modules: {error.message}</div>
@@ -194,6 +222,7 @@ export function ModuleView({
                     lessons={mainModuleLessons}
                     canEdit={canEdit}
                     onEditLesson={handleEditLesson}
+                    onDeleteLesson={handleDeleteLesson}
                   />
 
                   {/* Sub-modules section */}
@@ -206,6 +235,7 @@ export function ModuleView({
                     onLessonClick={handleLessonClick}
                     onSubModuleExpand={handleSubModuleExpand}
                     onEditLesson={handleEditLesson}
+                    onDeleteLesson={handleDeleteLesson}
                   />
                 </div>
               </AccordionContent>
@@ -254,6 +284,27 @@ export function ModuleView({
           isEdit={!!selectedLesson}
         />
       )}
+
+      <AlertDialog open={!!lessonToDelete} onOpenChange={() => setLessonToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you want to delete this lesson?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the lesson &ldquo;{lessonToDelete?.lesson.name}&rdquo; and all its associated data.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-red-600 hover:bg-red-700 text-white"
+              onClick={confirmDeleteLesson}
+              disabled={isDeletingLesson}
+            >
+              {isDeletingLesson ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 } 

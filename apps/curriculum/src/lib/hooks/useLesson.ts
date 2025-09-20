@@ -130,4 +130,33 @@ export function useUpdateLesson() {
       })
     }
   })
+}
+
+export function useDeleteLesson() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ lessonId }: { lessonId: string; moduleId: string }) => {
+      const token = getCookie('token')
+      const response = await axios.delete(
+        `${process.env.NEXT_PUBLIC_API}/lesson/${lessonId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      )
+      return response.data
+    },
+    onSuccess: (_, variables) => {
+      // Invalidate lessons for the module
+      queryClient.invalidateQueries({ 
+        queryKey: ['lessons', variables.moduleId] 
+      })
+      toast.success('Lesson deleted successfully')
+    },
+    onError: (error: AxiosError<ErrorResponse>) => {
+      toast.error("Error", { 
+        description: error.response?.data?.message || "Failed to delete lesson" 
+      })
+    }
+  })
 } 
