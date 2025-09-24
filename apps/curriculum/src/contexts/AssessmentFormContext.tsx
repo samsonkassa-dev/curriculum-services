@@ -10,7 +10,7 @@ import {
 import {
   useSubmitAssessment,
   useGetAssessment,
-} from "@/lib/hooks/useAssessment";
+} from "@/lib/hooks/useModuleAssessment";
 import { Loading } from "@/components/ui/loading";
 
 interface AssessmentMethod {
@@ -136,10 +136,7 @@ export function AssessmentFormProvider({
         setIsFormDataFilled(checkFormDataFilled(transformed));
 
         // Set editing flag if there's existing data
-        if (
-          assessmentData.assessmentMethods.length > 0 ||
-          assessmentData.subjectSpecificAssessmentMethod
-        ) {
+        if (assessmentData.assessmentMethods.length > 0) {
           setIsEditing(true);
         }
       }

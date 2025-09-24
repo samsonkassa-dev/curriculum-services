@@ -1,307 +1,276 @@
-# Survey System Documentation
+# Survey Component System
 
 ## Overview
 
-The Survey System is a comprehensive solution for creating, managing, and administering surveys within the training platform. It supports various question types, section-based organization, and both baseline and endline survey types.
-
-## Component Architecture
-
-### Refactored Structure
-
-The main `CreateSurveyForm.tsx` has been broken down into smaller, manageable components:
-
-```
-survey/
-├── components/
-│   ├── SurveySettings.tsx          # Survey basic information form
-│   ├── SurveyNavigation.tsx        # Left sidebar navigation
-│   ├── QuestionPreviews.tsx        # Question preview components  
-│   └── SingleQuestionEditor.tsx    # Question editing interface
-├── CreateSurveyForm.tsx            # Main survey builder (now ~400 lines)
-├── ViewSurveyDetails.tsx           # Survey viewing interface
-├── SurveyList.tsx                  # Survey list with cards
-└── survey.tsx                      # Main survey component router
-```
-
-### Component Responsibilities
-
-#### SurveySettings.tsx
-- Survey name, type, and description forms
-- Handles read-only mode for edit scenarios
-- Clean, focused UI for survey metadata
-
-#### SurveyNavigation.tsx
-- Left sidebar with section/question navigation
-- Section title editing (with read-only logic)
-- Add/delete buttons for sections and questions
-- Visual indicators for selected items
-
-#### QuestionPreviews.tsx
-- Preview components for all question types (TEXT, RADIO, CHECKBOX, GRID)
-- Live preview of how questions will appear to trainees
-- Handles complex layouts like grid tables
-
-#### SingleQuestionEditor.tsx
-- Question text editing
-- Question type selection with visual icons
-- Dynamic form fields based on question type
-- Choice/row management for complex question types
+The Survey Component System provides a comprehensive solution for creating, managing, and editing surveys within training programs. It supports multiple question types, follow-up questions, image uploads, and real-time validation.
 
 ## Key Features
 
-### 1. Smart Edit Mode
-- **Read-only Survey Metadata**: Can't change survey name/type/description in edit mode
-- **Selective Section Editing**: Can only edit titles of newly added sections
-- **Flexible Question Management**: Add/edit/delete questions in any section
-- **Change Detection**: Tracks what's new vs existing for efficient API calls
+### 🔄 Follow-up Questions
+- Questions can have follow-up questions based on specific choices from parent questions
+- Follow-ups are triggered by selecting a specific choice (A, B, C, etc.) from a parent question
+- **Constraints:**
+  - First question in any section cannot be a follow-up question
+  - GRID type questions cannot have follow-up questions (but can BE follow-up questions)
+  - Follow-up questions can be of any type: RADIO, CHECKBOX, TEXT, or GRID
 
-### 2. Multi-Section Question Adding
-- Add questions to multiple sections in one editing session
-- Batch API calls for all changes when saving
-- Smart detection of new vs existing content
+### 🔢 Question Numbering
+- Each question gets a unique `questionNumber` starting from 1
+- Used to identify parent-child relationships for follow-up questions
+- Automatically assigned during form submission
 
-### 3. Question Types Support
-  - **TEXT**: Simple text input
-- **RADIO**: Single choice with configurable options
-- **CHECKBOX**: Multiple choice with configurable options  
-- **GRID**: Matrix questions with rows and columns
+### 🖼️ Image Support
+- **Question Images**: Upload images for questions themselves
+- **Choice Images**: Upload images for individual answer choices
+- **Smart Validation**: When a choice has an image, text is optional for that choice
+- **File Formats**: Supports PNG, JPG, JPEG, GIF, WebP
+- **Multipart Upload**: Files are sent as multipart form data alongside JSON payload
 
-### 4. Real-time Validation
-- Client-side validation during form filling
-- Comprehensive pre-submit validation
-- Clear error messages with context
+### 📝 Question Types
+- **RADIO**: Single choice selection
+- **CHECKBOX**: Multiple choice selection  
+- **TEXT**: Free text input with optional text area
+- **GRID**: Matrix-style questions (cannot have follow-ups, but can be follow-ups)
+
+## Architecture
+
+### Component Structure
+```
+survey/
+├── survey.tsx                    # Main orchestrator component
+├── CreateSurveyForm.tsx          # Form container and state management
+├── components/
+│   ├── SingleQuestionEditor.tsx  # Individual question editing
+│   ├── QuestionPreviews.tsx      # Real-time question preview
+│   └── SurveyNavigation.tsx      # Section/question navigation
+└── README.md                     # This file
+```
+
+### Data Flow
+```
+survey.tsx
+    ↓ (manages view modes)
+CreateSurveyForm.tsx
+    ↓ (manages sections/questions state)
+SingleQuestionEditor.tsx
+    ↓ (handles individual question editing)
+useSurvey.ts (API calls)
+```
+
+## Data Types
+
+### Core Interfaces
+
+```typescript
+interface CreateSurveyChoice {
+  choice: string;                // Choice text (optional if image provided)
+  choiceImage?: string;         // Image URL (from server)
+  choiceImageFile?: File;       // Local file for upload
+}
+
+interface CreateSurveyEntry {
+  question: string;             // Question text
+  questionImage?: string;       // Question image URL (from server)
+  questionImageFile?: File;     // Local file for upload
+  questionType: QuestionType;   // RADIO, CHECKBOX, TEXT, GRID
+  choices: CreateSurveyChoice[]; // Answer choices
+  allowTextAnswer: boolean;     // Allow "Other" text input
+  rows: string[];              // For GRID type questions
+  required: boolean;           // Is question mandatory
+  questionNumber?: string;     // Auto-assigned unique number
+  parentQuestionNumber?: number; // Parent question for follow-ups
+  parentChoice?: string;       // Parent choice (A, B, C, etc.)
+  followUp?: boolean;          // Is this a follow-up question
+}
+```
 
 ## API Integration
 
-### React Query Hooks
+### Multipart Form Data Structure
+The system sends data as multipart form data with:
 
-The system provides comprehensive React Query hooks for all API operations:
+1. **JSON Payload** (key: `'payload'`):
+   ```json
+   {
+     "name": "Survey Name",
+     "type": "BASELINE",
+     "description": "Survey description",
+     "sections": [
+       {
+         "title": "Section Title",
+         "surveyEntries": [
+           {
+             "question": "Question text",
+             "questionNumber": "1",
+             "questionType": "RADIO",
+             "choices": [{"choice": "Choice A"}, {"choice": "Choice B"}],
+             "required": true,
+             "followUp": false
+           }
+         ]
+       }
+     ]
+   }
+   ```
 
-#### Survey Management Hooks
-```typescript
-// Survey CRUD operations
-useSurveys(trainingId)           // GET /api/survey/training/{trainingId}
-useCreateSurvey(trainingId)      // POST /api/survey/training/{trainingId}
-useSurveyDetail(surveyId)        // GET /api/survey/{surveyId}
-useUpdateSurvey()                // PUT /api/survey/{surveyId}
-useDeleteSurvey()                // DELETE /api/survey/{surveyId}
-```
-
-#### Section Management Hooks
-```typescript
-// Section operations
-useSurveySections(surveyId)      // GET /api/survey-section/survey/{surveyId}
-useAddSectionToSurvey()          // POST /api/survey-section/survey/{surveyId}
-useUpdateSurveySection()         // PUT /api/survey-section/{sectionId} - NEW
-useDeleteSurveySection()         // DELETE /api/survey-section/{sectionId}
-```
-
-#### Question Management Hooks
-```typescript
-// Question operations
-useAddQuestionToSection()        // POST /api/survey-entry/survey-section/{sectionId}
-useUpdateSurveyEntry()           // PATCH /api/survey-entry/{questionId}
-useDeleteSurveyEntry()           // DELETE /api/survey-entry/{questionId}
-```
-
-### Different Data Structures
-
-The system uses different TypeScript interfaces for different API operations:
-
-#### GET Operations (Viewing)
-```typescript
-interface SurveyEntry {
-  id?: string
-  question: string
-  questionType: QuestionType
-  choices: string[]
-  allowMultipleAnswers: boolean  // For checkbox questions
-  allowOtherAnswer: boolean      // For "Other" option
-  rows: string[]                 // For grid questions
-  required: boolean
-}
-
-interface SurveySection {
-  id: string
-  title: string
-  questions: SurveyEntry[]       // Uses "questions" field
-}
-```
-
-#### POST Operations (Creating)
-```typescript  
-interface CreateSurveyEntry {
-  question: string
-  questionType: QuestionType
-  choices: string[]
-  allowTextAnswer: boolean       // Different field name for creation
-  rows: string[]
-  required: boolean
-}
-
-interface CreateSurveySection {
-  title: string
-  surveyEntries: CreateSurveyEntry[]  // Uses "surveyEntries" field
-}
-```
-
-#### PATCH Operations (Updating Questions)
-```typescript
-interface UpdateSurveyEntryData {
-  question: string
-  questionType: QuestionType
-  choices: string[]
-  allowOtherAnswer: boolean      // Back to "allowOtherAnswer"
-  rows: string[]
-  isRequired: boolean           // Different field name: "isRequired"
-}
-```
-
-#### Special Operations
-```typescript
-// Adding questions to existing sections
-interface AddSurveyEntryData {
-  question: string
-  questionType: QuestionType
-  choices: string[]
-  allowTextAnswer: boolean      // Uses creation format
-  rows: string[]
-  required: boolean
-}
-
-// Section title updates
-interface UpdateSectionData {
-  title: string                 // Simple title update only
-}
-```
+2. **File Uploads** (indexed keys):
+   - Question images: `sections[0].surveyEntries[0].questionImage`
+   - Choice images: `sections[0].surveyEntries[0].choices[0].choiceImage`
 
 ### API Endpoints
+- **Create Survey**: `POST /survey/training/{trainingId}`
+- **Add Question**: `POST /survey-entry/survey-section/{sectionId}`
+- **Update Question**: `PUT /survey-entry/{entryId}`
 
-#### Survey Management
-- `GET /api/survey/training/{trainingId}` - List surveys for training
-- `POST /api/survey/training/{trainingId}` - Create new survey
-- `GET /api/survey/{surveyId}` - Get survey details with sections
-- `PUT /api/survey/{surveyId}` - Update survey metadata
-- `DELETE /api/survey/{surveyId}` - Delete survey
+## Usage Examples
 
-#### Section Management
-- `GET /api/survey-section/survey/{surveyId}` - Get sections for editing
-- `POST /api/survey-section/survey/{surveyId}` - Add new section
-- `PUT /api/survey-section/{sectionId}` - Update section title **NEW**
-- `DELETE /api/survey-section/{sectionId}` - Delete section **NEW**
-
-#### Question Management
-- `POST /api/survey-entry/survey-section/{sectionId}` - Add question to section
-- `PATCH /api/survey-entry/{questionId}` - Update existing question
-- `DELETE /api/survey-entry/{questionId}` - Delete question
-
-### Smart API Strategy
-- **Change Detection**: Only calls APIs for actual changes vs original state
-- **Batch Operations**: Multiple changes handled efficiently
-- **Optimistic Updates**: Immediate UI feedback with rollback on failure
-- **Cache Management**: Proper invalidation strategies with React Query
-
-## Usage Flow
-
-### Creating New Survey
-1. User clicks "Create New Survey"
-2. Opens survey builder in create mode
-3. User builds survey structure
-4. Single API call creates entire survey
-5. Returns to survey list
-
-### Editing Existing Survey
-1. User clicks "Add Question" on specific section
-2. Opens builder with existing sections loaded
-3. Focuses on target section with new question
-4. User makes changes across multiple sections
-5. Batch saves all changes via appropriate APIs
-6. Returns to survey view
-
-### Deleting Content
-- **Existing questions/sections**: API delete calls
-- **New questions/sections**: Local state removal only
-
-## Error Handling & Validation
-
-### Client-Side Validation
+### Creating a Basic Survey
 ```typescript
-// Form validation before submission
-const validateForm = () => {
-  if (!surveyName.trim()) {
-    toast.error("Survey name is required")
-    return false
-  }
-  // ... comprehensive validation
-}
-
-// Question validation
-const validateCreateSurveyEntry = (question: CreateSurveyEntry) => {
-  const errors: string[] = []
-  if (!question.question.trim()) {
-    errors.push("Question text is required")
-  }
-  // ... field-specific validation
-  return { isValid: errors.length === 0, errors }
+const surveyData: CreateSurveyData = {
+  name: "Customer Feedback",
+  type: "BASELINE",
+  description: "Post-training survey",
+  sections: [
+    {
+      title: "General Questions",
+      surveyEntries: [
+        {
+          question: "How satisfied are you?",
+          questionType: "RADIO",
+          choices: [
+            { choice: "Very Satisfied" },
+            { choice: "Satisfied" },
+            { choice: "Neutral" }
+          ],
+          required: true,
+          followUp: false
+        }
+      ]
+    }
+  ]
 }
 ```
 
-### API Error Handling
-- **Toast Notifications**: User-friendly error messages
-- **Loading States**: Visual feedback during operations
-- **Optimistic Updates**: Immediate UI changes with rollback
-- **Retry Logic**: Automatic retry on network failures
-- **Graceful Degradation**: Fallback UI states
+### Creating Follow-up Questions
+```typescript
+// Parent question (questionNumber: 1)
+{
+  question: "Did you enjoy the training?",
+  questionType: "RADIO",
+  choices: [
+    { choice: "Yes" },     // Choice A
+    { choice: "No" }       // Choice B
+  ],
+  questionNumber: "1",
+  followUp: false
+}
 
-## Benefits of Refactoring
+// Follow-up question (triggers on "No" - Choice B)
+{
+  question: "What could we improve?",
+  questionType: "TEXT",
+  parentQuestionNumber: 1,
+  parentChoice: "B",
+  questionNumber: "2",
+  followUp: true
+}
+```
 
-### Code Maintainability
-- **Single Responsibility**: Each component has one clear purpose
-- **Reduced Complexity**: Main form is now ~400 lines vs 1100+
-- **Better Testing**: Smaller components are easier to test
-- **Reusability**: Components can be reused in other contexts
+### Adding Images
+```typescript
+// Question with image
+{
+  question: "Identify this logo:",
+  questionImageFile: logoFile, // File object from upload
+  questionType: "RADIO",
+  choices: [
+    { choice: "Company A", choiceImageFile: logoA },
+    { choice: "Company B", choiceImageFile: logoB },
+    { choice: "", choiceImageFile: logoC } // Text optional when image provided
+  ]
+}
+```
 
-### Developer Experience
-- **Easier Navigation**: Find specific functionality quickly
-- **Cleaner Imports**: Logical component organization
-- **Better IDE Support**: Smaller files load and analyze faster
-- **Collaborative Development**: Multiple developers can work on different components
+## Validation Rules
 
-### Performance
-- **Bundle Splitting**: Components can be lazy-loaded
-- **Better Caching**: Smaller components cache more effectively
-- **Optimized Re-renders**: Isolated state reduces unnecessary renders
+### Form Validation
+- Survey name is required
+- Each section must have a title
+- Questions must have text or image
+- Choices must have text or image (at least one)
+- First question in section cannot be follow-up
+- GRID questions cannot have follow-ups (but can be follow-ups themselves)
 
-## Recent Improvements
+### Follow-up Validation
+- `parentQuestionNumber` must reference existing question
+- `parentChoice` must be valid (A, B, C, etc.)
+- Parent question can be any type (RADIO, CHECKBOX, TEXT, or GRID)
+- However, GRID questions themselves cannot have follow-ups
 
-### UI/UX Enhancements
-- **Smaller Icons**: Reduced pencil edit icon size for better proportions
-- **Accordion Interface**: Collapsible sections with chevron indicators
-- **Improved Button Layout**: Consistent sizing and spacing
-- **Delete Confirmation**: Proper dialog with warning message
-- **Responsive Design**: Better layout on different screen sizes
+## State Management
 
-### Technical Improvements
-- **TypeScript Safety**: Fixed all section.id undefined issues
-- **Proper Hook Integration**: Added `useUpdateSurveySection` hook
-- **Enhanced Error Handling**: Better error messages and states
-- **API Consistency**: Proper mapping between different data structures
-- **Build Optimization**: All TypeScript errors resolved
+### Local State (CreateSurveyForm)
+```typescript
+const [sections, setSections] = useState<CreateSurveySection[]>([])
+const [selectedSection, setSelectedSection] = useState(0)
+const [selectedQuestion, setSelectedQuestion] = useState(0)
+```
+
+### File Handling
+- Files stored in component state as `File` objects
+- Preserved through question type changes
+- Sent as multipart data during submission
+- Preview functionality using `URL.createObjectURL`
+
+## Performance Considerations
+
+### Optimizations
+- Lazy loading of question previews
+- Debounced validation
+- Memoized form calculations
+- Efficient state updates using spread operators
+
+### File Management
+- Local file previews to avoid re-uploads
+- Automatic cleanup of object URLs
+- File size validation (recommended: < 5MB per image)
+
+## Error Handling
+
+### Common Issues
+1. **400 Bad Request**: Usually multipart form data structure issues
+2. **File Upload Failures**: Check file format and size limits
+3. **Validation Errors**: Ensure all required fields are populated
+4. **Follow-up Logic**: Verify parent question relationships
+
+### Debugging
+- Network tab shows multipart payload structure
+- Console errors indicate validation failures
+- Form state can be inspected via React DevTools
 
 ## Future Enhancements
 
 ### Planned Features
-- **Question Reordering**: Drag and drop functionality
-- **Question Templates**: Pre-built question library
-- **Advanced Validation**: Custom validation rules
-- **Survey Analytics**: Response tracking and reporting
-- **Mobile Optimization**: Enhanced mobile experience
-- **Bulk Operations**: Select and manage multiple questions/sections
-- **Survey Duplication**: Copy existing surveys with modifications
+- Drag-and-drop question reordering
+- Question templates and presets
+- Conditional logic beyond simple follow-ups
+- Rich text editor for questions
+- Video/audio question support
+- Export/import survey definitions
 
-### Technical Roadmap
-- **Performance**: Further optimization for large surveys
-- **Accessibility**: Enhanced keyboard navigation and screen reader support
-- **Testing**: Comprehensive unit and integration test coverage
-- **Documentation**: Interactive examples and API documentation
-- **Monitoring**: Error tracking and performance analytics
+### Technical Debt
+- Consider moving to React Hook Form for better performance
+- Implement proper TypeScript strict mode
+- Add comprehensive unit tests
+- Optimize bundle size with code splitting
+
+## Browser Compatibility
+- Modern browsers with File API support
+- FormData multipart upload capability
+- ES6+ JavaScript features required
+
+## Security Considerations
+- File upload validation on both client and server
+- CSRF protection for form submissions
+- Proper authentication headers
+- Input sanitization for text fields

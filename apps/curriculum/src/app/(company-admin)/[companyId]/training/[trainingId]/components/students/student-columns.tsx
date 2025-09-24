@@ -85,25 +85,25 @@ export const studentColumnsBase: ColumnDef<Student>[] = [
       )
     }
   },
-  {
-    id: "trainingExperience",
-    header: "Training Experience",
-    cell: ({ row }) => {
-      const hasExperience = row.original.hasTrainingExperience
-      const experienceStatus = hasExperience ? "experienced" : "new"
+  // {
+  //   id: "trainingExperience",
+  //   header: "Training Experience",
+  //   cell: ({ row }) => {
+  //     const hasExperience = row.original.hasTrainingExperience
+  //     const experienceStatus = hasExperience ? "experienced" : "new"
       
-      return (
-        <div className="flex items-center gap-2">
-          <div className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1
-            ${hasExperience ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-700"}`}>
-            <div className={`w-1.5 h-1.5 rounded-full 
-              ${hasExperience ? "bg-green-500" : "bg-amber-500"}`} />
-            <span className="capitalize">{experienceStatus}</span>
-          </div>
-        </div>
-      )
-    }
-  }
+  //     return (
+  //       <div className="flex items-center gap-2">
+  //         <div className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1
+  //           ${hasExperience ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-700"}`}>
+  //           <div className={`w-1.5 h-1.5 rounded-full 
+  //             ${hasExperience ? "bg-green-500" : "bg-amber-500"}`} />
+  //           <span className="capitalize">{experienceStatus}</span>
+  //         </div>
+  //       </div>
+  //     )
+  //   }
+  // }
 ]
 
 // Student columns with selection checkbox

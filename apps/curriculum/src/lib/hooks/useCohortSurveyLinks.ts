@@ -14,7 +14,7 @@ import {
 
 export type ViewMode = 'all' | 'answered'
 
-export function useCohortSurveyLinks(trainingId: string, traineeIds: string[]) {
+export function useCohortSurveyLinks(trainingId: string, cohortId: string, traineeIds: string[]) {
   const [selectedSurveyId, setSelectedSurveyId] = useState("")
   const [viewMode, setViewMode] = useState<ViewMode>('all')
   const [expiryValue, setExpiryValue] = useState<number>(1)
@@ -62,7 +62,7 @@ export function useCohortSurveyLinks(trainingId: string, traineeIds: string[]) {
 
   const deleteLink = (linkId: string) => deleteLinkMutate({ linkId })
 
-  const base = process.env.NEXT_PUBLIC_SURVEY_PORTAL_URL || "https://curriculum-services-survey-portal.vercel.app"
+  const base = process.env.NEXT_PUBLIC_ASSESSMENTPORTAL || "http://localhost:3002"
   const getAnswersLink = (surveyId?: string, traineeId?: string) => (surveyId && traineeId ? `${base}/survey/answers/${surveyId}/${traineeId}` : undefined)
 
   const queryClient = useQueryClient()

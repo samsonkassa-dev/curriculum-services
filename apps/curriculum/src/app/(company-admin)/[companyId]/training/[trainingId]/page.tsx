@@ -20,9 +20,8 @@ const StudentsComponent = lazy(() => import("./components/students").then(module
 const CohortsComponent = lazy(() => import("./components/cohorts").then(module => ({ default: module.CohortsComponent })))
 const AttendanceComponent = lazy(() => import("./components/attendance").then(module => ({ default: module.AttendanceComponent })))
 const CertificateComponent = lazy(() => import("./components/certificate").then(module => ({ default: module.CertificateComponent })))
-const AssessmentComponent = lazy(() => import("./components/assessment").then(module => ({ default: module.AssessmentComponent })))
 const SurveyComponent = lazy(() => import("./components/survey").then(module => ({ default: module.SurveyComponent })))
-const CatComponent = lazy(() => import("./components/cat").then(module => ({ default: module.CatComponent })))
+const AssessmentComponent = lazy(() => import("./components/assessment").then(module => ({ default: module.AssessmentComponent })))
 const Content = lazy(() => import("./components/content").then(module => ({ default: module.Content })))
 // Insert new constant VALID_TABS above the component definition
 const VALID_TABS: Array<TabType> = ['overview', 'profile', 'audience', 'module', 'evaluation', 'students', 'cohorts', 'attendance', 'certificate', 'assessment', 'cat', 'survey'];
@@ -86,9 +85,8 @@ export default function TrainingDetail() {
             {activeTab === 'students' && <StudentsComponent trainingId={training.id} />}
             {activeTab === 'cohorts' && <CohortsComponent trainingId={training.id} />}
             {activeTab === 'attendance' && <AttendanceComponent trainingId={training.id} />}
-            {activeTab === 'assessment' && <AssessmentComponent trainingId={training.id} />}
-            {activeTab === 'cat' && <CatComponent trainingId={training.id} />}
             {activeTab === 'survey' && <SurveyComponent trainingId={training.id} />}
+            {activeTab === 'assessment' && <AssessmentComponent trainingId={training.id} />}
             {activeTab === 'certificate' && <CertificateComponent trainingId={training.id} />}
             {activeTab === 'content' && <Content/>}
           </Suspense>

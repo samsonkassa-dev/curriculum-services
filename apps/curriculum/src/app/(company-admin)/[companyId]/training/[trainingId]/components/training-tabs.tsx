@@ -22,12 +22,11 @@ const allTabs: TabConfig[] = [
   { id: 'module', label: 'Module', icon: '/module.svg', activeIcon: '/module_active.svg' },
   { id: 'students', label: 'Students', icon: '/student.svg', activeIcon: '/stuedntActive.svg' },
   { id: 'cohorts', label: 'Cohorts', icon: '/Schedule.svg', activeIcon: '/scheduleActive.svg' },
- { id: 'attendance', label: 'Attendance', icon: '/attendance.svg', activeIcon: '/attendanceActive.svg' },
-  { id: 'assessment', label: 'Assessment', icon: '/curriculum.svg', activeIcon: '/curriculum_active.svg' },
-  { id: 'cat', label: 'CAT', icon: '/section.svg', activeIcon: '/section-active.svg' },
+  { id: 'attendance', label: 'Attendance', icon: '/attendance.svg', activeIcon: '/attendanceActive.svg' },
   { id: 'survey', label: 'Survey', icon: '/survey.svg', activeIcon: '/surveyActive.svg' },
+  { id: 'assessment', label: 'Assessment', icon: '/Evaluation.svg', activeIcon: '/EvaluationActive.svg' },
   { id: 'evaluation', label: 'Evaluation', icon: '/Evaluation.svg', activeIcon: '/EvaluationActive.svg' },
-  { id: 'certificate', label: 'Certificates', icon: '/certificate.svg', activeIcon: '/certificateActive.svg' },
+  //{ id: 'certificate', label: 'Certificates', icon: '/certificate.svg', activeIcon: '/certificateActive.svg' },
   { id: 'content', label: 'Content', icon: '/content.svg', activeIcon: '/content-active.svg' },
 ]
 
@@ -75,7 +74,7 @@ export function TrainingTabs({ activeTab, onTabChange }: TrainingTabsProps) {
     visibleTabs = allTabs.filter(tab => ['overview','profile', 'audience', 'module', 'content'].includes(tab.id))
   }
   else if (isProjectManager) {
-    visibleTabs = allTabs.filter(tab => !['content'].includes(tab.id))
+    visibleTabs = allTabs
   }
   else {
     visibleTabs = allTabs.filter(tab => tab.id === 'overview') 

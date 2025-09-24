@@ -4,14 +4,28 @@ import { ChangeEvent, useRef } from "react"
 interface FileUploadProps {
   accept?: string
   onChange: (file: File | null) => void
+  variant?: 'button' | 'icon'
+  size?: 'sm' | 'md' | 'lg'
 }
 
-export function FileUpload({ accept, onChange }: FileUploadProps) {
+export function FileUpload({ accept, onChange, variant = 'button', size = 'md' }: FileUploadProps) {
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null
     onChange(file)
+  }
+
+  const iconSizes = {
+    sm: "w-5 h-5",
+    md: "w-6 h-6", 
+    lg: "w-8 h-8"
+  }
+
+  const containerSizes = {
+    sm: "w-8 h-8",
+    md: "w-10 h-10",
+    lg: "w-12 h-12"
   }
 
   return (
@@ -24,19 +38,37 @@ export function FileUpload({ accept, onChange }: FileUploadProps) {
         onChange={handleFileChange}
         title="file upload"
       />
-      <Button
-        variant="outline"
-        type="button"
-        onClick={() => fileInputRef.current?.click()}
-        className="flex gap-2"
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-          <polyline points="17 8 12 3 7 8" />
-          <line x1="12" y1="3" x2="12" y2="15" />
-        </svg>
-        Upload
-      </Button>
+      
+      {variant === 'icon' ? (
+        <button
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          className={`${containerSizes[size]} rounded-full border-2 border-dashed border-gray-300 hover:border-gray-400 flex items-center justify-center transition-colors hover:bg-gray-50 cursor-pointer`}
+          title="Add Image"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img 
+            src="/addImage.svg" 
+            alt="Add Image" 
+            className={iconSizes[size]}
+          />
+        </button>
+      ) : (
+        <Button
+          variant="outline"
+          type="button"
+          onClick={() => fileInputRef.current?.click()}
+          className="flex gap-2"
+        >
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img 
+            src="/addImage.svg" 
+            alt="Add Image" 
+            className="w-4 h-4"
+          />
+          Add Image
+        </Button>
+      )}
     </>
   )
 } 
