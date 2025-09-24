@@ -4,12 +4,11 @@ import type { AssessmentQuestion, AssessmentAnswer } from "@/lib/hooks/useAssess
 
 interface QuestionCardProps {
   question: AssessmentQuestion;
-  questionNumber: number;
   value?: AssessmentAnswer;
-  onChange: (answer: AssessmentAnswer) => void;
+  onChange: (_assessmentAnswer: AssessmentAnswer) => void;
 }
 
-export function QuestionCard({ question, questionNumber, value, onChange }: QuestionCardProps) {
+export function QuestionCard({ question, value, onChange }: QuestionCardProps) {
   const [selectedChoices, setSelectedChoices] = useState<string[]>(
     value?.selectedChoiceIds || []
   );

@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
-import type { NextRequest } from 'next/server'
 
-export function middleware(request: NextRequest) {
+export function middleware() {
   // Add any middleware logic here for authentication, redirects, etc.
   return NextResponse.next()
 }

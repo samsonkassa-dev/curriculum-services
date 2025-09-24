@@ -91,9 +91,9 @@ export default function PMAssessmentResultsPage() {
             <p className="text-gray-600 mb-4">
               Unable to load assessment results for this trainee.
             </p>
-            <Button asChild variant="outline">
-              <Link href="/">Go Home</Link>
-            </Button>
+            <Link href="/">
+              <Button variant="outline">Go Home</Button>
+            </Link>
           </CardContent>
         </Card>
       </div>
@@ -134,12 +134,12 @@ export default function PMAssessmentResultsPage() {
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-6xl mx-auto px-6 py-4">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/">
+            <Link href="/">
+              <Button variant="ghost" size="sm">
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Back
-              </Link>
-            </Button>
+              </Button>
+            </Link>
             <div>
               <h1 className="text-xl font-semibold">Assessment Results</h1>
               <p className="text-sm text-gray-500">{assessment.name}</p>

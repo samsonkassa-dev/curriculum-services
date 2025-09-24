@@ -37,7 +37,7 @@ export interface Assessment {
   maxAttempts: number;
   approvalStatus: string | null;
   contentDeveloper: string | null;
-  cohorts: any;
+  cohorts: unknown;
   sections: AssessmentSection[];
   timed: boolean;
 }
@@ -115,8 +115,8 @@ export function useStartAssessment() {
       // Invalidate and refetch assessment link validity
       queryClient.invalidateQueries({ queryKey: ["assessment", "link-validity"] });
     },
-    onError: (error: any) => {
-      const errorMessage = error.response?.data?.message || "Failed to start assessment";
+    onError: (error: unknown) => {
+      const errorMessage = (error as { response?: { data?: { message?: string } } })?.response?.data?.message || "Failed to start assessment";
       toast.error(errorMessage);
     },
   });
@@ -131,8 +131,8 @@ export function useSaveAssessmentAnswers() {
       });
       return response.data;
     },
-    onError: (error: any) => {
-      const errorMessage = error.response?.data?.message || "Failed to save answers";
+    onError: (error: unknown) => {
+      const errorMessage = (error as { response?: { data?: { message?: string } } })?.response?.data?.message || "Failed to save answers";
       console.error("Save answers error:", errorMessage);
     },
   });
@@ -157,8 +157,8 @@ export function useSubmitAssessment() {
       }
       queryClient.invalidateQueries({ queryKey: ["assessment"] });
     },
-    onError: (error: any) => {
-      const errorMessage = error.response?.data?.message || "Failed to submit assessment";
+    onError: (error: unknown) => {
+      const errorMessage = (error as { response?: { data?: { message?: string } } })?.response?.data?.message || "Failed to submit assessment";
       toast.error(errorMessage);
     },
   });

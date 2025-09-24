@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useCheckAssessmentLinkValidity, useStartAssessment, useSaveAssessmentAnswers, useSubmitAssessment, type AssessmentAnswer, type AssessmentAttempt } from "@/lib/hooks/useAssessmentLink";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -44,11 +44,25 @@ export default function AssessmentAnswerPage() {
   const currentSection = assessment?.sections[currentSectionIndex];
   const currentQuestion = currentSection?.questions[currentQuestionIndex];
 
+  const handleSubmit = useCallback(async () => {
+    try {
+      await submitAssessmentMutation.mutateAsync(linkId);
+      router.push('/');
+    } catch (error) {
+      console.error("Failed to submit assessment:", error);
+    }
+  }, [submitAssessmentMutation, linkId, router]);
+
   useEffect(() => {
     if (assessmentAttempt?.startedAt && assessment?.timed) {
       const startTime = new Date(assessmentAttempt.startedAt).getTime();
       const durationMs = assessment.duration * 60 * 1000; // Convert minutes to milliseconds
       const endTime = startTime + durationMs;
+      
+      const handleTimeUp = async () => {
+        toast.error("Time is up! Submitting assessment automatically.");
+        await handleSubmit();
+      };
       
       const updateTimer = () => {
         const now = Date.now();
@@ -65,12 +79,7 @@ export default function AssessmentAnswerPage() {
       
       return () => clearInterval(interval);
     }
-  }, [assessmentAttempt, assessment]);
-
-  const handleTimeUp = async () => {
-    toast.error("Time is up! Submitting assessment automatically.");
-    await handleSubmit();
-  };
+  }, [assessmentAttempt, assessment, handleSubmit]);
 
   const handleStartAssessment = async () => {
     try {
@@ -123,14 +132,6 @@ export default function AssessmentAnswerPage() {
     }
   };
 
-  const handleSubmit = async () => {
-    try {
-      await submitAssessmentMutation.mutateAsync(linkId);
-      router.push('/');
-    } catch (error) {
-      console.error("Failed to submit assessment:", error);
-    }
-  };
 
   // Loading state
   if (checkingValidity) {
@@ -250,7 +251,7 @@ export default function AssessmentAnswerPage() {
                   </li>
                   <li className="flex items-start gap-3">
                     <span className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">✓</span>
-                    <span>Click "Submit Assessment" when you're ready to finish</span>
+                    <span>Click &quot;Submit Assessment&quot; when you&apos;re ready to finish</span>
                   </li>
                 </ul>
               </div>
@@ -428,7 +429,7 @@ export default function AssessmentAnswerPage() {
                       {currentSection.description && (
                         <div className="bg-muted/30 p-3 rounded border-l-2 border-primary/20">
                           <p className="text-sm text-muted-foreground leading-relaxed italic">
-                            "{currentSection.description}"
+                            &quot;{currentSection.description}&quot;
                           </p>
                         </div>
                       )}
@@ -452,7 +453,6 @@ export default function AssessmentAnswerPage() {
                   <div className="w-full max-w-4xl">
                     <QuestionCard
                       question={currentQuestion}
-                      questionNumber={1}
                       value={answers[currentQuestion.id]}
                       onChange={(answer) => handleAnswerChange(currentQuestion.id, answer)}
                     />
