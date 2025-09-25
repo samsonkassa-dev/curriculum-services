@@ -125,7 +125,7 @@ export function SingleAssessmentQuestionEditor({
               size="sm"
               onClick={() => onUpdateQuestion({ 
                 questionImageFile: undefined, 
-                questionImage: question.questionImageFile ? question.questionImage : undefined 
+                questionImage: "" 
               })}
             >
               Remove

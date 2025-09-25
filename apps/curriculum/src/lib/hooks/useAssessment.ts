@@ -111,6 +111,15 @@ export interface AssessmentSectionDetail {
   questions: AssessmentQuestion[];
 }
 
+interface ContentDeveloperRef {
+  id: string;
+  firstName: string | null;
+  lastName: string | null;
+  email: string;
+  role: { name: string; colorCode?: string };
+  profilePictureUrl: string | null;
+}
+
 export interface AssessmentSummary {
   id: string;
   name: string;
@@ -119,7 +128,7 @@ export interface AssessmentSummary {
   duration: number;
   maxAttempts: number;
   approvalStatus: "PENDING" | "APPROVED" | "REJECTED";
-  contentDeveloper: string | null;
+  contentDeveloper: ContentDeveloperRef | null;
   cohorts: Cohort[];
   sectionCount: number;
   timed: boolean;
@@ -133,7 +142,7 @@ export interface AssessmentDetail {
   duration: number;
   maxAttempts: number;
   approvalStatus: "PENDING" | "APPROVED" | "REJECTED";
-  contentDeveloper: string | null;
+  contentDeveloper: ContentDeveloperRef | null;
   cohorts: string[];
   sections: AssessmentSectionDetail[];
   timed: boolean;

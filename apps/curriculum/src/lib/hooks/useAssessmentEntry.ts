@@ -120,7 +120,7 @@ export function useUpdateAssessmentEntry() {
         description: data.message || "Question updated successfully" 
       });
       
-      // Invalidate relevant queries
+      // Invalidate all assessment-related queries
       queryClient.invalidateQueries({ 
         queryKey: ['assessments'] 
       });
@@ -202,7 +202,7 @@ export function useAddAssessmentEntry() {
         description: data.message || "Question added successfully" 
       });
       
-      // Invalidate relevant queries
+      // Invalidate all assessment-related queries
       queryClient.invalidateQueries({ 
         queryKey: ['assessments'] 
       });
@@ -272,7 +272,7 @@ export function useUpdateChoice() {
         description: data.message || "Choice updated successfully" 
       });
       
-      // Invalidate relevant queries
+      // Invalidate all assessment-related queries
       queryClient.invalidateQueries({ 
         queryKey: ['assessments'] 
       });
@@ -319,7 +319,7 @@ export function useDeleteChoice() {
         description: data.message || "Choice deleted successfully" 
       });
       
-      // Invalidate relevant queries
+      // Invalidate all assessment-related queries
       queryClient.invalidateQueries({ 
         queryKey: ['assessments'] 
       });
@@ -387,7 +387,7 @@ export function useAddChoice() {
         description: data.message || "Choice added successfully" 
       });
       
-      // Invalidate relevant queries
+      // Invalidate all assessment-related queries
       queryClient.invalidateQueries({ 
         queryKey: ['assessments'] 
       });
@@ -438,7 +438,7 @@ export function useDeleteAssessmentEntry() {
         description: data.message || "Question deleted successfully" 
       });
       
-      // Invalidate relevant queries
+      // Invalidate all assessment-related queries
       queryClient.invalidateQueries({ 
         queryKey: ['assessments'] 
       });

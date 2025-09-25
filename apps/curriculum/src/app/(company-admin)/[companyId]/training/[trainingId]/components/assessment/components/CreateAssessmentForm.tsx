@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
 import { useAssessmentDetail, AssessmentSummary, useUpdateAssessment } from "@/lib/hooks/useAssessment"
+import { AssessmentEditorProvider, useAssessmentEditor } from "./AssessmentEditorContext"
 import { 
   useUpdateAssessmentEntry, 
   useAddAssessmentEntry, 
@@ -86,7 +87,7 @@ const emptySection = (): AssessmentSectionForm => ({
   assessmentEntries: [emptyQuestion()],
 })
 
-export function CreateAssessmentForm({ trainingId, onCancel, onSubmit, isSubmitting, editingAssessment }: CreateAssessmentFormProps) {
+function CreateAssessmentFormInner({ trainingId, onCancel, onSubmit, isSubmitting, editingAssessment }: CreateAssessmentFormProps) {
   // Assessment basic info state
   const [assessmentName, setAssessmentName] = useState("")
   const [assessmentType, setAssessmentType] = useState<"PRE_POST" | "CAT">("PRE_POST")
@@ -98,12 +99,23 @@ export function CreateAssessmentForm({ trainingId, onCancel, onSubmit, isSubmitt
   
   // Sections and questions state
   const [sections, setSections] = useState<AssessmentSectionForm[]>([emptySection()])
+  const [originalSectionsCount, setOriginalSectionsCount] = useState<number>(0)
   
-  // Navigation state
-  const [selectedSection, setSelectedSection] = useState(0)
-  const [selectedQuestion, setSelectedQuestion] = useState(0)
-  const [editMode, setEditMode] = useState<'assessment' | 'question'>('assessment')
-  const [questionEditMode, setQuestionEditMode] = useState(false)
+  // Use the context for navigation and editor state
+  const {
+    selectedSection,
+    selectedQuestion,
+    editorMode,
+    questionState,
+    setSelectedSection,
+    setSelectedQuestion,
+    setEditorMode,
+    startEditingQuestion,
+    startCreatingQuestion,
+    stopEditingQuestion,
+    navigateToNewQuestion,
+    navigateToNewSection,
+  } = useAssessmentEditor()
 
   // Fetch assessment details for editing
   const { data: assessmentDetailData, isLoading: isLoadingAssessment } = useAssessmentDetail(
@@ -139,67 +151,68 @@ export function CreateAssessmentForm({ trainingId, onCancel, onSubmit, isSubmitt
     }
   }
 
-  // Populate form data when editing
+  // Populate form data when editing - only on initial load/data change
   useEffect(() => {
-    if (editingAssessment && assessmentDetailData?.assessment) {
-      const assessment = assessmentDetailData.assessment
-      
-      // Populate basic info
-      setAssessmentName(assessment.name || "")
-      setAssessmentType(assessment.type || "PRE_POST")
-      setNumberOfAttempts(assessment.maxAttempts || 1)
-      setTimed(assessment.timed || false)
-      
-      // Convert duration from minutes to appropriate format
-      const { duration: convertedDuration, durationType: convertedDurationType } = convertMinutesToDurationAndType(assessment.duration || 0)
-      setDuration(convertedDuration)
-      setDurationType(convertedDurationType)
-      
-      setContentDeveloperEmail(assessment.contentDeveloper || "")
-      
-      // Convert assessment sections to form format
-      const formSections: AssessmentSectionForm[] = assessment.sections.map(section => ({
-        id: section.id,
-        title: section.title,
-        description: section.description,
-        assessmentEntries: section.questions.map(question => ({
-          id: question.id,
-          question: question.question,
-          questionImage: question.questionImageUrl || "",
-          questionImageFile: undefined,
-          questionType: question.questionType,
-          choices: question.choices.map(choice => ({
-            id: choice.id,
-            choice: choice.choiceText,
-            choiceImage: choice.choiceImageUrl || "",
-            choiceImageFile: undefined,
-            isCorrect: choice.isCorrect
-          })),
-          weight: question.weight
-        }))
-      }))
-      
-      setSections(formSections.length > 0 ? formSections : [emptySection()])
-      // Only reset navigation if we don't have valid current selections
-      if (selectedSection >= formSections.length) {
-        setSelectedSection(0)
-      }
-      if (selectedQuestion >= (formSections[selectedSection]?.assessmentEntries.length || 0)) {
-        setSelectedQuestion(0)
-      }
-    }
-  }, [editingAssessment, assessmentDetailData, selectedSection, selectedQuestion])
+    if (!editingAssessment || !assessmentDetailData?.assessment) return
 
-  // Section management functions
-  const addSection = () => {
-    setSections(prev => [...prev, emptySection()])
-    setSelectedSection(sections.length)
-    setSelectedQuestion(0)
-    setEditMode('question')
-    // For new sections in existing assessments, automatically enter edit mode
-    if (editingAssessment) {
-      setQuestionEditMode(true)
+    const assessment = assessmentDetailData.assessment
+
+    // Populate basic info
+    setAssessmentName(assessment.name || "")
+    setAssessmentType(assessment.type || "PRE_POST")
+    setNumberOfAttempts(assessment.maxAttempts || 1)
+    setTimed(assessment.timed || false)
+
+    // Convert duration from minutes to appropriate format
+    const { duration: convertedDuration, durationType: convertedDurationType } = convertMinutesToDurationAndType(assessment.duration || 0)
+    setDuration(convertedDuration)
+    setDurationType(convertedDurationType)
+
+    setContentDeveloperEmail(assessment.contentDeveloper?.email || "")
+
+    // Convert assessment sections to form format
+    const formSections: AssessmentSectionForm[] = assessment.sections.map(section => ({
+      id: section.id,
+      title: section.title,
+      description: section.description,
+      assessmentEntries: section.questions.map(question => ({
+        id: question.id,
+        question: question.question,
+        questionImage: question.questionImageUrl || "",
+        questionImageFile: undefined,
+        questionType: question.questionType,
+        choices: question.choices.map(choice => ({
+          id: choice.id,
+          choice: choice.choiceText,
+          choiceImage: choice.choiceImageUrl || "",
+          choiceImageFile: undefined,
+          isCorrect: choice.isCorrect
+        })),
+        weight: question.weight
+      }))
+    }))
+
+    setSections(formSections.length > 0 ? formSections : [emptySection()])
+    setOriginalSectionsCount(formSections.length)
+
+    // Ensure selection indices are within bounds for the loaded data
+    if (selectedSection >= formSections.length) {
+      setSelectedSection(0)
     }
+    const loadedQuestionsLen = formSections[selectedSection]?.assessmentEntries.length || 0
+    if (selectedQuestion >= loadedQuestionsLen) {
+      setSelectedQuestion(0)
+    }
+  }, [editingAssessment, assessmentDetailData])
+
+  // Section management functions (adding section is disabled in edit mode; remains for create only)
+  const addSection = () => {
+    const newSectionIndex = sections.length
+    const defaultTitle = `Section ${newSectionIndex + 1}`
+    const newSection = { ...emptySection(), title: defaultTitle }
+    setSections(prev => [...prev, newSection])
+    navigateToNewSection(newSectionIndex)
+    startCreatingQuestion()
   }
 
   const removeSection = (sectionIndex: number) => {
@@ -208,7 +221,7 @@ export function CreateAssessmentForm({ trainingId, onCancel, onSubmit, isSubmitt
       setSelectedSection(selectedSection - 1)
     }
     if (sections.length <= 1) {
-      setEditMode('assessment')
+      setEditorMode('assessment')
     }
   }
 
@@ -226,6 +239,9 @@ export function CreateAssessmentForm({ trainingId, onCancel, onSubmit, isSubmitt
 
   // Question management functions
   const addQuestion = (sectionIndex: number) => {
+    const currentSection = sections[sectionIndex]
+    const newQuestionIndex = currentSection.assessmentEntries.length
+    
     setSections(prev => prev.map((section, i) => 
       i === sectionIndex 
         ? { 
@@ -234,16 +250,16 @@ export function CreateAssessmentForm({ trainingId, onCancel, onSubmit, isSubmitt
           }
         : section
     ))
-    setSelectedSection(sectionIndex)
-    setSelectedQuestion(sections[sectionIndex].assessmentEntries.length)
-    setEditMode('question')
-    // For new questions in existing assessments, automatically enter edit mode
-    if (editingAssessment) {
-      setQuestionEditMode(true)
-    }
+    
+    navigateToNewQuestion(sectionIndex, newQuestionIndex)
+    // Switch editor to creation state for the new question
+    startCreatingQuestion()
   }
 
   const removeQuestion = (sectionIndex: number, questionIndex: number) => {
+    const currentSection = sections[sectionIndex]
+    const willHaveQuestions = currentSection.assessmentEntries.length > 1
+    
     setSections(prev => prev.map((section, i) => 
       i === sectionIndex 
         ? { 
@@ -254,12 +270,11 @@ export function CreateAssessmentForm({ trainingId, onCancel, onSubmit, isSubmitt
     ))
     
     // Navigate to a valid question or back to assessment mode
-    const section = sections[sectionIndex]
-    if (section && section.assessmentEntries.length > 1) {
+    if (willHaveQuestions) {
       const newQuestionIndex = questionIndex > 0 ? questionIndex - 1 : 0
       setSelectedQuestion(newQuestionIndex)
     } else if (sections.length > 0) {
-      setEditMode('assessment')
+      setEditorMode('assessment')
     }
   }
 
@@ -341,13 +356,14 @@ export function CreateAssessmentForm({ trainingId, onCancel, onSubmit, isSubmitt
 
   // Navigation functions
   const selectAssessmentSettings = () => {
-    setEditMode('assessment')
+    setEditorMode('assessment')
   }
 
   const selectQuestion = (sectionIndex: number, questionIndex: number) => {
     setSelectedSection(sectionIndex)
     setSelectedQuestion(questionIndex)
-    setEditMode('question')
+    setEditorMode('question')
+    stopEditingQuestion() // Reset to viewing mode when navigating
   }
 
   // Form validation
@@ -485,6 +501,16 @@ export function CreateAssessmentForm({ trainingId, onCancel, onSubmit, isSubmitt
 
   const currentQuestion = sections[selectedSection]?.assessmentEntries[selectedQuestion]
 
+  // Keep selection valid after local sections state changes during creation
+  useEffect(() => {
+    if (editorMode !== 'question' || questionState !== 'creating') return
+    const qLen = sections[selectedSection]?.assessmentEntries.length || 0
+    if (qLen === 0) return
+    if (selectedQuestion > qLen - 1) {
+      setSelectedQuestion(qLen - 1)
+    }
+  }, [sections, selectedSection, editorMode, questionState, selectedQuestion, setSelectedQuestion])
+
   // Show loading when fetching assessment details for editing
   if (editingAssessment && isLoadingAssessment) {
     return (
@@ -508,7 +534,7 @@ export function CreateAssessmentForm({ trainingId, onCancel, onSubmit, isSubmitt
                 {editingAssessment ? "Edit Assessment" : "Create New Assessment"}
               </h2>
               <p className="text-gray-600 mt-1">
-                {editMode === 'assessment' 
+                {editorMode === 'assessment' 
                   ? (editingAssessment ? 'Update assessment settings and basic information' : 'Configure assessment settings and basic information')
                   : `Editing ${sections[selectedSection]?.title || `Section ${selectedSection + 1}`} - Question ${selectedQuestion + 1}`
                 }
@@ -521,16 +547,16 @@ export function CreateAssessmentForm({ trainingId, onCancel, onSubmit, isSubmitt
                   Cancel
                 </Button>
               )}
-              {/* Only show the main submit button when in assessment mode or creating new assessment */}
-              {(editMode === 'assessment' || !editingAssessment) && (
+        {/* Only show the main submit button when in assessment mode or creating new assessment */}
+        {(editorMode === 'assessment' || !editingAssessment) && (
                 <Button
                   onClick={handleSubmit}
                   className="bg-blue-600 text-white hover:bg-blue-700 px-6"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || updateAssessment.isPending}
                 >
                   {isSubmitting 
                     ? (editingAssessment ? "Updating..." : "Creating...") 
-                    : (editingAssessment ? "Update Assessment" : "Create Assessment")
+                    : (editingAssessment ? (updateAssessment.isPending ? "Updating..." : "Update Assessment") : "Create Assessment")
                   }
                 </Button>
               )}
@@ -549,8 +575,10 @@ export function CreateAssessmentForm({ trainingId, onCancel, onSubmit, isSubmitt
                 sections={sections}
                 selectedSection={selectedSection}
                 selectedQuestion={selectedQuestion}
-                editMode={editMode}
+                editMode={editorMode}
                 assessmentName={assessmentName}
+                isEditMode={questionState === 'viewing'}
+                canAddSection={!editingAssessment}
                 onSelectAssessmentSettings={selectAssessmentSettings}
                 onSelectQuestion={selectQuestion}
                 onUpdateSectionTitle={updateSectionTitle}
@@ -558,7 +586,7 @@ export function CreateAssessmentForm({ trainingId, onCancel, onSubmit, isSubmitt
                 onDeleteSection={removeSection}
                 onDeleteQuestion={removeQuestion}
                 onAddQuestion={addQuestion}
-                onAddSection={addSection}
+                onAddSection={!editingAssessment ? addSection : undefined}
               />
             </div>
 
@@ -567,12 +595,12 @@ export function CreateAssessmentForm({ trainingId, onCancel, onSubmit, isSubmitt
               <Card className="w-full">
                 <div className="p-6 border-b">
                   <h3 className="text-lg font-semibold">
-                    {editMode === 'assessment' ? 'Assessment Settings' : 'Question Editor'}
+                    {editorMode === 'assessment' ? 'Assessment Settings' : 'Question Editor'}
                   </h3>
                 </div>
                 
                 <div className="p-6">
-                {editMode === 'assessment' ? (
+                {editorMode === 'assessment' ? (
                   <AssessmentSettings
                     assessmentName={assessmentName}
                     setAssessmentName={setAssessmentName}
@@ -595,24 +623,21 @@ export function CreateAssessmentForm({ trainingId, onCancel, onSubmit, isSubmitt
                           currentQuestion && (
                             <>
                               {editingAssessment ? (
-                                // Edit mode for existing assessments
-                                questionEditMode || !currentQuestion.id ? (
-                                  // Show editor for: explicit edit mode OR new questions (no ID)
+                                // In edit mode, use the editable editor for both creating and editing
+                                questionState !== 'viewing' || !currentQuestion.id ? (
                                   <EditableAssessmentQuestionEditor
                                     question={currentQuestion}
                                     sectionId={sections[selectedSection]?.id}
                                     isEditing={true}
                                     onUpdateQuestion={(updates) => updateQuestion(selectedSection, selectedQuestion, updates)}
                                     onSaveQuestion={() => {
-                                      setQuestionEditMode(false)
+                                      stopEditingQuestion()
                                       toast.success("Question saved successfully")
                                     }}
-                                    onCancelEdit={() => setQuestionEditMode(false)}
+                                    onCancelEdit={() => stopEditingQuestion()}
                                   />
                                 ) : (
-                                  // Show read-only view only for existing saved questions
                                   <>
-                                    {/* Edit Mode Toggle Header - only for existing questions */}
                                     <div className="mb-4 flex justify-between items-center">
                                       <div className="flex items-center gap-2">
                                         <Badge variant="secondary" className="bg-blue-100 text-blue-800">
@@ -624,19 +649,16 @@ export function CreateAssessmentForm({ trainingId, onCancel, onSubmit, isSubmitt
                                       </div>
                                       <Button
                                         size="sm"
-                                        onClick={() => setQuestionEditMode(true)}
+                                        onClick={startEditingQuestion}
                                         className="bg-blue-600 hover:bg-blue-700 text-white"
                                       >
                                         Edit Question
                                       </Button>
                                     </div>
-                                    
-                                    {/* Read-only view for existing questions only */}
                                     <ReadOnlyQuestionView question={currentQuestion} />
                                   </>
                                 )
                               ) : (
-                                // Create mode for new assessments - always editable
                                 <SingleAssessmentQuestionEditor
                                   question={currentQuestion}
                                   onUpdateQuestion={(updates) => updateQuestion(selectedSection, selectedQuestion, updates)}
@@ -651,7 +673,7 @@ export function CreateAssessmentForm({ trainingId, onCancel, onSubmit, isSubmitt
 
             {/* Right Sidebar - Preview */}
             <div className="col-span-3">
-              {editMode === 'question' && currentQuestion && (
+              {editorMode === 'question' && currentQuestion && (
                 <AssessmentQuestionPreview question={currentQuestion} />
               )}
             </div>
@@ -659,6 +681,15 @@ export function CreateAssessmentForm({ trainingId, onCancel, onSubmit, isSubmitt
         </div>
       </div>
     </div>
+  )
+}
+
+// Wrapper component with context provider
+export function CreateAssessmentForm(props: CreateAssessmentFormProps) {
+  return (
+    <AssessmentEditorProvider>
+      <CreateAssessmentFormInner {...props} />
+    </AssessmentEditorProvider>
   )
 }
 

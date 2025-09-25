@@ -18,7 +18,7 @@ interface AssessmentNavigationProps {
   editMode: 'assessment' | 'question'
   assessmentName: string
   isEditMode?: boolean
-  originalSectionsCount?: number
+  canAddSection?: boolean
   onSelectAssessmentSettings: () => void
   onSelectQuestion: (sectionIndex: number, questionIndex: number) => void
   onUpdateSectionTitle: (sectionIndex: number, title: string) => void
@@ -26,7 +26,7 @@ interface AssessmentNavigationProps {
   onDeleteSection: (sectionIndex: number) => void
   onDeleteQuestion: (sectionIndex: number, questionIndex: number) => void
   onAddQuestion: (sectionIndex: number) => void
-  onAddSection: () => void
+  onAddSection?: () => void
 }
 
 export function AssessmentNavigation({
@@ -36,7 +36,7 @@ export function AssessmentNavigation({
   editMode,
   assessmentName,
   isEditMode = false,
-  originalSectionsCount = 0,
+  canAddSection = true,
   onSelectAssessmentSettings,
   onSelectQuestion,
   onUpdateSectionTitle,
@@ -89,9 +89,9 @@ export function AssessmentNavigation({
                         value={section.title}
                         onChange={(e) => onUpdateSectionTitle(sectionIndex, e.target.value)}
                         placeholder={`Section ${sectionIndex + 1}`}
-                        readOnly={isEditMode && sectionIndex < originalSectionsCount}
+                        readOnly={isEditMode}
                         className={`text-sm h-9 border-0 px-3 py-2 font-medium bg-transparent transition-all duration-200 ${
-                          isEditMode && sectionIndex < originalSectionsCount
+                          isEditMode
                             ? 'cursor-not-allowed opacity-60 bg-gray-50'
                             : 'hover:bg-gray-50 focus:bg-white focus:border focus:border-blue-300 focus:rounded'
                         }`}
@@ -100,9 +100,9 @@ export function AssessmentNavigation({
                         value={section.description || ""}
                         onChange={(e) => onUpdateSectionDescription(sectionIndex, e.target.value)}
                         placeholder="Section description (optional)"
-                        readOnly={isEditMode && sectionIndex < originalSectionsCount}
+                        readOnly={isEditMode}
                         className={`text-xs h-16 border-0 px-3 py-2 bg-transparent resize-none transition-all duration-200 ${
-                          isEditMode && sectionIndex < originalSectionsCount
+                          isEditMode
                             ? 'cursor-not-allowed opacity-60 bg-gray-50'
                             : 'hover:bg-gray-50 focus:bg-white focus:border focus:border-blue-300 focus:rounded'
                         }`}
@@ -181,14 +181,16 @@ export function AssessmentNavigation({
           </div>
         ))}
 
-        {/* Add Section Button */}
-        <Button
-          variant="ghost"
-          onClick={onAddSection}
-          className="w-full text-green-600 hover:text-green-700 hover:bg-green-50 border border-dashed border-green-300 hover:border-green-400"
-        >
-          + Add Section
-        </Button>
+        {/* Add Section Button (hidden in edit mode if canAddSection is false) */}
+        {canAddSection && onAddSection && (
+          <Button
+            variant="ghost"
+            onClick={onAddSection}
+            className="w-full text-green-600 hover:text-green-700 hover:bg-green-50 border border-dashed border-green-300 hover:border-green-400"
+          >
+            + Add Section
+          </Button>
+        )}
       </div>
     </div>
   )

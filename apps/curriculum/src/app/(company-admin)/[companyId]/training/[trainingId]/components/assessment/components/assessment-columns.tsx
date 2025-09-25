@@ -45,10 +45,21 @@ export const assessmentColumns: ColumnDef<AssessmentSummary>[] = [
       const assessment = row.original
       
       if (assessment.contentDeveloper) {
+        const dev = assessment.contentDeveloper as unknown as {
+          firstName: string | null
+          lastName: string | null
+          email: string
+          role?: { name: string }
+        }
+        const displayName = (dev.firstName || dev.lastName)
+          ? `${dev.firstName || ''} ${dev.lastName || ''}`.trim()
+          : (dev.email?.split('@')[0] || 'Content Developer')
+        const roleName = dev.role?.name === 'ROLE_CONTENT_DEVELOPER' ? 'Content Developer' : dev.role?.name || ''
         return (
-          <span className="text-gray-500">
-            {assessment.contentDeveloper}
-          </span>
+          <div className="flex flex-col">
+            <span className="text-gray-700 text-sm">{displayName}</span>
+            <span className="text-gray-500 text-xs">{roleName}</span>
+          </div>
         )
       }
       

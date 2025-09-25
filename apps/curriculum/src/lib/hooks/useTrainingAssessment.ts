@@ -304,7 +304,6 @@ export function useSubmitAssessmentAnswer() {
       }
     },
     onError: (error: any) => {
-      console.error('Assessment answer submission error:', error)
       const errorMessage = error.response?.data?.message || 'Failed to submit assessment answer'
       toast.error(errorMessage)
     }

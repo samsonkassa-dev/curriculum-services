@@ -67,12 +67,12 @@ export function EditableAssessmentQuestionEditor({
   const [choiceToDelete, setChoiceToDelete] = useState<{ index: number; text: string } | null>(null)
   const [originalChoices, setOriginalChoices] = useState<ChoiceForm[]>(question.choices || [])
 
-  // Update local state when question prop changes
+  // Update local state when switching to a different saved question
   useEffect(() => {
     setLocalQuestion(question)
     setOriginalChoices(question.choices || [])
-    setHasUnsavedChanges(false)
-  }, [question])
+    // Don't clear hasUnsavedChanges on every keystroke propagated via parent updates
+  }, [question.id])
 
   // Hooks for API operations
   const updateAssessmentEntry = useUpdateAssessmentEntry()
@@ -214,10 +214,16 @@ export function EditableAssessmentQuestionEditor({
       }))
     }
 
-    await addAssessmentEntry.mutateAsync({
+    const response = await addAssessmentEntry.mutateAsync({
       sectionId: sectionId!,
       data: payload
     })
+
+    // Update local question with the returned ID if available
+    if (response?.data?.id) {
+      setLocalQuestion(prev => ({ ...prev, id: response.data.id }))
+      onUpdateQuestion({ id: response.data.id })
+    }
   }
 
   const updateChoicesIndividually = async () => {
