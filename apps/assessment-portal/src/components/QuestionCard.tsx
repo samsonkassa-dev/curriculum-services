@@ -6,15 +6,18 @@ interface QuestionCardProps {
   question: AssessmentQuestion;
   value?: AssessmentAnswer;
   onChange: (_assessmentAnswer: AssessmentAnswer) => void;
+  disabled?: boolean;
 }
 
-export function QuestionCard({ question, value, onChange }: QuestionCardProps) {
+export function QuestionCard({ question, value, onChange, disabled = false }: QuestionCardProps) {
   const [selectedChoices, setSelectedChoices] = useState<string[]>(
     value?.selectedChoiceIds || []
   );
   const [textAnswer, setTextAnswer] = useState<string>(value?.textAnswer || "");
 
   const handleChoiceSelect = (choiceId: string) => {
+    if (disabled) return;
+    
     let newSelection: string[];
     
     if (question.questionType === "RADIO") {
@@ -36,6 +39,8 @@ export function QuestionCard({ question, value, onChange }: QuestionCardProps) {
   };
 
   const handleTextChange = (text: string) => {
+    if (disabled) return;
+    
     setTextAnswer(text);
     onChange({
       assessmentEntryId: question.id,
@@ -95,7 +100,13 @@ export function QuestionCard({ question, value, onChange }: QuestionCardProps) {
                 value={textAnswer}
                 onChange={(e) => handleTextChange(e.target.value)}
                 placeholder="Type your detailed answer here..."
-                className="w-full min-h-[100px] p-3 rounded-lg bg-white border-2 border-border text-sm focus:border-primary/60 focus:outline-none focus:ring-0 resize-y transition-colors"
+                disabled={disabled}
+                className={clsx(
+                  "w-full min-h-[100px] p-3 rounded-lg border-2 text-sm focus:outline-none focus:ring-0 resize-y transition-colors",
+                  disabled 
+                    ? "bg-muted border-muted cursor-not-allowed text-muted-foreground" 
+                    : "bg-white border-border focus:border-primary/60"
+                )}
               />
             </div>
           ) : (
@@ -110,22 +121,34 @@ export function QuestionCard({ question, value, onChange }: QuestionCardProps) {
                     <div
                       key={choice.id}
                       className={clsx(
-                        "flex items-start gap-2.5 p-3 rounded-lg cursor-pointer transition-all duration-200 min-h-[50px] bg-white/80",
-                        {
+                        "flex items-start gap-2.5 p-3 rounded-lg transition-all duration-200 min-h-[50px]",
+                        disabled 
+                          ? "cursor-not-allowed bg-muted/50" 
+                          : "cursor-pointer bg-white/80",
+                        !disabled && {
                           "ring-1 ring-primary/40 bg-primary/5": isSelected,
                           "hover:bg-primary/5 border border-muted-foreground/20": !isSelected,
+                        },
+                        disabled && {
+                          "bg-muted/30": isSelected,
+                          "border border-muted-foreground/10": !isSelected,
                         }
                       )}
-                      onClick={() => handleChoiceSelect(choice.id)}
+                      onClick={() => !disabled && handleChoiceSelect(choice.id)}
                     >
                       {/* Choice Indicator */}
                       <div className={clsx(
                         "w-4 h-4 border-2 flex items-center justify-center flex-shrink-0 transition-colors mt-0.5",
                         question.questionType === "RADIO" ? "rounded-full" : "rounded",
-                        {
-                          "border-primary/70 bg-primary/70": isSelected,
-                          "border-muted-foreground/40 bg-white": !isSelected,
-                        }
+                        disabled 
+                          ? {
+                              "border-muted-foreground/30 bg-muted-foreground/30": isSelected,
+                              "border-muted-foreground/20 bg-muted": !isSelected,
+                            }
+                          : {
+                              "border-primary/70 bg-primary/70": isSelected,
+                              "border-muted-foreground/40 bg-white": !isSelected,
+                            }
                       )}>
                         {isSelected && (
                           <div className={clsx(
@@ -153,7 +176,11 @@ export function QuestionCard({ question, value, onChange }: QuestionCardProps) {
                         {/* Choice Text */}
                         <span className={clsx(
                           "text-sm break-words whitespace-pre-wrap leading-relaxed block",
-                          isSelected ? "font-medium text-primary/90" : "text-foreground"
+                          disabled 
+                            ? "text-muted-foreground/70"
+                            : isSelected 
+                            ? "font-medium text-primary/90" 
+                            : "text-foreground"
                         )}>
                           {choice.choiceText || `Choice ${choiceIndex + 1}`}
                         </span>

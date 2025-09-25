@@ -464,22 +464,32 @@ export function EditableAssessmentQuestionEditor({
           <div key={choiceIndex} className="flex items-center gap-3 p-3 border rounded-lg">
             {/* Correct Answer Selector */}
             <div className="flex items-center">
-              <Checkbox
-                checked={choice.isCorrect}
-                onCheckedChange={(checked) => {
-                  if (localQuestion.questionType === "RADIO" && checked) {
+              {localQuestion.questionType === "RADIO" ? (
+                <input
+                  type="radio"
+                  name="correct-answer"
+                  checked={choice.isCorrect}
+                  onChange={() => {
                     // For radio buttons, only one can be correct
                     const updatedChoices = localQuestion.choices.map((c, i) => ({
                       ...c,
                       isCorrect: i === choiceIndex
                     }))
                     updateLocalQuestion({ choices: updatedChoices })
-                  } else {
+                  }}
+                  disabled={isLoading}
+                  className="h-4 w-4 text-green-600 focus:ring-green-500"
+                />
+              ) : (
+                <Checkbox
+                  checked={choice.isCorrect}
+                  onCheckedChange={(checked) => {
                     updateChoice(choiceIndex, { isCorrect: !!checked })
-                  }
-                }}
-                disabled={isLoading}
-              />
+                  }}
+                  disabled={isLoading}
+                />
+              )}
+              <span className="ml-2 text-xs text-gray-500">Correct</span>
             </div>
 
             {/* Choice Text and Image */}

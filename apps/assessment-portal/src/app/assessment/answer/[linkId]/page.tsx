@@ -23,6 +23,7 @@ export default function AssessmentAnswerPage() {
   const [answers, setAnswers] = useState<Record<string, AssessmentAnswer>>({});
   const [isStarted, setIsStarted] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
+  const [isTimeUp, setIsTimeUp] = useState(false);
 
   // Hooks
   const { data: validityData, isLoading: checkingValidity, error: validityError } = useCheckAssessmentLinkValidity(linkId);
@@ -54,23 +55,19 @@ export default function AssessmentAnswerPage() {
   }, [submitAssessmentMutation, linkId, router]);
 
   useEffect(() => {
-    if (assessmentAttempt?.startedAt && assessment?.timed) {
+    if (assessmentAttempt?.startedAt && assessment?.timed && !isTimeUp) {
       const startTime = new Date(assessmentAttempt.startedAt).getTime();
       const durationMs = assessment.duration * 60 * 1000; // Convert minutes to milliseconds
       const endTime = startTime + durationMs;
-      
-      const handleTimeUp = async () => {
-        toast.error("Time is up! Submitting assessment automatically.");
-        await handleSubmit();
-      };
       
       const updateTimer = () => {
         const now = Date.now();
         const remaining = Math.max(0, endTime - now);
         setTimeRemaining(Math.ceil(remaining / 1000)); // Convert to seconds
         
-        if (remaining <= 0) {
-          handleTimeUp();
+        if (remaining <= 0 && !isTimeUp) {
+          setIsTimeUp(true);
+          toast.error("Time is up! Assessment time has expired.");
         }
       };
 
@@ -79,7 +76,7 @@ export default function AssessmentAnswerPage() {
       
       return () => clearInterval(interval);
     }
-  }, [assessmentAttempt, assessment, handleSubmit]);
+  }, [assessmentAttempt, assessment, isTimeUp]);
 
   const handleStartAssessment = async () => {
     try {
@@ -93,6 +90,12 @@ export default function AssessmentAnswerPage() {
   };
 
   const handleAnswerChange = async (questionId: string, answer: AssessmentAnswer) => {
+    // Don't allow answers when time is up
+    if (isTimeUp) {
+      toast.warning("Time is up! You can no longer modify your answers.");
+      return;
+    }
+
     const updatedAnswers = { ...answers, [questionId]: answer };
     setAnswers(updatedAnswers);
 
@@ -108,12 +111,16 @@ export default function AssessmentAnswerPage() {
   };
 
   const navigateToQuestion = (sectionIndex: number, questionIndex: number) => {
+    if (isTimeUp) {
+      toast.warning("Time is up! Navigation is no longer available.");
+      return;
+    }
     setCurrentSectionIndex(sectionIndex);
     setCurrentQuestionIndex(questionIndex);
   };
 
   const handleNext = () => {
-    if (!currentSection) return;
+    if (!currentSection || isTimeUp) return;
     
     if (currentQuestionIndex < currentSection.questions.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
@@ -124,6 +131,8 @@ export default function AssessmentAnswerPage() {
   };
 
   const handlePrevious = () => {
+    if (isTimeUp) return;
+    
     if (currentQuestionIndex > 0) {
       setCurrentQuestionIndex(currentQuestionIndex - 1);
     } else if (currentSectionIndex > 0) {
@@ -264,6 +273,61 @@ export default function AssessmentAnswerPage() {
                   className="px-12 py-3"
                 >
                   {startAssessmentMutation.isPending ? "Starting..." : "🚀 Start Assessment"}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  // Time up screen
+  if (isTimeUp) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-6">
+        <div className="max-w-2xl w-full mx-auto">
+          <Card className="shadow-lg border-destructive/20">
+            <CardHeader className="text-center pb-6">
+              <div className="mx-auto w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center mb-4">
+                <Clock className="h-8 w-8 text-destructive" />
+              </div>
+              <CardTitle className="text-3xl font-bold text-destructive">Time is Up!</CardTitle>
+              <p className="text-muted-foreground mt-2">
+                The assessment time has expired. You can no longer modify your answers.
+              </p>
+            </CardHeader>
+            <CardContent className="space-y-6 px-8 pb-8">
+              <div className="bg-muted/50 p-6 rounded-lg border text-center">
+                <h3 className="font-semibold text-lg mb-4 text-foreground">Assessment Summary</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="bg-card p-3 rounded-md">
+                    <p className="text-sm text-muted-foreground">Questions Answered</p>
+                    <p className="text-2xl font-bold text-primary/70">{answeredQuestions}/{totalQuestions}</p>
+                  </div>
+                  <div className="bg-card p-3 rounded-md">
+                    <p className="text-sm text-muted-foreground">Progress</p>
+                    <p className="text-2xl font-bold text-primary/70">{Math.round(progressPercentage)}%</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-amber-50 border border-amber-200 p-4 rounded-lg text-center">
+                <p className="text-amber-800 font-medium mb-2">⚠️ Important Notice</p>
+                <p className="text-amber-700 text-sm">
+                  Time has expired for this assessment. If you wish to submit your current answers, 
+                  you must do so through your instructor or assessment administrator.
+                </p>
+              </div>
+
+              <div className="flex justify-center pt-4">
+                <Button 
+                  onClick={() => router.push('/')}
+                  variant="outline"
+                  size="lg"
+                  className="px-12 py-3"
+                >
+                  Exit Assessment
                 </Button>
               </div>
             </CardContent>
@@ -455,6 +519,7 @@ export default function AssessmentAnswerPage() {
                       question={currentQuestion}
                       value={answers[currentQuestion.id]}
                       onChange={(answer) => handleAnswerChange(currentQuestion.id, answer)}
+                      disabled={isTimeUp}
                     />
                   </div>
                 </div>
@@ -465,7 +530,7 @@ export default function AssessmentAnswerPage() {
                     <Button
                       variant="outline"
                       onClick={handlePrevious}
-                      disabled={currentSectionIndex === 0 && currentQuestionIndex === 0}
+                      disabled={(currentSectionIndex === 0 && currentQuestionIndex === 0) || isTimeUp}
                       size="lg"
                       className="px-8 py-3 text-base"
                     >
@@ -478,6 +543,7 @@ export default function AssessmentAnswerPage() {
                         currentQuestionIndex === (currentSection?.questions.length || 0) - 1) && (
                         <Button 
                           onClick={handleNext}
+                          disabled={isTimeUp}
                           size="lg"
                           className="px-8 py-3 text-base"
                         >
@@ -485,16 +551,21 @@ export default function AssessmentAnswerPage() {
                         </Button>
                       )}
                       
-                      {/* Always show submit button */}
-                      <Button
-                        onClick={handleSubmit}
-                        disabled={submitAssessmentMutation.isPending}
-                        variant={answeredQuestions === totalQuestions ? "default" : "outline"}
-                        size="lg"
-                        className="px-8 py-3 text-base font-semibold"
-                      >
-                        {submitAssessmentMutation.isPending ? "Submitting..." : "Submit Assessment"}
-                      </Button>
+                        {/* Always show submit button */}
+                        <Button
+                          onClick={handleSubmit}
+                          disabled={submitAssessmentMutation.isPending || isTimeUp}
+                          variant={answeredQuestions === totalQuestions ? "default" : "outline"}
+                          size="lg"
+                          className="px-8 py-3 text-base font-semibold"
+                        >
+                          {isTimeUp 
+                            ? "Time Expired" 
+                            : submitAssessmentMutation.isPending 
+                            ? "Submitting..." 
+                            : "Submit Assessment"
+                          }
+                        </Button>
                     </div>
                   </div>
                 </div>
