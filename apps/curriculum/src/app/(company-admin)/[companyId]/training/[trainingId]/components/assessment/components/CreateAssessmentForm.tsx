@@ -5,8 +5,9 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
-import { useAssessmentDetail, AssessmentSummary, useUpdateAssessment } from "@/lib/hooks/useAssessment"
+import { useAssessmentDetail, AssessmentSummary, useUpdateAssessment, useAddAssessmentSection } from "@/lib/hooks/useAssessment"
 import { AssessmentEditorProvider, useAssessmentEditor } from "./AssessmentEditorContext"
+import { useUserRole } from "@/lib/hooks/useUserRole"
 import { 
   useUpdateAssessmentEntry, 
   useAddAssessmentEntry, 
@@ -116,6 +117,7 @@ function CreateAssessmentFormInner({ trainingId, onCancel, onSubmit, isSubmittin
     navigateToNewQuestion,
     navigateToNewSection,
   } = useAssessmentEditor()
+  const { isContentDeveloper } = useUserRole()
 
   // Fetch assessment details for editing
   const { data: assessmentDetailData, isLoading: isLoadingAssessment } = useAssessmentDetail(
@@ -124,6 +126,7 @@ function CreateAssessmentFormInner({ trainingId, onCancel, onSubmit, isSubmittin
 
   // Edit hooks
   const updateAssessment = useUpdateAssessment()
+  const addAssessmentSection = useAddAssessmentSection()
   const updateAssessmentEntry = useUpdateAssessmentEntry()
   const addAssessmentEntry = useAddAssessmentEntry()
   const deleteAssessmentEntry = useDeleteAssessmentEntry()
@@ -373,13 +376,21 @@ function CreateAssessmentFormInner({ trainingId, onCancel, onSubmit, isSubmittin
       return false
     }
 
-    if (sections.length === 0) {
-      toast.error("At least one section is required")
-      return false
+    // Build sanitized sections: drop sections with no title and no valid questions
+    const sanitizedSections = sections
+      .map((section) => ({
+        ...section,
+        assessmentEntries: section.assessmentEntries.filter((q) => q.question.trim())
+      }))
+      .filter((section) => section.title.trim() || section.assessmentEntries.length > 0)
+
+    // If no content sections remain, allow creating assessment with settings only
+    if (sanitizedSections.length === 0) {
+      return true
     }
 
-    for (let sectionIndex = 0; sectionIndex < sections.length; sectionIndex++) {
-      const section = sections[sectionIndex]
+    for (let sectionIndex = 0; sectionIndex < sanitizedSections.length; sectionIndex++) {
+      const section = sanitizedSections[sectionIndex]
       
       if (!section.title.trim()) {
         toast.error(`Section ${sectionIndex + 1} title is required`)
@@ -440,6 +451,14 @@ function CreateAssessmentFormInner({ trainingId, onCancel, onSubmit, isSubmittin
       durationInMinutes = durationInMinutes * 24 * 60
     }
 
+    // Sanitize sections: remove empty questions and drop sections without title and questions
+    const sanitizedSections = sections
+      .map((section) => ({
+        ...section,
+        assessmentEntries: section.assessmentEntries.filter((q) => q.question.trim())
+      }))
+      .filter((section) => section.title.trim() || section.assessmentEntries.length > 0)
+
     const payload: CreateAssessmentData = {
       name: assessmentName,
       type: "PRE_POST", // Always send PRE_POST for now, even if CAT is selected
@@ -448,7 +467,7 @@ function CreateAssessmentFormInner({ trainingId, onCancel, onSubmit, isSubmittin
       maxAttempts: numberOfAttempts,
       contentDeveloperEmail,
       timed,
-      sections,
+      sections: sanitizedSections,
     }
     onSubmit(payload)
   }
@@ -544,8 +563,46 @@ function CreateAssessmentFormInner({ trainingId, onCancel, onSubmit, isSubmittin
                   Cancel
                 </Button>
               )}
+        {/* Content developer: create section with all questions in current section */}
+        {isContentDeveloper && !!editingAssessment && !sections[selectedSection]?.id && sections[selectedSection]?.assessmentEntries?.length > 0 && (
+                <Button
+                  onClick={async () => {
+                    const sec = sections[selectedSection]
+                    try {
+                      await addAssessmentSection.mutateAsync({
+                        assessmentId: editingAssessment.id,
+                        data: {
+                          title: sec.title || `Section ${selectedSection + 1}`,
+                          description: sec.description || "",
+                          assessmentEntries: sec.assessmentEntries.map((q) => ({
+                            question: q.question,
+                            questionImage: q.questionImage,
+                            questionImageFile: q.questionImageFile,
+                            questionType: q.questionType,
+                            weight: q.weight,
+                            choices: q.choices.map(c => ({
+                              choice: c.choice,
+                              choiceImage: c.choiceImage,
+                              choiceImageFile: c.choiceImageFile,
+                              isCorrect: c.isCorrect,
+                            }))
+                          }))
+                        }
+                      })
+                      // Ideally we would set the returned section id here by refetching detail
+                      toast.success("Section created successfully")
+                    } catch (e) {
+                      // errors are toasted in the hook
+                    }
+                  }}
+                  className="bg-green-600 text-white hover:bg-green-700 px-6"
+                  disabled={isSubmitting || addAssessmentSection.isPending}
+                >
+                  {addAssessmentSection.isPending ? "Creating..." : "Create Section"}
+                </Button>
+        )}
         {/* Only show the main submit button when in assessment mode or creating new assessment */}
-        {(editorMode === 'assessment' || !editingAssessment) && (
+        {(editorMode === 'assessment' || !editingAssessment) && !isContentDeveloper && (
                 <Button
                   onClick={handleSubmit}
                   className="bg-blue-600 text-white hover:bg-blue-700 px-6"
@@ -574,8 +631,9 @@ function CreateAssessmentFormInner({ trainingId, onCancel, onSubmit, isSubmittin
                 selectedQuestion={selectedQuestion}
                 editMode={editorMode}
                 assessmentName={assessmentName}
-                isEditMode={!!editingAssessment && questionState === 'viewing'}
-                canAddSection={!editingAssessment}
+                isEditMode={!!editingAssessment && !isContentDeveloper && questionState === 'viewing'}
+                canAddSection={!editingAssessment || isContentDeveloper}
+                disableAssessmentSettings={!!editingAssessment && isContentDeveloper}
                 onSelectAssessmentSettings={selectAssessmentSettings}
                 onSelectQuestion={selectQuestion}
                 onUpdateSectionTitle={updateSectionTitle}
@@ -583,7 +641,7 @@ function CreateAssessmentFormInner({ trainingId, onCancel, onSubmit, isSubmittin
                 onDeleteSection={removeSection}
                 onDeleteQuestion={removeQuestion}
                 onAddQuestion={addQuestion}
-                onAddSection={!editingAssessment ? addSection : undefined}
+                onAddSection={isContentDeveloper ? addSection : (!editingAssessment ? addSection : undefined)}
               />
             </div>
 
@@ -614,7 +672,7 @@ function CreateAssessmentFormInner({ trainingId, onCancel, onSubmit, isSubmittin
                     contentDeveloperEmail={contentDeveloperEmail}
                     setContentDeveloperEmail={setContentDeveloperEmail}
                     trainingId={trainingId}
-                    isEditMode={!!editingAssessment}
+                    isEditMode={!!editingAssessment && isContentDeveloper}
                   />
                         ) : (
                           currentQuestion && (
@@ -623,6 +681,7 @@ function CreateAssessmentFormInner({ trainingId, onCancel, onSubmit, isSubmittin
                                 // In edit mode, use the editable editor for both creating and editing
                                 questionState !== 'viewing' || !currentQuestion.id ? (
                                   <EditableAssessmentQuestionEditor
+                                    key={`${sections[selectedSection]?.id || 'local'}-${selectedSection}-${selectedQuestion}-${currentQuestion?.id || 'new'}`}
                                     question={currentQuestion}
                                     sectionId={sections[selectedSection]?.id}
                                     isEditing={true}
@@ -632,6 +691,14 @@ function CreateAssessmentFormInner({ trainingId, onCancel, onSubmit, isSubmittin
                                       toast.success("Question saved successfully")
                                     }}
                                     onCancelEdit={() => stopEditingQuestion()}
+                                    assessmentId={editingAssessment?.id}
+                                    sectionTitle={sections[selectedSection]?.title}
+                                    sectionDescription={sections[selectedSection]?.description}
+                                    onSectionCreated={(newSectionId) => {
+                                      // write back the new section id locally so next questions attach correctly
+                                      setSections(prev => prev.map((section, i) => i === selectedSection ? { ...section, id: newSectionId } : section))
+                                    }}
+                                    disableHeaderActions={isContentDeveloper}
                                   />
                                 ) : (
                                   <>
@@ -657,6 +724,7 @@ function CreateAssessmentFormInner({ trainingId, onCancel, onSubmit, isSubmittin
                                 )
                               ) : (
                                 <SingleAssessmentQuestionEditor
+                                  key={`${sections[selectedSection]?.id || 'local'}-${selectedSection}-${selectedQuestion}-create`}
                                   question={currentQuestion}
                                   onUpdateQuestion={(updates) => updateQuestion(selectedSection, selectedQuestion, updates)}
                                 />

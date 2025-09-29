@@ -19,6 +19,7 @@ interface AssessmentNavigationProps {
   assessmentName: string
   isEditMode?: boolean
   canAddSection?: boolean
+  disableAssessmentSettings?: boolean
   onSelectAssessmentSettings: () => void
   onSelectQuestion: (sectionIndex: number, questionIndex: number) => void
   onUpdateSectionTitle: (sectionIndex: number, title: string) => void
@@ -37,6 +38,7 @@ export function AssessmentNavigation({
   assessmentName,
   isEditMode = false,
   canAddSection = true,
+  disableAssessmentSettings = false,
   onSelectAssessmentSettings,
   onSelectQuestion,
   onUpdateSectionTitle,
@@ -59,16 +61,17 @@ export function AssessmentNavigation({
           className={`p-3 rounded-lg transition-all ${
             isEditMode 
               ? 'bg-gray-100 border border-gray-200 cursor-not-allowed opacity-60' 
+              : disableAssessmentSettings ? 'bg-gray-100 border border-gray-200 cursor-not-allowed opacity-60' 
               : editMode === 'assessment' 
                 ? 'bg-blue-50 border border-blue-200 shadow-sm cursor-pointer' 
                 : 'bg-gray-50 border border-gray-200 hover:bg-gray-100 cursor-pointer'
           }`}
-          onClick={isEditMode ? undefined : onSelectAssessmentSettings}
+          onClick={isEditMode || disableAssessmentSettings ? undefined : onSelectAssessmentSettings}
         >
           <div className="flex items-center gap-2">
             <span className="text-blue-600">⚙️</span>
             <span className="font-medium text-sm">
-              Assessment Settings {isEditMode && '(Read-only)'}
+              Assessment Settings {(isEditMode || disableAssessmentSettings) && '(Read-only)'}
             </span>
           </div>
           <p className="text-xs text-gray-600 mt-1 truncate">

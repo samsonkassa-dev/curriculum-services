@@ -24,7 +24,7 @@ const allTabs: TabConfig[] = [
   { id: 'cohorts', label: 'Cohorts', icon: '/Schedule.svg', activeIcon: '/scheduleActive.svg' },
   { id: 'attendance', label: 'Attendance', icon: '/attendance.svg', activeIcon: '/attendanceActive.svg' },
   { id: 'survey', label: 'Survey', icon: '/survey.svg', activeIcon: '/surveyActive.svg' },
-  { id: 'assessment', label: 'Assessment', icon: '/Evaluation.svg', activeIcon: '/EvaluationActive.svg' },
+  { id: 'assessment', label: 'Assessment', icon: '/assessment.svg', activeIcon: '/assessmentSelected.svg' },
   { id: 'evaluation', label: 'Evaluation', icon: '/Evaluation.svg', activeIcon: '/EvaluationActive.svg' },
   //{ id: 'certificate', label: 'Certificates', icon: '/certificate.svg', activeIcon: '/certificateActive.svg' },
   { id: 'content', label: 'Content', icon: '/content.svg', activeIcon: '/content-active.svg' },
@@ -71,7 +71,7 @@ export function TrainingTabs({ activeTab, onTabChange }: TrainingTabsProps) {
     visibleTabs = allTabs.filter(tab => ['overview','profile', 'audience', 'module', 'attendance', 'content'].includes(tab.id))
   }
   else if (isContentDeveloper) {
-    visibleTabs = allTabs.filter(tab => ['overview','profile', 'audience', 'module', 'content'].includes(tab.id))
+    visibleTabs = allTabs.filter(tab => ['overview','profile', 'audience', 'module', 'content', 'assessment'].includes(tab.id))
   }
   else if (isProjectManager) {
     visibleTabs = allTabs

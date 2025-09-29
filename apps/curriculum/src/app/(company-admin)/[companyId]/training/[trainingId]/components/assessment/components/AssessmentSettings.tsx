@@ -52,8 +52,8 @@ export function AssessmentSettings({
   const [showUserList, setShowUserList] = useState(false)
   const [selectedUser, setSelectedUser] = useState<TrainingUser | null>(null)
 
-  // Fetch training users and filter for content developers
-  const { data: usersData } = useTrainingUsersByTrainingId(trainingId)
+  // Fetch training users and filter for content developers (only when not in edit mode)
+  const { data: usersData } = useTrainingUsersByTrainingId(trainingId, { enabled: !isEditMode })
 
   const contentDevelopers = useMemo(() => {
     if (!usersData?.users) return []
@@ -105,6 +105,7 @@ export function AssessmentSettings({
           onChange={(e) => setAssessmentName(e.target.value)}
           placeholder="Enter assessment name"
           className="mt-2"
+          disabled={isEditMode}
         />
       </div>
 
@@ -122,7 +123,7 @@ export function AssessmentSettings({
                         ? "border-blue-500 bg-blue-50"
                         : "border-gray-200 hover:border-gray-300"
                     )}
-                    onClick={() => setAssessmentType("PRE_POST")}
+                    onClick={() => !isEditMode && setAssessmentType("PRE_POST")}
                   >
                     <h3 className="font-medium text-gray-900 mb-1 text-sm">
                       Pre and Post Training Assessment
@@ -140,7 +141,7 @@ export function AssessmentSettings({
                         ? "border-blue-500 bg-blue-50"
                         : "border-gray-200 hover:border-gray-300"
                     )}
-                    onClick={() => setAssessmentType("CAT")}
+                    onClick={() => !isEditMode && setAssessmentType("CAT")}
                   >
                     <h3 className="font-medium text-gray-900 mb-1 text-sm">CAT</h3>
                     <p className="text-xs text-gray-500">
@@ -165,6 +166,7 @@ export function AssessmentSettings({
             "mt-2",
             !isAttemptsValid && "border-red-500 focus:border-red-500 focus:ring-red-500"
           )}
+          disabled={isEditMode}
         />
         {!isAttemptsValid && (
           <p className="text-sm text-red-600 mt-1">Number of attempts must be greater than 0</p>
@@ -182,8 +184,9 @@ export function AssessmentSettings({
               type="radio"
               name="timed"
               checked={timed === true}
-              onChange={() => setTimed(true)}
+              onChange={() => !isEditMode && setTimed(true)}
               className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+              disabled={isEditMode}
             />
             <span className="ml-2 text-sm text-gray-700">Yes</span>
           </label>
@@ -192,8 +195,9 @@ export function AssessmentSettings({
               type="radio"
               name="timed"
               checked={timed === false}
-              onChange={() => setTimed(false)}
+              onChange={() => !isEditMode && setTimed(false)}
               className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+              disabled={isEditMode}
             />
             <span className="ml-2 text-sm text-gray-700">No</span>
           </label>
@@ -214,6 +218,7 @@ export function AssessmentSettings({
               value={duration}
               onChange={(e) => setDuration(Number(e.target.value))}
               className="mt-2"
+              disabled={isEditMode}
             />
           </div>
           <div>
@@ -223,6 +228,7 @@ export function AssessmentSettings({
             <Select
               value={durationType}
               onValueChange={(value) => setDurationType(value as DurationType)}
+              disabled={isEditMode}
             >
               <SelectTrigger className="mt-2">
                 <SelectValue />
@@ -237,7 +243,8 @@ export function AssessmentSettings({
         </div>
       )}
 
-      {/* Assign Content Developer */}
+      {/* Assign Content Developer (hide and skip fetching on edit mode) */}
+      {!isEditMode && (
       <div className="relative">
         <Label className="text-sm font-medium text-gray-700 mb-3 block">
           Assign Content Developer
@@ -322,6 +329,7 @@ export function AssessmentSettings({
           </div>
         )}
       </div>
+      )}
     </div>
   )
 }

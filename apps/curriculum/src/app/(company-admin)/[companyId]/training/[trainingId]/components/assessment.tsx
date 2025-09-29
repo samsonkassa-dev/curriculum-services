@@ -8,12 +8,15 @@ import { toast } from "sonner"
 import { Plus, Filter } from "lucide-react"
 import Image from "next/image"
 import { useUserRole } from "@/lib/hooks/useUserRole"
+import { useAuth } from "@/lib/hooks/useAuth"
+import { useAddAssessmentSection, useChangeAssessmentStatus } from "@/lib/hooks/useAssessment"
 import { useCreateAssessment, useAssessments, AssessmentSummary } from "@/lib/hooks/useAssessment"
 import { CreateAssessmentForm, type CreateAssessmentData } from "./assessment/index"
 import { AssessmentDataTable } from "./assessment/components/assessment-data-table"
 import { createAssessmentColumnsWithActions } from "./assessment/components/assessment-columns"
 import { AssessmentViewModal } from "./assessment/components/AssessmentViewModal"
 import { DefaultCreate } from "./defaultCreate"
+import { AssessmentApproveDialog } from "./assessment/components/AssessmentApproveDialog"
 
 interface AssessmentComponentProps {
   trainingId: string
@@ -28,14 +31,23 @@ export function AssessmentComponent({ trainingId }: AssessmentComponentProps) {
   const [viewModalOpen, setViewModalOpen] = useState(false)
   const [selectedAssessment, setSelectedAssessment] = useState<AssessmentSummary | null>(null)
   const [editingAssessment, setEditingAssessment] = useState<AssessmentSummary | null>(null)
+  const [approveDialogOpen, setApproveDialogOpen] = useState(false)
+  const [approveTarget, setApproveTarget] = useState<AssessmentSummary | null>(null)
   
-  const { isProjectManager, isTrainingAdmin, isCompanyAdmin } = useUserRole()
+  const { isProjectManager, isTrainingAdmin, isCompanyAdmin, isCurriculumAdmin, isContentDeveloper } = useUserRole()
+  const { user } = useAuth()
   
   // Fetch assessments for this training
   const { data: assessmentsData, isLoading } = useAssessments(trainingId)
+  const addAssessmentSection = useAddAssessmentSection()
+  const changeStatus = useChangeAssessmentStatus()
   const createAssessment = useCreateAssessment()
 
-  const assessments = assessmentsData?.assessments || []
+  let assessments = assessmentsData?.assessments || []
+  // For content developers: show only assigned assessments
+  if (isContentDeveloper && user?.email) {
+    assessments = assessments.filter(a => a.contentDeveloper?.email === user.email)
+  }
   
   // Filter assessments based on search query
   const filteredAssessments = useMemo(() => {
@@ -100,6 +112,8 @@ export function AssessmentComponent({ trainingId }: AssessmentComponentProps) {
   }, [])
 
   const handleEditAssessment = useCallback((assessment: AssessmentSummary) => {
+    // Open builder immediately; for content developers with no sections,
+    // the builder will handle creating sections/questions on save
     setEditingAssessment(assessment)
     setShowCreateForm(true)
   }, [])
@@ -114,21 +128,41 @@ export function AssessmentComponent({ trainingId }: AssessmentComponentProps) {
     console.log("Delete assessment:", assessment)
   }, [])
 
+  const canApprove = useCallback((assessment: AssessmentSummary) => {
+    return (isProjectManager || isCompanyAdmin || isCurriculumAdmin) && assessment.approvalStatus !== "APPROVED"
+  }, [isProjectManager, isCompanyAdmin, isCurriculumAdmin])
+
+  const handleApproveAssessment = useCallback((assessment: AssessmentSummary) => {
+    setApproveTarget(assessment)
+    setApproveDialogOpen(true)
+  }, [])
+
   // Check if user has edit permissions
   const hasEditPermission = useMemo(() => {
+    return isCompanyAdmin || isProjectManager || isCurriculumAdmin || isTrainingAdmin || isContentDeveloper
+  }, [isCompanyAdmin, isProjectManager, isCurriculumAdmin, isTrainingAdmin, isContentDeveloper])
+
+  // Only non-content roles can create assessments
+  const canCreateAssessments = useMemo(() => {
     return isCompanyAdmin || isProjectManager || isTrainingAdmin
   }, [isCompanyAdmin, isProjectManager, isTrainingAdmin])
 
   // Create columns with actions
   const columnsWithActions = useMemo(() => {
+    const canAddContent = (a: AssessmentSummary) => isContentDeveloper && a.sectionCount === 0
+    const onAddContent = (a: AssessmentSummary) => handleEditAssessment(a)
     return createAssessmentColumnsWithActions(
       handleViewAssessment,
       handleEditAssessment,
       handleAssessmentSettings,
       handleDeleteAssessment,
-      hasEditPermission
+      hasEditPermission,
+      handleApproveAssessment,
+      canApprove,
+      onAddContent,
+      canAddContent
     )
-  }, [handleViewAssessment, handleEditAssessment, handleAssessmentSettings, handleDeleteAssessment, hasEditPermission])
+  }, [handleViewAssessment, handleEditAssessment, handleAssessmentSettings, handleDeleteAssessment, hasEditPermission, handleApproveAssessment, canApprove, isContentDeveloper])
 
   // Show loading for initial data fetch
   if (isLoading) {
@@ -148,8 +182,20 @@ export function AssessmentComponent({ trainingId }: AssessmentComponentProps) {
     )
   }
 
-  // Show default create view if no assessments exist
+  // No assessments view
   if (assessments.length === 0) {
+    if (isContentDeveloper) {
+      return (
+        <div className="flex lg:px-16 md:px-14 px-4 w-full">
+          <div className="flex-1 py-4 md:pl-12 min-w-0">
+            <h1 className="text-lg font-semibold mb-6">Assessment</h1>
+            <div className="rounded-md border p-10 text-center text-gray-500 text-sm bg-white">
+              No assessments assigned to you yet.
+            </div>
+          </div>
+        </div>
+      )
+    }
     return (
       <DefaultCreate
         title="Create Assessment"
@@ -193,7 +239,7 @@ export function AssessmentComponent({ trainingId }: AssessmentComponentProps) {
             </Button>
           </div>
           
-          {hasEditPermission && (
+          {canCreateAssessments && (
             <Button
               onClick={handleCreateNew}
               className="bg-[#0B75FF] hover:bg-[#0B75FF]/90 text-white flex items-center gap-2"
@@ -227,6 +273,23 @@ export function AssessmentComponent({ trainingId }: AssessmentComponentProps) {
             setViewModalOpen(false)
             setSelectedAssessment(null)
           }}
+        />
+
+        {/* Approve Dialog */}
+        <AssessmentApproveDialog
+          isOpen={approveDialogOpen}
+          onClose={() => setApproveDialogOpen(false)}
+          onConfirm={() => {
+            if (!approveTarget) return
+            changeStatus.mutate({ assessmentId: approveTarget.id, status: "APPROVED" }, {
+              onSuccess: () => {
+                setApproveDialogOpen(false)
+                setApproveTarget(null)
+              }
+            })
+          }}
+          assessmentName={approveTarget?.name || ""}
+          isApproving={changeStatus.isPending}
         />
       </div>
     </div>

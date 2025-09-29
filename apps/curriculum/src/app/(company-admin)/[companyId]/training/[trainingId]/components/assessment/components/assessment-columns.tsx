@@ -2,7 +2,7 @@
 
 import { ColumnDef } from "@tanstack/react-table"
 import { Button } from "@/components/ui/button"
-import { Eye, Edit, Settings, Trash2 } from "lucide-react"
+import { Eye, Edit, Settings, Trash2, CheckCircle2, PlusCircle } from "lucide-react"
 import { AssessmentSummary } from "@/lib/hooks/useAssessment"
 import { Badge } from "@/components/ui/badge"
 
@@ -141,7 +141,11 @@ export function createAssessmentActionsColumn(
   onEdit: (assessment: AssessmentSummary) => void,
   onSettings: (assessment: AssessmentSummary) => void,
   onDelete: (assessment: AssessmentSummary) => void,
-  hasEditPermission: boolean
+  hasEditPermission: boolean,
+  onApprove?: (assessment: AssessmentSummary) => void,
+  canApprove?: (assessment: AssessmentSummary) => boolean,
+  onAddContent?: (assessment: AssessmentSummary) => void,
+  canAddContent?: (assessment: AssessmentSummary) => boolean
 ): ColumnDef<AssessmentSummary> {
   return {
     id: "actions",
@@ -163,15 +167,38 @@ export function createAssessmentActionsColumn(
           
           {hasEditPermission && (
             <>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => onEdit(assessment)}
-                className="h-8 w-8 p-0 text-gray-600 hover:text-gray-700 hover:bg-gray-50"
-                title="Edit Assessment"
-              >
-                <Edit className="h-4 w-4" />
-              </Button>
+              {canAddContent?.(assessment) && onAddContent ? (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onAddContent(assessment)}
+                  className="h-8 w-8 p-0 text-green-600 hover:text-green-700 hover:bg-green-50"
+                  title="Add Content"
+                >
+                  <PlusCircle className="h-4 w-4" />
+                </Button>
+              ) : (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onEdit(assessment)}
+                  className="h-8 w-8 p-0 text-gray-600 hover:text-gray-700 hover:bg-gray-50"
+                  title="Edit Assessment"
+                >
+                  <Edit className="h-4 w-4" />
+                </Button>
+              )}
+              {onApprove && canApprove?.(assessment) && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => onApprove(assessment)}
+                  className="h-8 w-8 p-0 text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                  title="Approve Assessment"
+                >
+                  <CheckCircle2 className="h-4 w-4" />
+                </Button>
+              )}
               
               {/* <Button
                 variant="ghost"
@@ -206,10 +233,24 @@ export function createAssessmentColumnsWithActions(
   onEdit: (assessment: AssessmentSummary) => void,
   onSettings: (assessment: AssessmentSummary) => void,
   onDelete: (assessment: AssessmentSummary) => void,
-  hasEditPermission: boolean
+  hasEditPermission: boolean,
+  onApprove?: (assessment: AssessmentSummary) => void,
+  canApprove?: (assessment: AssessmentSummary) => boolean,
+  onAddContent?: (assessment: AssessmentSummary) => void,
+  canAddContent?: (assessment: AssessmentSummary) => boolean
 ): ColumnDef<AssessmentSummary>[] {
   return [
     ...assessmentColumns,
-    createAssessmentActionsColumn(onView, onEdit, onSettings, onDelete, hasEditPermission)
+    createAssessmentActionsColumn(
+      onView,
+      onEdit,
+      onSettings,
+      onDelete,
+      hasEditPermission,
+      onApprove,
+      canApprove,
+      onAddContent,
+      canAddContent,
+    )
   ]
 }

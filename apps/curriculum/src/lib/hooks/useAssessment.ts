@@ -695,7 +695,7 @@ export function useAddAssessmentSection() {
           question: string;
           questionImage?: string;
           questionImageFile?: File;
-          questionType: "RADIO" | "CHECKBOX";
+          questionType: "RADIO" | "CHECKBOX" | "TEXT";
           choices: {
             choice: string;
             choiceImage?: string;

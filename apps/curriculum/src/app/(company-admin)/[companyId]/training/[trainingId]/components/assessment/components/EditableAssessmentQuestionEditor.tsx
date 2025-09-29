@@ -12,6 +12,7 @@ import { Trash2, Plus, Save, X } from "lucide-react"
 import { toast } from "sonner"
 import { QuestionDeleteDialog } from "./QuestionDeleteDialog"
 import { ChoiceDeleteDialog } from "./ChoiceDeleteDialog"
+import { useAddAssessmentSection } from "@/lib/hooks/useAssessment"
 import {
   useUpdateAssessmentEntry,
   useAddAssessmentEntry,
@@ -50,6 +51,11 @@ interface EditableAssessmentQuestionEditorProps {
   onUpdateQuestion: (updates: Partial<AssessmentEntryForm>) => void
   onSaveQuestion?: () => void
   onCancelEdit?: () => void
+  assessmentId?: string
+  sectionTitle?: string
+  sectionDescription?: string
+  onSectionCreated?: (newSectionId: string) => void
+  disableHeaderActions?: boolean
 }
 
 export function EditableAssessmentQuestionEditor({
@@ -58,7 +64,12 @@ export function EditableAssessmentQuestionEditor({
   isEditing,
   onUpdateQuestion,
   onSaveQuestion,
-  onCancelEdit
+  onCancelEdit,
+  assessmentId,
+  sectionTitle,
+  sectionDescription,
+  onSectionCreated,
+  disableHeaderActions = false
 }: EditableAssessmentQuestionEditorProps) {
   const [localQuestion, setLocalQuestion] = useState<AssessmentEntryForm>(question)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
@@ -67,12 +78,12 @@ export function EditableAssessmentQuestionEditor({
   const [choiceToDelete, setChoiceToDelete] = useState<{ index: number; text: string } | null>(null)
   const [originalChoices, setOriginalChoices] = useState<ChoiceForm[]>(question.choices || [])
 
-  // Update local state when switching to a different saved question
+  // Update local state when switching to a different question reference
   useEffect(() => {
     setLocalQuestion(question)
     setOriginalChoices(question.choices || [])
-    // Don't clear hasUnsavedChanges on every keystroke propagated via parent updates
-  }, [question.id])
+    setHasUnsavedChanges(false)
+  }, [question, question?.id])
 
   // Hooks for API operations
   const updateAssessmentEntry = useUpdateAssessmentEntry()
@@ -81,6 +92,7 @@ export function EditableAssessmentQuestionEditor({
   const updateChoiceAPI = useUpdateChoice()
   const addChoiceAPI = useAddChoice()
   const deleteChoiceAPI = useDeleteChoice()
+  const addAssessmentSection = useAddAssessmentSection()
 
   const updateLocalQuestion = (updates: Partial<AssessmentEntryForm>) => {
     setLocalQuestion(prev => ({ ...prev, ...updates }))
@@ -199,7 +211,7 @@ export function EditableAssessmentQuestionEditor({
   }
 
   const createNewQuestion = async () => {
-    // For new questions, we can send all choices at once
+    // Build question payload
     const payload: CreateAssessmentEntryPayload = {
       question: localQuestion.question,
       questionType: localQuestion.questionType,
@@ -214,12 +226,38 @@ export function EditableAssessmentQuestionEditor({
       }))
     }
 
+    let targetSectionId = sectionId
+
+    // If we don't have a section on the server yet, create one first
+    if (!targetSectionId && assessmentId) {
+      const res = await addAssessmentSection.mutateAsync({
+        assessmentId,
+        data: {
+          title: sectionTitle || "Section",
+          description: sectionDescription || "",
+          assessmentEntries: [payload]
+        }
+      })
+      const createdSectionId = res?.section?.id || res?.data?.section?.id || res?.data?.id || res?.id
+      if (createdSectionId) {
+        targetSectionId = createdSectionId
+        onSectionCreated?.(createdSectionId)
+      }
+      // Since section was created with the first question, we're done
+      setHasUnsavedChanges(false)
+      return
+    }
+    
+    if (!targetSectionId) {
+      throw new Error("Missing section to add question to.")
+    }
+
+    // Section exists already → add this question to it
     const response = await addAssessmentEntry.mutateAsync({
-      sectionId: sectionId!,
+      sectionId: targetSectionId,
       data: payload
     })
 
-    // Update local question with the returned ID if available
     if (response?.data?.id) {
       setLocalQuestion(prev => ({ ...prev, id: response.data.id }))
       onUpdateQuestion({ id: response.data.id })
@@ -361,7 +399,7 @@ export function EditableAssessmentQuestionEditor({
   return (
     <div className="space-y-6">
       {/* Edit Mode Header */}
-      {isEditing && (
+      {isEditing && !disableHeaderActions && (
         <div className="flex items-center justify-between p-4 bg-blue-50 border border-blue-200 rounded-lg">
           <div className="flex items-center gap-2">
             <Badge variant="secondary" className="bg-blue-100 text-blue-800">
@@ -374,15 +412,30 @@ export function EditableAssessmentQuestionEditor({
             )}
           </div>
           <div className="flex items-center gap-2">
-            <Button
-              size="sm"
-              onClick={handleSaveQuestion}
-              disabled={isLoading}
-              className="bg-green-600 hover:bg-green-700 text-white"
-            >
-              <Save className="h-4 w-4 mr-1" />
-              Save
-            </Button>
+            {!sectionId && assessmentId ? (
+              <Button
+                size="sm"
+                onClick={async () => {
+                  await createNewQuestion()
+                  onSaveQuestion?.()
+                }}
+                disabled={isLoading}
+                className="bg-green-600 hover:bg-green-700 text-white"
+              >
+                <Save className="h-4 w-4 mr-1" />
+                Save Section
+              </Button>
+            ) : (
+              <Button
+                size="sm"
+                onClick={handleSaveQuestion}
+                disabled={isLoading}
+                className="bg-green-600 hover:bg-green-700 text-white"
+              >
+                <Save className="h-4 w-4 mr-1" />
+                Save
+              </Button>
+            )}
             {localQuestion.id && (
               <Button
                 size="sm"

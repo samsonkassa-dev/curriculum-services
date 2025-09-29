@@ -5,7 +5,7 @@ import { TrainingUsersResponse, CompanyUsersResponse } from "@/types/users"
 import { getCookie } from "@curriculum-services/auth"
 
 // Hook to fetch training users by training ID
-export function useTrainingUsersByTrainingId(trainingId: string) {
+export function useTrainingUsersByTrainingId(trainingId: string, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ['training-users', trainingId],
     queryFn: async () => {
@@ -25,7 +25,8 @@ export function useTrainingUsersByTrainingId(trainingId: string) {
         }
         throw error
       }
-    }
+    },
+    enabled: (options?.enabled ?? true) && !!trainingId,
   })
 }
 
