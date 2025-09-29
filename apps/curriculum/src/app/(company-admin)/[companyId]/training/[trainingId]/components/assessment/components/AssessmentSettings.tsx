@@ -276,9 +276,9 @@ export function AssessmentSettings({
               type="text"
               value={searchQuery}
               onChange={(e) => handleUserSearch(e.target.value)}
-              placeholder="Search for content developer or enter email"
+              placeholder="Search for content developer or enter email (optional)"
               onBlur={() => {
-                // If user typed an email directly, set it
+                // If user typed an email directly, set it (optional)
                 if (searchQuery.includes('@') && !selectedUser) {
                   setContentDeveloperEmail(searchQuery)
                   setSearchQuery("")

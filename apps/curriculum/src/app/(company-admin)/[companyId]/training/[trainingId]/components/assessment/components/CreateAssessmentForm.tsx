@@ -467,10 +467,7 @@ function CreateAssessmentFormInner({ trainingId, onCancel, onSubmit, isSubmittin
       toast.error("Duration must be greater than 0 for timed assessments")
       return
     }
-    if (!contentDeveloperEmail.trim()) {
-      toast.error("Content developer email is required")
-      return
-    }
+    // Content developer email is optional during edit
 
     // Convert duration to minutes based on duration type
     let durationInMinutes = Number(duration) || 0

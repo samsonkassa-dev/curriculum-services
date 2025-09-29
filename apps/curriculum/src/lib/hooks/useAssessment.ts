@@ -66,24 +66,11 @@ interface ApiErrorResponse {
   [key: string]: unknown;
 }
 
-// Module Assessment Method Interfaces (for legacy system)
-interface ModuleAssessmentMethod {
-  id: string;
-  name: string;
-  description: string;
-  assessmentSubType: "FORMATIVE" | "SUMMATIVE" | "OTHER";
-}
+// Legacy Module Assessment types removed
 
-interface ModuleAssessmentData {
-  assessmentMethods: ModuleAssessmentMethod[];
-}
+// Note: ModuleAssessmentData is deprecated and intentionally removed to reduce unused types.
 
-interface ModuleAssessmentResponse {
-  moduleAssessmentMethods?: ModuleAssessmentData;
-  sectionAssessmentMethods?: ModuleAssessmentData;
-  code: string;
-  message: string;
-}
+// Note: ModuleAssessmentResponse is deprecated and intentionally removed to reduce unused types.
 
 // GET API Response Interfaces
 export interface AssessmentChoice {
@@ -679,17 +666,8 @@ export function useUpdateAssessment() {
       });
     },
     onError: (error: AxiosError<ApiErrorResponse>) => {
-      let errorMessage = "Failed to update assessment. Please try again.";
-      
-      if (error.response?.data?.message) {
-        errorMessage = error.response.data.message;
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-      
-      toast.error("Error", {
-        description: errorMessage
-      });
+      const message = error.response?.data?.message || "Failed to update assessment. Please try again."
+      toast.error("Error", { description: message })
     }
   });
 }

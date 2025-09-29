@@ -229,41 +229,99 @@ export function EditableAssessmentQuestionEditor({
   const updateChoicesIndividually = async () => {
     const currentChoices = localQuestion.choices
 
-    // Process each current choice
-    for (const currentChoice of currentChoices) {
-      if (currentChoice.id) {
-        // Existing choice - find the original to compare
-        const originalChoice = originalChoices.find(oc => oc.id === currentChoice.id)
-        
-        if (originalChoice) {
-          // Check if it needs updating
-          const hasChanged = 
-            currentChoice.choice !== originalChoice.choice ||
-            currentChoice.isCorrect !== originalChoice.isCorrect ||
-            currentChoice.choiceImageFile !== originalChoice.choiceImageFile
+    const isSingleChoice = localQuestion.questionType === "RADIO"
 
-          if (hasChanged) {
-            await updateChoiceAPI.mutateAsync({
-              choiceId: currentChoice.id,
-              data: {
-                choice: currentChoice.choice,
-                choiceImageFile: currentChoice.choiceImageFile,
-                isCorrect: currentChoice.isCorrect
-              }
-            })
-          }
-        }
-      } else {
-        // New choice - add it
-        await addChoiceAPI.mutateAsync({
-          entryId: localQuestion.id!,
+    if (isSingleChoice) {
+      // 1) For single choice, update the newly selected correct choice first
+      const existingNewCorrect = currentChoices.find(c => {
+        if (!c.id) return false
+        const orig = originalChoices.find(oc => oc.id === c.id)
+        return orig && !orig.isCorrect && c.isCorrect
+      })
+
+      if (existingNewCorrect && existingNewCorrect.id) {
+        await updateChoiceAPI.mutateAsync({
+          choiceId: existingNewCorrect.id,
           data: {
-            choice: currentChoice.choice,
-            choiceImage: currentChoice.choiceImage,
-            choiceImageFile: currentChoice.choiceImageFile,
-            isCorrect: currentChoice.isCorrect
-          }
+            choice: existingNewCorrect.choice,
+            choiceImageFile: existingNewCorrect.choiceImageFile,
+            isCorrect: true,
+          },
         })
+      }
+
+      // 2) Process additions and other updates, but DO NOT send updates that flip a choice from true -> false
+      for (const currentChoice of currentChoices) {
+        if (!currentChoice.id) {
+          // New choice - add it
+          await addChoiceAPI.mutateAsync({
+            entryId: localQuestion.id!,
+            data: {
+              choice: currentChoice.choice,
+              choiceImage: currentChoice.choiceImage,
+              choiceImageFile: currentChoice.choiceImageFile,
+              isCorrect: currentChoice.isCorrect,
+            },
+          })
+          continue
+        }
+
+        const originalChoice = originalChoices.find(oc => oc.id === currentChoice.id)
+        if (!originalChoice) continue
+
+        const changedTextOrImage =
+          currentChoice.choice !== originalChoice.choice ||
+          currentChoice.choiceImageFile !== originalChoice.choiceImageFile
+        const changedCorrectness = currentChoice.isCorrect !== originalChoice.isCorrect
+        const becameFalseFromTrue = originalChoice.isCorrect && !currentChoice.isCorrect
+
+        // Skip sending a "set to false" update for single-choice to avoid transient no-correct state
+        if (becameFalseFromTrue) continue
+
+        if (changedTextOrImage || changedCorrectness) {
+          await updateChoiceAPI.mutateAsync({
+            choiceId: currentChoice.id,
+            data: {
+              choice: currentChoice.choice,
+              choiceImageFile: currentChoice.choiceImageFile,
+              isCorrect: currentChoice.isCorrect,
+            },
+          })
+        }
+      }
+    } else {
+      // Multiple choice (checkbox) – update per choice normally
+      for (const currentChoice of currentChoices) {
+        if (currentChoice.id) {
+          const originalChoice = originalChoices.find(oc => oc.id === currentChoice.id)
+          if (originalChoice) {
+            const hasChanged =
+              currentChoice.choice !== originalChoice.choice ||
+              currentChoice.isCorrect !== originalChoice.isCorrect ||
+              currentChoice.choiceImageFile !== originalChoice.choiceImageFile
+
+            if (hasChanged) {
+              await updateChoiceAPI.mutateAsync({
+                choiceId: currentChoice.id,
+                data: {
+                  choice: currentChoice.choice,
+                  choiceImageFile: currentChoice.choiceImageFile,
+                  isCorrect: currentChoice.isCorrect,
+                },
+              })
+            }
+          }
+        } else {
+          await addChoiceAPI.mutateAsync({
+            entryId: localQuestion.id!,
+            data: {
+              choice: currentChoice.choice,
+              choiceImage: currentChoice.choiceImage,
+              choiceImageFile: currentChoice.choiceImageFile,
+              isCorrect: currentChoice.isCorrect,
+            },
+          })
+        }
       }
     }
 
