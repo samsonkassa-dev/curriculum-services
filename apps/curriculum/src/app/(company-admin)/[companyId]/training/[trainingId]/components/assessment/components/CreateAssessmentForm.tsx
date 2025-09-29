@@ -577,7 +577,7 @@ function CreateAssessmentFormInner({ trainingId, onCancel, onSubmit, isSubmittin
                 selectedQuestion={selectedQuestion}
                 editMode={editorMode}
                 assessmentName={assessmentName}
-                isEditMode={questionState === 'viewing'}
+                isEditMode={!!editingAssessment && questionState === 'viewing'}
                 canAddSection={!editingAssessment}
                 onSelectAssessmentSettings={selectAssessmentSettings}
                 onSelectQuestion={selectQuestion}
