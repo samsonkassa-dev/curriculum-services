@@ -144,8 +144,8 @@ export function AssessmentComponent({ trainingId }: AssessmentComponentProps) {
 
   // Only non-content roles can create assessments
   const canCreateAssessments = useMemo(() => {
-    return isCompanyAdmin || isProjectManager || isTrainingAdmin
-  }, [isCompanyAdmin, isProjectManager, isTrainingAdmin])
+    return isCompanyAdmin || isProjectManager || isCurriculumAdmin || isTrainingAdmin
+  }, [isCompanyAdmin, isProjectManager, isCurriculumAdmin, isTrainingAdmin])
 
   // Create columns with actions
   const columnsWithActions = useMemo(() => {

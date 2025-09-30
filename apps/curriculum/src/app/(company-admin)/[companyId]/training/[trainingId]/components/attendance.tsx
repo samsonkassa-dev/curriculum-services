@@ -75,9 +75,9 @@ function attendanceReducer(state: AttendanceState, action: AttendanceAction): At
 }
 
 export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
-  const { isProjectManager, isTrainingAdmin, isTrainer, isLoading: isLoadingAuth } = useUserRole()
+  const { isProjectManager, isTrainingAdmin, isTrainer, isCompanyAdmin, isLoading: isLoadingAuth } = useUserRole()
   const [isInitialLoadComplete, setIsInitialLoadComplete] = useState(false)
-  const canEditAttendance = !isLoadingAuth && (isTrainer || isTrainingAdmin || isProjectManager) && isInitialLoadComplete
+  const canEditAttendance = !isLoadingAuth && (isTrainer || isTrainingAdmin || isProjectManager || isCompanyAdmin) && isInitialLoadComplete
   const [activeCohortId, setActiveCohortId] = useState<string>("")
   const [activeSessionId, setActiveSessionId] = useState<string>("")
   const [studentPage, setStudentPage] = useState(1)
