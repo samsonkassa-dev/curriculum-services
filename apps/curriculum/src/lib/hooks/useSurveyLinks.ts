@@ -119,7 +119,7 @@ export function useExtendAnswerLink() {
 }
 
 export const buildPortalLink = (relativeLink: string): string => {
-  const base = process.env.NEXT_PUBLIC_ASSESSMENTPORTAL || "http://localhost:3002";
+  const base = process.env.NEXT_PUBLIC_SURVEYPORTAL || "http://localhost:3002";
   return `${base}${relativeLink}`;
 };
 

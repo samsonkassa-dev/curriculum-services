@@ -62,7 +62,7 @@ export function useCohortSurveyLinks(trainingId: string, cohortId: string, train
 
   const deleteLink = (linkId: string) => deleteLinkMutate({ linkId })
 
-  const base = process.env.NEXT_PUBLIC_ASSESSMENTPORTAL || "http://localhost:3002"
+  const base = process.env.NEXT_PUBLIC_SURVEYPORTAL || "http://localhost:3002"
   const getAnswersLink = (surveyId?: string, traineeId?: string) => (surveyId && traineeId ? `${base}/survey/answers/${surveyId}/${traineeId}` : undefined)
 
   const queryClient = useQueryClient()
