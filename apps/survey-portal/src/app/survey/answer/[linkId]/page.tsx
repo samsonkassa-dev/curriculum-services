@@ -128,7 +128,7 @@ export default function SurveyAnswerPage() {
 
                 {q.questionType === 'RADIO' && (
                   <div className="grid sm:grid-cols-2 gap-2">
-                    {q.choices
+                    {[...(q.choices || [])]
                       .sort((a, b) => String(a?.order ?? '').localeCompare(String(b?.order ?? ''), undefined, { numeric: true, sensitivity: 'base' }))
                       .map(choice => (
                       <label key={choice.order} className="flex items-center gap-3 p-3 border rounded hover:bg-gray-50 cursor-pointer">
@@ -158,7 +158,7 @@ export default function SurveyAnswerPage() {
 
                 {q.questionType === 'CHECKBOX' && (
                   <div className="grid sm:grid-cols-2 gap-2">
-                    {q.choices
+                    {[...(q.choices || [])]
                       .sort((a, b) => String(a?.order ?? '').localeCompare(String(b?.order ?? ''), undefined, { numeric: true, sensitivity: 'base' }))
                       .map(choice => (
                       <label key={choice.order} className="flex items-center gap-3 p-3 border rounded hover:bg-gray-50 cursor-pointer">
@@ -191,7 +191,7 @@ export default function SurveyAnswerPage() {
                       <thead className="bg-gray-50">
                         <tr>
                           <th className="border px-3 py-2 text-left text-sm font-medium text-gray-700">Row</th>
-                          {q.choices
+                          {[...(q.choices || [])]
                             .sort((a, b) => String(a?.order ?? '').localeCompare(String(b?.order ?? ''), undefined, { numeric: true, sensitivity: 'base' }))
                             .map(choice => 
                             <th key={choice.order} className="border px-3 py-2 text-sm font-medium text-gray-700">
@@ -201,10 +201,10 @@ export default function SurveyAnswerPage() {
                         </tr>
                       </thead>
                       <tbody>
-                        {q.rows.map((r, ri) => (
+                        {(q.rows || []).map((r, ri) => (
                           <tr key={r} className={ri % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
                             <td className="border px-3 py-2 text-sm text-gray-700">{r}</td>
-                            {q.choices
+                            {[...(q.choices || [])]
                               .sort((a, b) => String(a?.order ?? '').localeCompare(String(b?.order ?? ''), undefined, { numeric: true, sensitivity: 'base' }))
                               .map(choice => (
                               <td key={choice.order} className="border px-3 py-2 text-center">
