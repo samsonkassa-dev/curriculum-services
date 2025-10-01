@@ -781,6 +781,81 @@ export function useAddAssessmentSection() {
 }
 
 /**
+ * Hook to add multiple sections to an existing assessment in a single request
+ * Expects a JSON payload with a top-level "sections" array as per API contract
+ * Only PMs/Company Admins should call user-fetching APIs; this bulk section
+ * creation is primarily used by content developers in the builder flow.
+ */
+export function useAddAssessmentSectionsBulk() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      assessmentId,
+      sections,
+    }: {
+      assessmentId: string;
+      sections: {
+        title: string;
+        description: string;
+        assessmentEntries: {
+          question: string;
+          questionImage?: string;
+          questionType: "RADIO" | "CHECKBOX" | "TEXT";
+          choices: {
+            choice: string;
+            choiceImage?: string;
+            isCorrect: boolean;
+          }[];
+          weight: number;
+        }[];
+      }[];
+    }) => {
+      const token = getCookie("token");
+
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_API}/assessment-section/assessment/${assessmentId}`,
+        { sections },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      return response.data;
+    },
+    onSuccess: (data, variables) => {
+      toast.success("Success", {
+        description: data?.message || "Assessment sections added successfully",
+      });
+
+      // Invalidate relevant queries, including the specific assessment detail if available
+      queryClient.invalidateQueries({ queryKey: assessmentQueryKeys.all });
+      if (variables?.assessmentId) {
+        queryClient.invalidateQueries({
+          queryKey: assessmentQueryKeys.detail(variables.assessmentId),
+        });
+        queryClient.invalidateQueries({
+          queryKey: assessmentQueryKeys.sections(variables.assessmentId),
+        });
+      }
+      queryClient.invalidateQueries({ queryKey: ["assessments"] });
+    },
+    onError: (error: AxiosError<ApiErrorResponse>) => {
+      let errorMessage = "Failed to add assessment sections. Please try again.";
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      toast.error("Error", { description: errorMessage });
+    },
+  });
+}
+
+/**
  * Hook to delete an assessment section
  */
 export function useDeleteAssessmentSection() {

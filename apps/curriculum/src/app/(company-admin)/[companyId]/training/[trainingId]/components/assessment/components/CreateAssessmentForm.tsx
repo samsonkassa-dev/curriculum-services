@@ -1,23 +1,16 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useQueryClient } from "@tanstack/react-query"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { toast } from "sonner"
-import { useAssessmentDetail, AssessmentSummary, useUpdateAssessment, useAddAssessmentSection } from "@/lib/hooks/useAssessment"
+import { useAssessmentDetail, AssessmentSummary, useUpdateAssessment, /* useAddAssessmentSection, */ useAddAssessmentSectionsBulk } from "@/lib/hooks/useAssessment"
 import { AssessmentEditorProvider, useAssessmentEditor } from "./AssessmentEditorContext"
 import { useUserRole } from "@/lib/hooks/useUserRole"
-import { 
-  useUpdateAssessmentEntry, 
-  useAddAssessmentEntry, 
-  useDeleteAssessmentEntry,
-  useUpdateChoice,
-  useAddChoice,
-  useDeleteChoice,
-  type UpdateAssessmentEntryPayload,
-  type CreateAssessmentEntryPayload 
-} from "@/lib/hooks/useAssessmentEntry"
+// Editors below handle entry/choice API calls directly; no direct usage here
+// Keeping imports lean to avoid unused symbol warnings
 
 // Import the new components
 import { AssessmentSettings } from "./AssessmentSettings"
@@ -68,7 +61,7 @@ export interface CreateAssessmentData {
 interface CreateAssessmentFormProps {
   trainingId: string
   onCancel?: () => void
-  onSubmit: (data: CreateAssessmentData) => void
+  onSubmit: (payload: CreateAssessmentData) => void
   isSubmitting?: boolean
   editingAssessment?: AssessmentSummary | null
 }
@@ -89,6 +82,7 @@ const emptySection = (): AssessmentSectionForm => ({
 })
 
 function CreateAssessmentFormInner({ trainingId, onCancel, onSubmit, isSubmitting, editingAssessment }: CreateAssessmentFormProps) {
+  const queryClient = useQueryClient()
   // Assessment basic info state
   const [assessmentName, setAssessmentName] = useState("")
   const [assessmentType, setAssessmentType] = useState<"PRE_POST" | "CAT">("PRE_POST")
@@ -100,7 +94,6 @@ function CreateAssessmentFormInner({ trainingId, onCancel, onSubmit, isSubmittin
   
   // Sections and questions state
   const [sections, setSections] = useState<AssessmentSectionForm[]>([emptySection()])
-  const [originalSectionsCount, setOriginalSectionsCount] = useState<number>(0)
   
   // Use the context for navigation and editor state
   const {
@@ -126,13 +119,9 @@ function CreateAssessmentFormInner({ trainingId, onCancel, onSubmit, isSubmittin
 
   // Edit hooks
   const updateAssessment = useUpdateAssessment()
-  const addAssessmentSection = useAddAssessmentSection()
-  const updateAssessmentEntry = useUpdateAssessmentEntry()
-  const addAssessmentEntry = useAddAssessmentEntry()
-  const deleteAssessmentEntry = useDeleteAssessmentEntry()
-  const updateChoiceAPI = useUpdateChoice()
-  const addChoiceAPI = useAddChoice()
-  const deleteChoiceAPI = useDeleteChoice()
+  // Keep single-section hook for other flows, even if not used in bulk path
+  // const addAssessmentSection = useAddAssessmentSection()
+  const addAssessmentSectionsBulk = useAddAssessmentSectionsBulk()
 
   // Helper function to convert minutes to appropriate duration and type
   const convertMinutesToDurationAndType = (minutes: number) => {
@@ -196,7 +185,7 @@ function CreateAssessmentFormInner({ trainingId, onCancel, onSubmit, isSubmittin
     }))
 
     setSections(formSections.length > 0 ? formSections : [emptySection()])
-    setOriginalSectionsCount(formSections.length)
+    // Track only locally; not used elsewhere yet
 
     // Ensure selection indices are within bounds for the loaded data
     if (selectedSection >= formSections.length) {
@@ -294,68 +283,8 @@ function CreateAssessmentFormInner({ trainingId, onCancel, onSubmit, isSubmittin
     ))
   }
 
-  // Choice management functions
-  const addChoice = (sectionIndex: number, questionIndex: number) => {
-    setSections(prev => prev.map((section, i) => 
-      i === sectionIndex 
-        ? { 
-            ...section, 
-            assessmentEntries: section.assessmentEntries.map((entry, qI) => 
-              qI === questionIndex 
-                ? { 
-                    ...entry, 
-                    choices: [...entry.choices, { choice: "", choiceImage: "", choiceImageFile: undefined, isCorrect: false }]
-                  } 
-                : entry
-            )
-          }
-        : section
-    ))
-  }
-
-  const removeChoice = (sectionIndex: number, questionIndex: number, choiceIndex: number) => {
-    setSections(prev => prev.map((section, i) => 
-      i === sectionIndex 
-        ? { 
-            ...section, 
-            assessmentEntries: section.assessmentEntries.map((entry, qI) => 
-              qI === questionIndex 
-                ? { 
-                    ...entry, 
-                    choices: entry.choices.filter((_, cI) => cI !== choiceIndex)
-                  } 
-                : entry
-            )
-          }
-        : section
-    ))
-  }
-
-  const toggleCorrect = (sectionIndex: number, questionIndex: number, choiceIndex: number) => {
-    setSections(prev => prev.map((section, i) => 
-      i === sectionIndex 
-        ? { 
-            ...section, 
-            assessmentEntries: section.assessmentEntries.map((entry, qI) => 
-              qI === questionIndex 
-                ? { 
-                    ...entry, 
-                    choices: entry.choices.map((choice, cI) => {
-                      if (entry.questionType === "RADIO") {
-                        // For radio buttons, only one can be correct
-                        return { ...choice, isCorrect: cI === choiceIndex }
-                      } else {
-                        // For checkboxes, toggle the selected one
-                        return cI === choiceIndex ? { ...choice, isCorrect: !choice.isCorrect } : choice
-                      }
-                    })
-                  } 
-                : entry
-            )
-          }
-        : section
-    ))
-  }
+  // Choice management functions (kept for local-only creation flow but not directly referenced here)
+  // These are intentionally not exported and may be used by child editors via props in the future
 
   // Navigation functions
   const selectAssessmentSettings = () => {
@@ -517,6 +446,83 @@ function CreateAssessmentFormInner({ trainingId, onCancel, onSubmit, isSubmittin
 
   const currentQuestion = sections[selectedSection]?.assessmentEntries[selectedQuestion]
 
+  // Helper: identify sections (by index) that are ready to post
+  const getUnsavedReadySectionIndexes = () => {
+    const indexes: number[] = []
+    sections.forEach((sec, idx) => {
+      // Consider any section with at least one entry as ready (content may include images only)
+      const hasAnyEntry = (sec.assessmentEntries || []).length > 0
+      if (!sec.id && hasAnyEntry) indexes.push(idx)
+    })
+    return indexes
+  }
+
+  const [creatingAllSections, setCreatingAllSections] = useState(false)
+
+  const handleCreateAllSections = async () => {
+    if (!editingAssessment?.id) return
+    const sectionIndexes = getUnsavedReadySectionIndexes()
+    if (sectionIndexes.length === 0) {
+      toast.error("Add at least one question to a section before creating")
+      return
+    }
+
+    setCreatingAllSections(true)
+    try {
+      const unsavedSections = sectionIndexes.map((idx) => {
+        const sec = sections[idx]
+        return {
+          title: sec.title || `Section ${idx + 1}`,
+          description: sec.description || "",
+          assessmentEntries: (sec.assessmentEntries || []).map((q: AssessmentEntryForm) => ({
+            question: q.question,
+            questionImage: q.questionImage,
+            questionType: q.questionType,
+            weight: q.weight,
+            choices: (q.choices || []).map((c: ChoiceForm) => ({
+              choice: c.choice,
+              choiceImage: c.choiceImage,
+              isCorrect: c.isCorrect,
+            })),
+          })),
+        }
+      })
+
+      // Bulk post all ready sections in a single request
+      const res = await addAssessmentSectionsBulk.mutateAsync({
+        assessmentId: editingAssessment.id,
+        sections: unsavedSections,
+      })
+
+      // Try to update local state with returned IDs if available
+      let createdSections: { id?: string; section?: { id?: string } }[] | undefined = undefined
+      if (Array.isArray(res)) createdSections = res
+      else if (Array.isArray(res?.sections)) createdSections = res.sections
+      else if (Array.isArray(res?.data?.sections)) createdSections = res.data.sections
+
+      if (createdSections && createdSections.length === sectionIndexes.length) {
+        const updated = [...sections]
+        sectionIndexes.forEach((idx, i) => {
+          const created = createdSections?.[i]
+          const newId = created?.id || created?.section?.id
+          if (newId) {
+            updated[idx] = { ...updated[idx], id: newId }
+          }
+        })
+        setSections(updated)
+      }
+
+      toast.success("All sections created successfully")
+      // Refresh assessment detail so UI reflects newly created sections/ids
+      queryClient.invalidateQueries({ queryKey: ["assessments", "detail", editingAssessment.id] })
+      queryClient.invalidateQueries({ queryKey: ["assessments"] })
+      } catch {
+      // Errors are toasted in hook as well
+    } finally {
+      setCreatingAllSections(false)
+    }
+  }
+
   // Keep selection valid after local sections state changes during creation
   useEffect(() => {
     if (editorMode !== 'question' || questionState !== 'creating') return
@@ -563,42 +569,14 @@ function CreateAssessmentFormInner({ trainingId, onCancel, onSubmit, isSubmittin
                   Cancel
                 </Button>
               )}
-        {/* Content developer: create section with all questions in current section */}
-        {isContentDeveloper && !!editingAssessment && !sections[selectedSection]?.id && sections[selectedSection]?.assessmentEntries?.length > 0 && (
+        {/* Content developer: create all local sections with their questions at once */}
+        {isContentDeveloper && !!editingAssessment && (
                 <Button
-                  onClick={async () => {
-                    const sec = sections[selectedSection]
-                    try {
-                      await addAssessmentSection.mutateAsync({
-                        assessmentId: editingAssessment.id,
-                        data: {
-                          title: sec.title || `Section ${selectedSection + 1}`,
-                          description: sec.description || "",
-                          assessmentEntries: sec.assessmentEntries.map((q) => ({
-                            question: q.question,
-                            questionImage: q.questionImage,
-                            questionImageFile: q.questionImageFile,
-                            questionType: q.questionType,
-                            weight: q.weight,
-                            choices: q.choices.map(c => ({
-                              choice: c.choice,
-                              choiceImage: c.choiceImage,
-                              choiceImageFile: c.choiceImageFile,
-                              isCorrect: c.isCorrect,
-                            }))
-                          }))
-                        }
-                      })
-                      // Ideally we would set the returned section id here by refetching detail
-                      toast.success("Section created successfully")
-                    } catch (e) {
-                      // errors are toasted in the hook
-                    }
-                  }}
+                  onClick={handleCreateAllSections}
                   className="bg-green-600 text-white hover:bg-green-700 px-6"
-                  disabled={isSubmitting || addAssessmentSection.isPending}
+                  disabled={creatingAllSections}
                 >
-                  {addAssessmentSection.isPending ? "Creating..." : "Create Section"}
+                  {creatingAllSections ? "Creating..." : "Create All Sections"}
                 </Button>
         )}
         {/* Only show the main submit button when in assessment mode or creating new assessment */}
