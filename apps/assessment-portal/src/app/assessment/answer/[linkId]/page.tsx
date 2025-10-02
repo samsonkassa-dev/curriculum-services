@@ -40,6 +40,7 @@ export default function AssessmentAnswerPage() {
   const totalQuestions = assessment?.sections.reduce((acc, section) => acc + section.questions.length, 0) || 0;
   const answeredQuestions = Object.keys(answers).length;
   const progressPercentage = totalQuestions > 0 ? (answeredQuestions / totalQuestions) * 100 : 0;
+  const allQuestionsAnswered = answeredQuestions === totalQuestions && totalQuestions > 0;
 
   // Get current section and question
   const currentSection = assessment?.sections[currentSectionIndex];
@@ -419,6 +420,27 @@ export default function AssessmentAnswerPage() {
         </div>
       </div>
 
+      {/* Banner: Please finish all questions */}
+      {!allQuestionsAnswered && (
+        <div className="bg-amber-50 border-b border-amber-200">
+          <div className="max-w-7xl mx-auto px-6 py-3">
+            <div className="flex items-center justify-center gap-3">
+              <div className="flex items-center gap-2">
+                <span className="text-amber-600 text-lg">⚠️</span>
+                <p className="text-amber-800 font-medium text-sm">
+                  Please answer all questions before submitting the assessment
+                </p>
+              </div>
+              <div className="bg-amber-100 px-3 py-1 rounded-full">
+                <span className="text-amber-900 text-xs font-semibold">
+                  {totalQuestions - answeredQuestions} question{totalQuestions - answeredQuestions !== 1 ? 's' : ''} remaining
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="max-w-7xl mx-auto p-6">
         <div className="grid lg:grid-cols-4 gap-8">
           {/* Assessment Navigation Sidebar */}
@@ -592,8 +614,8 @@ export default function AssessmentAnswerPage() {
                         {/* Always show submit button */}
                         <Button
                           onClick={handleSubmit}
-                          disabled={submitAssessmentMutation.isPending || isTimeUp}
-                          variant={answeredQuestions === totalQuestions ? "default" : "outline"}
+                          disabled={submitAssessmentMutation.isPending || isTimeUp || !allQuestionsAnswered}
+                          variant={allQuestionsAnswered ? "default" : "outline"}
                           size="lg"
                           className="px-8 py-3 text-base font-semibold"
                         >
@@ -601,6 +623,8 @@ export default function AssessmentAnswerPage() {
                             ? "Time Expired" 
                             : submitAssessmentMutation.isPending 
                             ? "Submitting..." 
+                            : !allQuestionsAnswered
+                            ? `Answer All Questions (${totalQuestions - answeredQuestions} left)`
                             : "Submit Assessment"
                           }
                         </Button>

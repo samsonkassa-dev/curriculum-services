@@ -5,7 +5,7 @@ import type { AssessmentQuestion, AssessmentAnswer } from "@/lib/hooks/useAssess
 interface QuestionCardProps {
   question: AssessmentQuestion;
   value?: AssessmentAnswer;
-  onChange: (_assessmentAnswer: AssessmentAnswer) => void;
+  onChange: (assessmentAnswer: AssessmentAnswer) => void;
   disabled?: boolean;
 }
 
@@ -18,18 +18,12 @@ export function QuestionCard({ question, value, onChange, disabled = false }: Qu
   // Update local state when value prop changes (e.g., when answers are restored)
   useEffect(() => {
     if (value?.selectedChoiceIds !== undefined) {
-      console.log('QuestionCard: Updating from props', {
-        questionId: question.id,
-        questionType: question.questionType,
-        newSelectedChoiceIds: value.selectedChoiceIds,
-        currentSelectedChoices: selectedChoices
-      });
       setSelectedChoices(value.selectedChoiceIds);
     }
     if (value?.textAnswer !== undefined) {
       setTextAnswer(value.textAnswer);
     }
-  }, [value, question.id, question.questionType, selectedChoices]);
+  }, [value]);
 
   const handleChoiceSelect = (choiceId: string) => {
     if (disabled) return;
@@ -44,13 +38,6 @@ export function QuestionCard({ question, value, onChange, disabled = false }: Qu
       newSelection = currentlySelected
         ? selectedChoices.filter(id => id !== choiceId)
         : [...selectedChoices, choiceId];
-      
-      console.log('CHECKBOX toggle:', {
-        choiceId,
-        currentlySelected,
-        before: selectedChoices,
-        after: newSelection
-      });
     } else {
       return; // For TEXT type, use text input instead
     }
