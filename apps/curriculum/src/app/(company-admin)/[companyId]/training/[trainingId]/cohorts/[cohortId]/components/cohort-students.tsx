@@ -417,15 +417,7 @@ export function CohortStudents({ cohortId, trainingId }: CohortStudentsProps) {
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : link ? (
             <>
-              <a href={link} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline text-sm" title={link}
-                 onClick={(e) => {
-                   // If answers mode, open in a popup so we can receive postMessage on submit
-                   if (isAnswersMode) {
-                     e.preventDefault()
-                     try { window.open(link, '_blank', 'noopener,noreferrer,width=1200,height=800') } catch {}
-                   }
-                 }}
-              >
+              <a href={link} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline text-sm" title={link}>
                 View Link
               </a>
               <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={copy} title="Copy link">
@@ -512,15 +504,7 @@ export function CohortStudents({ cohortId, trainingId }: CohortStudentsProps) {
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : link ? (
             <>
-              <a href={link} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline text-sm" title={link}
-                 onClick={(e) => {
-                   // If answers mode, open in a popup so we can receive postMessage on submit
-                   if (isAnswersMode) {
-                     e.preventDefault()
-                     try { window.open(link, '_blank', 'noopener,noreferrer,width=1200,height=800') } catch {}
-                   }
-                 }}
-              >
+              <a href={link} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline text-sm" title={link}>
                 View Link
               </a>
               <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={copy} title="Copy link">

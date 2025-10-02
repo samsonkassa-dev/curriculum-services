@@ -26,3 +26,19 @@ export function useAssessmentAnswers(assessmentId: string, traineeId: string) {
     enabled: !!assessmentId && !!traineeId
   })
 }
+
+export function useAssessmentAttempts(assessmentId?: string) {
+  return useQuery({
+    queryKey: ['assessmentAttempts', assessmentId],
+    queryFn: () => assessmentService.getAttemptsByAssessment(assessmentId as string),
+    enabled: Boolean(assessmentId)
+  })
+}
+
+export function useAttemptDetail(attemptId?: string) {
+  return useQuery({
+    queryKey: ['attemptDetail', attemptId],
+    queryFn: () => assessmentService.getAttemptDetail(attemptId as string),
+    enabled: Boolean(attemptId)
+  })
+}

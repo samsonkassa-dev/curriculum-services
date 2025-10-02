@@ -7,6 +7,7 @@ import {
   toExpiryMinutes,
   buildAssessmentPortalLink,
   useGetAssessmentLinks,
+  useAssessmentAttemptsSummary,
   useExtendAssessmentLink,
 } from "@/lib/hooks/useAssessmentLinks"
 
@@ -23,11 +24,17 @@ export function useCohortAssessmentLinks(trainingId: string, cohortId: string, t
   const assessments = (assessmentsRes?.assessments ?? []).map(a => ({ id: a.id, name: a.name }))
 
   const linksQuery = useGetAssessmentLinks(selectedAssessmentId || undefined, (traineeIds?.length ? traineeIds : undefined))
+  const attemptsSummaryQ = useAssessmentAttemptsSummary(selectedAssessmentId || undefined)
   
-  // Derive answered status from links data (invalid links = answered trainees)
+  // Derive answered status primarily from attempts summary (more accurate than expired links)
   const answeredIds = useMemo(() => {
     const answered = new Set<string>()
-    if (linksQuery.data?.assessmentLinks) {
+    if (attemptsSummaryQ.data?.traineeAttempts?.length) {
+      for (const t of attemptsSummaryQ.data.traineeAttempts) {
+        if (t.totalAttempts > 0) answered.add(t.traineeId)
+      }
+    } else if (linksQuery.data?.assessmentLinks) {
+      // Fallback to link validity when summary isn't available
       for (const l of linksQuery.data.assessmentLinks) {
         if (l.traineeId && l.linkType === linkType && !l.valid) {
           answered.add(l.traineeId)
@@ -35,7 +42,7 @@ export function useCohortAssessmentLinks(trainingId: string, cohortId: string, t
       }
     }
     return answered
-  }, [linksQuery.data, linkType])
+  }, [attemptsSummaryQ.data, linksQuery.data, linkType])
 
   const traineeIdToMeta: Record<string, { fullLink: string; linkId: string; expiryDate?: string; valid: boolean; linkType: string }> = {}
   if (linksQuery.data?.assessmentLinks) {
@@ -88,7 +95,7 @@ export function useCohortAssessmentLinks(trainingId: string, cohortId: string, t
 
   const base = process.env.NEXT_PUBLIC_ASSESSMENTPORTAL || "http://localhost:3002"
   const getAnswersLink = (assessmentId?: string, traineeId?: string) => 
-    (assessmentId && traineeId ? `${base}/assessment/answers/${assessmentId}/${traineeId}` : undefined)
+    (assessmentId && traineeId ? `${base}/assessment/answers/${assessmentId}/${traineeId}?attemptType=${linkType}` : undefined)
 
   const queryClient = useQueryClient()
   useEffect(() => {
@@ -97,6 +104,7 @@ export function useCohortAssessmentLinks(trainingId: string, cohortId: string, t
       if (d?.type === 'assessment-answered') {
         queryClient.invalidateQueries({ queryKey: ["assessment", "answered-trainees", selectedAssessmentId] })
         queryClient.invalidateQueries({ queryKey: ["assessment", "answer-links"] })
+        queryClient.invalidateQueries({ queryKey: ["assessment", "attempts-summary", selectedAssessmentId] })
       }
     }
     window.addEventListener('message', handler)

@@ -62,6 +62,43 @@ export function useGetAssessmentLinks(assessmentId?: string, traineeIds?: string
   });
 }
 
+// Attempts summary (who has attempted) - used for answered view in cohort
+export interface TraineeAttemptsSummary {
+  traineeId: string;
+  traineeName: string;
+  traineeEmail?: string;
+  traineeContactPhone?: string;
+  totalAttempts: number;
+  preAssessmentScore: number | null;
+  postAssessmentScore: number | null;
+  hasPassed: boolean | null;
+}
+
+export interface AssessmentAttemptsSummaryResponse {
+  code: string;
+  count: number;
+  traineeAttempts: TraineeAttemptsSummary[];
+  message: string;
+}
+
+export function useAssessmentAttemptsSummary(assessmentId?: string) {
+  const getAuthHeaders = () => {
+    const token = getCookie("token");
+    return { Authorization: `Bearer ${token}` };
+  };
+
+  return useQuery({
+    queryKey: ["assessment", "attempts-summary", assessmentId],
+    queryFn: async () => {
+      const headers = getAuthHeaders();
+      const url = `${process.env.NEXT_PUBLIC_API}/assessment-attempt/assessment/${assessmentId}`;
+      const res = await axios.get(url, { headers });
+      return res.data as AssessmentAttemptsSummaryResponse;
+    },
+    enabled: !!assessmentId,
+  });
+}
+
 // Hook to create cohort assessment answer links
 export function useCreateCohortAssessmentLinks() {
   const qc = useQueryClient();
