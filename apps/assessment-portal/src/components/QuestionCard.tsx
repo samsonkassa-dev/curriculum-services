@@ -66,35 +66,35 @@ export function QuestionCard({ question, value, onChange, disabled = false }: Qu
   };
 
   return (
-    <div className="w-full mb-8">
-      {/* Exam Paper Question Header */}
-      <div className="mb-6 bg-white/80 backdrop-blur-sm p-4 rounded-lg border border-muted-foreground/20 shadow-sm">
-        <div className="flex items-start justify-between mb-3">
-          <div className="text-xs text-muted-foreground uppercase tracking-wide font-medium">
+    <div className="w-full mb-4 sm:mb-8">
+      {/* Exam Paper Question Header - Mobile Responsive */}
+      <div className="mb-4 sm:mb-6 bg-white/80 backdrop-blur-sm p-3 sm:p-4 rounded-lg border border-muted-foreground/20 shadow-sm">
+        <div className="flex flex-col sm:flex-row items-start justify-between gap-2 sm:gap-0 mb-2 sm:mb-3">
+          <div className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-wide font-medium">
             {question.questionType === "RADIO" ? "Choose ONE correct answer" : 
              question.questionType === "CHECKBOX" ? "Choose ALL correct answers" : "Write your answer below"}
           </div>
           {getPoints() && (
             <div className="text-right">
-              <div className="text-xs text-muted-foreground">Marks</div>
-              <div className="text-base font-bold text-primary/80">[{question.weight}]</div>
+              <div className="text-[10px] sm:text-xs text-muted-foreground">Marks</div>
+              <div className="text-sm sm:text-base font-bold text-primary/80">[{question.weight}]</div>
             </div>
           )}
         </div>
         
         {/* Question Text */}
-        <div className="border-t border-muted-foreground/10 pt-3">
-          <h4 className="text-lg font-medium text-foreground mb-3 break-words whitespace-pre-wrap leading-relaxed">
+        <div className="border-t border-muted-foreground/10 pt-2 sm:pt-3">
+          <h4 className="text-base sm:text-lg font-medium text-foreground mb-2 sm:mb-3 break-words whitespace-pre-wrap leading-relaxed">
             {question.question}
           </h4>
           
           {/* Question Image */}
           {question.questionImageUrl && (
-            <div className="mb-4">
+            <div className="mb-3 sm:mb-4">
               <img
                 src={question.questionImageUrl}
                 alt="Question illustration"
-                className="w-40 h-28 object-cover rounded-lg border border-muted-foreground/20"
+                className="w-32 sm:w-40 h-24 sm:h-28 object-cover rounded-lg border border-muted-foreground/20"
                 loading="lazy"
               />
             </div>
@@ -102,19 +102,19 @@ export function QuestionCard({ question, value, onChange, disabled = false }: Qu
         </div>
       </div>
 
-      {/* Answer Section */}
-      <div className="bg-background/50 backdrop-blur-sm p-4 rounded-lg border border-muted-foreground/20">
-        <div className="space-y-3">
+      {/* Answer Section - Mobile Responsive */}
+      <div className="bg-background/50 backdrop-blur-sm p-3 sm:p-4 rounded-lg border border-muted-foreground/20">
+        <div className="space-y-2 sm:space-y-3">
           {question.questionType === "TEXT" ? (
-            <div className="space-y-3">
-              <h4 className="text-base font-medium text-foreground">Your Answer:</h4>
+            <div className="space-y-2 sm:space-y-3">
+              <h4 className="text-sm sm:text-base font-medium text-foreground">Your Answer:</h4>
               <textarea
                 value={textAnswer}
                 onChange={(e) => handleTextChange(e.target.value)}
                 placeholder="Type your detailed answer here..."
                 disabled={disabled}
                 className={clsx(
-                  "w-full min-h-[100px] p-3 rounded-lg border-2 text-sm focus:outline-none focus:ring-0 resize-y transition-colors",
+                  "w-full min-h-[80px] sm:min-h-[100px] p-2 sm:p-3 rounded-lg border-2 text-xs sm:text-sm focus:outline-none focus:ring-0 resize-y transition-colors",
                   disabled 
                     ? "bg-muted border-muted cursor-not-allowed text-muted-foreground" 
                     : "bg-white border-border focus:border-primary/60"
@@ -122,9 +122,9 @@ export function QuestionCard({ question, value, onChange, disabled = false }: Qu
               />
             </div>
           ) : (
-            <div className="space-y-3">
-              <h4 className="text-base font-medium text-foreground">Options:</h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="space-y-2 sm:space-y-3">
+              <h4 className="text-sm sm:text-base font-medium text-foreground">Options:</h4>
+              <div className="grid grid-cols-1 gap-2 sm:gap-3">
                 {question.choices.map((choice, choiceIndex) => {
                   const isSelected = selectedChoices.includes(choice.id);
                   const inputType = question.questionType === "RADIO" ? "radio" : "checkbox";
@@ -133,7 +133,7 @@ export function QuestionCard({ question, value, onChange, disabled = false }: Qu
                     <div
                       key={choice.id}
                       className={clsx(
-                        "flex items-start gap-2.5 p-3 rounded-lg transition-all duration-200 min-h-[50px]",
+                        "flex items-start gap-2 sm:gap-2.5 p-2 sm:p-3 rounded-lg transition-all duration-200 min-h-[40px] sm:min-h-[50px]",
                         disabled 
                           ? "cursor-not-allowed bg-muted/50" 
                           : "cursor-pointer bg-white/80",
@@ -175,11 +175,11 @@ export function QuestionCard({ question, value, onChange, disabled = false }: Qu
                       <div className="flex-1 min-w-0">
                         {/* Choice Image */}
                         {choice.choiceImageUrl && (
-                          <div className="mb-2">
+                          <div className="mb-1 sm:mb-2">
                             <img
                               src={choice.choiceImageUrl}
                               alt={`Choice ${choiceIndex + 1} image`}
-                              className="w-16 h-12 object-cover rounded border border-muted-foreground/20"
+                              className="w-12 sm:w-16 h-9 sm:h-12 object-cover rounded border border-muted-foreground/20"
                               loading="lazy"
                             />
                           </div>
@@ -187,7 +187,7 @@ export function QuestionCard({ question, value, onChange, disabled = false }: Qu
                         
                         {/* Choice Text */}
                         <span className={clsx(
-                          "text-sm break-words whitespace-pre-wrap leading-relaxed block",
+                          "text-xs sm:text-sm break-words whitespace-pre-wrap leading-relaxed block",
                           disabled 
                             ? "text-muted-foreground/70"
                             : isSelected 

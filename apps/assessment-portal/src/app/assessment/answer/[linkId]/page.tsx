@@ -427,21 +427,16 @@ export default function AssessmentAnswerPage() {
         </div>
       </div>
 
-      {/* Banner: Please finish all questions - Mobile Responsive */}
+      {/* Banner: Please finish all questions - Clean & Compact */}
       {!allQuestionsAnswered && (
-        <div className="bg-amber-50 border-b border-amber-200">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-2 sm:py-3">
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3">
-              <div className="flex items-center gap-2">
-                <span className="text-amber-600 text-base sm:text-lg">⚠️</span>
-                <p className="text-amber-800 font-medium text-xs sm:text-sm text-center sm:text-left">
-                  Please answer all questions before submitting
+        <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-b border-amber-200/60">
+          <div className="max-w-4xl mx-auto px-4 py-2.5">
+            <div className="flex items-center justify-center gap-2.5">
+              <div className="flex items-center gap-2 bg-white/60 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-sm border border-amber-200/40">
+                <div className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse"></div>
+                <p className="text-amber-900 font-medium text-xs sm:text-sm">
+                  {totalQuestions - answeredQuestions} question{totalQuestions - answeredQuestions !== 1 ? 's' : ''} left
                 </p>
-              </div>
-              <div className="bg-amber-100 px-2 sm:px-3 py-1 rounded-full">
-                <span className="text-amber-900 text-[10px] sm:text-xs font-semibold">
-                  {totalQuestions - answeredQuestions} question{totalQuestions - answeredQuestions !== 1 ? 's' : ''} remaining
-                </span>
               </div>
             </div>
           </div>
