@@ -379,60 +379,67 @@ export default function AssessmentAnswerPage() {
   // Assessment in progress
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
+      {/* Header - Mobile Responsive */}
       <div className="bg-card shadow-md border-b">
-        <div className="max-w-7xl mx-auto px-6 py-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
+          {/* Top Row: Exit button, Title, and Timer (mobile: stacked) */}
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
+            {/* Left: Exit + Title */}
+            <div className="flex items-start gap-2 sm:gap-4 flex-1 min-w-0">
               <Button 
                 variant="ghost" 
                 size="sm"
                 onClick={() => router.push('/')}
+                className="flex-shrink-0"
               >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Exit
+                <ArrowLeft className="h-4 w-4 sm:mr-2" />
+                <span className="hidden sm:inline">Exit</span>
               </Button>
-              <div>
-                <h1 className="text-xl font-bold text-foreground">{assessment?.name}</h1>
-                <p className="text-sm text-muted-foreground font-medium">{assessmentLink?.traineeName}</p>
+              <div className="flex-1 min-w-0">
+                <h1 className="text-base sm:text-xl font-bold text-foreground line-clamp-2">{assessment?.name}</h1>
+                <p className="text-xs sm:text-sm text-muted-foreground font-medium truncate">{assessmentLink?.traineeName}</p>
               </div>
             </div>
             
-            <div className="flex items-center gap-6">
+            {/* Right: Timer and Progress (mobile: row below, desktop: side by side) */}
+            <div className="flex flex-row sm:flex-row items-center gap-3 sm:gap-4 flex-shrink-0">
               {assessment?.timed && timeRemaining !== null && (
-                <Timer timeRemaining={timeRemaining} />
+                <div className="flex-shrink-0">
+                  <Timer timeRemaining={timeRemaining} />
+                </div>
               )}
-              <div className="text-right bg-muted px-4 py-2 rounded-lg border">
-                <p className="text-sm font-medium text-foreground">Progress</p>
-                <p className="text-lg font-bold text-primary/70">{answeredQuestions}/{totalQuestions}</p>
-                <p className="text-xs text-muted-foreground">questions answered</p>
+              <div className="text-center sm:text-right bg-muted px-3 sm:px-4 py-2 rounded-lg border flex-shrink-0">
+                <p className="text-xs sm:text-sm font-medium text-foreground">Progress</p>
+                <p className="text-base sm:text-lg font-bold text-primary/70">{answeredQuestions}/{totalQuestions}</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground hidden sm:block">questions answered</p>
               </div>
             </div>
           </div>
           
+          {/* Progress Bar */}
           <div className="space-y-2">
-            <div className="flex justify-between text-sm">
+            <div className="flex justify-between text-xs sm:text-sm">
               <span className="font-medium text-foreground">Overall Progress</span>
               <span className="font-bold text-primary/70">{Math.round(progressPercentage)}%</span>
             </div>
-            <Progress value={progressPercentage} className="h-3 [&>div]:bg-primary/60" />
+            <Progress value={progressPercentage} className="h-2 sm:h-3 [&>div]:bg-primary/60" />
           </div>
         </div>
       </div>
 
-      {/* Banner: Please finish all questions */}
+      {/* Banner: Please finish all questions - Mobile Responsive */}
       {!allQuestionsAnswered && (
         <div className="bg-amber-50 border-b border-amber-200">
-          <div className="max-w-7xl mx-auto px-6 py-3">
-            <div className="flex items-center justify-center gap-3">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-2 sm:py-3">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3">
               <div className="flex items-center gap-2">
-                <span className="text-amber-600 text-lg">⚠️</span>
-                <p className="text-amber-800 font-medium text-sm">
-                  Please answer all questions before submitting the assessment
+                <span className="text-amber-600 text-base sm:text-lg">⚠️</span>
+                <p className="text-amber-800 font-medium text-xs sm:text-sm text-center sm:text-left">
+                  Please answer all questions before submitting
                 </p>
               </div>
-              <div className="bg-amber-100 px-3 py-1 rounded-full">
-                <span className="text-amber-900 text-xs font-semibold">
+              <div className="bg-amber-100 px-2 sm:px-3 py-1 rounded-full">
+                <span className="text-amber-900 text-[10px] sm:text-xs font-semibold">
                   {totalQuestions - answeredQuestions} question{totalQuestions - answeredQuestions !== 1 ? 's' : ''} remaining
                 </span>
               </div>
@@ -441,16 +448,16 @@ export default function AssessmentAnswerPage() {
         </div>
       )}
 
-      <div className="max-w-7xl mx-auto p-6">
-        <div className="grid lg:grid-cols-4 gap-8">
-          {/* Assessment Navigation Sidebar */}
-          <div className="lg:col-span-1">
+      <div className="max-w-7xl mx-auto p-3 sm:p-6">
+        <div className="grid lg:grid-cols-4 gap-4 lg:gap-8">
+          {/* Assessment Navigation Sidebar - Hidden on mobile, collapsible */}
+          <div className="hidden lg:block lg:col-span-1">
             <div className="bg-card rounded-lg border shadow-sm sticky top-6">
-              <div className="p-4 border-b">
-                <h3 className="font-semibold text-foreground">Assessment Structure</h3>
+              <div className="p-3 sm:p-4 border-b">
+                <h3 className="font-semibold text-sm sm:text-base text-foreground">Assessment Structure</h3>
               </div>
               
-              <div className="p-4 space-y-3 max-h-[calc(100vh-200px)] overflow-y-auto">
+              <div className="p-3 sm:p-4 space-y-3 max-h-[calc(100vh-200px)] overflow-y-auto">
                 {/* Assessment Info */}
                 <div className="p-3 rounded-lg bg-muted border">
                   <div className="flex items-center gap-2">
@@ -531,34 +538,34 @@ export default function AssessmentAnswerPage() {
             </div>
           </div>
 
-          {/* Main Question Area */}
-          <div className="lg:col-span-3 space-y-6">
+          {/* Main Question Area - Mobile Responsive */}
+          <div className="lg:col-span-3 space-y-4 sm:space-y-6">
             {currentSection && currentQuestion && (
               <>
-                {/* Section Info - Exam Paper Style */}
-                <div className="mb-6 border-b-2 border-dashed border-muted-foreground/20 pb-4">
-                  <div className="bg-white/50 backdrop-blur-sm rounded-lg p-4 border-l-4 border-primary/20 shadow-sm">
-                    <div className="text-center mb-3">
-                      <h1 className="text-2xl font-bold text-foreground uppercase tracking-wide">
+                {/* Section Info - Exam Paper Style - Mobile Responsive */}
+                <div className="mb-4 sm:mb-6 border-b-2 border-dashed border-muted-foreground/20 pb-3 sm:pb-4">
+                  <div className="bg-white/50 backdrop-blur-sm rounded-lg p-3 sm:p-4 border-l-4 border-primary/20 shadow-sm">
+                    <div className="text-center mb-2 sm:mb-3">
+                      <h1 className="text-lg sm:text-2xl font-bold text-foreground uppercase tracking-wide">
                         SECTION {currentSection.sectionNumber}
                       </h1>
-                      <div className="w-16 h-0.5 bg-primary/40 mx-auto mt-1 rounded"></div>
+                      <div className="w-12 sm:w-16 h-0.5 bg-primary/40 mx-auto mt-1 rounded"></div>
                     </div>
                     
                     <div className="text-center space-y-2">
-                      <h2 className="text-lg font-semibold text-foreground">
+                      <h2 className="text-base sm:text-lg font-semibold text-foreground">
                         {currentSection.title}
                       </h2>
                       
                       {currentSection.description && (
-                        <div className="bg-muted/30 p-3 rounded border-l-2 border-primary/20">
-                          <p className="text-sm text-muted-foreground leading-relaxed italic">
+                        <div className="bg-muted/30 p-2 sm:p-3 rounded border-l-2 border-primary/20">
+                          <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed italic">
                             &quot;{currentSection.description}&quot;
                           </p>
                         </div>
                       )}
                       
-                      <div className="flex justify-center items-center gap-6 mt-4 text-xs text-muted-foreground">
+                      <div className="flex flex-col sm:flex-row justify-center items-center gap-2 sm:gap-6 mt-3 sm:mt-4 text-[10px] sm:text-xs text-muted-foreground">
                         <div className="flex items-center gap-1.5">
                           <div className="w-1.5 h-1.5 bg-primary/60 rounded-full"></div>
                           <span>Question {currentQuestionIndex + 1} of {currentSection.questions.length}</span>
@@ -584,20 +591,20 @@ export default function AssessmentAnswerPage() {
                   </div>
                 </div>
 
-                {/* Navigation */}
-                <div className="mt-12 mb-8">
-                  <div className="flex items-center justify-between py-6">
+                {/* Navigation - Mobile Responsive */}
+                <div className="mt-6 sm:mt-12 mb-4 sm:mb-8">
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-4 py-4 sm:py-6">
                     <Button
                       variant="outline"
                       onClick={handlePrevious}
                       disabled={(currentSectionIndex === 0 && currentQuestionIndex === 0) || isTimeUp}
                       size="lg"
-                      className="px-8 py-3 text-base"
+                      className="w-full sm:w-auto px-6 sm:px-8 py-3 text-sm sm:text-base"
                     >
                       ← Previous
                     </Button>
                     
-                    <div className="flex gap-4">
+                    <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
                       {/* Show Next if not last question */}
                       {!(currentSectionIndex === (assessment?.sections.length || 0) - 1 && 
                         currentQuestionIndex === (currentSection?.questions.length || 0) - 1) && (
@@ -605,7 +612,7 @@ export default function AssessmentAnswerPage() {
                           onClick={handleNext}
                           disabled={isTimeUp}
                           size="lg"
-                          className="px-8 py-3 text-base"
+                          className="w-full sm:w-auto px-6 sm:px-8 py-3 text-sm sm:text-base"
                         >
                           Next →
                         </Button>
@@ -617,14 +624,14 @@ export default function AssessmentAnswerPage() {
                           disabled={submitAssessmentMutation.isPending || isTimeUp || !allQuestionsAnswered}
                           variant={allQuestionsAnswered ? "default" : "outline"}
                           size="lg"
-                          className="px-8 py-3 text-base font-semibold"
+                          className="w-full sm:w-auto px-6 sm:px-8 py-3 text-sm sm:text-base font-semibold"
                         >
                           {isTimeUp 
                             ? "Time Expired" 
                             : submitAssessmentMutation.isPending 
                             ? "Submitting..." 
                             : !allQuestionsAnswered
-                            ? `Answer All Questions (${totalQuestions - answeredQuestions} left)`
+                            ? `Answer All (${totalQuestions - answeredQuestions} left)`
                             : "Submit Assessment"
                           }
                         </Button>
