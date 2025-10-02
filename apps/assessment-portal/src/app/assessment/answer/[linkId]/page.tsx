@@ -354,8 +354,7 @@ export default function AssessmentAnswerPage() {
               <div className="bg-amber-50 border border-amber-200 p-4 rounded-lg text-center">
                 <p className="text-amber-800 font-medium mb-2">⚠️ Important Notice</p>
                 <p className="text-amber-700 text-sm">
-                  Time has expired for this assessment. If you wish to submit your current answers, 
-                  you must do so through your instructor or assessment administrator.
+                  Time has expired for this assessment. 
                 </p>
               </div>
 
@@ -380,7 +379,7 @@ export default function AssessmentAnswerPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Header - Mobile Responsive */}
-      <div className="bg-card shadow-md border-b">
+      <div className="bg-card">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
           {/* Top Row: Exit button, Title, and Timer (mobile: stacked) */}
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
@@ -429,10 +428,12 @@ export default function AssessmentAnswerPage() {
 
       {/* Banner: Please finish all questions - Clean & Compact */}
       {!allQuestionsAnswered && (
-        <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-b border-amber-200/60">
-          <div className="max-w-4xl mx-auto px-4 py-2.5">
+        <div className="px-1">
+
+        <div className=" max-w-7xl mx-auto">
+          <div className=" mx-auto px-4 py-2.5">
             <div className="flex items-center justify-center gap-2.5">
-              <div className="flex items-center gap-2 bg-white/60 backdrop-blur-sm px-3 py-1.5 rounded-full shadow-sm border border-amber-200/40">
+              <div className="flex items-center gap-2 bg-white/60 backdrop-blur-sm px-3 py-1.5  rounded-full shadow-sm border border-amber-200/40">
                 <div className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse"></div>
                 <p className="text-amber-900 font-medium text-xs sm:text-sm">
                   {totalQuestions - answeredQuestions} question{totalQuestions - answeredQuestions !== 1 ? 's' : ''} left
@@ -440,6 +441,7 @@ export default function AssessmentAnswerPage() {
               </div>
             </div>
           </div>
+        </div>
         </div>
       )}
 
