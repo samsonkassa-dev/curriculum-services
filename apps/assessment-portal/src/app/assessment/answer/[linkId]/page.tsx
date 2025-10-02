@@ -82,8 +82,30 @@ export default function AssessmentAnswerPage() {
     try {
       const result = await startAssessmentMutation.mutateAsync(linkId);
       setAssessmentAttempt(result.assessmentAttempt);
+      
+      // Restore previously saved answers if they exist
+      if (result.assessmentAttempt.assessmentAnswers && result.assessmentAttempt.assessmentAnswers.length > 0) {
+        const restoredAnswers: Record<string, AssessmentAnswer> = {};
+        result.assessmentAttempt.assessmentAnswers.forEach((answer: {
+          assessmentEntryId: string;
+          selectedChoices?: Array<{ id: string; choiceText: string; choiceImageUrl: string | null; isCorrect: boolean | null }>;
+          textAnswer?: string | null;
+        }) => {
+          // Transform backend format to frontend format
+          // Backend returns: { selectedChoices: [{ id, choiceText, ... }], textAnswer }
+          // Frontend expects: { selectedChoiceIds: [id1, id2, ...], textAnswer }
+          restoredAnswers[answer.assessmentEntryId] = {
+            assessmentEntryId: answer.assessmentEntryId,
+            selectedChoiceIds: answer.selectedChoices?.map((choice) => choice.id) || [],
+            textAnswer: answer.textAnswer || undefined
+          };
+        });
+        setAnswers(restoredAnswers);
+        toast.info(`Restored ${result.assessmentAttempt.assessmentAnswers.length} saved answer${result.assessmentAttempt.assessmentAnswers.length === 1 ? '' : 's'}`);
+      }
+      
       setIsStarted(true);
-      toast.success("Assessment started!");
+      toast.success(result.assessmentAttempt.attemptStatus === 'IN_PROGRESS' ? "Continuing assessment..." : "Assessment started!");
     } catch (error) {
       console.error("Failed to start assessment:", error);
     }
@@ -99,12 +121,24 @@ export default function AssessmentAnswerPage() {
     const updatedAnswers = { ...answers, [questionId]: answer };
     setAnswers(updatedAnswers);
 
-    // Auto-save answers
+    // Auto-save answers - only send valid/complete answers
     try {
-      await saveAnswersMutation.mutateAsync({
-        linkId,
-        assessmentAnswers: Object.values(updatedAnswers)
+      // Filter out incomplete answers (empty selectedChoiceIds for RADIO/CHECKBOX, empty/undefined textAnswer for TEXT)
+      const validAnswers = Object.values(updatedAnswers).filter(ans => {
+        // TEXT questions must have textAnswer
+        if (ans.textAnswer !== undefined && ans.textAnswer !== null) {
+          return ans.textAnswer.trim().length > 0;
+        }
+        // RADIO/CHECKBOX questions must have at least one choice selected
+        return ans.selectedChoiceIds && ans.selectedChoiceIds.length > 0;
       });
+
+      if (validAnswers.length > 0) {
+        await saveAnswersMutation.mutateAsync({
+          linkId,
+          assessmentAnswers: validAnswers
+        });
+      }
     } catch (error) {
       console.error("Failed to auto-save answers:", error);
     }
@@ -272,9 +306,13 @@ export default function AssessmentAnswerPage() {
                   size="lg"
                   className="px-12 py-3"
                 >
-                  {startAssessmentMutation.isPending ? "Starting..." : "🚀 Start Assessment"}
+                  {startAssessmentMutation.isPending ? "Loading..." : "🚀 Start Assessment"}
                 </Button>
               </div>
+              
+              <p className="text-center text-sm text-muted-foreground mt-3">
+                💡 Your progress is automatically saved. You can safely refresh the page anytime.
+              </p>
             </CardContent>
           </Card>
         </div>

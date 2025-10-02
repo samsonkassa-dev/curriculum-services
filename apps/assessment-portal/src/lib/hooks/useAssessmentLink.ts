@@ -138,6 +138,20 @@ export function useSaveAssessmentAnswers() {
   });
 }
 
+// Hook to check for existing in-progress attempt
+export function useCheckInProgressAttempt(linkId: string) {
+  return useQuery({
+    queryKey: ["assessment", "in-progress-check", linkId],
+    queryFn: async () => {
+      const response = await api.get(`/assessment-attempt/link/${linkId}/check-in-progress`);
+      return response.data as { hasInProgress: boolean; answersCount: number };
+    },
+    enabled: !!linkId,
+    retry: false,
+    staleTime: 0, // Always fetch fresh data
+  });
+}
+
 // Hook to submit assessment
 export function useSubmitAssessment() {
   const queryClient = useQueryClient();

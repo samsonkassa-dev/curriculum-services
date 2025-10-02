@@ -122,6 +122,7 @@ export default function SurveyAnswerPage() {
                   <textarea
                     className="w-full border rounded px-3 py-2 min-h-28 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     placeholder="Type your answer here"
+                    value={answers[q.id]?.textAnswer || ''}
                     onChange={(e)=>setText(q.id, e.target.value)}
                   />
                 )}
@@ -212,6 +213,7 @@ export default function SurveyAnswerPage() {
                                   type="radio"
                                   name={`${q.id}-${r}`}
                                   className="h-5 w-5 accent-blue-600"
+                                  checked={answers[q.id]?.gridAnswers?.[r]?.[0] === choice.order}
                                   onChange={()=>setGrid(q.id, r, choice.order)}
                                 />
                               </td>

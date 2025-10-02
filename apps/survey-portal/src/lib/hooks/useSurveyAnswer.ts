@@ -8,7 +8,28 @@ import { checkLinkValidity, submitSurveyAnswers, SurveyDetailDto } from "@/lib/s
 export type AnswerMap = Record<string, { selectedChoices?: string[]; textAnswer?: string; gridAnswers?: Record<string, string[]> }>
 
 export function useSurveyAnswer(linkId: string | undefined) {
-  const [answers, setAnswers] = useState<AnswerMap>({})
+  const [answers, setAnswers] = useState<AnswerMap>(() => {
+    // Try to restore answers from localStorage on mount
+    if (typeof window !== 'undefined' && linkId) {
+      try {
+        const saved = localStorage.getItem(`survey_draft:${linkId}`)
+        if (saved) {
+          const restored = JSON.parse(saved) as AnswerMap
+          const count = Object.keys(restored).length
+          if (count > 0) {
+            // Delay toast to avoid SSR issues
+            setTimeout(() => {
+              toast.info(`Restored ${count} saved answer${count === 1 ? '' : 's'}`)
+            }, 100)
+          }
+          return restored
+        }
+      } catch (error) {
+        console.error('Failed to restore survey answers:', error)
+      }
+    }
+    return {}
+  })
   const [showErrors, setShowErrors] = useState(false)
   const [alreadySubmitted, setAlreadySubmitted] = useState(false)
 
@@ -45,16 +66,47 @@ export function useSurveyAnswer(linkId: string | undefined) {
     })
   }, [allEntries, answers])
 
-  const setText = (entryId: string, value: string) => setAnswers(p => ({ ...p, [entryId]: { ...(p[entryId]||{}), textAnswer: value } }))
+  const setText = (entryId: string, value: string) => setAnswers(p => {
+    const updated = { ...p, [entryId]: { ...(p[entryId]||{}), textAnswer: value } }
+    // Save to localStorage
+    if (typeof window !== 'undefined' && linkId) {
+      try {
+        localStorage.setItem(`survey_draft:${linkId}`, JSON.stringify(updated))
+      } catch (error) {
+        console.error('Failed to save survey draft:', error)
+      }
+    }
+    return updated
+  })
+  
   const toggleChoice = (entryId: string, choiceOrder: string, multiple: boolean) => setAnswers(p => {
     const prev = p[entryId]?.selectedChoices || []
     const next = multiple ? (prev.includes(choiceOrder) ? prev.filter(c=>c!==choiceOrder) : [...prev, choiceOrder]) : [choiceOrder]
-    return { ...p, [entryId]: { ...(p[entryId]||{}), selectedChoices: next } }
+    const updated = { ...p, [entryId]: { ...(p[entryId]||{}), selectedChoices: next } }
+    // Save to localStorage
+    if (typeof window !== 'undefined' && linkId) {
+      try {
+        localStorage.setItem(`survey_draft:${linkId}`, JSON.stringify(updated))
+      } catch (error) {
+        console.error('Failed to save survey draft:', error)
+      }
+    }
+    return updated
   })
+  
   const setGrid = (entryId: string, row: string, choiceOrder: string) => setAnswers(p => {
     const grid = p[entryId]?.gridAnswers || {}
     grid[row] = [choiceOrder]
-    return { ...p, [entryId]: { ...(p[entryId]||{}), gridAnswers: { ...grid } } }
+    const updated = { ...p, [entryId]: { ...(p[entryId]||{}), gridAnswers: { ...grid } } }
+    // Save to localStorage
+    if (typeof window !== 'undefined' && linkId) {
+      try {
+        localStorage.setItem(`survey_draft:${linkId}`, JSON.stringify(updated))
+      } catch (error) {
+        console.error('Failed to save survey draft:', error)
+      }
+    }
+    return updated
   })
 
   const isAnswered = (q: typeof allEntries[number]): boolean => {
@@ -115,10 +167,18 @@ export function useSurveyAnswer(linkId: string | undefined) {
       if (typeof window !== 'undefined') {
         try {
           sessionStorage.setItem('surveySubmitted', '1')
-          if (linkId) localStorage.setItem(`survey_answered:${linkId}`, new Date().toISOString())
+          if (linkId) {
+            localStorage.setItem(`survey_answered:${linkId}`, new Date().toISOString())
+            // Clear the draft after successful submission
+            localStorage.removeItem(`survey_draft:${linkId}`)
+          }
         } catch {}
       }
       setAlreadySubmitted(true)
+    },
+    onError: (error) => {
+      toast.error('Failed to submit survey. Your answers are saved and you can try again.')
+      console.error('Survey submission error:', error)
     }
   })
 

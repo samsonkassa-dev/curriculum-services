@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { clsx } from "clsx";
 import type { AssessmentQuestion, AssessmentAnswer } from "@/lib/hooks/useAssessmentLink";
 
@@ -15,6 +15,22 @@ export function QuestionCard({ question, value, onChange, disabled = false }: Qu
   );
   const [textAnswer, setTextAnswer] = useState<string>(value?.textAnswer || "");
 
+  // Update local state when value prop changes (e.g., when answers are restored)
+  useEffect(() => {
+    if (value?.selectedChoiceIds !== undefined) {
+      console.log('QuestionCard: Updating from props', {
+        questionId: question.id,
+        questionType: question.questionType,
+        newSelectedChoiceIds: value.selectedChoiceIds,
+        currentSelectedChoices: selectedChoices
+      });
+      setSelectedChoices(value.selectedChoiceIds);
+    }
+    if (value?.textAnswer !== undefined) {
+      setTextAnswer(value.textAnswer);
+    }
+  }, [value, question.id, question.questionType, selectedChoices]);
+
   const handleChoiceSelect = (choiceId: string) => {
     if (disabled) return;
     
@@ -23,9 +39,18 @@ export function QuestionCard({ question, value, onChange, disabled = false }: Qu
     if (question.questionType === "RADIO") {
       newSelection = [choiceId];
     } else if (question.questionType === "CHECKBOX") {
-      newSelection = selectedChoices.includes(choiceId)
+      // Toggle: if already selected, remove it; otherwise add it
+      const currentlySelected = selectedChoices.includes(choiceId);
+      newSelection = currentlySelected
         ? selectedChoices.filter(id => id !== choiceId)
         : [...selectedChoices, choiceId];
+      
+      console.log('CHECKBOX toggle:', {
+        choiceId,
+        currentlySelected,
+        before: selectedChoices,
+        after: newSelection
+      });
     } else {
       return; // For TEXT type, use text input instead
     }
@@ -44,8 +69,8 @@ export function QuestionCard({ question, value, onChange, disabled = false }: Qu
     setTextAnswer(text);
     onChange({
       assessmentEntryId: question.id,
-      selectedChoiceIds: [],
-      textAnswer: text
+      selectedChoiceIds: [], // Backend expects empty array for TEXT questions
+      textAnswer: text || undefined // Don't send empty string
     });
   };
 
