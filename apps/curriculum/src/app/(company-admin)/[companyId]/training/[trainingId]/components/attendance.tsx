@@ -12,6 +12,7 @@ import { useSubmitAttendance, useSubmitBulkAttendance, useSessionAttendance } fr
 import { useCohortSurveyLinks } from "@/lib/hooks/useCohortSurveyLinks"
 import { useCohortAssessmentLinks } from "@/lib/hooks/useCohortAssessmentLinks"
 import { useAssessmentAttemptsSummary } from "@/lib/hooks/useAssessmentLinks"
+import { useAssessments } from "@/lib/hooks/useAssessment"
 import { AssessmentSurveyTools } from "../attendance/components/assessment-survey-tools"
 import { toast } from "sonner"
 
@@ -231,6 +232,10 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
     answeredIds: surveyAnsweredIds,
   } = useCohortSurveyLinks(trainingId, activeCohortId, traineeIds)
 
+  // Get full assessment details including maxAttempts
+  const { data: assessmentsData } = useAssessments(trainingId)
+  const fullAssessments = assessmentsData?.assessments || []
+
   // Assessment links hook - simplified for attendance view
   const {
     selectedAssessmentId,
@@ -241,14 +246,26 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
   // Get assessment scores from the attempts summary
   const { data: attemptsSummaryData } = useAssessmentAttemptsSummary(selectedAssessmentId || undefined)
 
+  // Get the selected assessment's maxAttempts
+  const selectedAssessmentMaxAttempts = useMemo(() => {
+    if (!selectedAssessmentId || !fullAssessments.length) return null
+    const assessment = fullAssessments.find(a => a.id === selectedAssessmentId)
+    return assessment?.maxAttempts || null
+  }, [selectedAssessmentId, fullAssessments])
+
   // Build a map of trainee scores for easy lookup
   const traineeScores = useMemo(() => {
-    const scoreMap = new Map<string, { postScore: number | null; hasPassed: boolean | null }>()
+    const scoreMap = new Map<string, { 
+      postScore: number | null; 
+      hasPassed: boolean | null;
+      totalAttempts: number;
+    }>()
     if (attemptsSummaryData?.traineeAttempts) {
       attemptsSummaryData.traineeAttempts.forEach(attempt => {
         scoreMap.set(attempt.traineeId, {
           postScore: attempt.postAssessmentScore,
-          hasPassed: attempt.hasPassed
+          hasPassed: attempt.hasPassed,
+          totalAttempts: attempt.totalAttempts
         })
       })
     }
@@ -615,11 +632,11 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
     
     // Add assessment score column if assessment tools are active and an assessment is selected
     if (showAssessmentTools && selectedAssessmentId) {
-      extras.push(createAssessmentScoreColumn(traineeScores))
+      extras.push(createAssessmentScoreColumn(traineeScores, selectedAssessmentMaxAttempts))
     }
     
     return extras
-  }, [showSurveyTools, selectedSurveyId, surveyAnsweredIds, showAssessmentTools, selectedAssessmentId, traineeScores])
+  }, [showSurveyTools, selectedSurveyId, surveyAnsweredIds, showAssessmentTools, selectedAssessmentId, traineeScores, selectedAssessmentMaxAttempts])
 
   const memoizedColumns = useMemo(() => 
     createAttendanceColumns(activeSessionId, currentSession, trainingId, extraColumns, hasUnsavedChanges, submittedAttendanceIds, handleSaveIndividualAttendance),

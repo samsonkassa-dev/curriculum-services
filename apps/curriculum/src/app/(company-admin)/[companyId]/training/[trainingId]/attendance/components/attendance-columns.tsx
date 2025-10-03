@@ -496,7 +496,8 @@ export const createSurveyStatusColumn = (
 
 // Create assessment score column
 export const createAssessmentScoreColumn = (
-  traineeScores: Map<string, { postScore: number | null; hasPassed: boolean | null }>
+  traineeScores: Map<string, { postScore: number | null; hasPassed: boolean | null; totalAttempts: number }>,
+  maxAttempts: number | null
 ): ColumnDef<AttendanceStudent> => ({
   id: "assessmentScore",
   header: "Post Assessment Score",
@@ -506,14 +507,18 @@ export const createAssessmentScoreColumn = (
     
     if (!scoreData || scoreData.postScore === null) {
       return (
-        <div className="flex items-center justify-center">
+        <div className="flex flex-col items-center justify-center gap-1">
           <span className="text-xs text-gray-400">Not taken</span>
+          {maxAttempts && (
+            <span className="text-xs text-gray-400">0 / {maxAttempts} attempts</span>
+          )}
         </div>
       )
     }
     
     const score = scoreData.postScore
     const hasPassed = scoreData.hasPassed
+    const totalAttempts = scoreData.totalAttempts
     
     // Color coding based on score
     let colorClass = "text-gray-600"
@@ -527,10 +532,15 @@ export const createAssessmentScoreColumn = (
     }
     
     return (
-      <div className="flex items-center justify-center">
+      <div className="flex flex-col items-center justify-center gap-1.5">
         <div className={`px-3 py-1 rounded-full ${bgClass} ${colorClass}`}>
           <span className="text-sm font-semibold">{score.toFixed(1)}%</span>
         </div>
+        {maxAttempts && (
+          <span className="text-xs text-gray-500">
+            Attempt {totalAttempts} / {maxAttempts}
+          </span>
+        )}
       </div>
     )
   },
