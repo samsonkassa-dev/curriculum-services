@@ -18,12 +18,14 @@ export default function AssessmentAnswerPage() {
   const linkId = params.linkId as string;
 
   const [assessmentAttempt, setAssessmentAttempt] = useState<AssessmentAttempt | null>(null);
+  const [bestScore, setBestScore] = useState<number | null>(null);
   const [currentSectionIndex, setCurrentSectionIndex] = useState(0);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, AssessmentAnswer>>({});
   const [isStarted, setIsStarted] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
   const [isTimeUp, setIsTimeUp] = useState(false);
+  const [submittedResult, setSubmittedResult] = useState<AssessmentAttempt | null>(null);
 
   // Hooks
   const { data: validityData, isLoading: checkingValidity, error: validityError } = useCheckAssessmentLinkValidity(linkId);
@@ -48,12 +50,12 @@ export default function AssessmentAnswerPage() {
 
   const handleSubmit = useCallback(async () => {
     try {
-      await submitAssessmentMutation.mutateAsync(linkId);
-      router.push('/');
+      const result = await submitAssessmentMutation.mutateAsync(linkId);
+      setSubmittedResult(result.assessmentAttempt);
     } catch (error) {
       console.error("Failed to submit assessment:", error);
     }
-  }, [submitAssessmentMutation, linkId, router]);
+  }, [submitAssessmentMutation, linkId]);
 
   useEffect(() => {
     if (assessmentAttempt?.startedAt && assessment?.timed && !isTimeUp) {
@@ -84,6 +86,11 @@ export default function AssessmentAnswerPage() {
       const result = await startAssessmentMutation.mutateAsync(linkId);
       setAssessmentAttempt(result.assessmentAttempt);
       
+      // Store best score if provided (for POST assessments)
+      if (result.bestScore !== undefined) {
+        setBestScore(result.bestScore);
+      }
+      
       // Restore previously saved answers if they exist
       if (result.assessmentAttempt.assessmentAnswers && result.assessmentAttempt.assessmentAnswers.length > 0) {
         const restoredAnswers: Record<string, AssessmentAnswer> = {};
@@ -104,7 +111,7 @@ export default function AssessmentAnswerPage() {
         setAnswers(restoredAnswers);
         toast.info(`Restored ${result.assessmentAttempt.assessmentAnswers.length} saved answer${result.assessmentAttempt.assessmentAnswers.length === 1 ? '' : 's'}`);
       }
-      
+
       setIsStarted(true);
       toast.success(result.assessmentAttempt.attemptStatus === 'IN_PROGRESS' ? "Continuing assessment..." : "Assessment started!");
     } catch (error) {
@@ -193,26 +200,161 @@ export default function AssessmentAnswerPage() {
   if (!isValid || isExpired) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-6">
-        <Card className="max-w-md mx-auto shadow-lg">
-          <CardContent className="p-8 text-center">
-            <div className="w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Clock className="h-8 w-8 text-destructive" />
-            </div>
-            <h2 className="text-2xl font-bold text-foreground mb-2">Assessment Link Invalid</h2>
-            <p className="text-muted-foreground mb-6">
-              {validityError ? "This assessment link has expired or is no longer valid." : "Unable to access this assessment."}
-            </p>
-            <Button onClick={() => router.push('/')} variant="outline">
-              Go Home
-            </Button>
-          </CardContent>
-        </Card>
+        <div className="max-w-md w-full mx-auto">
+          <Card className="shadow-lg">
+            <CardHeader className="text-center pb-6">
+              <div className="mx-auto w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mb-4">
+                <Clock className="h-10 w-10 text-red-600" />
+              </div>
+              <CardTitle className="text-2xl font-bold text-foreground">Assessment Link Invalid</CardTitle>
+              <p className="text-muted-foreground mt-2">
+                {validityError ? "This assessment link has expired or is no longer valid." : "Unable to access this assessment."}
+              </p>
+            </CardHeader>
+            <CardContent className="px-8 pb-8">
+              <div className="flex justify-center">
+                <Button 
+                  onClick={() => router.push('/')} 
+                  variant="outline"
+                  size="lg"
+                  className="px-8"
+                >
+                  Go Home
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  // Submission result screen (only for POST assessments - PRE assessments are not graded)
+  if (submittedResult && assessmentLink?.linkType === "POST_ASSESSMENT") {
+    const isPassed = submittedResult.hasPassed === true;
+    const isFailed = submittedResult.hasPassed === false;
+
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-6">
+        <div className="max-w-2xl w-full mx-auto">
+          <Card className="shadow-lg">
+            <CardHeader className="text-center pb-6">
+              <div className={clsx(
+                "mx-auto w-16 h-16 rounded-full flex items-center justify-center mb-4",
+                isPassed && "bg-green-100",
+                isFailed && "bg-red-100",
+                !isPassed && !isFailed && "bg-blue-100"
+              )}>
+                <span className="text-3xl">
+                  {isPassed ? "✅" : isFailed ? "❌" : "📊"}
+                </span>
+              </div>
+              <CardTitle className="text-3xl font-bold text-foreground">Assessment Completed!</CardTitle>
+              <p className="text-muted-foreground mt-2">Your results are ready</p>
+            </CardHeader>
+            <CardContent className="space-y-6 px-8 pb-8">
+              {/* Score Display */}
+              <div className="bg-muted p-6 rounded-lg border text-center">
+                <h3 className="font-semibold text-lg mb-4 text-foreground">Your Score</h3>
+                <div className="flex items-center justify-center gap-8">
+                  <div>
+                    <p className="text-4xl font-bold text-primary">{submittedResult.score?.toFixed(1) || 0}</p>
+                    <p className="text-sm text-muted-foreground">out of {submittedResult.maxScore?.toFixed(1) || 0}</p>
+                  </div>
+                  <div className="h-16 w-px bg-border"></div>
+                  <div>
+                    <p className="text-4xl font-bold text-primary">{submittedResult.percentage?.toFixed(1) || 0}%</p>
+                    <p className="text-sm text-muted-foreground">Percentage</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Pass/Fail Status */}
+              {(isPassed || isFailed) && (
+                <div className={clsx(
+                  "p-4 rounded-lg border text-center",
+                  isPassed && "bg-green-50 border-green-200",
+                  isFailed && "bg-red-50 border-red-200"
+                )}>
+                  <p className={clsx(
+                    "font-semibold text-lg",
+                    isPassed && "text-green-800",
+                    isFailed && "text-red-800"
+                  )}>
+                    {isPassed ? "🎉 Congratulations! You Passed!" : "📚 Keep Practicing"}
+                  </p>
+                </div>
+              )}
+
+              {/* Best Score Info */}
+              {bestScore !== null && (
+                <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+                  <p className="text-sm text-blue-800 text-center">
+                    <span className="font-semibold">Your Best Score:</span> {bestScore.toFixed(1)}%
+                    {submittedResult.percentage !== null && submittedResult.percentage > bestScore && (
+                      <span className="ml-2 text-green-700 font-semibold">🎯 New Best!</span>
+                    )}
+                  </p>
+                  <p className="text-xs text-blue-600 text-center mt-1">
+                    Your highest score from all attempts will be used
+                  </p>
+                </div>
+              )}
+
+              <div className="flex justify-center pt-4">
+                <Button 
+                  onClick={() => router.push('/')}
+                  size="lg"
+                  className="px-12 py-3"
+                >
+                  Done
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  // PRE assessment completion (no grading, just redirect)
+  if (submittedResult && assessmentLink?.linkType === "PRE_ASSESSMENT") {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-6">
+        <div className="max-w-md w-full mx-auto">
+          <Card className="shadow-lg">
+            <CardHeader className="text-center pb-6">
+              <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                <span className="text-3xl">✓</span>
+              </div>
+              <CardTitle className="text-2xl font-bold text-foreground">Assessment Submitted!</CardTitle>
+              <p className="text-muted-foreground mt-2">Thank you for completing this assessment</p>
+            </CardHeader>
+            <CardContent className="space-y-6 px-8 pb-8">
+              <div className="text-center text-muted-foreground text-sm">
+                Your responses have been recorded successfully.
+              </div>
+              
+              <div className="flex justify-center pt-4">
+                <Button 
+                  onClick={() => router.push('/')}
+                  size="lg"
+                  className="px-12 py-3"
+                >
+                  Done
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     );
   }
 
   // Pre-assessment screen
   if (!isStarted) {
+    const isPostAssessment = assessmentLink?.linkType === "POST_ASSESSMENT";
+
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-6">
         <div className="max-w-2xl w-full mx-auto">
@@ -228,6 +370,21 @@ export default function AssessmentAnswerPage() {
               )}
             </CardHeader>
             <CardContent className="space-y-6 px-8 pb-8">
+              {/* Best Score Banner for POST Assessment */}
+              {isPostAssessment && bestScore !== null && (
+                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 p-4 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <span className="text-2xl">🏆</span>
+                    <div className="flex-1">
+                      <p className="font-semibold text-blue-900">Your Best Score: {bestScore.toFixed(1)}%</p>
+                      <p className="text-xs text-blue-700 mt-1">
+                        📌 Note: Your highest score from all attempts will be counted as your final grade
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="bg-muted p-6 rounded-lg border">
                 <h3 className="font-semibold text-lg mb-4 text-center text-foreground">Assessment Details</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -253,15 +410,6 @@ export default function AssessmentAnswerPage() {
                   </div>
                   <div className="bg-card p-3 rounded-md flex items-center gap-3">
                     <div className="w-8 h-8 bg-accent rounded-full flex items-center justify-center">
-                      <BookOpen className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground uppercase tracking-wide">Type</p>
-                      <p className="font-medium text-foreground">{assessmentLink?.linkType.replace('_', ' ')}</p>
-                    </div>
-                  </div>
-                  <div className="bg-card p-3 rounded-md flex items-center gap-3">
-                    <div className="w-8 h-8 bg-accent rounded-full flex items-center justify-center">
                       <span className="text-sm font-bold text-muted-foreground">{totalQuestions}</span>
                     </div>
                     <div>
@@ -269,33 +417,41 @@ export default function AssessmentAnswerPage() {
                       <p className="font-medium text-foreground">{totalQuestions} Total</p>
                     </div>
                   </div>
+                  {/* Max Attempts - Only show for POST assessments */}
+                  {isPostAssessment && (
+                    <div className="bg-card p-3 rounded-md flex items-center gap-3">
+                      <div className="w-8 h-8 bg-accent rounded-full flex items-center justify-center">
+                        <span className="text-sm font-bold text-muted-foreground">🔄</span>
+                      </div>
+                      <div>
+                        <p className="text-xs text-muted-foreground uppercase tracking-wide">Max Attempts</p>
+                        <p className="font-medium text-foreground">{assessment?.maxAttempts || 1}</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              <div className="bg-accent p-6 rounded-lg border">
-                <h4 className="font-semibold text-lg text-foreground mb-4 text-center">📋 Instructions</h4>
-                <ul className="text-muted-foreground space-y-3">
-                  <li className="flex items-start gap-3">
-                    <span className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">1</span>
-                    <span>Read each question carefully before answering</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <span className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">2</span>
+              <div className="bg-accent p-5 rounded-lg border">
+                <h4 className="font-semibold text-base text-foreground mb-3 text-center">📋 Instructions</h4>
+                <ul className="text-muted-foreground text-sm space-y-2.5">
+                  <li className="flex items-start gap-2.5">
+                    <span className="text-primary mt-0.5">•</span>
                     <span>Your answers will be automatically saved as you progress</span>
                   </li>
                   {assessment?.timed && (
-                    <li className="flex items-start gap-3">
-                      <span className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">⏰</span>
-                      <span>The timer will start once you begin - manage your time wisely</span>
+                    <li className="flex items-start gap-2.5">
+                      <span className="text-primary mt-0.5">•</span>
+                      <span>The timer will start once you begin</span>
                     </li>
                   )}
-                  <li className="flex items-start gap-3">
-                    <span className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">3</span>
-                    <span>Navigate between questions using the sidebar or navigation buttons</span>
+                  <li className="flex items-start gap-2.5">
+                    <span className="text-primary mt-0.5">•</span>
+                    <span>Navigate using the sidebar or navigation buttons</span>
                   </li>
-                  <li className="flex items-start gap-3">
-                    <span className="w-6 h-6 bg-primary text-primary-foreground rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">✓</span>
-                    <span>Click &quot;Submit Assessment&quot; when you&apos;re ready to finish</span>
+                  <li className="flex items-start gap-2.5">
+                    <span className="text-primary mt-0.5">•</span>
+                    <span>Submit when you&apos;re ready to finish</span>
                   </li>
                 </ul>
               </div>
@@ -307,13 +463,9 @@ export default function AssessmentAnswerPage() {
                   size="lg"
                   className="px-12 py-3"
                 >
-                  {startAssessmentMutation.isPending ? "Loading..." : "🚀 Start Assessment"}
+                  {startAssessmentMutation.isPending ? "Loading..." : "Start Assessment"}
                 </Button>
               </div>
-              
-              <p className="text-center text-sm text-muted-foreground mt-3">
-                💡 Your progress is automatically saved. You can safely refresh the page anytime.
-              </p>
             </CardContent>
           </Card>
         </div>

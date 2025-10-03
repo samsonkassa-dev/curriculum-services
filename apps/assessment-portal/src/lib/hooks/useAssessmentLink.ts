@@ -78,11 +78,19 @@ export interface AssessmentAttempt {
   score: number | null;
   maxScore: number | null;
   percentage: number | null;
-  attemptStatus: "IN_PROGRESS" | "SUBMITTED" | "EXPIRED";
+  hasPassed: boolean | null;
+  attemptStatus: "IN_PROGRESS" | "SUBMITTED" | "EXPIRED" | "GRADED";
   assessmentAnswers: AssessmentAnswer[];
 }
 
 export interface StartAssessmentResponse {
+  code: string;
+  bestScore?: number;
+  assessmentAttempt: AssessmentAttempt;
+  message: string;
+}
+
+export interface SubmitAssessmentResponse {
   code: string;
   assessmentAttempt: AssessmentAttempt;
   message: string;
@@ -159,7 +167,7 @@ export function useSubmitAssessment() {
   return useMutation({
     mutationFn: async (linkId: string) => {
       const response = await api.post(`/assessment-attempt/link/${linkId}/submit`);
-      return response.data;
+      return response.data as SubmitAssessmentResponse;
     },
     onSuccess: (data) => {
       toast.success(data?.message || "Assessment submitted successfully");
