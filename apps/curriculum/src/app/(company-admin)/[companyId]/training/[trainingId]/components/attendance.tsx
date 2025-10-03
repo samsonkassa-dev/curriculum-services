@@ -5,10 +5,14 @@ import { useUserRole } from "@/lib/hooks/useUserRole"
 import { Loading } from "@/components/ui/loading"
 import { useCohortSessions } from "@/lib/hooks/useSession"
 import { useCohorts, useCohortTrainees } from "@/lib/hooks/useCohorts"
-import { createAttendanceColumns } from "../attendance/components/attendance-columns"
+import { createAttendanceColumns, createSurveyStatusColumn, createAssessmentScoreColumn } from "../attendance/components/attendance-columns"
 import { AttendanceDataTable } from "../attendance/components/attendance-data-table"
 import { CohortSessionTabs } from "../attendance/components/cohort-session-tabs"
 import { useSubmitAttendance, useSubmitBulkAttendance, useSessionAttendance } from "@/lib/hooks/useAttendance"
+import { useCohortSurveyLinks } from "@/lib/hooks/useCohortSurveyLinks"
+import { useCohortAssessmentLinks } from "@/lib/hooks/useCohortAssessmentLinks"
+import { useAssessmentAttemptsSummary } from "@/lib/hooks/useAssessmentLinks"
+import { AssessmentSurveyTools } from "../attendance/components/assessment-survey-tools"
 import { toast } from "sonner"
 
 
@@ -99,6 +103,10 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
   // Local helpers for network UI states
   const [isSaving, setIsSaving] = useState(false)
   const [pendingSubmissions, setPendingSubmissions] = useState<string[]>([])
+
+  // Survey and Assessment tools state
+  const [showSurveyTools, setShowSurveyTools] = useState(false)
+  const [showAssessmentTools, setShowAssessmentTools] = useState(false)
 
   // Fetch cohorts for this training
   const { 
@@ -211,6 +219,41 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
   }, [attendanceResponse, hasUnsavedChanges]); 
 
   const students = studentData?.trainees || [];
+
+  // Prepare trainee IDs for survey/assessment hooks
+  const traineeIds = students.map(s => s.id).filter(Boolean) as string[]
+
+  // Survey links hook - simplified for attendance view
+  const {
+    selectedSurveyId,
+    setSelectedSurveyId,
+    surveys,
+    answeredIds: surveyAnsweredIds,
+  } = useCohortSurveyLinks(trainingId, activeCohortId, traineeIds)
+
+  // Assessment links hook - simplified for attendance view
+  const {
+    selectedAssessmentId,
+    setSelectedAssessmentId,
+    assessments,
+  } = useCohortAssessmentLinks(trainingId, activeCohortId, traineeIds)
+
+  // Get assessment scores from the attempts summary
+  const { data: attemptsSummaryData } = useAssessmentAttemptsSummary(selectedAssessmentId || undefined)
+
+  // Build a map of trainee scores for easy lookup
+  const traineeScores = useMemo(() => {
+    const scoreMap = new Map<string, { postScore: number | null; hasPassed: boolean | null }>()
+    if (attemptsSummaryData?.traineeAttempts) {
+      attemptsSummaryData.traineeAttempts.forEach(attempt => {
+        scoreMap.set(attempt.traineeId, {
+          postScore: attempt.postAssessmentScore,
+          hasPassed: attempt.hasPassed
+        })
+      })
+    }
+    return scoreMap
+  }, [attemptsSummaryData])
 
   // Get students with unsaved changes (comparing local state vs API state)
   const studentsWithChanges = useMemo(() => {
@@ -561,9 +604,26 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
   }, [attendanceResponse]);
 
   // Memoize the attendance columns to prevent recreation on each render
+  // Build extra columns based on selected survey/assessment
+  const extraColumns = useMemo(() => {
+    const extras = []
+    
+    // Add survey status column if survey tools are active and a survey is selected
+    if (showSurveyTools && selectedSurveyId) {
+      extras.push(createSurveyStatusColumn(surveyAnsweredIds))
+    }
+    
+    // Add assessment score column if assessment tools are active and an assessment is selected
+    if (showAssessmentTools && selectedAssessmentId) {
+      extras.push(createAssessmentScoreColumn(traineeScores))
+    }
+    
+    return extras
+  }, [showSurveyTools, selectedSurveyId, surveyAnsweredIds, showAssessmentTools, selectedAssessmentId, traineeScores])
+
   const memoizedColumns = useMemo(() => 
-    createAttendanceColumns(activeSessionId, currentSession, trainingId, [], hasUnsavedChanges, submittedAttendanceIds, handleSaveIndividualAttendance),
-    [activeSessionId, currentSession, trainingId, hasUnsavedChanges, submittedAttendanceIds, handleSaveIndividualAttendance]
+    createAttendanceColumns(activeSessionId, currentSession, trainingId, extraColumns, hasUnsavedChanges, submittedAttendanceIds, handleSaveIndividualAttendance),
+    [activeSessionId, currentSession, trainingId, extraColumns, hasUnsavedChanges, submittedAttendanceIds, handleSaveIndividualAttendance]
   );
 
   // Comprehensive loading states
@@ -709,6 +769,20 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
         setActiveCohortId={handleCohortChange}
         setActiveSessionId={handleSessionChange}
         trainingId={trainingId}
+      />
+      
+      {/* Assessment and Survey Tools */}
+      <AssessmentSurveyTools
+        showSurveyTools={showSurveyTools}
+        setShowSurveyTools={setShowSurveyTools}
+        surveys={surveys}
+        selectedSurveyId={selectedSurveyId}
+        setSelectedSurveyId={setSelectedSurveyId}
+        showAssessmentTools={showAssessmentTools}
+        setShowAssessmentTools={setShowAssessmentTools}
+        assessments={assessments}
+        selectedAssessmentId={selectedAssessmentId}
+        setSelectedAssessmentId={setSelectedAssessmentId}
       />
       
       {/* Student Attendance Table */}

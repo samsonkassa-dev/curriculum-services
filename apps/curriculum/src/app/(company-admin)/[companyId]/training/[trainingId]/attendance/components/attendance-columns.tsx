@@ -466,5 +466,75 @@ export const createAttendanceColumns = (
 
 
 
+// Create survey completion column
+export const createSurveyStatusColumn = (
+  surveyAnsweredIds: Set<string>
+): ColumnDef<AttendanceStudent> => ({
+  id: "surveyStatus",
+  header: "Survey Status",
+  cell: ({ row }) => {
+    const student = row.original
+    const hasCompleted = surveyAnsweredIds.has(student.id)
+    
+    return (
+      <div className="flex items-center justify-center">
+        {hasCompleted ? (
+          <div className="flex items-center gap-1.5 text-green-600">
+            <CheckCircle size={16} />
+            <span className="text-xs font-medium">Completed</span>
+          </div>
+        ) : (
+          <div className="flex items-center gap-1.5 text-gray-400">
+            <XCircle size={16} />
+            <span className="text-xs font-medium">Not completed</span>
+          </div>
+        )}
+      </div>
+    )
+  },
+})
+
+// Create assessment score column
+export const createAssessmentScoreColumn = (
+  traineeScores: Map<string, { postScore: number | null; hasPassed: boolean | null }>
+): ColumnDef<AttendanceStudent> => ({
+  id: "assessmentScore",
+  header: "Post Assessment Score",
+  cell: ({ row }) => {
+    const student = row.original
+    const scoreData = traineeScores.get(student.id)
+    
+    if (!scoreData || scoreData.postScore === null) {
+      return (
+        <div className="flex items-center justify-center">
+          <span className="text-xs text-gray-400">Not taken</span>
+        </div>
+      )
+    }
+    
+    const score = scoreData.postScore
+    const hasPassed = scoreData.hasPassed
+    
+    // Color coding based on score
+    let colorClass = "text-gray-600"
+    let bgClass = "bg-gray-100"
+    if (hasPassed === true) {
+      colorClass = "text-green-700"
+      bgClass = "bg-green-100"
+    } else if (hasPassed === false) {
+      colorClass = "text-red-700"
+      bgClass = "bg-red-100"
+    }
+    
+    return (
+      <div className="flex items-center justify-center">
+        <div className={`px-3 py-1 rounded-full ${bgClass} ${colorClass}`}>
+          <span className="text-sm font-semibold">{score.toFixed(1)}%</span>
+        </div>
+      </div>
+    )
+  },
+})
+
 // Export a static version for compatibility with existing code
 export const attendanceColumns = createAttendanceColumns(""); 
