@@ -5,7 +5,7 @@ import { useUserRole } from "@/lib/hooks/useUserRole"
 import { Loading } from "@/components/ui/loading"
 import { useCohortSessions } from "@/lib/hooks/useSession"
 import { useCohorts, useCohortTrainees } from "@/lib/hooks/useCohorts"
-import { createAttendanceColumns, createSurveyStatusColumn, createAssessmentScoreColumn } from "../attendance/components/attendance-columns"
+import { createAttendanceColumns, createSurveyStatusColumn, createAssessmentScoreColumn, createPreAssessmentScoreColumn } from "../attendance/components/attendance-columns"
 import { AttendanceDataTable } from "../attendance/components/attendance-data-table"
 import { CohortSessionTabs } from "../attendance/components/cohort-session-tabs"
 import { useSubmitAttendance, useSubmitBulkAttendance, useSessionAttendance } from "@/lib/hooks/useAttendance"
@@ -230,6 +230,7 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
     setSelectedSurveyId,
     surveys,
     answeredIds: surveyAnsweredIds,
+    answeredLoading: isSurveyAnsweredLoading,
   } = useCohortSurveyLinks(trainingId, activeCohortId, traineeIds)
 
   // Get full assessment details including maxAttempts
@@ -244,7 +245,7 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
   } = useCohortAssessmentLinks(trainingId, activeCohortId, traineeIds)
 
   // Get assessment scores from the attempts summary
-  const { data: attemptsSummaryData } = useAssessmentAttemptsSummary(selectedAssessmentId || undefined)
+  const { data: attemptsSummaryData, isLoading: isAttemptsSummaryLoading } = useAssessmentAttemptsSummary(selectedAssessmentId || undefined)
 
   // Get the selected assessment's maxAttempts
   const selectedAssessmentMaxAttempts = useMemo(() => {
@@ -256,6 +257,7 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
   // Build a map of trainee scores for easy lookup
   const traineeScores = useMemo(() => {
     const scoreMap = new Map<string, { 
+      preScore: number | null;
       postScore: number | null; 
       hasPassed: boolean | null;
       totalAttempts: number;
@@ -263,6 +265,7 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
     if (attemptsSummaryData?.traineeAttempts) {
       attemptsSummaryData.traineeAttempts.forEach(attempt => {
         scoreMap.set(attempt.traineeId, {
+          preScore: attempt.preAssessmentScore,
           postScore: attempt.postAssessmentScore,
           hasPassed: attempt.hasPassed,
           totalAttempts: attempt.totalAttempts
@@ -627,16 +630,25 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
     
     // Add survey status column if survey tools are active and a survey is selected
     if (showSurveyTools && selectedSurveyId) {
-      extras.push(createSurveyStatusColumn(surveyAnsweredIds))
+      extras.push(createSurveyStatusColumn(surveyAnsweredIds, isSurveyAnsweredLoading))
     }
     
     // Add assessment score column if assessment tools are active and an assessment is selected
     if (showAssessmentTools && selectedAssessmentId) {
-      extras.push(createAssessmentScoreColumn(traineeScores, selectedAssessmentMaxAttempts))
+      // Pre score first (if available), then post score
+      extras.push(createPreAssessmentScoreColumn(
+        new Map(Array.from(traineeScores.entries()).map(([id, v]) => [id, { preScore: v.preScore }])),
+        isAttemptsSummaryLoading
+      ))
+      extras.push(createAssessmentScoreColumn(
+        new Map(Array.from(traineeScores.entries()).map(([id, v]) => [id, { postScore: v.postScore, hasPassed: v.hasPassed, totalAttempts: v.totalAttempts }])), 
+        selectedAssessmentMaxAttempts,
+        isAttemptsSummaryLoading
+      ))
     }
     
     return extras
-  }, [showSurveyTools, selectedSurveyId, surveyAnsweredIds, showAssessmentTools, selectedAssessmentId, traineeScores, selectedAssessmentMaxAttempts])
+  }, [showSurveyTools, selectedSurveyId, surveyAnsweredIds, isSurveyAnsweredLoading, showAssessmentTools, selectedAssessmentId, traineeScores, selectedAssessmentMaxAttempts, isAttemptsSummaryLoading])
 
   const memoizedColumns = useMemo(() => 
     createAttendanceColumns(activeSessionId, currentSession, trainingId, extraColumns, hasUnsavedChanges, submittedAttendanceIds, handleSaveIndividualAttendance),

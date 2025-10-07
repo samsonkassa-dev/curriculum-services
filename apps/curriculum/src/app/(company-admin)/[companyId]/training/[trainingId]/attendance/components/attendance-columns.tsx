@@ -468,12 +468,18 @@ export const createAttendanceColumns = (
 
 // Create survey completion column
 export const createSurveyStatusColumn = (
-  surveyAnsweredIds: Set<string>
+  surveyAnsweredIds: Set<string>,
+  isLoading: boolean = false
 ): ColumnDef<AttendanceStudent> => ({
   id: "surveyStatus",
   header: "Survey Status",
   cell: ({ row }) => {
     const student = row.original
+    if (isLoading) {
+      return (
+        <div className="flex items-center justify-center text-gray-400 text-xs">Loading...</div>
+      )
+    }
     const hasCompleted = surveyAnsweredIds.has(student.id)
     
     return (
@@ -497,12 +503,18 @@ export const createSurveyStatusColumn = (
 // Create assessment score column
 export const createAssessmentScoreColumn = (
   traineeScores: Map<string, { postScore: number | null; hasPassed: boolean | null; totalAttempts: number }>,
-  maxAttempts: number | null
+  maxAttempts: number | null,
+  isLoading: boolean = false
 ): ColumnDef<AttendanceStudent> => ({
   id: "assessmentScore",
   header: "Post Assessment Score",
   cell: ({ row }) => {
     const student = row.original
+    if (isLoading) {
+      return (
+        <div className="flex items-center justify-center text-gray-400 text-xs">Loading...</div>
+      )
+    }
     const scoreData = traineeScores.get(student.id)
     
     if (!scoreData || scoreData.postScore === null) {
@@ -541,6 +553,45 @@ export const createAssessmentScoreColumn = (
             Attempt {totalAttempts} / {maxAttempts}
           </span>
         )}
+      </div>
+    )
+  },
+})
+
+// Create assessment score column
+export const createPreAssessmentScoreColumn = (
+  traineeScores: Map<string, { preScore: number | null }>,
+  isLoading: boolean = false
+): ColumnDef<AttendanceStudent> => ({
+  id: "preAssessmentScore",
+  header: "Pre Assessment Score",
+  cell: ({ row }) => {
+    const student = row.original
+    if (isLoading) {
+      return (
+        <div className="flex items-center justify-center text-gray-400 text-xs">Loading...</div>
+      )
+    }
+    const scoreData = traineeScores.get(student.id)
+    
+    if (!scoreData || scoreData.preScore === null) {
+      return (
+        <div className="flex flex-col items-center justify-center gap-1">
+          <span className="text-xs text-gray-400">Not taken</span>
+        </div>
+      )
+    }
+    
+    const score = scoreData.preScore
+  
+    
+
+    
+    return (
+      <div className="flex flex-col items-center justify-center gap-1.5">
+        <div className={`px-3 py-1 rounded-full bg-gray-100 text-gray-600`}>
+          <span className="text-sm font-semibold">{score.toFixed(1)}%</span>
+        </div>
       </div>
     )
   },
