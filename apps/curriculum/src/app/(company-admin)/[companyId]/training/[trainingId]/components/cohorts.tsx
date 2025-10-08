@@ -5,8 +5,9 @@ import { useRouter, useParams } from "next/navigation"
 import { useUserRole } from "@/lib/hooks/useUserRole"
 import { Button } from "@/components/ui/button"
 import { Loading } from "@/components/ui/loading"
-import { Plus, ChevronLeft, ChevronRight } from "lucide-react"
+import { Plus, ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
 import { useCohorts } from "@/lib/hooks/useCohorts"
+import { useDebounce } from "@/lib/hooks/useDebounce"
 import { Input } from "@/components/ui/input"
 import { CohortList } from "./cohorts/cohort-list"
 import { CohortForm } from "./cohorts/cohort-form"
@@ -41,6 +42,7 @@ export function CohortsComponent({ trainingId }: CohortsComponentProps) {
   
   // Search and filter state
   const [searchTerm, setSearchTerm] = useState("")
+  const debouncedSearchTerm = useDebounce(searchTerm, 500) // 500ms delay
   const [filters, setFilters] = useState<CohortFilters>({})
   
   // Modal state
@@ -56,8 +58,8 @@ export function CohortsComponent({ trainingId }: CohortsComponentProps) {
       pageSize,
     }
     
-    if (searchTerm.trim()) {
-      params.searchQuery = searchTerm.trim()
+    if (debouncedSearchTerm.trim()) {
+      params.searchQuery = debouncedSearchTerm.trim()
     }
     
     if (filters.name) {
@@ -77,7 +79,7 @@ export function CohortsComponent({ trainingId }: CohortsComponentProps) {
     }
     
     return params
-  }, [trainingId, page, pageSize, searchTerm, filters])
+  }, [trainingId, page, pageSize, debouncedSearchTerm, filters])
   
   const { data, isLoading, error } = useCohorts(queryParams)
   
@@ -155,10 +157,13 @@ export function CohortsComponent({ trainingId }: CohortsComponentProps) {
                 <Input
                   type="text"
                   placeholder="Search cohorts..."
-                  className="pl-10 h-10 text-sm bg-white border-gray-200"
+                  className="pl-10 pr-10 h-10 text-sm bg-white border-gray-200"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
+                {searchTerm !== debouncedSearchTerm && (
+                  <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 animate-spin text-gray-400" />
+                )}
               </div>
 
               <CohortFilter
