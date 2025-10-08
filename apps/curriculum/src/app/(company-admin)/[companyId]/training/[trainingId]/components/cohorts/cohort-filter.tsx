@@ -11,13 +11,6 @@ import {
 } from "@/components/ui/popover"
 import { Filter, X } from "lucide-react"
 import { Calendar } from "@/components/ui/calendar"
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 
 export interface CohortFilters {
   name?: string
@@ -206,7 +199,7 @@ export function CohortFilter({ filters, onFiltersChange, availableTags = [] }: C
             <Button
               size="sm"
               onClick={handleApplyFilters}
-              className="flex-1 bg-[#0B75FF] hover:bg-[#0B75FF]/90"
+              className="flex-1 bg-[#0B75FF] hover:bg-[#0B75FF]/90 text-white"
             >
               Apply Filters
             </Button>

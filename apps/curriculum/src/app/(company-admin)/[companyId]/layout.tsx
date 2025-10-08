@@ -130,7 +130,7 @@ export default function CompanyAdminLayout({
           label: "Dashboard",
         },
         {
-          icon: <img src="/training.svg" alt="icon" width={19} height={19} />,
+          icon: <img src="/trainingM.svg" alt="icon" width={19} height={19} />,
           href: `/${roleForUrl}/training`,
           label: "Training",
         },
