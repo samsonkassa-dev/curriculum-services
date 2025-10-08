@@ -44,7 +44,12 @@ export function decodeJWT(token: string | null): DecodedToken | null {
 // Format date string to display format (DD/MM/YYYY) in EAT timezone
 export function formatDateToDisplay(dateString: string): string {
   try {
-    const date = new Date(dateString);
+    // Ensure the date string is treated as UTC by appending 'Z' if not present
+    const normalizedDateString = dateString.endsWith('Z') || dateString.includes('+') || (dateString.includes('T') && dateString.split('T')[1]?.includes('-'))
+      ? dateString 
+      : `${dateString}Z`;
+    
+    const date = new Date(normalizedDateString);
     // Convert to EAT (East Africa Time - UTC+3) using Intl.DateTimeFormat
     const eatFormatter = new Intl.DateTimeFormat('en-GB', {
       timeZone: 'Africa/Addis_Ababa', // EAT timezone
@@ -63,7 +68,12 @@ export function formatDateToDisplay(dateString: string): string {
 // Format time string to display format (HH:MM AM/PM) in EAT timezone
 export function formatTimeToDisplay(dateString: string): string {
   try {
-    const date = new Date(dateString);
+    // Ensure the date string is treated as UTC by appending 'Z' if not present
+    const normalizedDateString = dateString.endsWith('Z') || dateString.includes('+') || (dateString.includes('T') && dateString.split('T')[1]?.includes('-'))
+      ? dateString 
+      : `${dateString}Z`;
+    
+    const date = new Date(normalizedDateString);
     // Convert to EAT (East Africa Time - UTC+3) using Intl.DateTimeFormat
     const eatFormatter = new Intl.DateTimeFormat('en-US', {
       timeZone: 'Africa/Addis_Ababa', // EAT timezone

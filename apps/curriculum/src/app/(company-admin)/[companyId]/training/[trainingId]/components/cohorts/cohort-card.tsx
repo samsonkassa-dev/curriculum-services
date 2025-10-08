@@ -3,17 +3,20 @@
 import { memo, useState, useCallback } from "react"
 import { useRouter, useParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Tag, Edit2, Trash2 } from "lucide-react"
+import { Tag, Edit2, Trash2, ChevronDown, ChevronRight, Plus } from "lucide-react"
 import { Cohort, useDeleteCohort } from "@/lib/hooks/useCohorts"
 import { useUserRole } from "@/lib/hooks/useUserRole"
 import { DeleteCohortDialog } from "./delete-cohort-dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { CohortForm } from "./cohort-form"
 
 interface CohortCardProps {
   cohort: Cohort
   onEditCohort?: (cohort: Cohort) => void
+  depth?: number
 }
 
-function CohortCardComponent({ cohort, onEditCohort }: CohortCardProps) {
+function CohortCardComponent({ cohort, onEditCohort, depth = 0 }: CohortCardProps) {
   const router = useRouter()
   const params = useParams()
   const companyId = params.companyId as string
@@ -21,12 +24,14 @@ function CohortCardComponent({ cohort, onEditCohort }: CohortCardProps) {
   
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [cohortToDelete, setCohortToDelete] = useState<Cohort | null>(null)
+  const [expanded, setExpanded] = useState(true)
+  const [isAddSubOpen, setIsAddSubOpen] = useState(false)
   
   const { isProjectManager, isTrainingAdmin } = useUserRole()
   const { deleteCohort, isLoading: isDeleting } = useDeleteCohort()
 
   const handleViewDetails = () => {
-    router.push(`/${companyId}/training/${trainingId}/cohorts/${cohort.id}`)
+    router.push(`/${companyId}/training/${trainingId}/cohorts/${cohort.id}?depth=${depth}`)
   }
 
   const handleDeleteCohort = useCallback(() => {
@@ -53,32 +58,48 @@ function CohortCardComponent({ cohort, onEditCohort }: CohortCardProps) {
 
   // Check if user can edit/delete cohorts (only project manager and training admin)
   const canEditCohorts = isProjectManager || isTrainingAdmin
+  const MAX_DEPTH = 3
+  const hasChildren = Array.isArray(cohort.subCohorts) && cohort.subCohorts.length > 0
+  const isLeaf = !hasChildren
+  const canAddMoreDepth = depth < MAX_DEPTH
+  const isActionable = isLeaf
+  const showAddSub = isLeaf && canAddMoreDepth
 
   return (
     <div className="bg-[#FBFBFB] p-5 rounded-lg border-[0.1px] border-gray-200">
-      <div className="grid grid-cols-6 items-center gap-4">
-        <div className="flex flex-col gap-1 col-span-2">
-          <h3 className="text-[#525252] font-bold text-sm break-words">{cohort.name}</h3>
-          {cohort.description && (
-            <p className="text-[#667085] text-xs line-clamp-2">{cohort.description}</p>
-          )}
+      <div className="grid grid-cols-1 md:grid-cols-6 items-start gap-4">
+        <div className="flex items-start gap-2 md:col-span-2 col-span-1 min-w-0">
+          <button
+            className="mt-0.5 text-gray-500 hover:text-gray-700"
+            onClick={() => setExpanded(v => !v)}
+            aria-label={expanded ? "Collapse" : "Expand"}
+            title={expanded ? "Collapse" : "Expand"}
+          >
+            {expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+          </button>
+          <div className="flex flex-col gap-1">
+            <h3 className="text-[#525252] font-bold text-sm break-words">{cohort.name}</h3>
+            {cohort.description && (
+              <p className="text-[#667085] text-xs line-clamp-2">{cohort.description}</p>
+            )}
+          </div>
         </div>
 
-        <div className="flex flex-col gap-1 col-span-1">
+        <div className="flex flex-col gap-1 md:col-span-1 col-span-1 min-w-0">
           <span className="text-[#525252] font-bold text-xs">Training</span>
           <span className="text-[#555252] font-light text-sm break-words">
             {cohort.trainingTitle}
           </span>
         </div>
 
-        <div className="flex flex-col gap-1 col-span-1">
+        <div className="flex flex-col gap-1 md:col-span-1 col-span-1 min-w-0">
           <span className="text-[#525252] font-bold text-xs">Parent Cohort</span>
           <span className="text-[#555252] font-light text-sm">
             {cohort.parentCohortName || "Main Cohort"}
           </span>
         </div>
 
-        <div className="flex flex-col gap-1 col-span-1">
+        <div className="flex flex-col gap-1 md:col-span-1 col-span-1 min-w-0">
           <span className="text-[#525252] font-bold text-xs">Tags</span>
           <div className="flex flex-col gap-1">
             <div className="flex flex-wrap gap-1">
@@ -99,17 +120,30 @@ function CohortCardComponent({ cohort, onEditCohort }: CohortCardProps) {
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-2 col-span-1">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="rounded-full border-[#667085] text-[#667085] text-xs font-medium"
-            onClick={handleViewDetails}
-          >
-            View Details
-          </Button>
+        <div className="flex items-center md:justify-end justify-start gap-2 md:col-span-1 col-span-1 flex-wrap">
+          {isActionable && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="rounded-full border-[#667085] text-[#667085] text-xs font-medium"
+              onClick={handleViewDetails}
+            >
+              View Details
+            </Button>
+          )}
           {canEditCohorts && (
             <>
+              {showAddSub && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="rounded-full border-[#667085] text-[#667085] text-xs font-medium"
+                  onClick={() => setIsAddSubOpen(true)}
+                >
+                  <Plus className="h-3 w-3 mr-1" />
+                  Add Sub-Cohort
+                </Button>
+              )}
               <Button
                 variant="outline"
                 size="sm"
@@ -142,6 +176,31 @@ function CohortCardComponent({ cohort, onEditCohort }: CohortCardProps) {
         onConfirmDelete={confirmDelete}
         isDeleting={isDeleting}
       />
+
+      {/* Add Sub-Cohort Modal */}
+      <Dialog open={isAddSubOpen} onOpenChange={setIsAddSubOpen}>
+        <DialogContent className="sm:max-w-[600px] p-0">
+          <DialogHeader className="px-6 py-4 border-b">
+            <DialogTitle className="text-lg font-semibold">Add Sub-Cohort</DialogTitle>
+          </DialogHeader>
+          <CohortForm
+            trainingId={trainingId}
+            companyId={companyId}
+            parentCohortId={cohort.id}
+            onSuccess={() => setIsAddSubOpen(false)}
+            onCancel={() => setIsAddSubOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Children */}
+      {hasChildren && expanded && (
+        <div className="mt-4 ml-6 space-y-4">
+          {cohort.subCohorts!.map((child) => (
+            <CohortCard key={child.id} cohort={child} onEditCohort={onEditCohort} depth={depth + 1} />
+          ))}
+        </div>
+      )}
     </div>
   )
 }

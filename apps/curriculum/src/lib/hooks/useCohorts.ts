@@ -14,6 +14,7 @@ export interface Cohort {
   tags: string[]
   trainingTitle: string
   parentCohortName: string | null
+  subCohorts?: Cohort[]
 }
 
 export interface CreateCohortData {

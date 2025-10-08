@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, lazy, Suspense } from "react"
-import { useParams, useRouter } from "next/navigation"
+import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { ChevronLeft } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Loading } from "@/components/ui/loading"
@@ -29,10 +29,12 @@ const TabLoadingFallback = () => (
 export default function CohortDetailPage() {
   const router = useRouter()
   const params = useParams()
+  const searchParams = useSearchParams()
   const companyId = params.companyId as string
   const trainingId = params.trainingId as string
   const cohortId = params.cohortId as string
-  const [activeTab, setActiveTab] = useState("sessions")
+  const initialTab = (searchParams.get("tab") || "sessions") as "sessions" | "students" | "sub-cohorts"
+  const [activeTab, setActiveTab] = useState(initialTab)
   const { isProjectManager, isTrainingAdmin, isTrainerAdmin, isTrainer } = useUserRole()
 
   // Fetch the specific cohort details using the dedicated useCohort hook
@@ -69,6 +71,9 @@ export default function CohortDetailPage() {
       </div>
     )
   }
+
+  const hasChildren = Array.isArray((cohort as any).subCohorts) && (cohort as any).subCohorts.length > 0
+  const isActionable = !hasChildren
 
   return (
     <div className="px-[7%] py-10">
@@ -123,34 +128,50 @@ export default function CohortDetailPage() {
         </div>
       </div>
 
-      <Tabs defaultValue="sessions" className="w-full mb-8" onValueChange={setActiveTab}>
+      <Tabs
+        defaultValue={initialTab}
+        className="w-full mb-8"
+        onValueChange={(v) => setActiveTab(v as "sessions" | "students" | "sub-cohorts")}
+      >
         <TabsList className="bg-transparent px-0 mb-6">
-          <TabsTrigger value="sessions">
-            Sessions
-          </TabsTrigger>
-          <TabsTrigger value="students">
-            Students
-          </TabsTrigger>
-          <TabsTrigger value="sub-cohorts">
-            Sub-Cohorts
-          </TabsTrigger>
+          {isActionable && (
+            <TabsTrigger value="sessions">
+              Sessions
+            </TabsTrigger>
+          )}
+          {isActionable && (
+            <TabsTrigger value="students">
+              Students
+            </TabsTrigger>
+          )}
+          {hasChildren && (
+            <TabsTrigger value="sub-cohorts">
+              Sub-Cohorts
+            </TabsTrigger>
+          )}
         </TabsList>
 
-        <TabsContent value="sessions" className="pt-0">
-          <CohortSessions cohortId={cohortId} trainingId={trainingId} />
-        </TabsContent>
+        {isActionable && (
+          <TabsContent value="sessions" className="pt-0">
+            <CohortSessions cohortId={cohortId} trainingId={trainingId} />
+          </TabsContent>
+        )}
 
-        <TabsContent value="students" className="pt-0">
-          <Suspense fallback={<TabLoadingFallback />}>
-            <CohortStudents cohortId={cohortId} trainingId={trainingId} />
-          </Suspense>
-        </TabsContent>
+        {isActionable && (
+          <TabsContent value="students" className="pt-0">
+            <Suspense fallback={<TabLoadingFallback />}>
+              <CohortStudents cohortId={cohortId} trainingId={trainingId} />
+            </Suspense>
+          </TabsContent>
+        )}
 
-        <TabsContent value="sub-cohorts" className="pt-0">
-          <Suspense fallback={<TabLoadingFallback />}>
-            <CohortSubCohorts cohortId={cohortId} trainingId={trainingId} />
-          </Suspense>
-        </TabsContent>
+        {hasChildren && (
+          <TabsContent value="sub-cohorts" className="pt-0">
+            <Suspense fallback={<TabLoadingFallback />}>
+              <CohortSubCohorts cohortId={cohortId} trainingId={trainingId} />
+            </Suspense>
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   )

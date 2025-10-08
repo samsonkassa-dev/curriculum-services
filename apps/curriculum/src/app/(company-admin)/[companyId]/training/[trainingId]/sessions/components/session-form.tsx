@@ -35,46 +35,56 @@ import { SessionCompensationSection } from "./session-compensation-section"
 import { Loading } from "@/components/ui/loading"
 import { TimePicker } from "./time-picker"
 
-// Helper function to format Date to YYYY-MM-DD string using UTC date
+// Helper function to format Date to YYYY-MM-DD string in Ethiopia timezone (EAT/UTC+3)
 const formatDateForInput = (date: Date | null | undefined): string => {
   if (!date) return ""
-  // Use UTC date components to maintain consistency with UTC time handling
-  const year = date.getUTCFullYear()
-  const month = (date.getUTCMonth() + 1).toString().padStart(2, '0')
-  const day = date.getUTCDate().toString().padStart(2, '0')
+  
+  // Convert UTC to Ethiopia time by adding 3 hours
+  const eatDate = new Date(date.getTime() + (3 * 60 * 60 * 1000))
+  const year = eatDate.getUTCFullYear()
+  const month = (eatDate.getUTCMonth() + 1).toString().padStart(2, '0')
+  const day = eatDate.getUTCDate().toString().padStart(2, '0')
   return `${year}-${month}-${day}`
 }
 
-// Helper function to format Date to HH:MM string using UTC time
+// Helper function to format Date to HH:MM string in Ethiopia timezone (EAT/UTC+3)
 const formatTimeForInput = (date: Date | null | undefined): string => {
   if (!date) return ""
-  // Use UTC methods to get the time as stored (UTC) without timezone conversion
-  const hours = date.getUTCHours().toString().padStart(2, '0')
-  const minutes = date.getUTCMinutes().toString().padStart(2, '0')
+  
+  // Convert UTC to Ethiopia time by adding 3 hours
+  const eatDate = new Date(date.getTime() + (3 * 60 * 60 * 1000))
+  const hours = eatDate.getUTCHours().toString().padStart(2, '0')
+  const minutes = eatDate.getUTCMinutes().toString().padStart(2, '0')
   return `${hours}:${minutes}`
 }
 
 // Helper function to convert date string to date object
+// Ensures the date string is treated as UTC by appending 'Z' if not present
 const parseDate = (dateString: string): Date => {
-  return new Date(dateString)
+  // If the date string doesn't end with 'Z' and doesn't have timezone info, treat it as UTC
+  const normalizedDateString = dateString.endsWith('Z') || dateString.includes('+') || dateString.includes('T') && dateString.split('T')[1]?.includes('-')
+    ? dateString 
+    : `${dateString}Z`
+  return new Date(normalizedDateString)
 }
 
-// Helper function to combine date and time into a single Date object in UTC
+// Helper function to combine date and time into a single Date object
+// Input time is in Ethiopia timezone (EAT/UTC+3), need to convert to UTC for storage
 const combineDateAndTime = (date: Date, timeString: string): Date => {
   const [hours, minutes] = timeString.split(':').map(Number)
   
-  // Get the date components in local timezone
+  // Get date components from the input date
   const year = date.getFullYear()
   const month = date.getMonth()
   const day = date.getDate()
   
-  // Create a new Date object using UTC methods to avoid timezone conversion
-  // This ensures the selected time is stored as UTC without adjustment
-  const combined = new Date()
-  combined.setUTCFullYear(year, month, day)
-  combined.setUTCHours(hours, minutes, 0, 0)
+  // Create date in Ethiopia timezone first
+  const eatDate = new Date(Date.UTC(year, month, day, hours, minutes, 0, 0))
   
-  return combined
+  // Convert Ethiopia time (UTC+3) to UTC by subtracting 3 hours
+  // For example: 9 AM EAT → 6 AM UTC
+  const utcDate = new Date(eatDate.getTime() - (3 * 60 * 60 * 1000))
+  return utcDate
 }
 
 interface SessionFormProps {
@@ -824,15 +834,26 @@ export function SessionForm({ trainingId, companyId, cohortId, sessionId, onSucc
                       disabled={isLoadingVenues}
                     >
                       <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Select a venue" />
+                        <SelectValue placeholder="Select a venue">
+                          {field.value && venuesData?.venues ? (
+                            <span className="truncate block">
+                              {venuesData.venues.find(v => v.id === field.value)?.name || 'Select a venue'}
+                            </span>
+                          ) : (
+                            'Select a venue'
+                          )}
+                        </SelectValue>
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="max-w-[500px]">
                         {isLoadingVenues ? (
                           <div className="py-2 px-3 text-sm text-gray-500">Loading venues...</div>
                         ) : venuesData?.venues && venuesData.venues.length > 0 ? (
                           venuesData.venues.map((venue) => (
                             <SelectItem key={venue.id} value={venue.id}>
-                              {venue.name} - {venue.location}
+                              <div className="flex flex-col max-w-full">
+                                <span className="font-medium truncate">{venue.name}</span>
+                                <span className="text-xs text-gray-500 truncate">{venue.location}</span>
+                              </div>
                             </SelectItem>
                           ))
                         ) : (

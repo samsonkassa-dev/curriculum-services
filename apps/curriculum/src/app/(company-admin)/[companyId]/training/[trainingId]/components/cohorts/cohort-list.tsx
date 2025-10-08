@@ -6,9 +6,10 @@ import { Cohort } from "@/lib/hooks/useCohorts"
 interface CohortListProps {
   cohorts: Cohort[]
   onEditCohort?: (cohort: Cohort) => void
+  depth?: number
 }
 
-export function CohortList({ cohorts, onEditCohort }: CohortListProps) {
+export function CohortList({ cohorts, onEditCohort, depth = 0 }: CohortListProps) {
   return (
     <div className="space-y-6">
       <div className="space-y-4">
@@ -18,6 +19,7 @@ export function CohortList({ cohorts, onEditCohort }: CohortListProps) {
               key={cohort.id} 
               cohort={cohort} 
               onEditCohort={onEditCohort}
+              depth={depth}
             />
           ))
         ) : (
