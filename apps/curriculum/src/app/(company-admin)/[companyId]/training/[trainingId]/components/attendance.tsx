@@ -14,6 +14,7 @@ import { useCohortAssessmentLinks } from "@/lib/hooks/useCohortAssessmentLinks"
 import { useAssessmentAttemptsSummary } from "@/lib/hooks/useAssessmentLinks"
 import { useAssessments } from "@/lib/hooks/useAssessment"
 import { AssessmentSurveyTools } from "../attendance/components/assessment-survey-tools"
+import { getAllLeafCohorts } from "@/lib/utils/cohort-utils"
 import { toast } from "sonner"
 
 
@@ -103,24 +104,28 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
 
   // Local helpers for network UI states
   const [isSaving, setIsSaving] = useState(false)
-  const [pendingSubmissions, setPendingSubmissions] = useState<string[]>([])
 
   // Survey and Assessment tools state
   const [showSurveyTools, setShowSurveyTools] = useState(false)
   const [showAssessmentTools, setShowAssessmentTools] = useState(false)
 
-  // Fetch cohorts for this training
+  // Fetch cohorts for this training (fetch all to get complete tree structure)
   const { 
     data: cohortsData, 
     isLoading: isLoadingCohorts, 
     error: cohortsError 
   } = useCohorts({
     trainingId,
-    pageSize: 20,
+    pageSize: 100, // Fetch more to ensure we get all cohorts
     page: 1
   })
   
-  const cohorts = cohortsData?.cohorts || []
+  // Extract only leaf cohorts (those with no children) for session display
+  // Only leaf cohorts have sessions and students
+  const cohorts = useMemo(() => {
+    const allCohorts = cohortsData?.cohorts || []
+    return getAllLeafCohorts(allCohorts)
+  }, [cohortsData?.cohorts])
 
   // Fetch sessions for the active cohort
   const { 
@@ -388,7 +393,7 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
       _onCommentChange: handleCommentChange,
       _onSelectionChange: handleStudentSelection,
       _onEditModeChange: handleEditModeChange,
-      _isProcessing: pendingSubmissions.includes(student.id),
+      _isProcessing: false,
       _isSelected: selectedStudents.has(student.id),
       _isEditing: editingStudents.has(student.id),
       _hasUnsavedChanges: studentsWithChanges.includes(student.id)
@@ -403,7 +408,6 @@ export function AttendanceComponent({ trainingId }: AttendanceComponentProps) {
     handleCommentChange, 
     handleStudentSelection,
     handleEditModeChange,
-    pendingSubmissions,
     selectedStudents,
     editingStudents,
     studentsWithChanges

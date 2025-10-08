@@ -1,22 +1,29 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { useRouter, useParams } from "next/navigation"
 import { useUserRole } from "@/lib/hooks/useUserRole"
 import { Button } from "@/components/ui/button"
 import { Loading } from "@/components/ui/loading"
-import { Plus, Filter, X } from "lucide-react"
+import { Plus, ChevronLeft, ChevronRight } from "lucide-react"
 import { useCohorts } from "@/lib/hooks/useCohorts"
 import { Input } from "@/components/ui/input"
 import { CohortList } from "./cohorts/cohort-list"
 import { CohortForm } from "./cohorts/cohort-form"
+import { CohortFilter, CohortFilters } from "./cohorts/cohort-filter"
 import { 
   Dialog,
   DialogHeader,
   DialogTitle,
-  DialogClose,
   DialogContent
 } from "@/components/ui/dialog"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import Image from "next/image"
 
 interface CohortsComponentProps {
@@ -28,18 +35,55 @@ export function CohortsComponent({ trainingId }: CohortsComponentProps) {
   const params = useParams()
   const { isProjectManager, isTrainingAdmin } = useUserRole()
   
-  const { data, isLoading, error } = useCohorts({
-    trainingId,
-    pageSize: 20,
-    page: 1
-  })
+  // Pagination state
+  const [page, setPage] = useState(1)
+  const [pageSize, setPageSize] = useState(10)
   
-  const cohorts = data?.cohorts || []
-
+  // Search and filter state
   const [searchTerm, setSearchTerm] = useState("")
+  const [filters, setFilters] = useState<CohortFilters>({})
+  
+  // Modal state
   const [isAddCohortModalOpen, setIsAddCohortModalOpen] = useState(false)
   const [isEditCohortModalOpen, setIsEditCohortModalOpen] = useState(false)
-  const [cohortToEdit, setCohortToEdit] = useState<typeof cohorts[0] | null>(null)
+  const [cohortToEdit, setCohortToEdit] = useState<any>(null)
+  
+  // Build API query parameters
+  const queryParams = useMemo(() => {
+    const params: any = {
+      trainingId,
+      page,
+      pageSize,
+    }
+    
+    if (searchTerm.trim()) {
+      params.searchQuery = searchTerm.trim()
+    }
+    
+    if (filters.name) {
+      params.name = filters.name
+    }
+    
+    if (filters.tags && filters.tags.length > 0) {
+      params.tags = filters.tags
+    }
+    
+    if (filters.createdAtFrom) {
+      params.createdAtFrom = filters.createdAtFrom.toISOString()
+    }
+    
+    if (filters.createdAtTo) {
+      params.createdAtTo = filters.createdAtTo.toISOString()
+    }
+    
+    return params
+  }, [trainingId, page, pageSize, searchTerm, filters])
+  
+  const { data, isLoading, error } = useCohorts(queryParams)
+  
+  const cohorts = data?.cohorts || []
+  const totalPages = data?.totalPages || 0
+  const totalElements = data?.totalElements || 0
 
   const handleAddCohort = () => {
     setIsAddCohortModalOpen(true)
@@ -70,9 +114,24 @@ export function CohortsComponent({ trainingId }: CohortsComponentProps) {
     setCohortToEdit(null)
   }
 
-  const filteredCohorts = cohorts.filter(cohort => 
-    cohort.name.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const handleFiltersChange = (newFilters: CohortFilters) => {
+    setFilters(newFilters)
+    setPage(1) // Reset to first page when filters change
+  }
+
+  const handlePageSizeChange = (value: string) => {
+    setPageSize(Number(value))
+    setPage(1) // Reset to first page when page size changes
+  }
+
+  // Extract all unique tags from cohorts for filter dropdown
+  const availableTags = useMemo(() => {
+    const tagsSet = new Set<string>()
+    cohorts.forEach(cohort => {
+      cohort.tags?.forEach(tag => tagsSet.add(tag))
+    })
+    return Array.from(tagsSet).sort()
+  }, [cohorts])
 
   if (isLoading) {
     return <Loading />
@@ -102,10 +161,11 @@ export function CohortsComponent({ trainingId }: CohortsComponentProps) {
                 />
               </div>
 
-              <button className="flex items-center gap-2 px-4 py-2.5 border border-gray-300 rounded-md text-sm font-medium text-[#344054] h-10 whitespace-nowrap">
-                <Filter className="h-4 w-4" />
-                <span>Filters</span>
-              </button>
+              <CohortFilter
+                filters={filters}
+                onFiltersChange={handleFiltersChange}
+                availableTags={availableTags}
+              />
               {(isProjectManager || isTrainingAdmin) && (
                 <Button
                   className="bg-[#0B75FF] hover:bg-[#0B75FF]/90 text-white flex items-center gap-2 h-10"
@@ -142,7 +202,70 @@ export function CohortsComponent({ trainingId }: CohortsComponentProps) {
               )}
             </div>
           ) : (
-            <CohortList cohorts={filteredCohorts} onEditCohort={handleEditCohort} />
+            <>
+              <CohortList cohorts={cohorts} onEditCohort={handleEditCohort} />
+              
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="mt-6 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-gray-700">
+                      Showing <span className="font-medium">{((page - 1) * pageSize) + 1}</span> to{" "}
+                      <span className="font-medium">
+                        {Math.min(page * pageSize, totalElements)}
+                      </span>{" "}
+                      of <span className="font-medium">{totalElements}</span> cohorts
+                    </span>
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    {/* Page Size Selector */}
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-gray-700">Rows per page:</span>
+                      <Select
+                        value={pageSize.toString()}
+                        onValueChange={handlePageSizeChange}
+                      >
+                        <SelectTrigger className="h-8 w-[70px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="5">5</SelectItem>
+                          <SelectItem value="10">10</SelectItem>
+                          <SelectItem value="20">20</SelectItem>
+                          <SelectItem value="50">50</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Page Navigation */}
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPage((p) => Math.max(1, p - 1))}
+                        disabled={page === 1}
+                        className="h-8 w-8 p-0"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </Button>
+                      <span className="text-sm text-gray-700">
+                        Page {page} of {totalPages}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                        disabled={page === totalPages}
+                        className="h-8 w-8 p-0"
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>

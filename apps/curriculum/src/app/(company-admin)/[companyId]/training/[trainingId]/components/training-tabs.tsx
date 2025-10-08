@@ -62,7 +62,7 @@ export function TrainingTabs({ activeTab, onTabChange }: TrainingTabsProps) {
   } else if (isCurriculumAdmin)  {
     visibleTabs = allTabs.filter(tab => !['students', 'evaluation', 'cohorts', 'attendance', 'certificate'].includes(tab.id))
   } else if (isTrainingAdmin) {
-    visibleTabs = allTabs.filter(tab => !['evaluation', 'survey', 'cat'].includes(tab.id))
+    visibleTabs = allTabs.filter(tab => !['evaluation',].includes(tab.id))
   }
   else if (isTrainerAdmin) {
     visibleTabs = allTabs.filter(tab => !['evaluation', 'attendance', 'certificate', 'assessment', 'survey', 'cat'].includes(tab.id))
