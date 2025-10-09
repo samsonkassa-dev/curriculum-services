@@ -16,8 +16,9 @@ import { ColumnDef } from "@tanstack/react-table"
 import { useState as useReactState, useEffect, useRef } from "react"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useCohortSurveyLinks } from "@/lib/hooks/useCohortSurveyLinks"
+import { useSurveyLinkExport } from "@/lib/hooks/useSurveyLinkExport"
 import { useCohortAssessmentLinks } from "@/lib/hooks/useCohortAssessmentLinks"
-import { Copy, FileText, Loader2, Pencil, Upload } from "lucide-react"
+import { Copy, FileText, Loader2, Pencil, Upload, Download } from "lucide-react"
 import { useUploadConsentForm } from "@/lib/hooks/useStudents"
 import { useQueryClient } from "@tanstack/react-query"
 import { cn } from "@/lib/utils"
@@ -345,6 +346,10 @@ export function CohortStudents({ cohortId, trainingId }: CohortStudentsProps) {
   const [extendContext, setExtendContext] = useReactState<{ linkId: string; traineeName?: string; currentExpiry?: string } | null>(null)
   // Delete link dialog state
   const [linkToDelete, setLinkToDelete] = useReactState<{ linkId: string; traineeName?: string } | null>(null)
+  
+  // Export links state
+  const [isExporting, setIsExporting] = useReactState(false)
+  const { refetch: refetchExport } = useSurveyLinkExport(selectedSurveyId, cohortId, false)
   const [isDeleteLinkDialogOpen, setIsDeleteLinkDialogOpen] = useReactState(false)
 
   // Bulk extend modal state
@@ -352,6 +357,64 @@ export function CohortStudents({ cohortId, trainingId }: CohortStudentsProps) {
   const [bulkExtendValue, setBulkExtendValue] = useReactState<number>(1)
   const [bulkExtendUnit, setBulkExtendUnit] = useReactState<"minutes" | "hours" | "days" | "weeks">("days")
   const [isBulkExtending, setIsBulkExtending] = useReactState(false)
+
+  // Export survey links handler
+  const handleExportLinks = async () => {
+    if (!selectedSurveyId || !cohortId) {
+      toast.error("Please select a survey first")
+      return
+    }
+
+    setIsExporting(true)
+    try {
+      const result = await refetchExport()
+      
+      if (!result.data || !result.data.surveyLinks || result.data.surveyLinks.length === 0) {
+        toast.error("No active survey links found to export")
+        setIsExporting(false)
+        return
+      }
+
+      const data = result.data
+      
+      // Get survey and cohort names from the first link
+      const surveyName = data.surveyLinks[0]?.survey || "Survey"
+      const cohortName = data.surveyLinks[0]?.cohort || "Cohort"
+      
+      // Create CSV content
+      let csvContent = "Survey Links Export\n\n"
+      csvContent += `Survey: ${surveyName}\n`
+      csvContent += `Cohort: ${cohortName}\n`
+      csvContent += `Total Links: ${data.count}\n`
+      csvContent += `Export Date: ${new Date().toLocaleString()}\n\n`
+      csvContent += "Trainee Name,Phone Number,Survey Link\n"
+      
+      // Add data rows (only active/valid links)
+      data.surveyLinks
+        .filter(link => link.isValid)
+        .forEach(link => {
+          csvContent += `"${link.traineeFullName}","${link.traineePhoneNumber}","${link.link}"\n`
+        })
+      
+      // Create and download file
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `survey-links-${cohortName}-${new Date().toISOString().split('T')[0]}.csv`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+      
+      toast.success(`Exported ${data.surveyLinks.filter(l => l.isValid).length} survey links`)
+    } catch (error) {
+      console.error("Export error:", error)
+      toast.error("Failed to export survey links")
+    } finally {
+      setIsExporting(false)
+    }
+  }
 
   // Toggle for survey tools panel
   const [showSurveyTools, setShowSurveyTools] = useReactState(false)
@@ -740,6 +803,25 @@ export function CohortStudents({ cohortId, trainingId }: CohortStudentsProps) {
                   onClick={() => setBulkExtendOpen(true)}
                 >
                   {isBulkExtending ? "Extending..." : `Extend all (${Object.keys(traineeIdToMeta).length || 0})`}
+                </Button>
+                <Button
+                  variant="outline"
+                  className="h-10 gap-2"
+                  disabled={!selectedSurveyId || isExporting}
+                  onClick={handleExportLinks}
+                  title="Export survey links to CSV"
+                >
+                  {isExporting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span>Exporting...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Download className="h-4 w-4" />
+                      <span>Export Links</span>
+                    </>
+                  )}
                 </Button>
               </>
             )}

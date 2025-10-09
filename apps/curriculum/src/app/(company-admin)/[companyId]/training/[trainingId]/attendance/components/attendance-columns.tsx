@@ -472,7 +472,7 @@ export const createSurveyStatusColumn = (
   isLoading: boolean = false
 ): ColumnDef<AttendanceStudent> => ({
   id: "surveyStatus",
-  header: "Survey Status",
+  header: () => <div className="text-center">Survey Status</div>,
   cell: ({ row }) => {
     const student = row.original
     if (isLoading) {
@@ -507,7 +507,7 @@ export const createAssessmentScoreColumn = (
   isLoading: boolean = false
 ): ColumnDef<AttendanceStudent> => ({
   id: "assessmentScore",
-  header: "Post Assessment Score",
+  header: () => <div className="text-center">Post Assessment Score</div>,
   cell: ({ row }) => {
     const student = row.original
     if (isLoading) {
@@ -564,7 +564,7 @@ export const createPreAssessmentScoreColumn = (
   isLoading: boolean = false
 ): ColumnDef<AttendanceStudent> => ({
   id: "preAssessmentScore",
-  header: "Pre Assessment Score",
+  header: () => <div className="text-center">Pre Assessment Score</div>,
   cell: ({ row }) => {
     const student = row.original
     if (isLoading) {
