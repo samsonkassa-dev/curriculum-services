@@ -5,9 +5,8 @@ import { useParams } from "next/navigation"
 import { useUserRole } from "@/lib/hooks/useUserRole"
 import { Button } from "@/components/ui/button"
 import { Loading } from "@/components/ui/loading"
-import { Plus, ChevronLeft, ChevronRight, Loader2 } from "lucide-react"
+import { Plus, ChevronLeft, ChevronRight } from "lucide-react"
 import { useCohorts } from "@/lib/hooks/useCohorts"
-import { useDebounce } from "@/lib/hooks/useDebounce"
 import { Input } from "@/components/ui/input"
 import { CohortList } from "./cohorts/cohort-list"
 import { CohortForm } from "./cohorts/cohort-form"
@@ -41,7 +40,7 @@ export function CohortsComponent({ trainingId }: CohortsComponentProps) {
   
   // Search and filter state
   const [searchTerm, setSearchTerm] = useState("")
-  const debouncedSearchTerm = useDebounce(searchTerm, 500) // 500ms delay
+  const [activeSearchTerm, setActiveSearchTerm] = useState("")
   const [filters, setFilters] = useState<CohortFilters>({})
   
   // Modal state
@@ -66,8 +65,8 @@ export function CohortsComponent({ trainingId }: CohortsComponentProps) {
       pageSize,
     }
     
-    if (debouncedSearchTerm.trim()) {
-      params.searchQuery = debouncedSearchTerm.trim()
+    if (activeSearchTerm.trim()) {
+      params.searchQuery = activeSearchTerm.trim()
     }
     
     if (filters.name) {
@@ -87,7 +86,7 @@ export function CohortsComponent({ trainingId }: CohortsComponentProps) {
     }
     
     return params
-  }, [trainingId, page, pageSize, debouncedSearchTerm, filters])
+  }, [trainingId, page, pageSize, activeSearchTerm, filters])
   
   const { data, isLoading, error } = useCohorts(queryParams)
   
@@ -134,6 +133,28 @@ export function CohortsComponent({ trainingId }: CohortsComponentProps) {
     setPage(1) // Reset to first page when page size changes
   }
 
+  const handleSearch = () => {
+    setActiveSearchTerm(searchTerm)
+    setPage(1) // Reset to first page when searching
+  }
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    setSearchTerm(value)
+    
+    // If user clears the search, immediately show all results
+    if (value.trim() === "") {
+      setActiveSearchTerm("")
+      setPage(1)
+    }
+  }
+
+  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      handleSearch()
+    }
+  }
+
   // Extract all unique tags from cohorts for filter dropdown
   const availableTags = useMemo(() => {
     const tagsSet = new Set<string>()
@@ -155,23 +176,28 @@ export function CohortsComponent({ trainingId }: CohortsComponentProps) {
             <h1 className="text-lg font-semibold">Cohorts</h1>
             <div className="flex items-center gap-4">
               <div className="relative md:w-[300px]">
-                <Image
-                  src="/search.svg"
-                  alt="Search"
-                  width={19}
-                  height={19}
-                  className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black h-5 w-5 z-10"
-                />
                 <Input
                   type="text"
                   placeholder="Search cohorts..."
-                  className="pl-10 pr-10 h-10 text-sm bg-white border-gray-200"
+                  className="pr-10 h-10 text-sm bg-white border-gray-200"
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={handleSearchChange}
+                  onKeyDown={handleSearchKeyDown}
                 />
-                {searchTerm !== debouncedSearchTerm && (
-                  <Loader2 className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 animate-spin text-gray-400" />
-                )}
+                <button
+                  type="button"
+                  onClick={handleSearch}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 hover:opacity-70 transition-opacity"
+                  aria-label="Search"
+                >
+                  <Image
+                    src="/search.svg"
+                    alt="Search"
+                    width={19}
+                    height={19}
+                    className="h-5 w-5"
+                  />
+                </button>
               </div>
 
               <CohortFilter
