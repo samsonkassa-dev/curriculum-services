@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback, useRef } from "react"
+import { useState, useCallback, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Upload, FileText, X } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -95,6 +95,7 @@ interface MarginalizedGroup {
 
 interface CSVImportContentProps {
   onImport: (students: CreateStudentByNameData[]) => Promise<void>
+  onFileUpload?: () => void
   isSubmitting: boolean
   languages: Language[]
   countries: Country[]
@@ -108,6 +109,7 @@ interface CSVImportContentProps {
 
 export function CSVImportContent({
   onImport,
+  onFileUpload,
   isSubmitting,
   languages,
   countries,
@@ -120,6 +122,8 @@ export function CSVImportContent({
 }: CSVImportContentProps) {
   const [csvData, setCsvData] = useState<CSVStudentData[]>([])
   const [fileName, setFileName] = useState<string>("")
+  const [rawCsvData, setRawCsvData] = useState<Record<string, string>[]>([])
+  const [isDataLoaded, setIsDataLoaded] = useState(false)
 
   const validateCSVRow = (row: Record<string, string>, index: number): CSVStudentData => {
     const errors: Record<string, string> = {}
@@ -188,38 +192,45 @@ export function CSVImportContent({
       errors.academicLevelName = "Invalid academic level name"
     }
     
-    // Cascading location validation - exactly like venue form pattern
+    // Cascading location validation - filter by parent first to avoid duplicate names
     const selectedCountry = row.countryName ? countries.find(c => c.name === row.countryName) : null;
     if (row.countryName && !selectedCountry) {
       errors.countryName = "Invalid country name"
     }
     
-    const selectedRegion = row.regionName ? regions.find(r => r.name === row.regionName) : null;
+    // Filter regions by selected country first
+    const regionsInCountry = selectedCountry 
+      ? regions.filter(r => r.country.name === selectedCountry.name)
+      : regions;
+    const selectedRegion = row.regionName ? regionsInCountry.find(r => r.name === row.regionName) : null;
     if (row.regionName && !selectedRegion) {
-      errors.regionName = "Invalid region name"
-    } else if (selectedRegion && selectedCountry && selectedRegion.country.name !== selectedCountry.name) {
-      errors.regionName = "Region does not belong to the selected country"
+      errors.regionName = selectedCountry 
+        ? "Region not found in the selected country"
+        : "Invalid region name"
     }
     
-    const selectedZone = row.zoneName ? zones.find(z => z.name === row.zoneName) : null;
+    // Filter zones by selected region first (CRITICAL for duplicate zone names like "North Shewa Zone")
+    const zonesInRegion = selectedRegion 
+      ? zones.filter(z => z.region.name === selectedRegion.name)
+      : zones;
+    const selectedZone = row.zoneName ? zonesInRegion.find(z => z.name === row.zoneName) : null;
     if (row.zoneName && !selectedZone) {
-      errors.zoneName = "Invalid zone name"
-    } else if (selectedZone && selectedRegion && selectedZone.region.name !== selectedRegion.name) {
-      errors.zoneName = "Zone does not belong to the selected region"
+      errors.zoneName = selectedRegion 
+        ? "Zone not found in the selected region"
+        : "Invalid zone name"
     }
     
-    // City validation - optional field
-    if (row.cityName) {
-      const selectedCity = cities.find(c => c.name === row.cityName);
-      if (selectedCity && selectedZone && selectedCity.zone && selectedCity.zone.name !== selectedZone.name) {
-        errors.cityName = "City does not belong to the selected zone"
-      }
-      // Note: If city is not found, we ignore it (no error) since city is optional
-    }
+    // Filter cities by selected zone first
+    // Note: City is optional, so we don't add it to errors even if not found
+    const citiesInZone = selectedZone 
+      ? cities.filter(c => c.zone && c.zone.name === selectedZone.name)
+      : cities;
+    const selectedCity = row.cityName ? citiesInZone.find(c => c.name === row.cityName) : null;
+    // City not found is not an error - it's optional
 
-    // Validate disability names (only if provided)
-    if (row.disabilityNames && row.disabilityNames.trim()) {
-      const disabilityNameArray = row.disabilityNames.split(',').map(name => name.trim()).filter(Boolean)
+    // Validate disability names (only if provided and not "-")
+    if (row.disabilityNames && row.disabilityNames.trim() && row.disabilityNames.trim() !== '-') {
+      const disabilityNameArray = row.disabilityNames.split(',').map(name => name.trim()).filter(name => name && name !== '-')
       if (disabilityNameArray.length > 0) {
         const invalidDisabilityNames = disabilityNameArray.filter(name => !disabilities.find(d => d.name === name))
         if (invalidDisabilityNames.length > 0) {
@@ -228,9 +239,9 @@ export function CSVImportContent({
       }
     }
 
-    // Validate marginalized group names (only if provided)
-    if (row.marginalizedGroupNames && row.marginalizedGroupNames.trim()) {
-      const groupNameArray = row.marginalizedGroupNames.split(',').map(name => name.trim()).filter(Boolean)
+    // Validate marginalized group names (only if provided and not "-")
+    if (row.marginalizedGroupNames && row.marginalizedGroupNames.trim() && row.marginalizedGroupNames.trim() !== '-') {
+      const groupNameArray = row.marginalizedGroupNames.split(',').map(name => name.trim()).filter(name => name && name !== '-')
       if (groupNameArray.length > 0) {
         const invalidGroupNames = groupNameArray.filter(name => !marginalizedGroups.find(g => g.name === name))
         if (invalidGroupNames.length > 0) {
@@ -269,25 +280,60 @@ export function CSVImportContent({
     }
   }
 
+  // Validate CSV data once all base data is loaded
+  useEffect(() => {
+    if (rawCsvData.length > 0 && !isDataLoaded) {
+      // Check if all required data is loaded
+      const hasAllData = 
+        languages.length > 0 &&
+        countries.length > 0 &&
+        regions.length > 0 &&
+        zones.length > 0 &&
+        academicLevels.length > 0 &&
+        disabilities.length > 0 &&
+        marginalizedGroups.length > 0
+      
+      if (hasAllData) {
+        // Now validate with the loaded data
+        const validatedData = rawCsvData.map((row, index) => 
+          validateCSVRow(row, index + 1)
+        )
+        setCsvData(validatedData)
+        setIsDataLoaded(true)
+      }
+    }
+  }, [rawCsvData, isDataLoaded, languages, countries, regions, zones, cities, academicLevels, disabilities, marginalizedGroups])
+
   const parseCSV = useCallback((file: File) => {
+    // Notify parent that a file has been uploaded (triggers data fetch)
+    onFileUpload?.()
+    
     Papa.parse<Record<string, string>>(file, {
       header: true,
       skipEmptyLines: true,
       complete: (results) => {
-        const validatedData = results.data.map((row, index) => 
-          validateCSVRow(row, index + 1)
-        )
-        setCsvData(validatedData)
+        // Store raw data without validation
+        setRawCsvData(results.data)
         setFileName(file.name)
+        setIsDataLoaded(false) // Mark that we're waiting for data
       },
       error: (error) => {
         console.log("CSV parsing error:", error)
         toast.error("Error parsing CSV file. Please check the format.")
       }
     })
-  }, [languages, academicLevels, zones, cities, countries, regions, disabilities, marginalizedGroups])
+  }, [onFileUpload])
 
   const convertToStudentFormValues = (csvRow: CSVStudentData): CreateStudentByNameData => {
+    // Helper to parse comma-separated names, treating "-" or empty as undefined
+    const parseNames = (value: string | undefined): string[] | undefined => {
+      if (!value || !value.trim() || value.trim() === '-') {
+        return undefined
+      }
+      const names = value.split(',').map(name => name.trim()).filter(name => name && name !== '-')
+      return names.length > 0 ? names : undefined
+    }
+
     return {
       firstName: csvRow.firstName,
       middleName: csvRow.middleName && csvRow.middleName.trim() ? csvRow.middleName.trim() : undefined,
@@ -311,8 +357,8 @@ export function CSVImportContent({
       emergencyContactName: csvRow.emergencyContactName,
       emergencyContactPhone: csvRow.emergencyContactPhone,
       emergencyContactRelationship: csvRow.emergencyContactRelationship,
-      disabilityNames: csvRow.disabilityNames && csvRow.disabilityNames.trim() ? csvRow.disabilityNames.split(',').map(name => name.trim()).filter(Boolean) : undefined,
-      marginalizedGroupNames: csvRow.marginalizedGroupNames && csvRow.marginalizedGroupNames.trim() ? csvRow.marginalizedGroupNames.split(',').map(name => name.trim()).filter(Boolean) : undefined,
+      disabilityNames: parseNames(csvRow.disabilityNames),
+      marginalizedGroupNames: parseNames(csvRow.marginalizedGroupNames),
     }
   }
 
@@ -376,14 +422,24 @@ export function CSVImportContent({
 
   return (
     <div className="space-y-6">
-      {csvData.length === 0 ? (
+      {csvData.length === 0 && rawCsvData.length === 0 ? (
         <CSVUploadSection onFileSelect={parseCSV} />
+      ) : rawCsvData.length > 0 && !isDataLoaded ? (
+        <div className="flex flex-col items-center justify-center py-12 space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0B75FF]"></div>
+          <p className="text-sm text-gray-600">Loading validation data...</p>
+          <p className="text-xs text-gray-500">Fetching countries, regions, zones, and other data</p>
+        </div>
       ) : (
         <>
           <CSVFileInfo 
             fileName={fileName} 
             studentCount={csvData.length}
-            onClear={() => setCsvData([])}
+            onClear={() => {
+              setCsvData([])
+              setRawCsvData([])
+              setIsDataLoaded(false)
+            }}
           />
 
           <CSVDataTable

@@ -552,46 +552,47 @@ export function useBulkImportStudents() {
   })
 }
 
-export function useBulkImportStudentsByName() {
-  // Always fetch countries first
+export function useBulkImportStudentsByName(enabled: boolean = true) {
+  // Fetch countries (always needed for CSV validation)
   const { data: countries } = useBaseData('country', {
-    enabled: true,
+    enabled,
     disablePagination: true
   })
   
   // Fetch all regions, zones, and cities without pagination for client-side filtering
+  // Only fetch when CSV import view is open to avoid unnecessary API calls
   const { data: regions } = useBaseData('region', {
-    enabled: true,
+    enabled,
     disablePagination: true
   })
   
   const { data: zones } = useBaseData('zone', {
-    enabled: true,
+    enabled,
     disablePagination: true
   })
   
   const { data: cities } = useBaseData('city', {
-    enabled: true,
+    enabled,
     disablePagination: true
   })
   
   const { data: languages } = useBaseData('language', {
-    enabled: true,
+    enabled,
     disablePagination: true
   })
   
   const { data: academicLevels } = useBaseData('academic-level', {
-    enabled: true,
+    enabled,
     disablePagination: true
   })
   
   const { data: disabilities } = useBaseData('disability', {
-    enabled: true,
+    enabled,
     disablePagination: true
   })
   
   const { data: marginalizedGroups } = useBaseData('marginalized-group', {
-    enabled: true,
+    enabled,
     disablePagination: true
   })
 

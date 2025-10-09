@@ -3,12 +3,18 @@
 import { memo, useState, useCallback } from "react"
 import { useRouter, useParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Tag, Edit2, Trash2, ChevronDown, ChevronRight, Plus, Loader2 } from "lucide-react"
+import { Tag, Edit2, Trash2, ChevronDown, ChevronRight, Plus, Loader2, MoreVertical } from "lucide-react"
 import { Cohort, useDeleteCohort } from "@/lib/hooks/useCohorts"
 import { useUserRole } from "@/lib/hooks/useUserRole"
 import { DeleteCohortDialog } from "./delete-cohort-dialog"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { CohortForm } from "./cohort-form"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 interface CohortCardProps {
   cohort: Cohort
@@ -63,7 +69,7 @@ function CohortCardComponent({ cohort, onEditCohort, depth = 0 }: CohortCardProp
   const hasChildren = Array.isArray(cohort.subCohorts) && cohort.subCohorts.length > 0
   const isLeaf = !hasChildren
   const isActionable = isLeaf // Only leaf cohorts have sessions and students
-  const showAddSub = true // All cohorts can have sub-cohorts added
+
 
   return (
     <div className="bg-[#FBFBFB] p-5 rounded-lg border-[0.1px] border-gray-200">
@@ -136,7 +142,7 @@ function CohortCardComponent({ cohort, onEditCohort, depth = 0 }: CohortCardProp
             <Button 
               variant="outline" 
               size="sm" 
-              className="rounded-full border-[#667085] text-[#667085] hover:bg-gray-50 text-xs font-medium"
+              className="rounded-full border-[#667085] text-[#667085] hover:bg-transparent hover:border-[#0B75FF] transition-colors text-[11px] font-medium px-3 py-1 h-7"
               onClick={handleViewDetails}
               disabled={isNavigating}
             >
@@ -155,32 +161,38 @@ function CohortCardComponent({ cohort, onEditCohort, depth = 0 }: CohortCardProp
               <Button
                 variant="outline"
                 size="sm"
-                className="rounded-full border-[#0B75FF] text-[#0B75FF] hover:bg-[#0B75FF]/10 text-xs font-medium"
+                className="rounded-full border-[#0B75FF] text-[#0B75FF] hover:bg-transparent hover:border-[#0066FF] hover:shadow-[0_0_0_2px_rgba(11,117,255,0.3)] transition-all text-[11px] font-medium px-3 py-1 h-7"
                 onClick={() => setIsAddSubOpen(true)}
                 disabled={isDeleting}
               >
-                <Plus className="h-3 w-3 mr-1" />
-                Add Sub-Cohort
+                <Plus className="h-3 w-2 " />
+                Sub-Cohort
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="rounded-full border-[#667085] text-[#667085] text-xs font-medium"
-                onClick={handleEditCohort}
-                disabled={isDeleting}
-              >
-                <Edit2 className="h-3 w-3 mr-1" />
-                Edit
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                className="rounded-full border-red-300 text-red-600 hover:bg-red-50 text-xs font-medium"
-                onClick={handleDeleteCohort}
-                disabled={isDeleting}
-              >
-                <Trash2 className="h-3 w-3" />
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className=" text-[#667085] hover:bg-transparent hover:border-[#0B75FF] transition-colors h-7 w-7 p-0"
+                    disabled={isDeleting}
+                  >
+                    <MoreVertical className="h-3.5 w-3.5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-40">
+                  <DropdownMenuItem onClick={handleEditCohort} className="cursor-pointer">
+                    <Edit2 className="h-3.5 w-3.5 mr-2" />
+                    Edit
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={handleDeleteCohort} 
+                    className="cursor-pointer text-red-600 focus:text-red-600"
+                  >
+                    <Trash2 className="h-3.5 w-3.5 mr-2" />
+                    Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </>
           )}
         </div>

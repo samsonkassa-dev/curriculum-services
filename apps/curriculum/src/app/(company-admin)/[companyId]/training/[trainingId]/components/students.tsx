@@ -32,6 +32,7 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
   const [searchQuery, setSearchQuery] = useState("")
   const [showModal, setShowModal] = useState(false)
   const [showImportView, setShowImportView] = useState(false)
+  const [hasUploadedCSV, setHasUploadedCSV] = useState(false)
   const [step, setStep] = useState(1)
   const [isEditing, setIsEditing] = useState(false)
   const [currentStudentId, setCurrentStudentId] = useState<string | null>(null)
@@ -88,6 +89,7 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
   const bulkDeleteMutation = useBulkDeleteStudents()
   
   // Get bulk import hook with ALL location data for CSV validation
+  // Only fetch when a CSV file has been uploaded to avoid unnecessary API calls
   const {
     countries: csvCountries,
     regions: csvRegions,
@@ -99,7 +101,7 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
     marginalizedGroups: csvMarginalizedGroups,
     bulkImportByName,
     isLoading: isBulkImporting
-  } = useBulkImportStudentsByName()
+  } = useBulkImportStudentsByName(hasUploadedCSV)
 
   const form = useForm<StudentFormValues>({
     resolver: zodResolver(studentFormSchema),
@@ -299,7 +301,8 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
   }, []);
 
   const handleBackFromImport = useCallback(() => {
-    setShowImportView(false);
+    setShowImportView(false)
+    setHasUploadedCSV(false) // Reset CSV upload state
   }, []);
 
   const validateStep = useCallback(async () => {
@@ -415,6 +418,7 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
       await bulkImportByName({ trainingId, studentsData: students })
       // Only close import view after successful completion
       setShowImportView(false)
+      setHasUploadedCSV(false) // Reset CSV upload state
     } catch (error) {
       console.log("CSV import failed:", error)
       throw error // Re-throw to let CSVImportContent handle the error display
@@ -623,6 +627,7 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
             {/* CSV Import Content */}
             <CSVImportContent
               onImport={handleCSVImport}
+              onFileUpload={() => setHasUploadedCSV(true)}
               isSubmitting={isBulkImporting}
               languages={csvLanguages || []}
               countries={csvCountries || []}

@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useRef } from "react"
 import { Button } from "@/components/ui/button"
-import { Upload } from "lucide-react"
+import { Upload, FileText } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 
@@ -13,14 +13,22 @@ interface CSVUploadSectionProps {
 export function CSVUploadSection({ onFileSelect }: CSVUploadSectionProps) {
   const [dragActive, setDragActive] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const dragCounterRef = useRef(0)
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    if (e.type === "dragenter" || e.type === "dragover") {
+    
+    if (e.type === "dragenter") {
+      dragCounterRef.current++
+      setDragActive(true)
+    } else if (e.type === "dragover") {
       setDragActive(true)
     } else if (e.type === "dragleave") {
-      setDragActive(false)
+      dragCounterRef.current--
+      if (dragCounterRef.current === 0) {
+        setDragActive(false)
+      }
     }
   }, [])
 
@@ -28,6 +36,7 @@ export function CSVUploadSection({ onFileSelect }: CSVUploadSectionProps) {
     e.preventDefault()
     e.stopPropagation()
     setDragActive(false)
+    dragCounterRef.current = 0
     
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const file = e.dataTransfer.files[0]
@@ -54,22 +63,45 @@ export function CSVUploadSection({ onFileSelect }: CSVUploadSectionProps) {
     <div className="space-y-4">
       <div
         className={cn(
-          "border-2 border-dashed rounded-lg p-8 text-center transition-colors",
-          dragActive ? "border-blue-500 bg-blue-50" : "border-gray-300"
+          "border-2 border-dashed rounded-lg p-8 text-center transition-all duration-200",
+          dragActive 
+            ? "border-blue-500 bg-blue-50" 
+            : "border-gray-300 hover:border-gray-400"
         )}
         onDragEnter={handleDrag}
         onDragLeave={handleDrag}
         onDragOver={handleDrag}
         onDrop={handleDrop}
       >
-        <Upload className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-        <h3 className="text-lg font-medium mb-2">Upload CSV File</h3>
-        <p className="text-gray-500 mb-4">
-          Drag and drop your CSV file here, or click to browse
+        {dragActive ? (
+          <FileText className="h-12 w-12 mx-auto text-blue-500 mb-4 animate-bounce" />
+        ) : (
+          <Upload className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+        )}
+        
+        <h3 className={cn(
+          "text-lg font-medium mb-2 transition-colors",
+          dragActive ? "text-blue-700" : ""
+        )}>
+          {dragActive ? "Drop your CSV file here" : "Upload CSV File"}
+        </h3>
+        
+        <p className={cn(
+          "mb-4 transition-colors",
+          dragActive ? "text-blue-600 text-sm" : "text-gray-500"
+        )}>
+          {dragActive 
+            ? "Release to upload" 
+            : "Drag and drop your CSV file here, or click to browse"
+          }
         </p>
-        <Button onClick={() => fileInputRef.current?.click()} className="text-white">
-          Choose File
-        </Button>
+        
+        {!dragActive && (
+          <Button onClick={() => fileInputRef.current?.click()} className="text-white">
+            Choose File
+          </Button>
+        )}
+        
         <input
           ref={fileInputRef}
           type="file"

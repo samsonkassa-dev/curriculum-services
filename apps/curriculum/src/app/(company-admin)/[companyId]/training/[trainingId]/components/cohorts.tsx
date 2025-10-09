@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { useRouter, useParams } from "next/navigation"
+import { useParams } from "next/navigation"
 import { useUserRole } from "@/lib/hooks/useUserRole"
 import { Button } from "@/components/ui/button"
 import { Loading } from "@/components/ui/loading"
@@ -32,7 +32,6 @@ interface CohortsComponentProps {
 }
 
 export function CohortsComponent({ trainingId }: CohortsComponentProps) {
-  const router = useRouter()
   const params = useParams()
   const { isProjectManager, isTrainingAdmin } = useUserRole()
   
@@ -48,11 +47,20 @@ export function CohortsComponent({ trainingId }: CohortsComponentProps) {
   // Modal state
   const [isAddCohortModalOpen, setIsAddCohortModalOpen] = useState(false)
   const [isEditCohortModalOpen, setIsEditCohortModalOpen] = useState(false)
-  const [cohortToEdit, setCohortToEdit] = useState<any>(null)
+  const [cohortToEdit, setCohortToEdit] = useState<typeof cohorts[0] | null>(null)
   
   // Build API query parameters
   const queryParams = useMemo(() => {
-    const params: any = {
+    const params: {
+      trainingId: string
+      page: number
+      pageSize: number
+      searchQuery?: string
+      name?: string
+      tags?: string[]
+      createdAtFrom?: string
+      createdAtTo?: string
+    } = {
       trainingId,
       page,
       pageSize,
@@ -83,7 +91,7 @@ export function CohortsComponent({ trainingId }: CohortsComponentProps) {
   
   const { data, isLoading, error } = useCohorts(queryParams)
   
-  const cohorts = data?.cohorts || []
+  const cohorts = useMemo(() => data?.cohorts || [], [data?.cohorts])
   const totalPages = data?.totalPages || 0
   const totalElements = data?.totalElements || 0
 

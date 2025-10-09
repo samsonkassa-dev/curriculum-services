@@ -6,6 +6,12 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Edit2, Check, X, AlertCircle, Trash2 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 interface CSVStudentData {
   firstName: string
@@ -432,7 +438,18 @@ export function CSVDataTable({
           {displayValue}
         </span>
         <div className="flex items-center gap-1">
-          {hasError && <AlertCircle className="h-3 w-3 text-red-500" />}
+          {hasError && (
+            <TooltipProvider delayDuration={200}>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <AlertCircle className="h-3 w-3 text-red-500 cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent side="top" className="max-w-xs bg-red-50 border-red-200">
+                  <p className="text-xs text-red-800 font-medium">{row.errors![field]}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
           <Edit2 className="h-3 w-3 opacity-0 group-hover:opacity-100 transition-opacity text-gray-400" />
         </div>
       </div>
