@@ -32,6 +32,7 @@ import { useCohorts } from "@/lib/hooks/useCohorts"
 import { useCohortSessions } from "@/lib/hooks/useSession"
 import { Loader2, Calendar, Clock, Check, X } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { getAllLeafCohorts } from "@/lib/utils/cohort-utils"
 
 // Update Zod Schema for date and time
 const createJobSchema = z.object({
@@ -100,9 +101,10 @@ export function CreateJobModal({ isOpen, onClose, jobId }: CreateJobModalProps) 
     isArchived: false // Fetch only active trainings
   });
 
-  // Fetch Cohorts based on selected Training
+  // Fetch ALL Cohorts based on selected Training to get the complete tree structure
   const { data: cohortsData, isLoading: cohortsLoading, error: cohortsError } = useCohorts({
     trainingId: selectedTrainingId || "", // Pass selected training ID
+    pageSize: 100, // Fetch all cohorts to get the complete tree
   });
 
   // Fetch Sessions based on selected Cohort
@@ -110,10 +112,16 @@ export function CreateJobModal({ isOpen, onClose, jobId }: CreateJobModalProps) 
     cohortId: selectedCohortId || "", // Pass selected cohort ID
   });
 
-  // Memoize safe access to cohorts and sessions data
-  const safeCohorts = useMemo(() => 
+  // Get all cohorts from the response
+  const allCohorts = useMemo(() => 
     cohortsData?.cohorts?.length ? cohortsData.cohorts : [], 
     [cohortsData?.cohorts]
+  );
+
+  // Filter to get only leaf cohorts (cohorts that have sessions)
+  const leafCohorts = useMemo(() => 
+    getAllLeafCohorts(allCohorts),
+    [allCohorts]
   );
   const safeSessions = useMemo(() => 
     sessionsData?.sessions?.length ? sessionsData.sessions : [], 
@@ -142,10 +150,10 @@ export function CreateJobModal({ isOpen, onClose, jobId }: CreateJobModalProps) 
     [trainingsData?.trainings]
   );
 
-  // Memoize cohort options
+  // Memoize cohort options (only leaf cohorts)
   const cohortOptions = useMemo(() => 
-    safeCohorts.map(c => ({ value: c.id, label: c.name })),
-    [safeCohorts]
+    leafCohorts.map(c => ({ value: c.id, label: c.name })),
+    [leafCohorts]
   );
 
   // Memoize session selection handlers
