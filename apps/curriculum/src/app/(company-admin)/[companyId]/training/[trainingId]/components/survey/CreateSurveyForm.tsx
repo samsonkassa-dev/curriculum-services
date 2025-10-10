@@ -474,6 +474,27 @@ export function CreateSurveyForm({
           hasChanges = true
         }
         
+        // Check follow-up field changes
+        if (currQ.followUp !== origQ.followUp) {
+          questionChanges.isFollowUp = currQ.followUp ?? false
+          changeTypes.push('followUp')
+          hasChanges = true
+        }
+        
+        // Check parent question number change
+        if (currQ.parentQuestionNumber !== origQ.parentQuestionNumber) {
+          questionChanges.parentQuestionNumber = currQ.parentQuestionNumber
+          changeTypes.push('parentQuestion')
+          hasChanges = true
+        }
+        
+        // Check parent choice change
+        if (currQ.parentChoice !== origQ.parentChoice) {
+          questionChanges.parentChoice = currQ.parentChoice
+          changeTypes.push('parentChoice')
+          hasChanges = true
+        }
+        
         // If any changes detected, create single combined update
         if (hasChanges) {
           updatedQuestions.push({

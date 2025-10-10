@@ -170,7 +170,7 @@ export function SurveyNavigation({
                         alt={`${entry.questionType} icon`}
                         className="w-4 h-4 text-gray-600"
                       />
-                      <span className="text-sm font-medium">Q{questionIndex + 1}</span>
+                      <span className="text-sm font-medium">Q{entry.questionNumber || questionIndex + 1}</span>
                       {questionIndex === 0 && (
                         <span className="text-[10px] text-gray-500">(Parent)</span>
                       )}

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Card } from "@/components/ui/card"
-import { Plus, Trash2, PencilIcon, Check, X, FileText, CheckCircle, Square, Grid3X3 } from "lucide-react"
+import { Plus, Trash2, PencilIcon, Check, X } from "lucide-react"
 import { 
   useUpdateSurveyEntry,
   useDeleteSurveyEntry,
@@ -164,7 +164,7 @@ export function SurveyQuestionManager({
     const defaults = getDefaultQuestionFields(questionType)
     // Convert CreateSurveyChoice[] to string[] for SurveyEntry
     const normalizedChoices = Array.isArray(defaults.choices) 
-      ? defaults.choices.map((c: any) => typeof c === 'string' ? c : c.choice || '') 
+      ? defaults.choices.map((c: string | { choice: string }) => typeof c === 'string' ? c : c.choice || '') 
       : []
     
     setEditingEntry({ 
@@ -200,6 +200,26 @@ export function SurveyQuestionManager({
   const updateEditingRequired = (required: boolean) => {
     if (!editingEntry) return
     setEditingEntry({ ...editingEntry, required })
+  }
+
+  const updateEditingFollowUp = (followUp: boolean) => {
+    if (!editingEntry) return
+    setEditingEntry({ 
+      ...editingEntry, 
+      followUp,
+      // Clear follow-up fields when turning off follow-up
+      ...(followUp ? {} : { parentQuestionNumber: undefined, parentChoice: undefined })
+    })
+  }
+
+  const updateEditingParentQuestionNumber = (parentQuestionNumber: number) => {
+    if (!editingEntry) return
+    setEditingEntry({ ...editingEntry, parentQuestionNumber })
+  }
+
+  const updateEditingParentChoice = (parentChoice: string) => {
+    if (!editingEntry) return
+    setEditingEntry({ ...editingEntry, parentChoice })
   }
 
   // Question Type Components (reused from CreateSurveyForm)
@@ -319,7 +339,7 @@ export function SurveyQuestionManager({
               <div className="flex justify-between items-start">
                 <h3 className="text-lg font-medium">
                   <span className="inline-flex items-center justify-center w-7 h-7 bg-blue-100 text-blue-600 rounded-full mr-2 text-sm">
-                    {index + 1}
+                    {entry.questionNumber || index + 1}
                   </span>
                   Edit Question
                 </h3>
@@ -377,6 +397,49 @@ export function SurveyQuestionManager({
                   <Label htmlFor={`edit-required-${editingEntry.entryId}`}>
                     Required question
                   </Label>
+                </div>
+
+                {/* Follow-up Configuration */}
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id={`edit-followup-${editingEntry.entryId}`}
+                      checked={!!editingEntry.followUp}
+                      onChange={(e) => updateEditingFollowUp(e.target.checked)}
+                      className="rounded"
+                      aria-label="Mark as follow-up question"
+                    />
+                    <Label htmlFor={`edit-followup-${editingEntry.entryId}`}>
+                      This is a follow-up question
+                    </Label>
+                  </div>
+                  {editingEntry.followUp && (
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <Label className="text-sm font-medium">Parent Question Number</Label>
+                        <Input
+                          value={typeof editingEntry.parentQuestionNumber === 'number' ? String(editingEntry.parentQuestionNumber) : ""}
+                          onChange={(e) => updateEditingParentQuestionNumber(Number(e.target.value) || 0)}
+                          placeholder="e.g., 1"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium">Parent Choice (letter)</Label>
+                        <Input
+                          value={(editingEntry.parentChoice || "").toString().toUpperCase()}
+                          onChange={(e) => {
+                            const v = (e.target.value || "").toUpperCase();
+                            // keep only first A-Z
+                            const letter = v.replace(/[^A-Z]/g, "").slice(0, 1);
+                            updateEditingParentChoice(letter);
+                          }}
+                          placeholder="A, B, C, ..."
+                        />
+                        <p className="text-[10px] text-gray-500 mt-1">Match by option order: A = first choice, B = second, etc.</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Question Type Specific Fields */}
@@ -510,7 +573,7 @@ export function SurveyQuestionManager({
               <div className="flex-1">
                 <div className="flex items-start gap-3 mb-3">
                   <span className="inline-flex items-center justify-center w-7 h-7 bg-blue-100 text-blue-600 rounded-full text-sm font-medium shrink-0">
-                    {index + 1}
+                    {entry.questionNumber || index + 1}
                   </span>
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
