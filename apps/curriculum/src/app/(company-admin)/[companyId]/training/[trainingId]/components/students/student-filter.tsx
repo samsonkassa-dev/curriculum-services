@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client"
 
-import React, { useState, useMemo } from "react"
+import React, { useState, useMemo, useEffect } from "react"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
@@ -46,17 +46,18 @@ interface AcademicLevel {
   description: string
 }
 
-interface Disability {
-  id: string
-  name: string
-  description: string
-}
+// Commented out for now - can be enabled later
+// interface Disability {
+//   id: string
+//   name: string
+//   description: string
+// }
 
-interface MarginalizedGroup {
-  id: string
-  name: string
-  description: string
-}
+// interface MarginalizedGroup {
+//   id: string
+//   name: string
+//   description: string
+// }
 
 interface StudentFilterProps {
   countries?: Country[]
@@ -106,7 +107,24 @@ export function StudentFilter({
   const [selectedLanguageIds, setSelectedLanguageIds] = useState<string[]>(defaultSelected.languageIds || [])
   const [selectedAcademicLevelIds, setSelectedAcademicLevelIds] = useState<string[]>(defaultSelected.academicLevelIds || [])
   const [selectedZoneIds, setSelectedZoneIds] = useState<string[]>(defaultSelected.zoneIds || [])
-    // Commented out for now
+  
+  // Attendance filter states
+  const [attendancePercentageAbove, setAttendancePercentageAbove] = useState<number | undefined>(defaultSelected.attendancePercentageAbove)
+  const [attendancePercentageBelow, setAttendancePercentageBelow] = useState<number | undefined>(defaultSelected.attendancePercentageBelow)
+  
+  // Survey filter states
+  const [hasFilledBaselineSurvey, setHasFilledBaselineSurvey] = useState<boolean | undefined>(defaultSelected.hasFilledBaselineSurvey)
+  const [hasFilledEndlineSurvey, setHasFilledEndlineSurvey] = useState<boolean | undefined>(defaultSelected.hasFilledEndlineSurvey)
+  
+  // Assessment filter states
+  const [hasPreAssessmentAttempt, setHasPreAssessmentAttempt] = useState<boolean | undefined>(defaultSelected.hasPreAssessmentAttempt)
+  const [hasPostAssessmentAttempt, setHasPostAssessmentAttempt] = useState<boolean | undefined>(defaultSelected.hasPostAssessmentAttempt)
+  const [preAssessmentScoreAbove, setPreAssessmentScoreAbove] = useState<number | undefined>(defaultSelected.preAssessmentScoreAbove)
+  const [preAssessmentScoreBelow, setPreAssessmentScoreBelow] = useState<number | undefined>(defaultSelected.preAssessmentScoreBelow)
+  const [postAssessmentScoreAbove, setPostAssessmentScoreAbove] = useState<number | undefined>(defaultSelected.postAssessmentScoreAbove)
+  const [postAssessmentScoreBelow, setPostAssessmentScoreBelow] = useState<number | undefined>(defaultSelected.postAssessmentScoreBelow)
+  
+  // Commented out for now
   // const [selectedDisabilityIds, setSelectedDisabilityIds] = useState<string[]>(defaultSelected.disabilityIds || [])
   // const [selectedMarginalizedGroupIds, setSelectedMarginalizedGroupIds] = useState<string[]>(defaultSelected.marginalizedGroupIds || [])
   // const [selectedHasSmartphone, setSelectedHasSmartphone] = useState<boolean | undefined>(defaultSelected.hasSmartphone)
@@ -196,6 +214,46 @@ export function StudentFilter({
     return region?.name || ""
   }
 
+  // Check if any filters are currently applied
+  const hasActiveFilters = () => {
+    return (
+      selectedGenders.length > 0 ||
+      selectedLanguageIds.length > 0 ||
+      selectedAcademicLevelIds.length > 0 ||
+      selectedZoneIds.length > 0 ||
+      attendancePercentageAbove !== undefined ||
+      attendancePercentageBelow !== undefined ||
+      hasFilledBaselineSurvey !== undefined ||
+      hasFilledEndlineSurvey !== undefined ||
+      hasPreAssessmentAttempt !== undefined ||
+      hasPostAssessmentAttempt !== undefined ||
+      preAssessmentScoreAbove !== undefined ||
+      preAssessmentScoreBelow !== undefined ||
+      postAssessmentScoreAbove !== undefined ||
+      postAssessmentScoreBelow !== undefined
+    )
+  }
+
+  // Count active filters for display
+  const getActiveFilterCount = () => {
+    let count = 0
+    if (selectedGenders.length > 0) count++
+    if (selectedLanguageIds.length > 0) count++
+    if (selectedAcademicLevelIds.length > 0) count++
+    if (selectedZoneIds.length > 0) count++
+    if (attendancePercentageAbove !== undefined) count++
+    if (attendancePercentageBelow !== undefined) count++
+    if (hasFilledBaselineSurvey !== undefined) count++
+    if (hasFilledEndlineSurvey !== undefined) count++
+    if (hasPreAssessmentAttempt !== undefined) count++
+    if (hasPostAssessmentAttempt !== undefined) count++
+    if (preAssessmentScoreAbove !== undefined) count++
+    if (preAssessmentScoreBelow !== undefined) count++
+    if (postAssessmentScoreAbove !== undefined) count++
+    if (postAssessmentScoreBelow !== undefined) count++
+    return count
+  }
+
  
 
   const handleApply = () => {
@@ -205,6 +263,23 @@ export function StudentFilter({
     if (selectedLanguageIds.length > 0) filters.languageIds = selectedLanguageIds
     if (selectedAcademicLevelIds.length > 0) filters.academicLevelIds = selectedAcademicLevelIds
     if (selectedZoneIds.length > 0) filters.zoneIds = selectedZoneIds
+    
+    // Attendance filters
+    if (attendancePercentageAbove !== undefined) filters.attendancePercentageAbove = attendancePercentageAbove
+    if (attendancePercentageBelow !== undefined) filters.attendancePercentageBelow = attendancePercentageBelow
+    
+    // Survey filters
+    if (hasFilledBaselineSurvey !== undefined) filters.hasFilledBaselineSurvey = hasFilledBaselineSurvey
+    if (hasFilledEndlineSurvey !== undefined) filters.hasFilledEndlineSurvey = hasFilledEndlineSurvey
+    
+    // Assessment filters
+    if (hasPreAssessmentAttempt !== undefined) filters.hasPreAssessmentAttempt = hasPreAssessmentAttempt
+    if (hasPostAssessmentAttempt !== undefined) filters.hasPostAssessmentAttempt = hasPostAssessmentAttempt
+    if (preAssessmentScoreAbove !== undefined) filters.preAssessmentScoreAbove = preAssessmentScoreAbove
+    if (preAssessmentScoreBelow !== undefined) filters.preAssessmentScoreBelow = preAssessmentScoreBelow
+    if (postAssessmentScoreAbove !== undefined) filters.postAssessmentScoreAbove = postAssessmentScoreAbove
+    if (postAssessmentScoreBelow !== undefined) filters.postAssessmentScoreBelow = postAssessmentScoreBelow
+    
     // Commented out for now
     // if (selectedDisabilityIds.length > 0) filters.disabilityIds = selectedDisabilityIds
     // if (selectedMarginalizedGroupIds.length > 0) filters.marginalizedGroupIds = selectedMarginalizedGroupIds
@@ -239,6 +314,23 @@ export function StudentFilter({
     setSelectedZoneIds([])
     setSelectedCountryId("")
     setSelectedRegionId("")
+    
+    // Clear attendance filters
+    setAttendancePercentageAbove(undefined)
+    setAttendancePercentageBelow(undefined)
+    
+    // Clear survey filters
+    setHasFilledBaselineSurvey(undefined)
+    setHasFilledEndlineSurvey(undefined)
+    
+    // Clear assessment filters
+    setHasPreAssessmentAttempt(undefined)
+    setHasPostAssessmentAttempt(undefined)
+    setPreAssessmentScoreAbove(undefined)
+    setPreAssessmentScoreBelow(undefined)
+    setPostAssessmentScoreAbove(undefined)
+    setPostAssessmentScoreBelow(undefined)
+    
     // Commented out for now
     // setSelectedDisabilityIds([])
     // setSelectedMarginalizedGroupIds([])
@@ -256,7 +348,10 @@ export function StudentFilter({
         <Button
           variant="outline"
           size="default"
-          className="h-10 px-4 border-gray-200 rounded-lg font-normal text-sm"
+          className={cn(
+            "h-10 px-4 border-gray-200 rounded-lg font-normal text-sm transition-colors",
+            hasActiveFilters() && "border-blue-500 bg-blue-50 text-blue-700"
+          )}
         >
           <Image
             src="/filter.svg"
@@ -266,6 +361,11 @@ export function StudentFilter({
             className="h-4 w-4 mr-2"
           />
           Filter
+          {hasActiveFilters() && (
+            <span className="ml-2 inline-flex items-center justify-center w-5 h-5 text-xs font-medium text-blue-700 bg-blue-200 rounded-full">
+              {getActiveFilterCount()}
+            </span>
+          )}
         </Button>
       </PopoverTrigger>
       <PopoverContent 
@@ -471,6 +571,182 @@ export function StudentFilter({
               />
             </div>
           )}
+
+          {/* Attendance Percentage Filter */}
+          <div className="space-y-3">
+            <h4 className="text-base font-semibold">Attendance Percentage</h4>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Above (%)</Label>
+                <Input
+                  type="number"
+                  placeholder="e.g., 80"
+                  value={attendancePercentageAbove || ''}
+                  onChange={(e) => setAttendancePercentageAbove(e.target.value ? Number(e.target.value) : undefined)}
+                  className="h-10"
+                  min="0"
+                  max="100"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Below (%)</Label>
+                <Input
+                  type="number"
+                  placeholder="e.g., 50"
+                  value={attendancePercentageBelow || ''}
+                  onChange={(e) => setAttendancePercentageBelow(e.target.value ? Number(e.target.value) : undefined)}
+                  className="h-10"
+                  min="0"
+                  max="100"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Survey Filters */}
+          <div className="space-y-3">
+            <h4 className="text-base font-semibold">Survey Completion</h4>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="baseline-survey"
+                  checked={hasFilledBaselineSurvey === true}
+                  onCheckedChange={(checked) => 
+                    setHasFilledBaselineSurvey(checked ? true : undefined)
+                  }
+                  className="h-5 w-5 rounded-[4px] border-gray-300 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
+                />
+                <Label 
+                  htmlFor="baseline-survey"
+                  className="text-base font-normal"
+                >
+                  Has Baseline Survey
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="endline-survey"
+                  checked={hasFilledEndlineSurvey === true}
+                  onCheckedChange={(checked) => 
+                    setHasFilledEndlineSurvey(checked ? true : undefined)
+                  }
+                  className="h-5 w-5 rounded-[4px] border-gray-300 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
+                />
+                <Label 
+                  htmlFor="endline-survey"
+                  className="text-base font-normal"
+                >
+                  Has Endline Survey
+                </Label>
+              </div>
+            </div>
+          </div>
+
+          {/* Assessment Filters */}
+          <div className="space-y-3">
+            <h4 className="text-base font-semibold">Assessment Attempts</h4>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="pre-assessment"
+                  checked={hasPreAssessmentAttempt === true}
+                  onCheckedChange={(checked) => 
+                    setHasPreAssessmentAttempt(checked ? true : undefined)
+                  }
+                  className="h-5 w-5 rounded-[4px] border-gray-300 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
+                />
+                <Label 
+                  htmlFor="pre-assessment"
+                  className="text-base font-normal"
+                >
+                  Has Pre-Assessment
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="post-assessment"
+                  checked={hasPostAssessmentAttempt === true}
+                  onCheckedChange={(checked) => 
+                    setHasPostAssessmentAttempt(checked ? true : undefined)
+                  }
+                  className="h-5 w-5 rounded-[4px] border-gray-300 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
+                />
+                <Label 
+                  htmlFor="post-assessment"
+                  className="text-base font-normal"
+                >
+                  Has Post-Assessment
+                </Label>
+              </div>
+            </div>
+          </div>
+
+          {/* Assessment Score Filters */}
+          <div className="space-y-3">
+            <h4 className="text-base font-semibold">Assessment Scores</h4>
+            
+            {/* Pre-Assessment Scores */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Pre-Assessment Score</Label>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-xs text-gray-600">Above (%)</Label>
+                  <Input
+                    type="number"
+                    placeholder="e.g., 70"
+                    value={preAssessmentScoreAbove || ''}
+                    onChange={(e) => setPreAssessmentScoreAbove(e.target.value ? Number(e.target.value) : undefined)}
+                    className="h-10"
+                    min="0"
+                    max="100"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs text-gray-600">Below (%)</Label>
+                  <Input
+                    type="number"
+                    placeholder="e.g., 50"
+                    value={preAssessmentScoreBelow || ''}
+                    onChange={(e) => setPreAssessmentScoreBelow(e.target.value ? Number(e.target.value) : undefined)}
+                    className="h-10"
+                    min="0"
+                    max="100"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Post-Assessment Scores */}
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Post-Assessment Score</Label>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-xs text-gray-600">Above (%)</Label>
+                  <Input
+                    type="number"
+                    placeholder="e.g., 80"
+                    value={postAssessmentScoreAbove || ''}
+                    onChange={(e) => setPostAssessmentScoreAbove(e.target.value ? Number(e.target.value) : undefined)}
+                    className="h-10"
+                    min="0"
+                    max="100"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs text-gray-600">Below (%)</Label>
+                  <Input
+                    type="number"
+                    placeholder="e.g., 60"
+                    value={postAssessmentScoreBelow || ''}
+                    onChange={(e) => setPostAssessmentScoreBelow(e.target.value ? Number(e.target.value) : undefined)}
+                    className="h-10"
+                    min="0"
+                    max="100"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
 
           {/* Commented out for now - can be enabled later */}
           {/* Disabilities Filter */}

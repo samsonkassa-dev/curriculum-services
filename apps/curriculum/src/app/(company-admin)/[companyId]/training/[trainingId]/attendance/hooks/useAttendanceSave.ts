@@ -14,16 +14,21 @@ type AttendanceRecord = {
   attendanceId?: string
 }
 
+type AttendanceAction = 
+  | { type: 'clearSaved'; studentIds: string[] }
+  | { type: 'update'; studentId: string; data: Partial<AttendanceRecord> }
+  | { type: 'reset' }
+
 interface UseAttendanceSaveProps {
   activeSessionId: string
   attendanceData: Record<string, AttendanceRecord>
   students: Student[]
   studentsWithChanges: string[]
-  dispatchAttendance: (action: any) => void
+  dispatchAttendance: (action: AttendanceAction) => void
   setSelectedStudents: (fn: (prev: Set<string>) => Set<string>) => void
   setEditingStudents: (fn: (prev: Set<string>) => Set<string>) => void
-  refetchStudents: () => Promise<any>
-  refetchAttendance: () => Promise<any>
+  refetchStudents: () => Promise<unknown>
+  refetchAttendance: () => Promise<unknown>
 }
 
 export function useAttendanceSave({

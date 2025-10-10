@@ -17,7 +17,7 @@ interface TabConfig {
 
 const allTabs: TabConfig[] = [
   { id: 'overview', label: 'Overview', icon: '/overview.svg', activeIcon: '/overview_active.svg' },
-  { id: 'profile', label: 'Training Profile', icon: '/trainingProfile.svg', activeIcon: '/training_active.svg' },
+  { id: 'profile', label: 'Training Profile', icon: '/trainingProfile.svg', activeIcon: '/baseDataActive.svg' },
   { id: 'audience', label: 'Audience Profile', icon: '/audienceProfile.svg', activeIcon: '/audience_active.svg' },
   { id: 'module', label: 'Module', icon: '/module.svg', activeIcon: '/module_active.svg' },
   { id: 'students', label: 'Students', icon: '/student.svg', activeIcon: '/stuedntActive.svg' },

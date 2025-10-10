@@ -319,15 +319,6 @@ export function CohortsComponent({ trainingId }: CohortsComponentProps) {
           <DialogHeader className="px-6 py-4 border-b">
             <div className="flex items-center justify-between w-full">
               <DialogTitle className="text-xl font-semibold">New Cohort</DialogTitle>
-              {/* <DialogClose asChild>
-                <Button 
-                  variant="ghost" 
-                  size="icon"
-                  className="h-8 w-8"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </DialogClose> */}
             </div>
           </DialogHeader>
           <CohortForm 
@@ -349,15 +340,6 @@ export function CohortsComponent({ trainingId }: CohortsComponentProps) {
           <DialogHeader className="px-6 py-4 border-b">
             <div className="flex items-center justify-between w-full">
               <DialogTitle className="text-xl font-semibold">Edit Cohort</DialogTitle>
-              {/* <DialogClose asChild>
-                <Button 
-                  variant="ghost" 
-                  size="icon"
-                  className="h-8 w-8"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </DialogClose> */}
             </div>
           </DialogHeader>
           <CohortForm 

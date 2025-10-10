@@ -201,6 +201,19 @@ export interface StudentFilters {
   languageIds?: string[]
   academicLevelIds?: string[]
   zoneIds?: string[]
+  // Attendance filters
+  attendancePercentageAbove?: number
+  attendancePercentageBelow?: number
+  // Survey filters
+  hasFilledBaselineSurvey?: boolean
+  hasFilledEndlineSurvey?: boolean
+  // Assessment filters
+  hasPreAssessmentAttempt?: boolean
+  hasPostAssessmentAttempt?: boolean
+  preAssessmentScoreAbove?: number
+  preAssessmentScoreBelow?: number
+  postAssessmentScoreAbove?: number
+  postAssessmentScoreBelow?: number
   // Commented out for now - can be enabled later
   // disabilityIds?: string[]
   // marginalizedGroupIds?: string[]
@@ -247,6 +260,43 @@ export function useStudents(
           if (filters.zoneIds && filters.zoneIds.length > 0) {
             filters.zoneIds.forEach(zoneId => params.append('zone-ids', zoneId))
           }
+          
+          // Attendance filters
+          if (filters.attendancePercentageAbove !== undefined) {
+            params.append('attendance-percentage-above', filters.attendancePercentageAbove.toString())
+          }
+          if (filters.attendancePercentageBelow !== undefined) {
+            params.append('attendance-percentage-below', filters.attendancePercentageBelow.toString())
+          }
+          
+          // Survey filters
+          if (filters.hasFilledBaselineSurvey !== undefined) {
+            params.append('has-filled-baseline-survey', filters.hasFilledBaselineSurvey.toString())
+          }
+          if (filters.hasFilledEndlineSurvey !== undefined) {
+            params.append('has-filled-endline-survey', filters.hasFilledEndlineSurvey.toString())
+          }
+          
+          // Assessment filters
+          if (filters.hasPreAssessmentAttempt !== undefined) {
+            params.append('has-pre-assessment-attempt', filters.hasPreAssessmentAttempt.toString())
+          }
+          if (filters.hasPostAssessmentAttempt !== undefined) {
+            params.append('has-post-assessment-attempt', filters.hasPostAssessmentAttempt.toString())
+          }
+          if (filters.preAssessmentScoreAbove !== undefined) {
+            params.append('pre-assessment-score-above', filters.preAssessmentScoreAbove.toString())
+          }
+          if (filters.preAssessmentScoreBelow !== undefined) {
+            params.append('pre-assessment-score-below', filters.preAssessmentScoreBelow.toString())
+          }
+          if (filters.postAssessmentScoreAbove !== undefined) {
+            params.append('post-assessment-score-above', filters.postAssessmentScoreAbove.toString())
+          }
+          if (filters.postAssessmentScoreBelow !== undefined) {
+            params.append('post-assessment-score-below', filters.postAssessmentScoreBelow.toString())
+          }
+          
           // Commented out for now - can be enabled later
           // if (filters.disabilityIds && filters.disabilityIds.length > 0) {
           //   filters.disabilityIds.forEach(disabilityId => params.append('disability-id', disabilityId))
