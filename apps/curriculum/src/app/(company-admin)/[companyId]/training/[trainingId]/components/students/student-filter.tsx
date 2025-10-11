@@ -449,7 +449,7 @@ export function StudentFilter({
         </Button>
       </PopoverTrigger>
       <PopoverContent 
-        className="w-[500px] p-0 max-h-[70vh] flex flex-col" 
+        className="w-[500px] p-0 max-h-[55vh] flex flex-col overflow-y-auto" 
         align="end" 
         alignOffset={-40}
         sideOffset={8}

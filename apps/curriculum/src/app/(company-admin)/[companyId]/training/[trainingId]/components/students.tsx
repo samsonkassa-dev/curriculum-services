@@ -650,9 +650,9 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
 
 
                 {/* Always show search bar and buttons when there are students or user has edit permission */}
-                <div className="flex items-center lg:justify-end gap-3 mb-6">
-                  <div className="flex items-center gap-3">
-                    <div className="relative md:w-[300px]">
+                <div className="flex flex-col sm:flex-row sm:items-center lg:justify-end gap-3 mb-6">
+                  <div className="flex w-full sm:w-auto items-center gap-3">
+                    <div className="relative w-full sm:w-[280px] md:w-[300px]">
                       <Image
                         src="/search.svg"
                         alt="Search"
@@ -662,14 +662,15 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
                       />
                       <Input
                         placeholder="Search students..."
-                        className="pl-10 h-10 text-sm bg-white border-gray-200"
+                        className="pl-10 h-10 text-sm bg-white border-gray-200 w-full"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                       />
                     </div>
                     
                     {/* Filter Component */}
-                    <StudentFilter
+                    <div className="w-full sm:w-auto">
+                      <StudentFilter
                       trainingId={trainingId}
                       countries={csvCountries}
                       regions={csvRegions}
@@ -678,16 +679,17 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
                       academicLevels={academicLevels}
                       onApply={handleApplyFilters}
                       defaultSelected={memoizedFilters}
-                    />
+                      />
+                    </div>
                   </div>
                   
                   {hasEditPermission && (
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 w-full sm:w-auto sm:justify-end">
                       {/* Delete Button - only show when multiple students selected */}
                       {selectedStudentsCount > 1 && (
                         <Button
                           variant="destructive"
-                          className="flex items-center gap-2"
+                          className="flex items-center gap-2 w-full sm:w-auto"
                           onClick={handleBulkDelete}
                           disabled={bulkDeleteMutation.isPending}
                         >
@@ -706,7 +708,7 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
                       )}
                       <Button
                         variant="outline"
-                        className="flex items-center gap-2"
+                        className="flex items-center gap-2 w-full sm:w-auto"
                         onClick={handleShowImport}
                       >
                         <Upload className="h-4 w-4" />
@@ -714,6 +716,7 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
                       </Button>
                       <Button
                         className="bg-[#0B75FF] hover:bg-[#0B75FF]/90 text-white flex items-center gap-2"
+                        
                         onClick={handleAddStudent}
                       >
                         <Plus className="h-4 w-4" />
