@@ -13,6 +13,8 @@ import Image from "next/image"
 import { useDebounce } from "@/lib/hooks/useDebounce"
 import { Check, ChevronsUpDown, Search } from "lucide-react"
 import { StudentFilters } from "@/lib/hooks/useStudents"
+import { useCohorts } from "@/lib/hooks/useCohorts"
+import { getAllLeafCohorts, getCohortHierarchyName } from "@/lib/utils/cohort-utils"
 
 interface Country {
   id: string
@@ -60,6 +62,7 @@ interface AcademicLevel {
 // }
 
 interface StudentFilterProps {
+  trainingId: string
   countries?: Country[]
   regions?: Region[]
   zones?: Zone[]
@@ -89,6 +92,7 @@ const genderOptions = [
 // ]
 
 export function StudentFilter({
+  trainingId,
   countries = [],
   regions = [],
   zones = [],
@@ -102,11 +106,30 @@ export function StudentFilter({
 }: StudentFilterProps) {
   const [open, setOpen] = useState(false)
   
+  // Fetch cohorts for this training
+  const { data: cohortsData } = useCohorts({
+    trainingId,
+    pageSize: 100 // Get all cohorts
+  })
+  
+  // Get leaf cohorts for selection
+  const leafCohorts = cohortsData?.cohorts ? getAllLeafCohorts(cohortsData.cohorts) : []
+  
   // Filter states
   const [selectedGenders, setSelectedGenders] = useState<string[]>(defaultSelected.genders || [])
   const [selectedLanguageIds, setSelectedLanguageIds] = useState<string[]>(defaultSelected.languageIds || [])
   const [selectedAcademicLevelIds, setSelectedAcademicLevelIds] = useState<string[]>(defaultSelected.academicLevelIds || [])
   const [selectedZoneIds, setSelectedZoneIds] = useState<string[]>(defaultSelected.zoneIds || [])
+  
+  // Age filter states
+  const [ageAbove, setAgeAbove] = useState<number | undefined>(defaultSelected.ageAbove)
+  const [ageBelow, setAgeBelow] = useState<number | undefined>(defaultSelected.ageBelow)
+  
+  // Consent form filter state
+  const [hasConsentForm, setHasConsentForm] = useState<boolean | undefined>(defaultSelected.hasConsentForm)
+  
+  // Cohort filter states
+  const [selectedCohortIds, setSelectedCohortIds] = useState<string[]>(defaultSelected.cohortIds || [])
   
   // Attendance filter states
   const [attendancePercentageAbove, setAttendancePercentageAbove] = useState<number | undefined>(defaultSelected.attendancePercentageAbove)
@@ -221,6 +244,10 @@ export function StudentFilter({
       selectedLanguageIds.length > 0 ||
       selectedAcademicLevelIds.length > 0 ||
       selectedZoneIds.length > 0 ||
+      ageAbove !== undefined ||
+      ageBelow !== undefined ||
+      hasConsentForm !== undefined ||
+      selectedCohortIds.length > 0 ||
       attendancePercentageAbove !== undefined ||
       attendancePercentageBelow !== undefined ||
       hasFilledBaselineSurvey !== undefined ||
@@ -241,6 +268,10 @@ export function StudentFilter({
     if (selectedLanguageIds.length > 0) count++
     if (selectedAcademicLevelIds.length > 0) count++
     if (selectedZoneIds.length > 0) count++
+    if (ageAbove !== undefined) count++
+    if (ageBelow !== undefined) count++
+    if (hasConsentForm !== undefined) count++
+    if (selectedCohortIds.length > 0) count++
     if (attendancePercentageAbove !== undefined) count++
     if (attendancePercentageBelow !== undefined) count++
     if (hasFilledBaselineSurvey !== undefined) count++
@@ -263,6 +294,16 @@ export function StudentFilter({
     if (selectedLanguageIds.length > 0) filters.languageIds = selectedLanguageIds
     if (selectedAcademicLevelIds.length > 0) filters.academicLevelIds = selectedAcademicLevelIds
     if (selectedZoneIds.length > 0) filters.zoneIds = selectedZoneIds
+    
+    // Age filters
+    if (ageAbove !== undefined) filters.ageAbove = ageAbove
+    if (ageBelow !== undefined) filters.ageBelow = ageBelow
+    
+    // Consent form filter
+    if (hasConsentForm !== undefined) filters.hasConsentForm = hasConsentForm
+    
+    // Cohort filters
+    if (selectedCohortIds.length > 0) filters.cohortIds = selectedCohortIds
     
     // Attendance filters
     if (attendancePercentageAbove !== undefined) filters.attendancePercentageAbove = attendancePercentageAbove
@@ -314,6 +355,16 @@ export function StudentFilter({
     setSelectedZoneIds([])
     setSelectedCountryId("")
     setSelectedRegionId("")
+    
+    // Clear age filters
+    setAgeAbove(undefined)
+    setAgeBelow(undefined)
+    
+    // Clear consent form filter
+    setHasConsentForm(undefined)
+    
+    // Clear cohort filters
+    setSelectedCohortIds([])
     
     // Clear attendance filters
     setAttendancePercentageAbove(undefined)
@@ -369,13 +420,14 @@ export function StudentFilter({
         </Button>
       </PopoverTrigger>
       <PopoverContent 
-        className="w-[500px] p-4 max-h-[70vh] overflow-y-auto" 
+        className="w-[500px] p-0 max-h-[70vh] flex flex-col" 
         align="end" 
         alignOffset={-40}
         sideOffset={8}
       >
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold">Filter Students</h3>
+        <div className="p-4 flex-1 overflow-y-auto">
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">Filter Students</h3>
           
           {/* Gender Filter */}
           <div className="space-y-3">
@@ -567,6 +619,77 @@ export function StudentFilter({
                 placeholder="Search and select academic levels..."
                 searchPlaceholder="Search academic levels..."
                 noResultsText="No academic levels found."
+                className="w-full"
+              />
+            </div>
+          )}
+
+          {/* Age Filter */}
+          <div className="space-y-3">
+            <h4 className="text-base font-semibold">Age Range</h4>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Above (years)</Label>
+                <Input
+                  type="number"
+                  placeholder="e.g., 18"
+                  value={ageAbove || ''}
+                  onChange={(e) => setAgeAbove(e.target.value ? Number(e.target.value) : undefined)}
+                  className="h-10"
+                  min="0"
+                  max="120"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Below (years)</Label>
+                <Input
+                  type="number"
+                  placeholder="e.g., 65"
+                  value={ageBelow || ''}
+                  onChange={(e) => setAgeBelow(e.target.value ? Number(e.target.value) : undefined)}
+                  className="h-10"
+                  min="0"
+                  max="120"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Consent Form Filter */}
+          <div className="space-y-3">
+            <h4 className="text-base font-semibold">Consent Form</h4>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="consent-form"
+                checked={hasConsentForm === true}
+                onCheckedChange={(checked) => 
+                  setHasConsentForm(checked ? true : undefined)
+                }
+                className="h-5 w-5 rounded-[4px] border-gray-300 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
+              />
+              <Label 
+                htmlFor="consent-form"
+                className="text-base font-normal"
+              >
+                Has Consent Form
+              </Label>
+            </div>
+          </div>
+
+          {/* Cohort Filter */}
+          {leafCohorts.length > 0 && (
+            <div className="space-y-3">
+              <h4 className="text-base font-semibold">Cohorts</h4>
+              <MultiSelectCombobox
+                options={leafCohorts.map(cohort => ({ 
+                  value: cohort.id, 
+                  label: getCohortHierarchyName(cohort) 
+                }))}
+                selected={selectedCohortIds}
+                onChange={setSelectedCohortIds}
+                placeholder="Search and select cohorts..."
+                searchPlaceholder="Search cohorts..."
+                noResultsText="No cohorts found."
                 className="w-full"
               />
             </div>
@@ -827,21 +950,24 @@ export function StudentFilter({
             </div>
           </div>*/}
 
-          <div className="flex justify-between gap-3 pt-2">
-            <Button
-              variant="outline"
-              className="flex-1 border-gray-200"
-              onClick={clearAllFilters}
-            >
-              Clear All
-            </Button>
-            <Button
-              className="flex-1 bg-brand text-white hover:bg-blue-600"
-              onClick={handleApply}
-            >
-              Apply
-            </Button>
           </div>
+        </div>
+        
+        {/* Sticky buttons at bottom */}
+        <div className="p-4 border-t bg-white flex justify-between gap-3">
+          <Button
+            variant="outline"
+            className="flex-1 border-gray-200"
+            onClick={clearAllFilters}
+          >
+            Clear All
+          </Button>
+          <Button
+            className="flex-1 bg-brand text-white hover:bg-blue-600"
+            onClick={handleApply}
+          >
+            Apply
+          </Button>
         </div>
       </PopoverContent>
     </Popover>

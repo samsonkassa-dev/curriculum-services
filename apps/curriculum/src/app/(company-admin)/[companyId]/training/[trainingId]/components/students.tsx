@@ -670,6 +670,7 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
                     
                     {/* Filter Component */}
                     <StudentFilter
+                      trainingId={trainingId}
                       countries={csvCountries}
                       regions={csvRegions}
                       zones={csvZones}
