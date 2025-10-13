@@ -4,7 +4,6 @@ import { memo, useCallback } from "react"
 import { Session } from "@/lib/hooks/useSession"
 import { Cohort } from "@/lib/hooks/useCohorts"
 import { Calendar } from "lucide-react"
-import { Button } from "@/components/ui/button"
 import { formatDateToDisplay } from "@/lib/utils"
 import { cn } from "@/lib/utils"
 import { useRouter, useParams } from "next/navigation"
@@ -154,7 +153,7 @@ function CohortSessionTabsComponent({
             </div>
 
             {/* Conditionally render the button based on the trainer role */}
-            {!isTrainer && (
+            {/* {!isTrainer && (
               <Button
                 variant="outline"
                 className="text-xs border-[#99948E] text-[#99948E] h-8"
@@ -162,7 +161,7 @@ function CohortSessionTabsComponent({
               >
                 Session Details
               </Button>
-            )}
+            )} */}
           </div>
         </div>
       )}
