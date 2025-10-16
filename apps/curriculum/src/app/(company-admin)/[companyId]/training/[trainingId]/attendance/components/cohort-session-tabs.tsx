@@ -152,7 +152,6 @@ function CohortSessionTabsComponent({
               </span>
             </div>
 
-            {/* Conditionally render the button based on the trainer role */}
             {/* {!isTrainer && (
               <Button
                 variant="outline"
