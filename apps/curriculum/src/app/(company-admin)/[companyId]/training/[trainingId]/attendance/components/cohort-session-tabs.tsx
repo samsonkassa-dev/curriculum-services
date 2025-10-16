@@ -4,7 +4,7 @@ import { memo, useCallback } from "react"
 import { Session } from "@/lib/hooks/useSession"
 import { Cohort } from "@/lib/hooks/useCohorts"
 import { Calendar } from "lucide-react"
-import { formatDateToDisplay } from "@/lib/utils"
+import { formatDateToDisplay, formatTimeToDisplay } from "@/lib/utils"
 import { cn } from "@/lib/utils"
 import { useRouter, useParams } from "next/navigation"
 import { useUserRole } from "@/lib/hooks/useUserRole"
@@ -137,8 +137,8 @@ function CohortSessionTabsComponent({
               <span className="text-[#525252] font-bold text-xs">Time</span>
               <div className="flex items-center gap-1.5">
                 <span className="text-[#555252] font-light text-sm">
-                  {new Date(activeSession.startDate).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})} - 
-                  {new Date(activeSession.endDate).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                  {formatTimeToDisplay(activeSession.startDate)} - 
+                  {formatTimeToDisplay(activeSession.endDate)}
                 </span>
               </div>
             </div>
