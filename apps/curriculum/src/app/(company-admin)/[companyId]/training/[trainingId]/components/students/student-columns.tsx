@@ -55,18 +55,11 @@ export const studentColumnsBase: ColumnDef<Student>[] = [
     }
   },
   {
-    accessorKey: "dateOfBirth",
-    header: "Date",
+    accessorKey: "cohortName",
+    header: "Cohort Name",
     cell: ({ row }) => {
-      const dob = row.original.dateOfBirth
-      if (!dob) return <span className="text-gray-500">N/A</span>
-      
-      try {
-        return <span className="text-gray-500">{format(new Date(dob), "dd MMM yyyy")}</span>
-      } catch {
-        return <span className="text-gray-500">Invalid date</span>
+        return <span className="text-gray-500">{row.original.cohortName || "N/A"}</span>
       }
-    }
   },
   {
     id: "language",

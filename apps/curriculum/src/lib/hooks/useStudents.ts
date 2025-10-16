@@ -113,6 +113,7 @@ export interface Student {
   backIdUrl: string | null
   signatureUrl: string | null
   selfRegistered: boolean
+  cohortName:string
 }
 
 export interface CreateStudentData {
