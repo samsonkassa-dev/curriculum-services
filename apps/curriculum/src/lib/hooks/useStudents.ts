@@ -104,7 +104,7 @@ export interface Student {
   emergencyContactRelationship: string
   disabilities: Disability[]
   marginalizedGroups: any[]
-  // New fields from the provided JSON
+  // New fields after leyu pending trainees
   didSignConsentForm: boolean | null
   consentFormUrl: string | null
   pendingTraineeId: string | null
