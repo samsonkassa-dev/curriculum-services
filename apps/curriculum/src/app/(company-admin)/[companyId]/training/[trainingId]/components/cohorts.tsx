@@ -234,7 +234,7 @@ export function CohortsComponent({ trainingId }: CohortsComponentProps) {
             <>
               <CohortList cohorts={cohorts} onEditCohort={handleEditCohort} />
               
-              {/* Pagination Controls - match users/training UI */}
+              {/* Pagination Controls */}
               {totalPages > 1 && (
                 <div className="flex items-center justify-between py-4">
                   <div className="flex items-center justify-between w-full">

@@ -224,12 +224,12 @@ export const ConsentFormCell = ({ student }: ConsentFormCellProps) => {
   // If student already has a consent form or signature
   if (formUrl) {
     return (
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1">
         <a 
           href={formUrl} 
           target="_blank" 
           rel="noopener noreferrer"
-          className="flex items-center gap-1.5 text-blue-600 hover:text-blue-800 underline"
+          className="flex items-center text-xs gap-1.5 text-blue-600 hover:text-blue-800 underline"
         >
           <FileText className="h-4 w-4" />
           <span>View Form</span>
@@ -259,7 +259,7 @@ export const ConsentFormCell = ({ student }: ConsentFormCellProps) => {
             {isUploading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              <Pencil className="h-4 w-4 text-gray-500" />
+              <Pencil className="h-2 w-2 text-gray-500" />
             )}
           </Button>
         )}
