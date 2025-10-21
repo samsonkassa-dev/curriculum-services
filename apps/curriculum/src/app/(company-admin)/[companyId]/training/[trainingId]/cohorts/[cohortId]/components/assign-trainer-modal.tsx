@@ -11,8 +11,6 @@ import { useTrainers } from "@/lib/hooks/useTrainers"
 import { useAssignTrainerToSession } from "@/lib/hooks/useSession"
 import { Session } from "@/lib/hooks/useSession"
 import { Loader2, Search, User } from "lucide-react"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import Image from "next/image"
 
 interface AssignTrainerModalProps {
   isOpen: boolean
@@ -86,15 +84,15 @@ export function AssignTrainerModal({ isOpen, onClose, sessions, onSuccess }: Ass
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh] flex flex-col">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-[700px] max-h-[90vh] flex flex-col p-0">
+        <DialogHeader className="px-6 pt-6 pb-4 border-b">
           <DialogTitle>Assign Trainer to Session(s)</DialogTitle>
           <DialogDescription>
             Select one or more sessions and assign a trainer as main or assistant
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex-1 overflow-hidden flex flex-col gap-6 py-4">
+        <div className="flex-1 overflow-y-auto flex flex-col gap-6 px-6 py-4">
           {/* Assignment Type Selection */}
           <div className="space-y-2">
             <Label>Trainer Type</Label>
@@ -128,8 +126,8 @@ export function AssignTrainerModal({ isOpen, onClose, sessions, onSuccess }: Ass
                 {selectedSessionIds.length === sessions.length ? "Deselect All" : "Select All"}
               </Button>
             </div>
-            <ScrollArea className="h-[150px] border rounded-md p-3">
-              <div className="space-y-2">
+            <div className="border rounded-md max-h-[200px] overflow-y-auto">
+              <div className="p-3 space-y-2">
                 {sessions.map((session) => (
                   <div key={session.id} className="flex items-center space-x-2 p-2 hover:bg-gray-50 rounded">
                     <Checkbox
@@ -149,7 +147,7 @@ export function AssignTrainerModal({ isOpen, onClose, sessions, onSuccess }: Ass
                   </div>
                 ))}
               </div>
-            </ScrollArea>
+            </div>
           </div>
 
           {/* Trainer Selection */}
@@ -165,13 +163,13 @@ export function AssignTrainerModal({ isOpen, onClose, sessions, onSuccess }: Ass
               />
             </div>
 
-            <ScrollArea className="h-[200px] border rounded-md">
+            <div className="border rounded-md max-h-[250px] overflow-y-auto">
               {loadingTrainers ? (
-                <div className="flex items-center justify-center h-full">
+                <div className="flex items-center justify-center h-32">
                   <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
                 </div>
               ) : filteredTrainers.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-full text-center p-4">
+                <div className="flex flex-col items-center justify-center h-32 text-center p-4">
                   <p className="text-sm text-gray-500">No trainers found</p>
                 </div>
               ) : (
@@ -202,12 +200,12 @@ export function AssignTrainerModal({ isOpen, onClose, sessions, onSuccess }: Ass
                   ))}
                 </div>
               )}
-            </ScrollArea>
+            </div>
           </div>
         </div>
 
         {/* Footer Actions */}
-        <div className="flex items-center justify-end gap-3 pt-4 border-t">
+        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t bg-white">
           <Button
             type="button"
             variant="outline"
@@ -230,4 +228,5 @@ export function AssignTrainerModal({ isOpen, onClose, sessions, onSuccess }: Ass
     </Dialog>
   )
 }
+
 
