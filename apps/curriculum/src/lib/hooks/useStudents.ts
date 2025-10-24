@@ -112,6 +112,7 @@ export interface Student {
   frontIdUrl: string | null
   backIdUrl: string | null
   signatureUrl: string | null
+  certificateUrl: string | null
   selfRegistered: boolean
   cohortName:string
 }

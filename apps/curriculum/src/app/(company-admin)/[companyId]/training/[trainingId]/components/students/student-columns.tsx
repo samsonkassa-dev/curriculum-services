@@ -77,19 +77,25 @@ export const studentColumnsBase: ColumnDef<Student>[] = [
       }
   },
   {
-    id: "language",
-    header: "Language",
+    id: "certificate",
+    header: "Certificate",
     cell: ({ row }) => {
-      const language = row.original.language?.name
+      const certificateUrl = row.original.certificateUrl
+      
+      if (!certificateUrl) {
+        return <span className="text-gray-400 text-sm">No Certificate</span>
+      }
       
       return (
-        <div className="flex items-center gap-2">
-          <div className={`px-2 py-1 rounded-full text-xs font-medium flex items-center gap-1
-            bg-blue-50 text-blue-700`}>
-            <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-            <span>{language || "Not specified"}</span>
-          </div>
-        </div>
+        <a 
+          href={certificateUrl} 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="flex items-center text-xs gap-1.5 text-green-600 hover:text-green-800 underline"
+        >
+          <FileText className="h-4 w-4" />
+          <span>View Certificate</span>
+        </a>
       )
     }
   },
