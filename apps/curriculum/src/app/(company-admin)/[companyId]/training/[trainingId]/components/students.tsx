@@ -767,7 +767,7 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="w-56">
                             {/* Generate Certificate - only for curriculum/company admin and 1-10 students */}
-                            {(isCurriculumAdmin || isCompanyAdmin) && selectedStudentsCount <= 10 && (
+                            {( isCompanyAdmin || isProjectManager) && selectedStudentsCount <= 10 && (
                               <DropdownMenuItem
                                 onClick={handleGenerateCertificates}
                                 disabled={isGeneratingCertificates}
