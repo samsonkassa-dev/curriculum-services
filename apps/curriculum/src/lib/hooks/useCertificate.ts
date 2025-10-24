@@ -79,6 +79,10 @@ export function useSubmitCertificate() {
       queryClient.invalidateQueries({
         queryKey: ['certificates']
       })
+      // Invalidate students query to refresh certificate URLs in the table
+      queryClient.invalidateQueries({
+        queryKey: ['students']
+      })
     },
     onError: (error) => {
       if (axios.isAxiosError(error)) {

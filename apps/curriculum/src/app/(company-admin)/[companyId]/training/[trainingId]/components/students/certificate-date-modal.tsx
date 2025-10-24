@@ -39,8 +39,8 @@ export function CertificateDateModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[480px]">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-[480px] max-h-[90vh] flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center gap-2 text-xl">
             <div className="p-2 rounded-lg bg-green-100">
               <Award className="h-5 w-5 text-green-600" />
@@ -49,7 +49,7 @@ export function CertificateDateModal({
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6 py-4">
+        <div className="space-y-6 py-4 overflow-y-auto flex-1">
           {/* Student count info */}
           <div className="flex items-center gap-3 p-4 rounded-lg bg-blue-50 border border-blue-100">
             <div className="p-2 rounded-full bg-blue-100">
@@ -97,7 +97,7 @@ export function CertificateDateModal({
           </div>
         </div>
 
-        <DialogFooter className="gap-2 sm:gap-0">
+        <DialogFooter className="gap-2 sm:gap-0 flex-shrink-0 border-t pt-4 mt-2">
           <Button
             variant="outline"
             onClick={handleClose}
