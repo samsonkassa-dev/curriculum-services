@@ -229,6 +229,9 @@ export interface StudentFilters {
   // marginalizedGroupIds?: string[]
   // hasSmartphone?: boolean
   // hasTrainingExperience?: boolean
+  // Certificate filters
+  isCertified?: boolean
+  isCertificateSmsSent?: boolean
 }
 
 export function useStudents(
@@ -323,6 +326,14 @@ export function useStudents(
           }
           if (filters.postAssessmentScoreBelow !== undefined) {
             params.append('post-assessment-score-below', filters.postAssessmentScoreBelow.toString())
+          }
+
+          // Certificate filters
+          if (filters.isCertified !== undefined) {
+            params.append('is-certified', filters.isCertified.toString())
+          }
+          if (filters.isCertificateSmsSent !== undefined) {
+            params.append('is-certificate-sms-sent', filters.isCertificateSmsSent.toString())
           }
           
           // Commented out for now - can be enabled later

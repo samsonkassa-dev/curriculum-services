@@ -180,6 +180,10 @@ export function StudentFilter({
   const [postAssessmentScoreAbove, setPostAssessmentScoreAbove] = useState<number | undefined>(defaultSelected.postAssessmentScoreAbove)
   const [postAssessmentScoreBelow, setPostAssessmentScoreBelow] = useState<number | undefined>(defaultSelected.postAssessmentScoreBelow)
  
+  // Certificate filter states
+  const [isCertified, setIsCertified] = useState<boolean | undefined>(defaultSelected.isCertified)
+  const [isCertificateSmsSent, setIsCertificateSmsSent] = useState<boolean | undefined>(defaultSelected.isCertificateSmsSent)
+  
   // Location cascading states
   const [selectedCountryId, setSelectedCountryId] = useState("")
   const [selectedRegionId, setSelectedRegionId] = useState("")
@@ -308,7 +312,9 @@ export function StudentFilter({
       preAssessmentScoreAbove !== undefined ||
       preAssessmentScoreBelow !== undefined ||
       postAssessmentScoreAbove !== undefined ||
-      postAssessmentScoreBelow !== undefined
+      postAssessmentScoreBelow !== undefined ||
+      isCertified !== undefined ||
+      isCertificateSmsSent !== undefined
     )
   }
 
@@ -333,6 +339,8 @@ export function StudentFilter({
     if (preAssessmentScoreBelow !== undefined) count++
     if (postAssessmentScoreAbove !== undefined) count++
     if (postAssessmentScoreBelow !== undefined) count++
+    if (isCertified !== undefined) count++
+    if (isCertificateSmsSent !== undefined) count++
     return count
   }
 
@@ -372,6 +380,9 @@ export function StudentFilter({
     if (postAssessmentScoreAbove !== undefined) filters.postAssessmentScoreAbove = postAssessmentScoreAbove
     if (postAssessmentScoreBelow !== undefined) filters.postAssessmentScoreBelow = postAssessmentScoreBelow
     
+    // Certificate filters
+    if (isCertified !== undefined) filters.isCertified = isCertified
+    if (isCertificateSmsSent !== undefined) filters.isCertificateSmsSent = isCertificateSmsSent
   
     onApply(filters)
     setOpen(false)
@@ -417,6 +428,10 @@ export function StudentFilter({
     setPreAssessmentScoreBelow(undefined)
     setPostAssessmentScoreAbove(undefined)
     setPostAssessmentScoreBelow(undefined)
+    
+    // Clear certificate filters
+    setIsCertified(undefined)
+    setIsCertificateSmsSent(undefined)
     
     onApply({})
     setOpen(false)
@@ -835,6 +850,45 @@ export function StudentFilter({
               placeholderBelow="e.g., 60"
             />
           </div>
+          </div>
+
+          {/* Certificate Filters */}
+          <div className="space-y-3">
+            <h4 className="text-base font-semibold">Certificate</h4>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="certificate"
+                  checked={isCertified === true}
+                  onCheckedChange={(checked) => 
+                    setIsCertified(checked ? true : undefined)
+                  }
+                  className="h-5 w-5 rounded-[4px] border-gray-300 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
+                />
+                <Label 
+                  htmlFor="certificate"
+                  className="text-base font-normal"
+                >
+                  Is Certified?
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="certificate-sms-sent"
+                  checked={isCertificateSmsSent === true}
+                  onCheckedChange={(checked) => 
+                    setIsCertificateSmsSent(checked ? true : undefined)
+                  }
+                  className="h-5 w-5 rounded-[4px] border-gray-300 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
+                />
+                <Label 
+                  htmlFor="certificate-sms-sent"
+                  className="text-base font-normal"
+                >
+                  Is Certificate SMS Sent?
+                </Label>
+              </div>
+            </div>
           </div>
         </div>
         
