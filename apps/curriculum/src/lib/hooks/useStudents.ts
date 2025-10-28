@@ -113,6 +113,7 @@ export interface Student {
   backIdUrl: string | null
   signatureUrl: string | null
   certificateUrl: string | null
+  certificateSmsSent: boolean
   selfRegistered: boolean
   cohortName:string
 }
