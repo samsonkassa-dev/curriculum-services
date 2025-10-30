@@ -2,12 +2,12 @@
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Award, Trash2 } from "lucide-react"
 import Image from "next/image"
 import { StudentFilter } from "../student-filter"
 import { StudentFilters } from "@/lib/hooks/useStudents"
 import { BaseDataItem } from "@/types/base-data"
 import { StudentsActionsMenu } from "./students-actions-menu"
+import { BulkActionsMenu } from "./bulk-actions-menu"
 
 interface BaseDataResponse {
   data: BaseDataItem[]
@@ -173,66 +173,30 @@ export function StudentsHeader({
         {hasEditPermission && (
           <div className="flex gap-2 w-full sm:w-auto sm:justify-end flex-wrap">
             {/* Bulk Actions - Show when students are selected */}
-            {selectedCount > 0 && (
-              <>
-                {/* Generate Certificate */}
-                {(isCompanyAdmin || isProjectManager) && selectedCount <= 10 && (
-                  <Button
-                    onClick={onGenerateCertificates}
-                    disabled={isGeneratingCertificates}
-                    className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white"
-                  >
-                    {isGeneratingCertificates ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        <span>Generating...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Award className="h-4 w-4" />
-                        <span>Generate Certificate{selectedCount > 1 ? 's' : ''}</span>
-                      </>
-                    )}
-                  </Button>
-                )}
-                
-                {/* Delete */}
-                {selectedCount > 1 && (
-                  <Button
-                    onClick={onBulkDelete}
-                    disabled={isBulkDeleting}
-                    variant="destructive"
-                    className="flex items-center gap-2"
-                  >
-                    {isBulkDeleting ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        <span>Deleting...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Trash2 className="h-4 w-4" />
-                        <span>Delete {selectedCount} Students</span>
-                      </>
-                    )}
-                  </Button>
-                )}
-              </>
-            )}
+            <BulkActionsMenu
+              selectedCount={selectedCount}
+              hasSyncPermission={hasSyncPermission}
+              hasEditPermission={hasEditPermission}
+              isCompanyAdmin={isCompanyAdmin}
+              isProjectManager={isProjectManager}
+              onGenerateCertificates={onGenerateCertificates}
+              onSyncPreAssessment={onSyncPreAssessment}
+              onSyncPostAssessment={onSyncPostAssessment}
+              onSyncEnrollTrainees={onSyncEnrollTrainees}
+              onSyncCreateTrainees={onSyncCreateTrainees}
+              onBulkDelete={onBulkDelete}
+              isGeneratingCertificates={isGeneratingCertificates}
+              isSyncingPreAssessment={isSyncingPreAssessment}
+              isSyncingPostAssessment={isSyncingPostAssessment}
+              isSyncingEnrollTrainees={isSyncingEnrollTrainees}
+              isSyncingCreateTrainees={isSyncingCreateTrainees}
+              isBulkDeleting={isBulkDeleting}
+            />
             
             <StudentsActionsMenu
               onAddStudent={onAddStudent}
               onShowImport={onShowImport}
               hasSyncPermission={hasSyncPermission}
-              selectedCount={selectedCount}
-              onSyncPreAssessment={onSyncPreAssessment}
-              onSyncPostAssessment={onSyncPostAssessment}
-              onSyncEnrollTrainees={onSyncEnrollTrainees}
-              onSyncCreateTrainees={onSyncCreateTrainees}
-              isSyncingPreAssessment={isSyncingPreAssessment}
-              isSyncingPostAssessment={isSyncingPostAssessment}
-              isSyncingEnrollTrainees={isSyncingEnrollTrainees}
-              isSyncingCreateTrainees={isSyncingCreateTrainees}
               onSyncPreAssessmentTraining={onSyncPreAssessmentTraining}
               onSyncPostAssessmentTraining={onSyncPostAssessmentTraining}
               onSyncEnrollTraineesTraining={onSyncEnrollTraineesTraining}

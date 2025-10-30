@@ -19,17 +19,6 @@ interface StudentsActionsMenuProps {
   // Sync permissions
   hasSyncPermission: boolean
   
-  // Selected students sync handlers (require selection)
-  selectedCount: number
-  onSyncPreAssessment: () => void
-  onSyncPostAssessment: () => void
-  onSyncEnrollTrainees: () => void
-  onSyncCreateTrainees: () => void
-  isSyncingPreAssessment: boolean
-  isSyncingPostAssessment: boolean
-  isSyncingEnrollTrainees: boolean
-  isSyncingCreateTrainees: boolean
-  
   // Training-level sync handlers (don't require selection)
   onSyncPreAssessmentTraining: () => void
   onSyncPostAssessmentTraining: () => void
@@ -48,15 +37,6 @@ export function StudentsActionsMenu({
   onAddStudent,
   onShowImport,
   hasSyncPermission,
-  selectedCount,
-  onSyncPreAssessment,
-  onSyncPostAssessment,
-  onSyncEnrollTrainees,
-  onSyncCreateTrainees,
-  isSyncingPreAssessment,
-  isSyncingPostAssessment,
-  isSyncingEnrollTrainees,
-  isSyncingCreateTrainees,
   onSyncPreAssessmentTraining,
   onSyncPostAssessmentTraining,
   onSyncEnrollTraineesTraining,
@@ -70,8 +50,6 @@ export function StudentsActionsMenu({
   if (!hasEditPermission && !hasSyncPermission) {
     return null
   }
-
-  const hasSelection = selectedCount > 0
 
   return (
     <DropdownMenu>
@@ -103,90 +81,11 @@ export function StudentsActionsMenu({
               <Upload className="h-4 w-4 text-blue-600" />
               <span>Import CSV</span>
             </DropdownMenuItem>
-            <DropdownMenuSeparator />
+            {hasSyncPermission && <DropdownMenuSeparator />}
           </>
         )}
 
-        {/* Sync Section - Selected Students */}
-        {hasSyncPermission && hasSelection && (
-          <>
-            <DropdownMenuLabel>Sync Selected ({selectedCount})</DropdownMenuLabel>
-            <DropdownMenuItem
-              onClick={onSyncPreAssessment}
-              disabled={isSyncingPreAssessment}
-              className="flex items-center gap-2 cursor-pointer"
-            >
-              {isSyncingPreAssessment ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
-                  <span>Syncing Pre-Assessment...</span>
-                </>
-              ) : (
-                <>
-                  <FileCheck className="h-4 w-4 text-blue-600" />
-                  <span>Sync Pre-Assessment</span>
-                </>
-              )}
-            </DropdownMenuItem>
-            
-            <DropdownMenuItem
-              onClick={onSyncPostAssessment}
-              disabled={isSyncingPostAssessment}
-              className="flex items-center gap-2 cursor-pointer"
-            >
-              {isSyncingPostAssessment ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
-                  <span>Syncing Post-Assessment...</span>
-                </>
-              ) : (
-                <>
-                  <FileCheck className="h-4 w-4 text-blue-600" />
-                  <span>Sync Post-Assessment</span>
-                </>
-              )}
-            </DropdownMenuItem>
-            
-            <DropdownMenuItem
-              onClick={onSyncEnrollTrainees}
-              disabled={isSyncingEnrollTrainees}
-              className="flex items-center gap-2 cursor-pointer"
-            >
-              {isSyncingEnrollTrainees ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
-                  <span>Syncing Enrollment...</span>
-                </>
-              ) : (
-                <>
-                  <GraduationCap className="h-4 w-4 text-blue-600" />
-                  <span>Sync Enrollment</span>
-                </>
-              )}
-            </DropdownMenuItem>
-            
-            <DropdownMenuItem
-              onClick={onSyncCreateTrainees}
-              disabled={isSyncingCreateTrainees}
-              className="flex items-center gap-2 cursor-pointer"
-            >
-              {isSyncingCreateTrainees ? (
-                <>
-                  <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
-                  <span>Syncing Create Trainees...</span>
-                </>
-              ) : (
-                <>
-                  <UserPlus className="h-4 w-4 text-blue-600" />
-                  <span>Sync Create Trainees</span>
-                </>
-              )}
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-          </>
-        )}
-
-        {/* Sync Section - All Students */}
+        {/* Sync Section - All Students (by Training) */}
         {hasSyncPermission && (
           <>
             <DropdownMenuLabel>Sync All Students</DropdownMenuLabel>

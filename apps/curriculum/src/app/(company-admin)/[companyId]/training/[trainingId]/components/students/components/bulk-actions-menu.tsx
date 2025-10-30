@@ -6,6 +6,8 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
 import { MoreVertical, Award, Trash2, FileCheck, GraduationCap, UserPlus } from "lucide-react"
 
@@ -49,7 +51,7 @@ export function BulkActionsMenu({
   isBulkDeleting,
 }: BulkActionsMenuProps) {
   if (selectedCount === 0 || !hasEditPermission) {
-    return null;
+    return null
   }
 
   return (
@@ -85,9 +87,34 @@ export function BulkActionsMenu({
           </DropdownMenuItem>
         )}
         
-        {/* Sync options */}
+        {/* Delete */}
+        {selectedCount > 1 && (
+          <DropdownMenuItem
+            onClick={onBulkDelete}
+            disabled={isBulkDeleting}
+            className="flex items-center gap-2 cursor-pointer text-red-600 focus:text-red-600"
+          >
+            {isBulkDeleting ? (
+              <>
+                <div className="w-4 h-4 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
+                <span>Deleting...</span>
+              </>
+            ) : (
+              <>
+                <Trash2 className="h-4 w-4" />
+                <span>Delete {selectedCount} Students</span>
+              </>
+            )}
+          </DropdownMenuItem>
+        )}
+        
+        {/* Sync by Trainee ID - Only show if sync permission */}
         {hasSyncPermission && (
           <>
+            {((isCompanyAdmin || isProjectManager) && selectedCount <= 10) || selectedCount > 1 ? (
+              <DropdownMenuSeparator />
+            ) : null}
+            <DropdownMenuLabel>Sync Selected ({selectedCount})</DropdownMenuLabel>
             <DropdownMenuItem
               onClick={onSyncPreAssessment}
               disabled={isSyncingPreAssessment}
@@ -150,7 +177,7 @@ export function BulkActionsMenu({
               {isSyncingCreateTrainees ? (
                 <>
                   <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
-                  <span>Syncing Creation...</span>
+                  <span>Syncing Created Trainees...</span>
                 </>
               ) : (
                 <>
@@ -161,29 +188,7 @@ export function BulkActionsMenu({
             </DropdownMenuItem>
           </>
         )}
-        
-        {/* Delete */}
-        {selectedCount > 1 && (
-          <DropdownMenuItem
-            onClick={onBulkDelete}
-            disabled={isBulkDeleting}
-            className="flex items-center gap-2 cursor-pointer text-red-600 focus:text-red-600"
-          >
-            {isBulkDeleting ? (
-              <>
-                <div className="w-4 h-4 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
-                <span>Deleting...</span>
-              </>
-            ) : (
-              <>
-                <Trash2 className="h-4 w-4" />
-                <span>Delete {selectedCount} Students</span>
-              </>
-            )}
-          </DropdownMenuItem>
-        )}
       </DropdownMenuContent>
     </DropdownMenu>
   )
 }
-
