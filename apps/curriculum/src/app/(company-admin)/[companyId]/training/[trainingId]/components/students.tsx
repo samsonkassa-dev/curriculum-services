@@ -142,7 +142,7 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
     academicLevels: csvAcademicLevels,
     disabilities: csvDisabilities,
     marginalizedGroups: csvMarginalizedGroups,
-    bulkImportByName,
+    bulkImportByNameAsync,
     isLoading: isBulkImporting
   } = useBulkImportStudentsByName(showImportView)
   
@@ -196,17 +196,21 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
   
   const handleCSVImport = useCallback(async (students: CreateStudentByNameData[]) => {
     try {
-      await bulkImportByName({ trainingId, studentsData: students })
+      // Wait for the import to complete - using Async version to catch errors
+      await bulkImportByNameAsync({ trainingId, studentsData: students })
+      
+      // Add a small delay to ensure loading state is visible and success message is read
+      await new Promise(resolve => setTimeout(resolve, 500))
+      
       // Only navigate back on success
       setShowImportView(false)
       setHasUploadedCSV(false)
       // Success toast is already shown in the mutation
     } catch (error) {
       // Error toast is already shown in the mutation
-      // Stay on import page so user can see the error and fix data
       throw error
     }
-  }, [bulkImportByName, trainingId])
+  }, [bulkImportByNameAsync, trainingId])
   
   const handleFormSubmit = useCallback(async (values: StudentFormValues) => {
     const success = await handleSubmit(values, isEditing, currentStudentId)

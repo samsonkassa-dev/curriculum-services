@@ -124,6 +124,7 @@ export function CSVImportContent({
   const [fileName, setFileName] = useState<string>("")
   const [rawCsvData, setRawCsvData] = useState<Record<string, string>[]>([])
   const [isDataLoaded, setIsDataLoaded] = useState(false)
+  const [isImporting, setIsImporting] = useState(false)
 
   const validateCSVRow = (row: Record<string, string>, index: number): CSVStudentData => {
     const errors: Record<string, string> = {}
@@ -369,13 +370,16 @@ export function CSVImportContent({
       return
     }
 
+    setIsImporting(true)
     try {
       const studentData = csvData.map(convertToStudentFormValues)
       await onImport(studentData)
       // Success - parent component will handle navigation
+      // Keep loading state until component unmounts
     } catch (error) {
       // Error - stay on page, error toast already shown by mutation
       console.error("Import failed:", error)
+      setIsImporting(false)
     }
   }
 
@@ -429,7 +433,7 @@ export function CSVImportContent({
   return (
     <div className="space-y-6 relative">
       {/* Loading Overlay during import */}
-      {isSubmitting && (
+      {isImporting && (
         <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center">
           <div className="bg-white rounded-lg p-8 shadow-2xl max-w-md w-full mx-4">
             <div className="flex flex-col items-center space-y-4">
@@ -493,10 +497,10 @@ export function CSVImportContent({
           <div className="flex justify-end">
             <Button 
               onClick={handleImportStudents}
-              disabled={isSubmitting || csvData.some(row => row.errors && Object.keys(row.errors).length > 0)}
+              disabled={isImporting || csvData.some(row => row.errors && Object.keys(row.errors).length > 0)}
               className="bg-blue-600 hover:bg-blue-700 text-white disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {isSubmitting ? "Importing..." : `Import ${csvData.length} Students`}
+              {isImporting ? "Importing..." : `Import ${csvData.length} Students`}
             </Button>
           </div>
         </>
