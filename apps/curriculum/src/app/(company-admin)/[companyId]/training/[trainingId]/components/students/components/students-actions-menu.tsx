@@ -264,12 +264,12 @@ export function StudentsActionsMenu({
               {isSyncingCreateTraineesTraining ? (
                 <>
                   <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
-                  <span>Syncing Create Trainees...</span>
+                  <span>Syncing Created Trainees...</span>
                 </>
               ) : (
                 <>
                   <UserPlus className="h-4 w-4 text-blue-600" />
-                  <span>Sync Create Trainees</span>
+                  <span>Sync Created Trainees</span>
                 </>
               )}
             </DropdownMenuItem>
