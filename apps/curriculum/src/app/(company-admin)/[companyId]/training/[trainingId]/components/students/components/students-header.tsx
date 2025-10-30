@@ -7,6 +7,7 @@ import Image from "next/image"
 import { StudentFilter } from "../student-filter"
 import { StudentFilters } from "@/lib/hooks/useStudents"
 import { BaseDataItem } from "@/types/base-data"
+import { StudentsActionsMenu } from "./students-actions-menu"
 
 interface BaseDataResponse {
   data: BaseDataItem[]
@@ -63,6 +64,33 @@ interface StudentsHeaderProps {
   languages?: BaseDataResponse | null
   academicLevels?: BaseDataResponse | null
   hasEditPermission: boolean
+  hasSyncPermission: boolean
+  selectedCount: number
+  // Sync handlers for selected students
+  onSyncPreAssessment: () => void
+  onSyncPostAssessment: () => void
+  onSyncEnrollTrainees: () => void
+  onSyncCreateTrainees: () => void
+  isSyncingPreAssessment: boolean
+  isSyncingPostAssessment: boolean
+  isSyncingEnrollTrainees: boolean
+  isSyncingCreateTrainees: boolean
+  // Sync handlers for all students
+  onSyncPreAssessmentTraining: () => void
+  onSyncPostAssessmentTraining: () => void
+  onSyncEnrollTraineesTraining: () => void
+  onSyncCreateTraineesTraining: () => void
+  isSyncingPreAssessmentTraining: boolean
+  isSyncingPostAssessmentTraining: boolean
+  isSyncingEnrollTraineesTraining: boolean
+  isSyncingCreateTraineesTraining: boolean
+  // Bulk actions
+  isCompanyAdmin: boolean
+  isProjectManager: boolean
+  onGenerateCertificates: () => void
+  onBulkDelete: () => void
+  isGeneratingCertificates: boolean
+  isBulkDeleting: boolean
 }
 
 export function StudentsHeader({
@@ -79,6 +107,30 @@ export function StudentsHeader({
   languages,
   academicLevels,
   hasEditPermission,
+  hasSyncPermission,
+  selectedCount,
+  onSyncPreAssessment,
+  onSyncPostAssessment,
+  onSyncEnrollTrainees,
+  onSyncCreateTrainees,
+  isSyncingPreAssessment,
+  isSyncingPostAssessment,
+  isSyncingEnrollTrainees,
+  isSyncingCreateTrainees,
+  onSyncPreAssessmentTraining,
+  onSyncPostAssessmentTraining,
+  onSyncEnrollTraineesTraining,
+  onSyncCreateTraineesTraining,
+  isSyncingPreAssessmentTraining,
+  isSyncingPostAssessmentTraining,
+  isSyncingEnrollTraineesTraining,
+  isSyncingCreateTraineesTraining,
+  isCompanyAdmin,
+  isProjectManager,
+  onGenerateCertificates,
+  onBulkDelete,
+  isGeneratingCertificates,
+  isBulkDeleting,
 }: StudentsHeaderProps) {
   return (
     <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
@@ -120,21 +172,35 @@ export function StudentsHeader({
         
         {hasEditPermission && (
           <div className="flex gap-2 w-full sm:w-auto sm:justify-end">
-            <Button
-              variant="outline"
-              className="flex items-center gap-2 w-full sm:w-auto"
-              onClick={onShowImport}
-            >
-              <Upload className="h-4 w-4" />
-              <span>Import CSV</span>
-            </Button>
-            <Button
-              className="bg-[#0B75FF] hover:bg-[#0B75FF]/90 text-white flex items-center gap-2"
-              onClick={onAddStudent}
-            >
-              <Plus className="h-4 w-4" />
-              <span>Add Student</span>
-            </Button>
+            <StudentsActionsMenu
+              onAddStudent={onAddStudent}
+              onShowImport={onShowImport}
+              hasSyncPermission={hasSyncPermission}
+              selectedCount={selectedCount}
+              onSyncPreAssessment={onSyncPreAssessment}
+              onSyncPostAssessment={onSyncPostAssessment}
+              onSyncEnrollTrainees={onSyncEnrollTrainees}
+              onSyncCreateTrainees={onSyncCreateTrainees}
+              isSyncingPreAssessment={isSyncingPreAssessment}
+              isSyncingPostAssessment={isSyncingPostAssessment}
+              isSyncingEnrollTrainees={isSyncingEnrollTrainees}
+              isSyncingCreateTrainees={isSyncingCreateTrainees}
+              onSyncPreAssessmentTraining={onSyncPreAssessmentTraining}
+              onSyncPostAssessmentTraining={onSyncPostAssessmentTraining}
+              onSyncEnrollTraineesTraining={onSyncEnrollTraineesTraining}
+              onSyncCreateTraineesTraining={onSyncCreateTraineesTraining}
+              isSyncingPreAssessmentTraining={isSyncingPreAssessmentTraining}
+              isSyncingPostAssessmentTraining={isSyncingPostAssessmentTraining}
+              isSyncingEnrollTraineesTraining={isSyncingEnrollTraineesTraining}
+              isSyncingCreateTraineesTraining={isSyncingCreateTraineesTraining}
+              hasEditPermission={hasEditPermission}
+              isCompanyAdmin={isCompanyAdmin}
+              isProjectManager={isProjectManager}
+              onGenerateCertificates={onGenerateCertificates}
+              onBulkDelete={onBulkDelete}
+              isGeneratingCertificates={isGeneratingCertificates}
+              isBulkDeleting={isBulkDeleting}
+            />
           </div>
         )}
       </div>

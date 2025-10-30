@@ -16,8 +16,6 @@ import { useStudentForm } from "./students/hooks/useStudentForm"
 import { useStudentActions } from "./students/hooks/useStudentActions"
 import { useStudentSync } from "./students/hooks/useStudentSync"
 import { StudentsHeader } from "./students/components/students-header"
-import { BulkActionsMenu } from "./students/components/bulk-actions-menu"
-import { SyncAllSection } from "./students/components/sync-all-section"
 import { StudentsEmptyState } from "./students/components/students-empty-state"
 import { CSVImportView } from "./students/components/csv-import-view"
 
@@ -287,44 +285,31 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
                   languages={csvLanguages}
                   academicLevels={csvAcademicLevels}
                   hasEditPermission={hasEditPermission}
+                  hasSyncPermission={hasSyncPermission}
+                  selectedCount={selectedStudentsCount}
+                  onSyncPreAssessment={handleSyncPreAssessment}
+                  onSyncPostAssessment={handleSyncPostAssessment}
+                  onSyncEnrollTrainees={handleSyncEnrollTrainees}
+                  onSyncCreateTrainees={handleSyncCreateTrainees}
+                  isSyncingPreAssessment={isSyncingPreAssessment}
+                  isSyncingPostAssessment={isSyncingPostAssessment}
+                  isSyncingEnrollTrainees={isSyncingEnrollTrainees}
+                  isSyncingCreateTrainees={isSyncingCreateTrainees}
+                  onSyncPreAssessmentTraining={handleSyncPreAssessmentTraining}
+                  onSyncPostAssessmentTraining={handleSyncPostAssessmentTraining}
+                  onSyncEnrollTraineesTraining={handleSyncEnrollTraineesTraining}
+                  onSyncCreateTraineesTraining={handleSyncCreateTraineesTraining}
+                  isSyncingPreAssessmentTraining={isSyncingPreAssessmentTraining}
+                  isSyncingPostAssessmentTraining={isSyncingPostAssessmentTraining}
+                  isSyncingEnrollTraineesTraining={isSyncingEnrollTraineesTraining}
+                  isSyncingCreateTraineesTraining={isSyncingCreateTraineesTraining}
+                  isCompanyAdmin={isCompanyAdmin}
+                  isProjectManager={isProjectManager}
+                  onGenerateCertificates={handleGenerateCertificates}
+                  onBulkDelete={handleBulkDelete}
+                  isGeneratingCertificates={isGeneratingCertificates}
+                  isBulkDeleting={isBulkDeleting}
                 />
-                
-                {hasEditPermission && (
-                  <div className="flex gap-2 w-full sm:w-auto sm:justify-end mb-6">
-                    <BulkActionsMenu
-                      selectedCount={selectedStudentsCount}
-                      hasSyncPermission={hasSyncPermission}
-                      hasEditPermission={hasEditPermission}
-                      isCompanyAdmin={isCompanyAdmin}
-                      isProjectManager={isProjectManager}
-                      onGenerateCertificates={handleGenerateCertificates}
-                      onSyncPreAssessment={handleSyncPreAssessment}
-                      onSyncPostAssessment={handleSyncPostAssessment}
-                      onSyncEnrollTrainees={handleSyncEnrollTrainees}
-                      onSyncCreateTrainees={handleSyncCreateTrainees}
-                      onBulkDelete={handleBulkDelete}
-                      isGeneratingCertificates={isGeneratingCertificates}
-                      isSyncingPreAssessment={isSyncingPreAssessment}
-                      isSyncingPostAssessment={isSyncingPostAssessment}
-                      isSyncingEnrollTrainees={isSyncingEnrollTrainees}
-                      isSyncingCreateTrainees={isSyncingCreateTrainees}
-                      isBulkDeleting={isBulkDeleting}
-                    />
-                  </div>
-                )}
-                
-                {hasSyncPermission && (
-                  <SyncAllSection
-                    onSyncPreAssessment={handleSyncPreAssessmentTraining}
-                    onSyncPostAssessment={handleSyncPostAssessmentTraining}
-                    onSyncEnrollTrainees={handleSyncEnrollTraineesTraining}
-                    onSyncCreateTrainees={handleSyncCreateTraineesTraining}
-                    isSyncingPreAssessment={isSyncingPreAssessmentTraining}
-                    isSyncingPostAssessment={isSyncingPostAssessmentTraining}
-                    isSyncingEnrollTrainees={isSyncingEnrollTraineesTraining}
-                    isSyncingCreateTrainees={isSyncingCreateTraineesTraining}
-                  />
-                )}
                 
                 <StudentDataTable
                   columns={columnsWithActions}
