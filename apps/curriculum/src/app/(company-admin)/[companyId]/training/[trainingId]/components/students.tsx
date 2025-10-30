@@ -197,10 +197,13 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
   const handleCSVImport = useCallback(async (students: CreateStudentByNameData[]) => {
     try {
       await bulkImportByName({ trainingId, studentsData: students })
+      // Only navigate back on success
       setShowImportView(false)
       setHasUploadedCSV(false)
+      // Success toast is already shown in the mutation
     } catch (error) {
-      console.log("CSV import failed:", error)
+      // Error toast is already shown in the mutation
+      // Stay on import page so user can see the error and fix data
       throw error
     }
   }, [bulkImportByName, trainingId])
