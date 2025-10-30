@@ -155,7 +155,7 @@ export function BulkActionsMenu({
               ) : (
                 <>
                   <UserPlus className="h-4 w-4 text-blue-600" />
-                  <span>Sync Create Trainees</span>
+                  <span>Sync Created Trainees</span>
                 </>
               )}
             </DropdownMenuItem>
