@@ -22,6 +22,7 @@ import { ConsentFormFilter } from "./filters/ConsentFormFilter"
 import { SurveyFilter } from "./filters/SurveyFilter"
 import { AssessmentAttemptFilter } from "./filters/AssessmentAttemptFilter"
 import { CertificateFilter } from "./filters/CertificateFilter"
+import { EdgeSyncFilter } from "./filters/EdgeSyncFilter"
 import { useStudentFilterState } from "./filters/useStudentFilterState"
 
 interface Country {
@@ -298,6 +299,18 @@ export function StudentFilter({
               isCertificateSmsSent={filterState.isCertificateSmsSent}
               onCertifiedChange={(checked) => filterState.setIsCertified(checked ? true : undefined)}
               onSmsSentChange={(checked) => filterState.setIsCertificateSmsSent(checked ? true : undefined)}
+            />
+
+            {/* Edge Sync Filters */}
+            <EdgeSyncFilter
+              isCreationSyncedWithEdge={filterState.isCreationSyncedWithEdge}
+              isEnrollmentSyncedWithEdge={filterState.isEnrollmentSyncedWithEdge}
+              isPreAssessmentSyncedWithEdge={filterState.isPreAssessmentSyncedWithEdge}
+              isPostAssessmentSyncedWithEdge={filterState.isPostAssessmentSyncedWithEdge}
+              onCreationSyncChange={filterState.setIsCreationSyncedWithEdge}
+              onEnrollmentSyncChange={filterState.setIsEnrollmentSyncedWithEdge}
+              onPreAssessmentSyncChange={filterState.setIsPreAssessmentSyncedWithEdge}
+              onPostAssessmentSyncChange={filterState.setIsPostAssessmentSyncedWithEdge}
             />
           </div>
         </div>

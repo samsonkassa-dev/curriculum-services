@@ -42,6 +42,12 @@ export function useStudentFilterState(defaultSelected: StudentFilters = {}) {
   const [isCertified, setIsCertified] = useState<boolean | undefined>(defaultSelected.isCertified)
   const [isCertificateSmsSent, setIsCertificateSmsSent] = useState<boolean | undefined>(defaultSelected.isCertificateSmsSent)
 
+  // Edge sync filters
+  const [isCreationSyncedWithEdge, setIsCreationSyncedWithEdge] = useState<boolean | undefined>(defaultSelected.isCreationSyncedWithEdge)
+  const [isEnrollmentSyncedWithEdge, setIsEnrollmentSyncedWithEdge] = useState<boolean | undefined>(defaultSelected.isEnrollmentSyncedWithEdge)
+  const [isPreAssessmentSyncedWithEdge, setIsPreAssessmentSyncedWithEdge] = useState<boolean | undefined>(defaultSelected.isPreAssessmentSyncedWithEdge)
+  const [isPostAssessmentSyncedWithEdge, setIsPostAssessmentSyncedWithEdge] = useState<boolean | undefined>(defaultSelected.isPostAssessmentSyncedWithEdge)
+
   // Check if any filters are active
   const hasActiveFilters = () => {
     return (
@@ -64,7 +70,11 @@ export function useStudentFilterState(defaultSelected: StudentFilters = {}) {
       postAssessmentScoreAbove !== undefined ||
       postAssessmentScoreBelow !== undefined ||
       isCertified !== undefined ||
-      isCertificateSmsSent !== undefined
+      isCertificateSmsSent !== undefined ||
+      isCreationSyncedWithEdge !== undefined ||
+      isEnrollmentSyncedWithEdge !== undefined ||
+      isPreAssessmentSyncedWithEdge !== undefined ||
+      isPostAssessmentSyncedWithEdge !== undefined
     )
   }
 
@@ -91,6 +101,10 @@ export function useStudentFilterState(defaultSelected: StudentFilters = {}) {
     if (postAssessmentScoreBelow !== undefined) count++
     if (isCertified !== undefined) count++
     if (isCertificateSmsSent !== undefined) count++
+    if (isCreationSyncedWithEdge !== undefined) count++
+    if (isEnrollmentSyncedWithEdge !== undefined) count++
+    if (isPreAssessmentSyncedWithEdge !== undefined) count++
+    if (isPostAssessmentSyncedWithEdge !== undefined) count++
     return count
   }
 
@@ -118,6 +132,10 @@ export function useStudentFilterState(defaultSelected: StudentFilters = {}) {
     if (postAssessmentScoreBelow !== undefined) filters.postAssessmentScoreBelow = postAssessmentScoreBelow
     if (isCertified !== undefined) filters.isCertified = isCertified
     if (isCertificateSmsSent !== undefined) filters.isCertificateSmsSent = isCertificateSmsSent
+    if (isCreationSyncedWithEdge !== undefined) filters.isCreationSyncedWithEdge = isCreationSyncedWithEdge
+    if (isEnrollmentSyncedWithEdge !== undefined) filters.isEnrollmentSyncedWithEdge = isEnrollmentSyncedWithEdge
+    if (isPreAssessmentSyncedWithEdge !== undefined) filters.isPreAssessmentSyncedWithEdge = isPreAssessmentSyncedWithEdge
+    if (isPostAssessmentSyncedWithEdge !== undefined) filters.isPostAssessmentSyncedWithEdge = isPostAssessmentSyncedWithEdge
     
     return filters
   }
@@ -146,6 +164,10 @@ export function useStudentFilterState(defaultSelected: StudentFilters = {}) {
     setPostAssessmentScoreBelow(undefined)
     setIsCertified(undefined)
     setIsCertificateSmsSent(undefined)
+    setIsCreationSyncedWithEdge(undefined)
+    setIsEnrollmentSyncedWithEdge(undefined)
+    setIsPreAssessmentSyncedWithEdge(undefined)
+    setIsPostAssessmentSyncedWithEdge(undefined)
   }
 
   // Handle gender toggle
@@ -191,6 +213,10 @@ export function useStudentFilterState(defaultSelected: StudentFilters = {}) {
     postAssessmentScoreBelow,
     isCertified,
     isCertificateSmsSent,
+    isCreationSyncedWithEdge,
+    isEnrollmentSyncedWithEdge,
+    isPreAssessmentSyncedWithEdge,
+    isPostAssessmentSyncedWithEdge,
     
     // Setters
     setSelectedGenders,
@@ -215,6 +241,10 @@ export function useStudentFilterState(defaultSelected: StudentFilters = {}) {
     setPostAssessmentScoreBelow,
     setIsCertified,
     setIsCertificateSmsSent,
+    setIsCreationSyncedWithEdge,
+    setIsEnrollmentSyncedWithEdge,
+    setIsPreAssessmentSyncedWithEdge,
+    setIsPostAssessmentSyncedWithEdge,
     
     // Handlers
     handleGenderToggle,

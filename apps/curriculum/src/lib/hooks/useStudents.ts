@@ -249,6 +249,11 @@ export interface StudentFilters {
   // Certificate filters
   isCertified?: boolean
   isCertificateSmsSent?: boolean
+  // Edge sync filters
+  isCreationSyncedWithEdge?: boolean
+  isEnrollmentSyncedWithEdge?: boolean
+  isPreAssessmentSyncedWithEdge?: boolean
+  isPostAssessmentSyncedWithEdge?: boolean
 }
 
 export function useStudents(
@@ -351,6 +356,20 @@ export function useStudents(
           }
           if (filters.isCertificateSmsSent !== undefined) {
             params.append('is-certificate-sms-sent', filters.isCertificateSmsSent.toString())
+          }
+
+          // Edge sync filters
+          if (filters.isCreationSyncedWithEdge !== undefined) {
+            params.append('is-creation-synced-with-edge', filters.isCreationSyncedWithEdge.toString())
+          }
+          if (filters.isEnrollmentSyncedWithEdge !== undefined) {
+            params.append('is-enrollment-synced-with-edge', filters.isEnrollmentSyncedWithEdge.toString())
+          }
+          if (filters.isPreAssessmentSyncedWithEdge !== undefined) {
+            params.append('is-pre-assessment-synced-with-edge', filters.isPreAssessmentSyncedWithEdge.toString())
+          }
+          if (filters.isPostAssessmentSyncedWithEdge !== undefined) {
+            params.append('is-post-assessment-synced-with-edge', filters.isPostAssessmentSyncedWithEdge.toString())
           }
           
           // Commented out for now - can be enabled later
