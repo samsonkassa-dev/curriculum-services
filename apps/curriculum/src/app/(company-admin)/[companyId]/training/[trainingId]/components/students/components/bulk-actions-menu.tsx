@@ -59,7 +59,7 @@ export function BulkActionsMenu({
       <DropdownMenuTrigger asChild>
         <Button
           variant="outline"
-          className="flex items-center gap-2 w-full sm:w-auto"
+          className="flex items-center gap-2 w-full sm:w-auto bg-[#0A2342]"
         >
           <MoreVertical className="h-4 w-4" />
           <span>Bulk Actions ({selectedCount})</span>
