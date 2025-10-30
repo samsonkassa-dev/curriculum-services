@@ -9,7 +9,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
-import { Settings, FileCheck, GraduationCap, UserPlus, Award, Trash2, Plus, Upload } from "lucide-react"
+import { Settings, FileCheck, GraduationCap, UserPlus, Plus, Upload } from "lucide-react"
 
 interface StudentsActionsMenuProps {
   // Student management
@@ -40,14 +40,8 @@ interface StudentsActionsMenuProps {
   isSyncingEnrollTraineesTraining: boolean
   isSyncingCreateTraineesTraining: boolean
   
-  // Bulk actions (require selection)
+  // Permissions
   hasEditPermission: boolean
-  isCompanyAdmin: boolean
-  isProjectManager: boolean
-  onGenerateCertificates: () => void
-  onBulkDelete: () => void
-  isGeneratingCertificates: boolean
-  isBulkDeleting: boolean
 }
 
 export function StudentsActionsMenu({
@@ -72,12 +66,6 @@ export function StudentsActionsMenu({
   isSyncingEnrollTraineesTraining,
   isSyncingCreateTraineesTraining,
   hasEditPermission,
-  isCompanyAdmin,
-  isProjectManager,
-  onGenerateCertificates,
-  onBulkDelete,
-  isGeneratingCertificates,
-  isBulkDeleting,
 }: StudentsActionsMenuProps) {
   if (!hasEditPermission && !hasSyncPermission) {
     return null
@@ -273,56 +261,6 @@ export function StudentsActionsMenu({
                 </>
               )}
             </DropdownMenuItem>
-            {hasEditPermission && hasSelection && <DropdownMenuSeparator />}
-          </>
-        )}
-        
-        {/* Bulk Actions - Only show when students are selected */}
-        {hasEditPermission && hasSelection && (
-          <>
-            <DropdownMenuLabel>Bulk Actions</DropdownMenuLabel>
-            
-            {/* Generate Certificate */}
-            {(isCompanyAdmin || isProjectManager) && selectedCount <= 10 && (
-              <DropdownMenuItem
-                onClick={onGenerateCertificates}
-                disabled={isGeneratingCertificates}
-                className="flex items-center gap-2 cursor-pointer"
-              >
-                {isGeneratingCertificates ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
-                    <span>Generating Certificates...</span>
-                  </>
-                ) : (
-                  <>
-                    <Award className="h-4 w-4 text-green-600" />
-                    <span>Generate Certificate{selectedCount > 1 ? 's' : ''}</span>
-                  </>
-                )}
-              </DropdownMenuItem>
-            )}
-            
-            {/* Delete */}
-            {selectedCount > 1 && (
-              <DropdownMenuItem
-                onClick={onBulkDelete}
-                disabled={isBulkDeleting}
-                className="flex items-center gap-2 cursor-pointer text-red-600 focus:text-red-600"
-              >
-                {isBulkDeleting ? (
-                  <>
-                    <div className="w-4 h-4 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />
-                    <span>Deleting...</span>
-                  </>
-                ) : (
-                  <>
-                    <Trash2 className="h-4 w-4" />
-                    <span>Delete {selectedCount} Students</span>
-                  </>
-                )}
-              </DropdownMenuItem>
-            )}
           </>
         )}
       </DropdownMenuContent>

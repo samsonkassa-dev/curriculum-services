@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Plus, Upload } from "lucide-react"
+import { Award, Trash2 } from "lucide-react"
 import Image from "next/image"
 import { StudentFilter } from "../student-filter"
 import { StudentFilters } from "@/lib/hooks/useStudents"
@@ -171,7 +171,55 @@ export function StudentsHeader({
         </div>
         
         {hasEditPermission && (
-          <div className="flex gap-2 w-full sm:w-auto sm:justify-end">
+          <div className="flex gap-2 w-full sm:w-auto sm:justify-end flex-wrap">
+            {/* Bulk Actions - Show when students are selected */}
+            {selectedCount > 0 && (
+              <>
+                {/* Generate Certificate */}
+                {(isCompanyAdmin || isProjectManager) && selectedCount <= 10 && (
+                  <Button
+                    onClick={onGenerateCertificates}
+                    disabled={isGeneratingCertificates}
+                    className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white"
+                  >
+                    {isGeneratingCertificates ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        <span>Generating...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Award className="h-4 w-4" />
+                        <span>Generate Certificate{selectedCount > 1 ? 's' : ''}</span>
+                      </>
+                    )}
+                  </Button>
+                )}
+                
+                {/* Delete */}
+                {selectedCount > 1 && (
+                  <Button
+                    onClick={onBulkDelete}
+                    disabled={isBulkDeleting}
+                    variant="destructive"
+                    className="flex items-center gap-2"
+                  >
+                    {isBulkDeleting ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        <span>Deleting...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Trash2 className="h-4 w-4" />
+                        <span>Delete {selectedCount} Students</span>
+                      </>
+                    )}
+                  </Button>
+                )}
+              </>
+            )}
+            
             <StudentsActionsMenu
               onAddStudent={onAddStudent}
               onShowImport={onShowImport}
@@ -194,12 +242,6 @@ export function StudentsHeader({
               isSyncingEnrollTraineesTraining={isSyncingEnrollTraineesTraining}
               isSyncingCreateTraineesTraining={isSyncingCreateTraineesTraining}
               hasEditPermission={hasEditPermission}
-              isCompanyAdmin={isCompanyAdmin}
-              isProjectManager={isProjectManager}
-              onGenerateCertificates={onGenerateCertificates}
-              onBulkDelete={onBulkDelete}
-              isGeneratingCertificates={isGeneratingCertificates}
-              isBulkDeleting={isBulkDeleting}
             />
           </div>
         )}
