@@ -55,6 +55,23 @@ export interface Disability {
   }
 }
 
+export interface Region {
+  id: string
+  name: string
+  description: string
+  alternateNames?: {
+    [key: string]: string
+  }
+  country: {
+    id: string
+    name: string
+    description: string
+    alternateNames?: {
+      [key: string]: string
+    }
+  }
+}
+
 export interface Zone {
   id: string
   name: string
@@ -645,47 +662,67 @@ export function useBulkImportStudents() {
 
 export function useBulkImportStudentsByName(enabled: boolean = true) {
   // Fetch countries (always needed for CSV validation)
-  const { data: countries } = useBaseData('country', {
+  // Use large page size instead of disablePagination to ensure we get all data
+  const countriesQuery = useBaseData('country', {
     enabled,
-    disablePagination: true
+    page: 1,
+    pageSize: 10000
   })
   
   // Fetch all regions, zones, and cities without pagination for client-side filtering
   // Only fetch when CSV import view is open to avoid unnecessary API calls
-  const { data: regions } = useBaseData('region', {
+  // Note: These endpoints return nested data (region includes country, zone includes region, etc.)
+  const regionsQuery = useBaseData('region', {
     enabled,
-    disablePagination: true
+    page: 1,
+    pageSize: 10000
   })
   
-  const { data: zones } = useBaseData('zone', {
+  const zonesQuery = useBaseData('zone', {
     enabled,
-    disablePagination: true
+    page: 1,
+    pageSize: 10000
   })
   
-  const { data: cities } = useBaseData('city', {
+  const citiesQuery = useBaseData('city', {
     enabled,
-    disablePagination: true
+    page: 1,
+    pageSize: 10000
   })
   
-  const { data: languages } = useBaseData('language', {
+  const languagesQuery = useBaseData('language', {
     enabled,
-    disablePagination: true
+    page: 1,
+    pageSize: 10000
   })
   
-  const { data: academicLevels } = useBaseData('academic-level', {
+  const academicLevelsQuery = useBaseData('academic-level', {
     enabled,
-    disablePagination: true
+    page: 1,
+    pageSize: 10000
   })
   
-  const { data: disabilities } = useBaseData('disability', {
+  const disabilitiesQuery = useBaseData('disability', {
     enabled,
-    disablePagination: true
+    page: 1,
+    pageSize: 10000
   })
   
-  const { data: marginalizedGroups } = useBaseData('marginalized-group', {
+  const marginalizedGroupsQuery = useBaseData('marginalized-group', {
     enabled,
-    disablePagination: true
+    page: 1,
+    pageSize: 10000
   })
+  
+  // Wrap data in objects with .data property for CSVImportView
+  const countries = countriesQuery.data ? { data: countriesQuery.data } : null
+  const regions = regionsQuery.data ? { data: regionsQuery.data } : null
+  const zones = zonesQuery.data ? { data: zonesQuery.data } : null
+  const cities = citiesQuery.data ? { data: citiesQuery.data } : null
+  const languages = languagesQuery.data ? { data: languagesQuery.data } : null
+  const academicLevels = academicLevelsQuery.data ? { data: academicLevelsQuery.data } : null
+  const disabilities = disabilitiesQuery.data ? { data: disabilitiesQuery.data } : null
+  const marginalizedGroups = marginalizedGroupsQuery.data ? { data: marginalizedGroupsQuery.data } : null
 
   const queryClient = useQueryClient()
 

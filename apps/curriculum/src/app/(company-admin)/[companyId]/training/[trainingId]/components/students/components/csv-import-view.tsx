@@ -113,17 +113,17 @@ export function CSVImportView({
         onImport={onImport}
         onFileUpload={onFileUpload}
         isSubmitting={isSubmitting}
-        languages={languages?.data as Language[] || []}
-        countries={countries?.data as Country[] || []}
+        languages={(languages?.data || []) as Language[]}
+        countries={(countries?.data || []) as Country[]}
         // Note: useBaseData returns flat BaseDataItem[], but CSVImportContent expects nested structures
         // Using type assertions here - the API endpoints /region, /zone, /city may return nested data
         // If validation fails, we may need to use cascading location endpoints to fetch with nested relationships
-        regions={regions?.data as Region[] || []}
-        zones={zones?.data as Zone[] || []}
-        cities={cities?.data as City[] || []}
-        academicLevels={academicLevels?.data as AcademicLevel[] || []}
-        disabilities={disabilities?.data as Disability[] || []}
-        marginalizedGroups={marginalizedGroups?.data as MarginalizedGroup[] || []}
+        regions={(regions?.data || []) as Region[]}
+        zones={(zones?.data || []) as Zone[]}
+        cities={(cities?.data || []) as City[]}
+        academicLevels={(academicLevels?.data || []) as AcademicLevel[]}
+        disabilities={(disabilities?.data || []) as Disability[]}
+        marginalizedGroups={(marginalizedGroups?.data || []) as MarginalizedGroup[]}
       />
     </>
   )

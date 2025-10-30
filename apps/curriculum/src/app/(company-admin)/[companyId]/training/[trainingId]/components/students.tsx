@@ -132,15 +132,7 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
     getSelectedStudentIds,
   })
   
-  // Form data for modal
-  const { 
-    languages, 
-    academicLevels,
-    disabilities,
-    marginalizedGroups,
-  } = useBulkImportStudentsByName(hasUploadedCSV)
-  
-  // CSV import data
+  // CSV import data - fetch data when import view is shown (not just when CSV is uploaded)
   const {
     countries: csvCountries,
     regions: csvRegions,
@@ -152,7 +144,14 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
     marginalizedGroups: csvMarginalizedGroups,
     bulkImportByName,
     isLoading: isBulkImporting
-  } = useBulkImportStudentsByName(hasUploadedCSV)
+  } = useBulkImportStudentsByName(showImportView)
+  
+  // Use same data for form modal (avoid duplicate fetching)
+  // Extract arrays from wrapper objects
+  const languages = csvLanguages?.data || []
+  const academicLevels = csvAcademicLevels?.data || []
+  const disabilities = csvDisabilities?.data || []
+  const marginalizedGroups = csvMarginalizedGroups?.data || []
   
   // Reset page when search changes
   useEffect(() => {
