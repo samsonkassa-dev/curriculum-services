@@ -56,6 +56,8 @@ export function StudentDataTable({
     getCoreRowModel: getCoreRowModel(),
     onSortingChange: setSorting,
     getSortedRowModel: getSortedRowModel(),
+    // Use stable row IDs so selection persists across pagination/sorting and maps to student IDs
+    getRowId: (row) => (row as Student).id,
     state: {
       sorting,
       rowSelection,

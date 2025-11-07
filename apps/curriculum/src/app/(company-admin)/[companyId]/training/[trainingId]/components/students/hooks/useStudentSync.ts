@@ -9,6 +9,8 @@ import {
   useSyncPostAssessmentTraining,
   useSyncEnrollTraineesTraining,
   useSyncCreateTraineesTraining,
+  useSyncCompletion,
+  useSyncCompletionTraining,
 } from "@/lib/hooks/useSyncEdgeIntegration"
 
 interface UseStudentSyncProps {
@@ -22,12 +24,14 @@ export function useStudentSync({ trainingId, getSelectedStudentIds }: UseStudent
   const { syncPostAssessment, isLoading: isSyncingPostAssessment } = useSyncPostAssessment()
   const { syncEnrollTrainees, isLoading: isSyncingEnrollTrainees } = useSyncEnrollTrainees()
   const { syncCreateTrainees, isLoading: isSyncingCreateTrainees } = useSyncCreateTrainees()
+  const { syncCompletion, isLoading: isSyncingCompletion } = useSyncCompletion()
   
   // Sync hooks for all students in training
   const { syncPreAssessmentTraining, isLoading: isSyncingPreAssessmentTraining } = useSyncPreAssessmentTraining()
   const { syncPostAssessmentTraining, isLoading: isSyncingPostAssessmentTraining } = useSyncPostAssessmentTraining()
   const { syncEnrollTraineesTraining, isLoading: isSyncingEnrollTraineesTraining } = useSyncEnrollTraineesTraining()
   const { syncCreateTraineesTraining, isLoading: isSyncingCreateTraineesTraining } = useSyncCreateTraineesTraining()
+  const { syncCompletionTraining, isLoading: isSyncingCompletionTraining } = useSyncCompletionTraining()
 
   // Sync handlers for selected students
   const handleSyncPreAssessment = useCallback(() => {
@@ -66,6 +70,15 @@ export function useStudentSync({ trainingId, getSelectedStudentIds }: UseStudent
     syncCreateTrainees({ traineeIds });
   }, [getSelectedStudentIds, syncCreateTrainees]);
 
+  const handleSyncCompletion = useCallback(() => {
+    const traineeIds = getSelectedStudentIds();
+    if (traineeIds.length === 0) {
+      toast.error('Please select students to sync');
+      return;
+    }
+    syncCompletion({ traineeIds });
+  }, [getSelectedStudentIds, syncCompletion]);
+
   // Sync handlers for all students in training
   const handleSyncPreAssessmentTraining = useCallback(() => {
     syncPreAssessmentTraining({ trainingId });
@@ -83,28 +96,36 @@ export function useStudentSync({ trainingId, getSelectedStudentIds }: UseStudent
     syncCreateTraineesTraining({ trainingId });
   }, [syncCreateTraineesTraining, trainingId]);
 
+  const handleSyncCompletionTraining = useCallback(() => {
+    syncCompletionTraining({ trainingId });
+  }, [syncCompletionTraining, trainingId]);
+
   return {
     // Selected students sync handlers
     handleSyncPreAssessment,
     handleSyncPostAssessment,
     handleSyncEnrollTrainees,
     handleSyncCreateTrainees,
+    handleSyncCompletion,
     
     // All students sync handlers
     handleSyncPreAssessmentTraining,
     handleSyncPostAssessmentTraining,
     handleSyncEnrollTraineesTraining,
     handleSyncCreateTraineesTraining,
+    handleSyncCompletionTraining,
     
     // Loading states
     isSyncingPreAssessment,
     isSyncingPostAssessment,
     isSyncingEnrollTrainees,
     isSyncingCreateTrainees,
+    isSyncingCompletion,
     isSyncingPreAssessmentTraining,
     isSyncingPostAssessmentTraining,
     isSyncingEnrollTraineesTraining,
     isSyncingCreateTraineesTraining,
+    isSyncingCompletionTraining,
   }
 }
 

@@ -254,9 +254,10 @@ export interface StudentFilters {
   isEnrollmentSyncedWithEdge?: boolean
   isPreAssessmentSyncedWithEdge?: boolean
   isPostAssessmentSyncedWithEdge?: boolean
-  // edge age filters
-  edgeAgeAbove?: number
-  edgeAgeBelow?: number
+  // Completion sync filter
+  isCompletionSyncedWithEdge?: boolean
+  // Edge relative date filter (single date, not range)
+  relativeDate?: string
 }
 
 export function useStudents(
@@ -374,12 +375,12 @@ export function useStudents(
           if (filters.isPostAssessmentSyncedWithEdge !== undefined) {
             params.append('is-post-assessment-synced-with-edge', filters.isPostAssessmentSyncedWithEdge.toString())
           }
-          // edge age filters
-          if (filters.edgeAgeAbove !== undefined) {
-            params.append('training-age-above', filters.edgeAgeAbove.toString())
+          if (filters.isCompletionSyncedWithEdge !== undefined) {
+            params.append('is-completion-synced-with-edge', filters.isCompletionSyncedWithEdge.toString())
           }
-          if (filters.edgeAgeBelow !== undefined) {
-            params.append('training-age-below', filters.edgeAgeBelow.toString())
+          // Edge relative date filter
+          if (filters.relativeDate !== undefined) {
+            params.append('relative-date', filters.relativeDate)
           }
           
           // Commented out for now - can be enabled later
@@ -414,7 +415,9 @@ export function useStudents(
         throw new Error(error?.response?.data?.message || 'Failed to load students')
       }
     },
-    enabled: !!trainingId
+    enabled: !!trainingId,
+    staleTime: 1000 * 30, // 30 seconds
+    refetchOnWindowFocus: false,
   })
 }
 
@@ -692,10 +695,11 @@ export function useBulkImportStudents() {
 export function useBulkImportStudentsByName(enabled: boolean = true) {
   // Fetch countries (always needed for CSV validation)
   // Use large page size instead of disablePagination to ensure we get all data
+  // Add staleTime to prevent refetching on every component mount
   const countriesQuery = useBaseData('country', {
     enabled,
     page: 1,
-    pageSize: 10000
+    pageSize: 1000 // Reduced from 10000 - most countries won't exceed this
   })
   
   // Fetch all regions, zones, and cities without pagination for client-side filtering
@@ -704,43 +708,43 @@ export function useBulkImportStudentsByName(enabled: boolean = true) {
   const regionsQuery = useBaseData('region', {
     enabled,
     page: 1,
-    pageSize: 10000
+    pageSize: 1000 // Reduced from 10000
   })
   
   const zonesQuery = useBaseData('zone', {
     enabled,
     page: 1,
-    pageSize: 10000
+    pageSize: 2000 // Reduced from 10000
   })
   
   const citiesQuery = useBaseData('city', {
     enabled,
     page: 1,
-    pageSize: 10000
+    pageSize: 3000 // Reduced from 10000 - most relevant use cases won't exceed this
   })
   
   const languagesQuery = useBaseData('language', {
     enabled,
     page: 1,
-    pageSize: 10000
+    pageSize: 200 // Reduced from 10000
   })
   
   const academicLevelsQuery = useBaseData('academic-level', {
     enabled,
     page: 1,
-    pageSize: 10000
+    pageSize: 50 // Reduced from 10000
   })
   
   const disabilitiesQuery = useBaseData('disability', {
     enabled,
     page: 1,
-    pageSize: 10000
+    pageSize: 100 // Reduced from 10000
   })
   
   const marginalizedGroupsQuery = useBaseData('marginalized-group', {
     enabled,
     page: 1,
-    pageSize: 10000
+    pageSize: 100 // Reduced from 10000
   })
   
   // Wrap data in objects with .data property for CSVImportView

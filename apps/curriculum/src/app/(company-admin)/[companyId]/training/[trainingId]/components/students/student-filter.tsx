@@ -18,6 +18,7 @@ import { LocationFilter } from "./filters/LocationFilter"
 import { MultiSelectFilter } from "./filters/MultiSelectFilter"
 import { CohortFilter } from "./filters/CohortFilter"
 import { RangeField } from "./filters/RangeField"
+import { DateField } from "./filters/DateField"
 import { ConsentFormFilter } from "./filters/ConsentFormFilter"
 import { SurveyFilter } from "./filters/SurveyFilter"
 import { AssessmentAttemptFilter } from "./filters/AssessmentAttemptFilter"
@@ -216,19 +217,13 @@ export function StudentFilter({
               placeholderBelow="e.g., 65"
             />
 
-            {/* Edge Age Filter */}
-            <RangeField
-              label="Edge Age Range"
-              aboveLabel="Above (years)"
-              belowLabel="Below (years)"
-              aboveValue={filterState.edgeAgeAbove}
-              belowValue={filterState.edgeAgeBelow}
-              setAbove={filterState.setEdgeAgeAbove}
-              setBelow={filterState.setEdgeAgeBelow}
-              min={0}
-              max={120}
-              placeholderAbove="e.g., 18"
-              placeholderBelow="e.g., 65"
+            {/* Edge Relative Date Filter */}
+            <DateField
+              label="Edge Relative Date"
+              value={filterState.relativeDate}
+              setValue={filterState.setRelativeDate}
+              placeholder="Select date"
+              description="Filter students by their training start date relative to this date"
             />
 
             {/* Consent Form Filter */}
@@ -322,10 +317,12 @@ export function StudentFilter({
               isEnrollmentSyncedWithEdge={filterState.isEnrollmentSyncedWithEdge}
               isPreAssessmentSyncedWithEdge={filterState.isPreAssessmentSyncedWithEdge}
               isPostAssessmentSyncedWithEdge={filterState.isPostAssessmentSyncedWithEdge}
+              isCompletionSyncedWithEdge={filterState.isCompletionSyncedWithEdge}
               onCreationSyncChange={filterState.setIsCreationSyncedWithEdge}
               onEnrollmentSyncChange={filterState.setIsEnrollmentSyncedWithEdge}
               onPreAssessmentSyncChange={filterState.setIsPreAssessmentSyncedWithEdge}
               onPostAssessmentSyncChange={filterState.setIsPostAssessmentSyncedWithEdge}
+              onCompletionSyncChange={filterState.setIsCompletionSyncedWithEdge}
             />
           </div>
         </div>

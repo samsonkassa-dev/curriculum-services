@@ -74,7 +74,8 @@ export function useSubmitCertificate() {
           traineeIds: data.traineeIds
         },
         {
-          headers: { Authorization: `Bearer ${token}` }
+          headers: { Authorization: `Bearer ${token}` },
+          timeout: 30000 // 30 second timeout to prevent hanging
         }
       )
       
@@ -91,22 +92,24 @@ export function useSubmitCertificate() {
           ? 'Certificate generated successfully' 
           : `${count} certificates generated successfully`
       )
-      // Invalidate certificates query to trigger refetch
+      // Invalidate queries to refresh data
       queryClient.invalidateQueries({
         queryKey: ['certificates']
       })
-      // Invalidate students query to refresh certificate URLs in the table
       queryClient.invalidateQueries({
         queryKey: ['students']
       })
     },
     onError: (error) => {
+      // Show error toast
       if (axios.isAxiosError(error)) {
         toast.error(error.response?.data?.message || 'Failed to generate certificate(s)')
       } else {
         toast.error('Failed to generate certificate(s)')
       }
-    }
+    },
+    // Prevent mutation from retrying on error to avoid multiple toast notifications
+    retry: false,
   })
 }
 

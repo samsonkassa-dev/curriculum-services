@@ -6,10 +6,12 @@ interface EdgeSyncFilterProps {
   isEnrollmentSyncedWithEdge?: boolean
   isPreAssessmentSyncedWithEdge?: boolean
   isPostAssessmentSyncedWithEdge?: boolean
+  isCompletionSyncedWithEdge?: boolean
   onCreationSyncChange: (value: boolean | undefined) => void
   onEnrollmentSyncChange: (value: boolean | undefined) => void
   onPreAssessmentSyncChange: (value: boolean | undefined) => void
   onPostAssessmentSyncChange: (value: boolean | undefined) => void
+  onCompletionSyncChange: (value: boolean | undefined) => void
 }
 
 export function EdgeSyncFilter({ 
@@ -17,10 +19,12 @@ export function EdgeSyncFilter({
   isEnrollmentSyncedWithEdge,
   isPreAssessmentSyncedWithEdge,
   isPostAssessmentSyncedWithEdge,
+  isCompletionSyncedWithEdge,
   onCreationSyncChange,
   onEnrollmentSyncChange,
   onPreAssessmentSyncChange,
-  onPostAssessmentSyncChange
+  onPostAssessmentSyncChange,
+  onCompletionSyncChange
 }: EdgeSyncFilterProps) {
   return (
     <div className="space-y-3">
@@ -92,6 +96,23 @@ export function EdgeSyncFilter({
             className="text-base font-normal"
           >
             Post-Assessment Synced
+          </Label>
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <Checkbox
+            id="completion-synced"
+            checked={isCompletionSyncedWithEdge === true}
+            onCheckedChange={(checked) => 
+              onCompletionSyncChange(checked ? true : undefined)
+            }
+            className="h-5 w-5 rounded-[4px] border-gray-300 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
+          />
+          <Label 
+            htmlFor="completion-synced"
+            className="text-base font-normal"
+          >
+            Completion Synced
           </Label>
         </div>
       </div>

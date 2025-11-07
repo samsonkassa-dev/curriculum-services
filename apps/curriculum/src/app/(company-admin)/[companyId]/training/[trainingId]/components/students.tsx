@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect, useMemo, useCallback } from "react"
+import { useRouter } from "next/navigation"
 import { useUserRole } from "@/lib/hooks/useUserRole"
 import { Loading } from "@/components/ui/loading"
 import { useStudents, useBulkImportStudentsByName, Student, StudentFilters, CreateStudentByNameData } from "@/lib/hooks/useStudents"
@@ -24,6 +25,8 @@ interface StudentsComponentProps {
 }
 
 export function StudentsComponent({ trainingId }: StudentsComponentProps) {
+  const router = useRouter()
+  
   // State
   const [page, setPage] = useState(1)
   const [pageSize, setPageSize] = useState(10)
@@ -41,22 +44,17 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
   const hasEditPermission = useMemo(() => isCompanyAdmin || isProjectManager || isTrainingAdmin, [isCompanyAdmin, isProjectManager, isTrainingAdmin])
   const hasSyncPermission = useMemo(() => isProjectManager || isCompanyAdmin, [isProjectManager, isCompanyAdmin])
   
-  // Memoize filters
-  const memoizedFilters = useMemo(() => filters, [filters])
+  // Memoize filters using JSON stringify to prevent unnecessary re-renders from object reference changes
+  const memoizedFilters = useMemo(() => filters, [JSON.stringify(filters)])
   
   // Students data queries
   const { data, isLoading } = useStudents(trainingId, page, pageSize, undefined, undefined, debouncedSearch, memoizedFilters)
   
+  // Only check for empty state when no search/filters - use main query data
   const shouldFetchAllStudents = !debouncedSearch.trim() && Object.keys(memoizedFilters).length === 0
-  const { data: allStudentsData, isLoading: isLoadingAllStudents } = useStudents(
-    shouldFetchAllStudents ? trainingId : '',
-    1, 
-    1, 
-    undefined, 
-    undefined, 
-    "",
-    {}
-  )
+  // Use the main query data for empty state check instead of a separate query
+  const allStudentsData = shouldFetchAllStudents ? data : null
+  const isLoadingAllStudents = shouldFetchAllStudents ? isLoading : false
   
   // Pagination data
   const paginationData = useMemo(() => ({
@@ -115,18 +113,22 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
     handleSyncPostAssessment,
     handleSyncEnrollTrainees,
     handleSyncCreateTrainees,
+    handleSyncCompletion,
     handleSyncPreAssessmentTraining,
     handleSyncPostAssessmentTraining,
     handleSyncEnrollTraineesTraining,
     handleSyncCreateTraineesTraining,
+    handleSyncCompletionTraining,
     isSyncingPreAssessment,
     isSyncingPostAssessment,
     isSyncingEnrollTrainees,
     isSyncingCreateTrainees,
+    isSyncingCompletion,
     isSyncingPreAssessmentTraining,
     isSyncingPostAssessmentTraining,
     isSyncingEnrollTraineesTraining,
     isSyncingCreateTraineesTraining,
+    isSyncingCompletionTraining,
   } = useStudentSync({
     trainingId,
     getSelectedStudentIds,
@@ -153,11 +155,10 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
   const disabilities = csvDisabilities?.data || []
   const marginalizedGroups = csvMarginalizedGroups?.data || []
   
-  // Reset page when search changes
+  // Reset page when debounced search actually changes (not on every searchQuery keystroke)
   useEffect(() => {
-    if (debouncedSearch !== searchQuery) return
     setPage(1)
-  }, [debouncedSearch, searchQuery])
+  }, [debouncedSearch, memoizedFilters])
   
   // Handlers
   const handleAddStudent = useCallback(() => {
@@ -244,8 +245,8 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
     return hasNoSearchQuery && hasNoFilters && hasNoStudentsAtAll
   }, [debouncedSearch, memoizedFilters, allStudentsData?.totalElements])
   
-  // Loading state
-  if (isLoadingAllStudents && !allStudentsData) {
+  // Show loading only on initial load (when no data exists yet)
+  if (isLoading && !data) {
     return <Loading />
   }
   
@@ -297,18 +298,22 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
                   onSyncPostAssessment={handleSyncPostAssessment}
                   onSyncEnrollTrainees={handleSyncEnrollTrainees}
                   onSyncCreateTrainees={handleSyncCreateTrainees}
+                  onSyncCompletion={handleSyncCompletion}
                   isSyncingPreAssessment={isSyncingPreAssessment}
                   isSyncingPostAssessment={isSyncingPostAssessment}
                   isSyncingEnrollTrainees={isSyncingEnrollTrainees}
                   isSyncingCreateTrainees={isSyncingCreateTrainees}
+                  isSyncingCompletion={isSyncingCompletion}
                   onSyncPreAssessmentTraining={handleSyncPreAssessmentTraining}
                   onSyncPostAssessmentTraining={handleSyncPostAssessmentTraining}
                   onSyncEnrollTraineesTraining={handleSyncEnrollTraineesTraining}
                   onSyncCreateTraineesTraining={handleSyncCreateTraineesTraining}
+                  onSyncCompletionTraining={handleSyncCompletionTraining}
                   isSyncingPreAssessmentTraining={isSyncingPreAssessmentTraining}
                   isSyncingPostAssessmentTraining={isSyncingPostAssessmentTraining}
                   isSyncingEnrollTraineesTraining={isSyncingEnrollTraineesTraining}
                   isSyncingCreateTraineesTraining={isSyncingCreateTraineesTraining}
+                  isSyncingCompletionTraining={isSyncingCompletionTraining}
                   isCompanyAdmin={isCompanyAdmin}
                   isProjectManager={isProjectManager}
                   onGenerateCertificates={handleGenerateCertificates}
@@ -377,7 +382,13 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
         
         <CertificateDateModal
           isOpen={certificateDateModalOpen}
-          onClose={() => setCertificateDateModalOpen(false)}
+          onClose={() => {
+            setCertificateDateModalOpen(false);
+            // Refresh page when modal closes to prevent UI freeze
+            setTimeout(() => {
+              router.refresh();
+            }, 300);
+          }}
           onConfirm={handleConfirmCertificateGeneration}
           studentCount={selectedStudentsCount}
           isGenerating={isGeneratingCertificates}

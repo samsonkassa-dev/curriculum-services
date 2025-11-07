@@ -47,10 +47,10 @@ export function useStudentFilterState(defaultSelected: StudentFilters = {}) {
   const [isEnrollmentSyncedWithEdge, setIsEnrollmentSyncedWithEdge] = useState<boolean | undefined>(defaultSelected.isEnrollmentSyncedWithEdge)
   const [isPreAssessmentSyncedWithEdge, setIsPreAssessmentSyncedWithEdge] = useState<boolean | undefined>(defaultSelected.isPreAssessmentSyncedWithEdge)
   const [isPostAssessmentSyncedWithEdge, setIsPostAssessmentSyncedWithEdge] = useState<boolean | undefined>(defaultSelected.isPostAssessmentSyncedWithEdge)
+  const [isCompletionSyncedWithEdge, setIsCompletionSyncedWithEdge] = useState<boolean | undefined>(defaultSelected.isCompletionSyncedWithEdge)
 
-  // Edge age filters
-  const [edgeAgeAbove, setEdgeAgeAbove] = useState<number | undefined>(defaultSelected.edgeAgeAbove)
-  const [edgeAgeBelow, setEdgeAgeBelow] = useState<number | undefined>(defaultSelected.edgeAgeBelow)
+  // Edge relative date filter (single date)
+  const [relativeDate, setRelativeDate] = useState<Date | undefined>(undefined)
 
   // Check if any filters are active
   const hasActiveFilters = () => {
@@ -79,8 +79,8 @@ export function useStudentFilterState(defaultSelected: StudentFilters = {}) {
       isEnrollmentSyncedWithEdge !== undefined ||
       isPreAssessmentSyncedWithEdge !== undefined ||
       isPostAssessmentSyncedWithEdge !== undefined ||
-      edgeAgeAbove !== undefined ||
-      edgeAgeBelow !== undefined
+      isCompletionSyncedWithEdge !== undefined ||
+      relativeDate !== undefined
     )
   }
 
@@ -111,8 +111,8 @@ export function useStudentFilterState(defaultSelected: StudentFilters = {}) {
     if (isEnrollmentSyncedWithEdge !== undefined) count++
     if (isPreAssessmentSyncedWithEdge !== undefined) count++
     if (isPostAssessmentSyncedWithEdge !== undefined) count++
-    if (edgeAgeAbove !== undefined) count++
-    if (edgeAgeBelow !== undefined) count++
+    if (isCompletionSyncedWithEdge !== undefined) count++
+    if (relativeDate !== undefined) count++
     return count
   }
 
@@ -144,8 +144,16 @@ export function useStudentFilterState(defaultSelected: StudentFilters = {}) {
     if (isEnrollmentSyncedWithEdge !== undefined) filters.isEnrollmentSyncedWithEdge = isEnrollmentSyncedWithEdge
     if (isPreAssessmentSyncedWithEdge !== undefined) filters.isPreAssessmentSyncedWithEdge = isPreAssessmentSyncedWithEdge
     if (isPostAssessmentSyncedWithEdge !== undefined) filters.isPostAssessmentSyncedWithEdge = isPostAssessmentSyncedWithEdge
-    if (edgeAgeAbove !== undefined) filters.edgeAgeAbove = edgeAgeAbove
-    if (edgeAgeBelow !== undefined) filters.edgeAgeBelow = edgeAgeBelow
+    if (isCompletionSyncedWithEdge !== undefined) filters.isCompletionSyncedWithEdge = isCompletionSyncedWithEdge
+    
+    // Format relative date as YYYY-MM-DD string for API
+    if (relativeDate !== undefined) {
+      const year = relativeDate.getFullYear()
+      const month = String(relativeDate.getMonth() + 1).padStart(2, '0')
+      const day = String(relativeDate.getDate()).padStart(2, '0')
+      filters.relativeDate = `${year}-${month}-${day}`
+    }
+    
     return filters
   }
 
@@ -177,8 +185,8 @@ export function useStudentFilterState(defaultSelected: StudentFilters = {}) {
     setIsEnrollmentSyncedWithEdge(undefined)
     setIsPreAssessmentSyncedWithEdge(undefined)
     setIsPostAssessmentSyncedWithEdge(undefined)
-    setEdgeAgeAbove(undefined)
-    setEdgeAgeBelow(undefined)
+    setIsCompletionSyncedWithEdge(undefined)
+    setRelativeDate(undefined)
   }
 
   // Handle gender toggle
@@ -228,8 +236,8 @@ export function useStudentFilterState(defaultSelected: StudentFilters = {}) {
     isEnrollmentSyncedWithEdge,
     isPreAssessmentSyncedWithEdge,
     isPostAssessmentSyncedWithEdge,
-    edgeAgeAbove,
-    edgeAgeBelow,
+    isCompletionSyncedWithEdge,
+    relativeDate,
     // Setters
     setSelectedGenders,
     setSelectedLanguageIds,
@@ -257,8 +265,8 @@ export function useStudentFilterState(defaultSelected: StudentFilters = {}) {
     setIsEnrollmentSyncedWithEdge,
     setIsPreAssessmentSyncedWithEdge,
     setIsPostAssessmentSyncedWithEdge,
-    setEdgeAgeAbove,
-    setEdgeAgeBelow,
+    setIsCompletionSyncedWithEdge,
+    setRelativeDate,
     // Handlers
     handleGenderToggle,
     handleCountryChange,

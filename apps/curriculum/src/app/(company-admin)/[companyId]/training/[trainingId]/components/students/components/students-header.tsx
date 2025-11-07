@@ -71,19 +71,23 @@ interface StudentsHeaderProps {
   onSyncPostAssessment: () => void
   onSyncEnrollTrainees: () => void
   onSyncCreateTrainees: () => void
+  onSyncCompletion: () => void
   isSyncingPreAssessment: boolean
   isSyncingPostAssessment: boolean
   isSyncingEnrollTrainees: boolean
   isSyncingCreateTrainees: boolean
+  isSyncingCompletion: boolean
   // Sync handlers for all students
   onSyncPreAssessmentTraining: () => void
   onSyncPostAssessmentTraining: () => void
   onSyncEnrollTraineesTraining: () => void
   onSyncCreateTraineesTraining: () => void
+  onSyncCompletionTraining: () => void
   isSyncingPreAssessmentTraining: boolean
   isSyncingPostAssessmentTraining: boolean
   isSyncingEnrollTraineesTraining: boolean
   isSyncingCreateTraineesTraining: boolean
+  isSyncingCompletionTraining: boolean
   // Bulk actions
   isCompanyAdmin: boolean
   isProjectManager: boolean
@@ -113,18 +117,22 @@ export function StudentsHeader({
   onSyncPostAssessment,
   onSyncEnrollTrainees,
   onSyncCreateTrainees,
+  onSyncCompletion,
   isSyncingPreAssessment,
   isSyncingPostAssessment,
   isSyncingEnrollTrainees,
   isSyncingCreateTrainees,
+  isSyncingCompletion,
   onSyncPreAssessmentTraining,
   onSyncPostAssessmentTraining,
   onSyncEnrollTraineesTraining,
   onSyncCreateTraineesTraining,
+  onSyncCompletionTraining,
   isSyncingPreAssessmentTraining,
   isSyncingPostAssessmentTraining,
   isSyncingEnrollTraineesTraining,
   isSyncingCreateTraineesTraining,
+  isSyncingCompletionTraining,
   isCompanyAdmin,
   isProjectManager,
   onGenerateCertificates,
@@ -184,12 +192,14 @@ export function StudentsHeader({
               onSyncPostAssessment={onSyncPostAssessment}
               onSyncEnrollTrainees={onSyncEnrollTrainees}
               onSyncCreateTrainees={onSyncCreateTrainees}
+              onSyncCompletion={onSyncCompletion}
               onBulkDelete={onBulkDelete}
               isGeneratingCertificates={isGeneratingCertificates}
               isSyncingPreAssessment={isSyncingPreAssessment}
               isSyncingPostAssessment={isSyncingPostAssessment}
               isSyncingEnrollTrainees={isSyncingEnrollTrainees}
               isSyncingCreateTrainees={isSyncingCreateTrainees}
+              isSyncingCompletion={isSyncingCompletion}
               isBulkDeleting={isBulkDeleting}
             />
             
@@ -201,10 +211,12 @@ export function StudentsHeader({
               onSyncPostAssessmentTraining={onSyncPostAssessmentTraining}
               onSyncEnrollTraineesTraining={onSyncEnrollTraineesTraining}
               onSyncCreateTraineesTraining={onSyncCreateTraineesTraining}
+              onSyncCompletionTraining={onSyncCompletionTraining}
               isSyncingPreAssessmentTraining={isSyncingPreAssessmentTraining}
               isSyncingPostAssessmentTraining={isSyncingPostAssessmentTraining}
               isSyncingEnrollTraineesTraining={isSyncingEnrollTraineesTraining}
               isSyncingCreateTraineesTraining={isSyncingCreateTraineesTraining}
+              isSyncingCompletionTraining={isSyncingCompletionTraining}
               hasEditPermission={hasEditPermission}
             />
           </div>
