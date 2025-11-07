@@ -216,6 +216,21 @@ export function StudentFilter({
               placeholderBelow="e.g., 65"
             />
 
+            {/* Edge Age Filter */}
+            <RangeField
+              label="Edge Age Range"
+              aboveLabel="Above (years)"
+              belowLabel="Below (years)"
+              aboveValue={filterState.edgeAgeAbove}
+              belowValue={filterState.edgeAgeBelow}
+              setAbove={filterState.setEdgeAgeAbove}
+              setBelow={filterState.setEdgeAgeBelow}
+              min={0}
+              max={120}
+              placeholderAbove="e.g., 18"
+              placeholderBelow="e.g., 65"
+            />
+
             {/* Consent Form Filter */}
             <ConsentFormFilter
               hasConsentForm={filterState.hasConsentForm}

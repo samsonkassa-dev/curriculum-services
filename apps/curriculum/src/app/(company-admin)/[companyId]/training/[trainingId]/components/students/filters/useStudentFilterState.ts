@@ -48,6 +48,10 @@ export function useStudentFilterState(defaultSelected: StudentFilters = {}) {
   const [isPreAssessmentSyncedWithEdge, setIsPreAssessmentSyncedWithEdge] = useState<boolean | undefined>(defaultSelected.isPreAssessmentSyncedWithEdge)
   const [isPostAssessmentSyncedWithEdge, setIsPostAssessmentSyncedWithEdge] = useState<boolean | undefined>(defaultSelected.isPostAssessmentSyncedWithEdge)
 
+  // Edge age filters
+  const [edgeAgeAbove, setEdgeAgeAbove] = useState<number | undefined>(defaultSelected.edgeAgeAbove)
+  const [edgeAgeBelow, setEdgeAgeBelow] = useState<number | undefined>(defaultSelected.edgeAgeBelow)
+
   // Check if any filters are active
   const hasActiveFilters = () => {
     return (
@@ -74,7 +78,9 @@ export function useStudentFilterState(defaultSelected: StudentFilters = {}) {
       isCreationSyncedWithEdge !== undefined ||
       isEnrollmentSyncedWithEdge !== undefined ||
       isPreAssessmentSyncedWithEdge !== undefined ||
-      isPostAssessmentSyncedWithEdge !== undefined
+      isPostAssessmentSyncedWithEdge !== undefined ||
+      edgeAgeAbove !== undefined ||
+      edgeAgeBelow !== undefined
     )
   }
 
@@ -105,6 +111,8 @@ export function useStudentFilterState(defaultSelected: StudentFilters = {}) {
     if (isEnrollmentSyncedWithEdge !== undefined) count++
     if (isPreAssessmentSyncedWithEdge !== undefined) count++
     if (isPostAssessmentSyncedWithEdge !== undefined) count++
+    if (edgeAgeAbove !== undefined) count++
+    if (edgeAgeBelow !== undefined) count++
     return count
   }
 
@@ -136,7 +144,8 @@ export function useStudentFilterState(defaultSelected: StudentFilters = {}) {
     if (isEnrollmentSyncedWithEdge !== undefined) filters.isEnrollmentSyncedWithEdge = isEnrollmentSyncedWithEdge
     if (isPreAssessmentSyncedWithEdge !== undefined) filters.isPreAssessmentSyncedWithEdge = isPreAssessmentSyncedWithEdge
     if (isPostAssessmentSyncedWithEdge !== undefined) filters.isPostAssessmentSyncedWithEdge = isPostAssessmentSyncedWithEdge
-    
+    if (edgeAgeAbove !== undefined) filters.edgeAgeAbove = edgeAgeAbove
+    if (edgeAgeBelow !== undefined) filters.edgeAgeBelow = edgeAgeBelow
     return filters
   }
 
@@ -168,6 +177,8 @@ export function useStudentFilterState(defaultSelected: StudentFilters = {}) {
     setIsEnrollmentSyncedWithEdge(undefined)
     setIsPreAssessmentSyncedWithEdge(undefined)
     setIsPostAssessmentSyncedWithEdge(undefined)
+    setEdgeAgeAbove(undefined)
+    setEdgeAgeBelow(undefined)
   }
 
   // Handle gender toggle
@@ -217,7 +228,8 @@ export function useStudentFilterState(defaultSelected: StudentFilters = {}) {
     isEnrollmentSyncedWithEdge,
     isPreAssessmentSyncedWithEdge,
     isPostAssessmentSyncedWithEdge,
-    
+    edgeAgeAbove,
+    edgeAgeBelow,
     // Setters
     setSelectedGenders,
     setSelectedLanguageIds,
@@ -245,7 +257,8 @@ export function useStudentFilterState(defaultSelected: StudentFilters = {}) {
     setIsEnrollmentSyncedWithEdge,
     setIsPreAssessmentSyncedWithEdge,
     setIsPostAssessmentSyncedWithEdge,
-    
+    setEdgeAgeAbove,
+    setEdgeAgeBelow,
     // Handlers
     handleGenderToggle,
     handleCountryChange,

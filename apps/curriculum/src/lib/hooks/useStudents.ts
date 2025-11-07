@@ -254,6 +254,9 @@ export interface StudentFilters {
   isEnrollmentSyncedWithEdge?: boolean
   isPreAssessmentSyncedWithEdge?: boolean
   isPostAssessmentSyncedWithEdge?: boolean
+  // edge age filters
+  edgeAgeAbove?: number
+  edgeAgeBelow?: number
 }
 
 export function useStudents(
@@ -370,6 +373,13 @@ export function useStudents(
           }
           if (filters.isPostAssessmentSyncedWithEdge !== undefined) {
             params.append('is-post-assessment-synced-with-edge', filters.isPostAssessmentSyncedWithEdge.toString())
+          }
+          // edge age filters
+          if (filters.edgeAgeAbove !== undefined) {
+            params.append('training-age-above', filters.edgeAgeAbove.toString())
+          }
+          if (filters.edgeAgeBelow !== undefined) {
+            params.append('training-age-below', filters.edgeAgeBelow.toString())
           }
           
           // Commented out for now - can be enabled later
