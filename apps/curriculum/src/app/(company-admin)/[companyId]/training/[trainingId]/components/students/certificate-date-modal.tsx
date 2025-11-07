@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { DatePicker } from "@/components/ui/date-picker"
+import { Calendar } from "@/components/ui/calendar"
 import { Award, Users } from "lucide-react"
 
 interface CertificateDateModalProps {
@@ -50,7 +50,7 @@ export function CertificateDateModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[420px]">
+      <DialogContent className="sm:max-w-[420px] max-h-[85vh]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <div className="p-2 rounded-lg bg-green-100">
@@ -60,7 +60,7 @@ export function CertificateDateModal({
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-4 py-2">
+        <div className="space-y-4 py-2 max-h-[60vh] overflow-y-auto pr-1">
           {/* Student count info */}
           <div className="flex items-center gap-3 p-3 rounded-lg bg-blue-50 border border-blue-100">
             <div className="p-1.5 rounded-full bg-blue-100">
@@ -81,12 +81,15 @@ export function CertificateDateModal({
             <label className="text-sm font-medium text-gray-700">
               Issue Date
             </label>
-            <DatePicker
-              date={selectedDate}
-              setDate={setSelectedDate}
-              placeholder="Select issue date"
-              disabled={(date) => date > new Date()}
-            />
+            <div className="rounded-md border border-gray-200 p-2 bg-white">
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={setSelectedDate}
+                disabled={(date) => date > new Date()}
+                initialFocus
+              />
+            </div>
           </div>
         </div>
 

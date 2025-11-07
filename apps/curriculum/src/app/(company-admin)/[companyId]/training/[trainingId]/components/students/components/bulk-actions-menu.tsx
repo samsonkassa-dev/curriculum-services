@@ -75,7 +75,7 @@ export function BulkActionsMenu({
         {/* Generate Certificate */}
         {(isCompanyAdmin || isProjectManager) && selectedCount <= 10 && (
           <DropdownMenuItem
-            onSelect={(e) => {
+            onSelect={() => {
               // Ensure menu closes before opening modal to avoid any lingering portals
               setOpen(false)
               onGenerateCertificates()
