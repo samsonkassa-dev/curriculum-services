@@ -118,6 +118,9 @@ export function AddDataDialog({
     countries: cityCountries,
     regions: cityRegions,
     zones: cityZones,
+    isLoadingCountries: isLoadingCityCountries,
+    isLoadingRegions: isLoadingCityRegions,
+    isLoadingZones: isLoadingCityZones,
   } = useSingleCascadingLocation(
     type === "city" ? cityCountryId : undefined,
     type === "city" ? cityRegionId : undefined
@@ -214,9 +217,17 @@ export function AddDataDialog({
                     setCityRegionId("");
                     setZoneId("");
                   }}
+                  disabled={isLoadingCityCountries}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select country" />
+                    {isLoadingCityCountries ? (
+                      <div className="flex items-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span>Loading countries...</span>
+                      </div>
+                    ) : (
+                      <SelectValue placeholder="Select country" />
+                    )}
                   </SelectTrigger>
                   <SelectContent>
                     {cityCountries?.map((country: BaseDataItem) => (
@@ -238,10 +249,17 @@ export function AddDataDialog({
                     // Clear dependent selection
                     setZoneId("");
                   }}
-                  disabled={!cityCountryId}
+                  disabled={!cityCountryId || isLoadingCityRegions}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder={!cityCountryId ? "Select country first" : "Select region"} />
+                    {isLoadingCityRegions ? (
+                      <div className="flex items-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span>Loading regions...</span>
+                      </div>
+                    ) : (
+                      <SelectValue placeholder={!cityCountryId ? "Select country first" : "Select region"} />
+                    )}
                   </SelectTrigger>
                   <SelectContent>
                     {cityRegions?.map((region: BaseDataItem) => (
@@ -259,10 +277,17 @@ export function AddDataDialog({
                 <Select 
                   value={zoneId} 
                   onValueChange={setZoneId}
-                  disabled={!cityRegionId}
+                  disabled={!cityRegionId || isLoadingCityZones}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder={!cityRegionId ? "Select region first" : "Select zone"} />
+                    {isLoadingCityZones ? (
+                      <div className="flex items-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        <span>Loading zones...</span>
+                      </div>
+                    ) : (
+                      <SelectValue placeholder={!cityRegionId ? "Select region first" : "Select zone"} />
+                    )}
                   </SelectTrigger>
                   <SelectContent>
                     {cityZones?.map((zone: BaseDataItem) => (
