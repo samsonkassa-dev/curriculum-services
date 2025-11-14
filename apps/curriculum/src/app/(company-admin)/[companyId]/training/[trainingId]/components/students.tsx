@@ -134,7 +134,8 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
     getSelectedStudentIds,
   })
   
-  // CSV import data - fetch data when import view is shown (not just when CSV is uploaded)
+  // CSV import data - fetch data when import view OR form modal is shown (not just when CSV is uploaded)
+  // This ensures we have the necessary data for both CSV import and student add/edit forms
   const {
     countries: csvCountries,
     regions: csvRegions,
@@ -146,7 +147,7 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
     marginalizedGroups: csvMarginalizedGroups,
     bulkImportByNameAsync,
     isLoading: isBulkImporting
-  } = useBulkImportStudentsByName(showImportView)
+  } = useBulkImportStudentsByName(showImportView || showModal)
   
   // Use same data for form modal (avoid duplicate fetching)
   // Extract arrays from wrapper objects

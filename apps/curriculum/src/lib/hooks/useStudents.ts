@@ -426,25 +426,25 @@ export function useAddStudent() {
   const { data: languages } = useBaseData('language', {
     enabled: true,
     page: 1,
-    pageSize: 50 // Most applications won't have more than 50 languages
+    pageSize: 200 // Increased to match bulk import requirements
   })
   
   const { data: academicLevels } = useBaseData('academic-level', {
     enabled: true,
     page: 1,
-    pageSize: 20 // Academic levels are typically limited
+    pageSize: 50 // Increased for better coverage
   })
   
   const { data: disabilities } = useBaseData('disability', {
     enabled: true,
     page: 1,
-    pageSize: 30 // Reasonable limit for disabilities
+    pageSize: 100 // Increased to match bulk import for consistency
   })
   
   const { data: marginalizedGroups } = useBaseData('marginalized-group', {
     enabled: true,
     page: 1,
-    pageSize: 20 // Reasonable limit for marginalized groups
+    pageSize: 100 // Increased to match bulk import for consistency
   })
 
   // Location data will be handled by cascading location hook in components
