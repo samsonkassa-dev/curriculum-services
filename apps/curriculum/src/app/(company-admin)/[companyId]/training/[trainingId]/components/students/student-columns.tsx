@@ -5,12 +5,18 @@ import { useQueryClient } from "@tanstack/react-query"
 import { Student, useUploadConsentForm, useDeleteConsentForm } from "@/lib/hooks/useStudents"
 import { format } from "date-fns"
 import { Button } from "@/components/ui/button"
-import { Pencil, Trash2, Upload, FileText, Loader2 } from "lucide-react"
+import { Pencil, Trash2, Upload, FileText, Loader2, MoreVertical } from "lucide-react"
 export type { ColumnDef } from "@tanstack/react-table"
 import { useState, useRef, useEffect } from "react"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 import { DeleteConsentFormDialog } from "./delete-consent-form-dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 // Base student columns without selection - for when selection is not needed
 export const studentColumnsBase: ColumnDef<Student>[] = [
@@ -162,27 +168,37 @@ export const createActionsColumn = (
     }
     
     return (
-      <div className="flex items-center gap-2">
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          onClick={() => handleEditStudent(student)}
-          className="h-8 w-8 p-0"
-          title="Edit"
-        >
-          <Pencil className="h-4 w-4 text-gray-500" />
-        </Button>
-        
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          onClick={() => handleDeleteStudent(student)}
-          className="h-8 w-8 p-0"
-          title="Delete"
-        >
-          <Trash2 className="h-4 w-4 text-red-500" />
-        </Button>
-      </div>
+      <DropdownMenu modal={false}>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-8 w-8 p-0"
+          >
+            <MoreVertical className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem 
+            onClick={() => handleEditStudent(student)}
+            onSelect={(e) => e.preventDefault()}
+          >
+            <Pencil className="mr-2 h-4 w-4" />
+            Edit
+          </DropdownMenuItem>
+          <DropdownMenuItem 
+            onClick={(e) => {
+              e.preventDefault()
+              // Small delay to let dropdown close first
+              setTimeout(() => handleDeleteStudent(student), 0)
+            }}
+            className="text-red-600 focus:text-red-600"
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     )
   }
 })

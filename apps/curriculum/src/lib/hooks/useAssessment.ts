@@ -672,6 +672,51 @@ export function useUpdateAssessment() {
   });
 }
 
+// Hook to delete assessment
+export function useDeleteAssessment() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (assessmentId: string) => {
+      const token = getCookie("token");
+      
+      const response = await axios.delete(
+        `${process.env.NEXT_PUBLIC_API}/assessment/${assessmentId}`,
+        {
+          headers: { 
+            Authorization: `Bearer ${token}` 
+          }
+        }
+      );
+      
+      return response.data;
+    },
+    onSuccess: (data) => {
+      toast.success("Success", { 
+        description: data.message || "Assessment deleted successfully" 
+      });
+      
+      // Invalidate relevant queries
+      queryClient.invalidateQueries({ 
+        queryKey: assessmentQueryKeys.all 
+      });
+    },
+    onError: (error: AxiosError<ApiErrorResponse>) => {
+      let errorMessage = "Failed to delete assessment. Please try again.";
+      
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      toast.error("Error", {
+        description: errorMessage
+      });
+    }
+  });
+}
+
 // =============================================================================
 // SECTION MUTATION HOOKS - Managing Assessment Sections
 // =============================================================================
