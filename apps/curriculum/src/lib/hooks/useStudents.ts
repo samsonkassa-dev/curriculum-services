@@ -611,6 +611,36 @@ export function useUploadConsentForm() {
   })
 }
 
+export function useDeleteConsentForm() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const token = getCookie('token')
+      
+      const response = await axios.delete(
+        `${process.env.NEXT_PUBLIC_API}/trainee/${id}/consent-form`,
+        {
+          headers: { 
+            Authorization: `Bearer ${token}`
+          }
+        }
+      )
+      return { responseData: response.data, id }
+    },
+    onSuccess: ({ id }) => {
+      toast.success('Consent form deleted successfully')
+      queryClient.invalidateQueries({ queryKey: ['student', id] })
+      queryClient.invalidateQueries({ queryKey: ['students'] })
+      // Also invalidate cohortTrainees to update the attendance view
+      queryClient.invalidateQueries({ queryKey: ['cohortTrainees'] })
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to delete consent form')
+    }
+  })
+}
+
 export function useUpdateStudent() {
   const queryClient = useQueryClient()
 

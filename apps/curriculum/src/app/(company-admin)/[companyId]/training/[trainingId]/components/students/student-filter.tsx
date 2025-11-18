@@ -229,7 +229,7 @@ export function StudentFilter({
             {/* Consent Form Filter */}
             <ConsentFormFilter
               hasConsentForm={filterState.hasConsentForm}
-              onChange={(checked) => filterState.setHasConsentForm(checked ? true : undefined)}
+              onChange={filterState.setHasConsentForm}
             />
 
             {/* Cohort Filter */}
@@ -258,16 +258,16 @@ export function StudentFilter({
             <SurveyFilter
               hasFilledBaselineSurvey={filterState.hasFilledBaselineSurvey}
               hasFilledEndlineSurvey={filterState.hasFilledEndlineSurvey}
-              onBaselineSurveyChange={(checked) => filterState.setHasFilledBaselineSurvey(checked ? true : undefined)}
-              onEndlineSurveyChange={(checked) => filterState.setHasFilledEndlineSurvey(checked ? true : undefined)}
+              onBaselineSurveyChange={filterState.setHasFilledBaselineSurvey}
+              onEndlineSurveyChange={filterState.setHasFilledEndlineSurvey}
             />
 
             {/* Assessment Attempt Filters */}
             <AssessmentAttemptFilter
               hasPreAssessmentAttempt={filterState.hasPreAssessmentAttempt}
               hasPostAssessmentAttempt={filterState.hasPostAssessmentAttempt}
-              onPreAssessmentChange={(checked) => filterState.setHasPreAssessmentAttempt(checked ? true : undefined)}
-              onPostAssessmentChange={(checked) => filterState.setHasPostAssessmentAttempt(checked ? true : undefined)}
+              onPreAssessmentChange={filterState.setHasPreAssessmentAttempt}
+              onPostAssessmentChange={filterState.setHasPostAssessmentAttempt}
             />
 
             {/* Assessment Score Filters */}
@@ -307,8 +307,8 @@ export function StudentFilter({
             <CertificateFilter
               isCertified={filterState.isCertified}
               isCertificateSmsSent={filterState.isCertificateSmsSent}
-              onCertifiedChange={(checked) => filterState.setIsCertified(checked ? true : undefined)}
-              onSmsSentChange={(checked) => filterState.setIsCertificateSmsSent(checked ? true : undefined)}
+              onCertifiedChange={filterState.setIsCertified}
+              onSmsSentChange={filterState.setIsCertificateSmsSent}
             />
 
             {/* Edge Sync Filters */}

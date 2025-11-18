@@ -2,7 +2,7 @@
 
 import { ColumnDef } from "@tanstack/react-table"
 import { useQueryClient } from "@tanstack/react-query"
-import { Student, useUploadConsentForm } from "@/lib/hooks/useStudents"
+import { Student, useUploadConsentForm, useDeleteConsentForm } from "@/lib/hooks/useStudents"
 import { format } from "date-fns"
 import { Button } from "@/components/ui/button"
 import { Pencil, Trash2, Upload, FileText, Loader2 } from "lucide-react"
@@ -10,6 +10,7 @@ export type { ColumnDef } from "@tanstack/react-table"
 import { useState, useRef, useEffect } from "react"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
+import { DeleteConsentFormDialog } from "./delete-consent-form-dialog"
 
 // Base student columns without selection - for when selection is not needed
 export const studentColumnsBase: ColumnDef<Student>[] = [
@@ -194,9 +195,12 @@ interface ConsentFormCellProps {
 
 export const ConsentFormCell = ({ student }: ConsentFormCellProps) => {
   const [isUploading, setIsUploading] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { mutateAsync: uploadConsentForm } = useUploadConsentForm();
+  const { mutateAsync: deleteConsentForm } = useDeleteConsentForm();
   const queryClient = useQueryClient();
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -227,6 +231,22 @@ export const ConsentFormCell = ({ student }: ConsentFormCellProps) => {
     }
   };
 
+  const handleConfirmDelete = async () => {
+    try {
+      setIsDeleting(true);
+      await deleteConsentForm(student.id);
+      // Refetch to update the UI
+      queryClient.invalidateQueries({ queryKey: ['students'] });
+      queryClient.invalidateQueries({ queryKey: ['student', student.id] });
+      await queryClient.refetchQueries({ queryKey: ['students'] });
+      setShowDeleteDialog(false);
+    } catch (error) {
+      console.error('Error deleting consent form:', error);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   // Turn off refreshing once the consentFormUrl becomes available from parent data
   useEffect(() => {
     if (student.consentFormUrl) {
@@ -238,15 +258,34 @@ export const ConsentFormCell = ({ student }: ConsentFormCellProps) => {
     fileInputRef.current?.click();
   };
 
-  // Determine which URL to use - prioritize signatureUrl, then consentFormUrl
-  const formUrl = student.signatureUrl || student.consentFormUrl;
+  // Check if it's a signature URL (read-only) or consent form (editable/deletable)
+  const hasSignature = !!student.signatureUrl;
+  const hasConsentForm = !!student.consentFormUrl;
+  const displayUrl = student.signatureUrl || student.consentFormUrl || undefined;
 
-  // If student already has a consent form or signature
-  if (formUrl) {
+  // If student has a signature URL (read-only - no edit, no delete)
+  if (hasSignature) {
     return (
       <div className="flex items-center gap-1">
         <a 
-          href={formUrl} 
+          href={displayUrl} 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="flex items-center text-xs gap-1.5 text-blue-600 hover:text-blue-800 underline"
+        >
+          <FileText className="h-4 w-4" />
+          <span>View Signature</span>
+        </a>
+      </div>
+    );
+  }
+
+  // If student has a consent form (editable and deletable)
+  if (hasConsentForm) {
+    return (
+      <div className="flex items-center gap-1">
+        <a 
+          href={displayUrl} 
           target="_blank" 
           rel="noopener noreferrer"
           className="flex items-center text-xs gap-1.5 text-blue-600 hover:text-blue-800 underline"
@@ -268,21 +307,44 @@ export const ConsentFormCell = ({ student }: ConsentFormCellProps) => {
             <Loader2 className="h-4 w-4 animate-spin" />
           </div>
         ) : (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={triggerFileInput}
-            disabled={isUploading}
-            className="h-8 w-8 p-0"
-            title="Edit Consent Form"
-          >
-            {isUploading ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Pencil className="h-2 w-2 text-gray-500" />
-            )}
-          </Button>
+          <>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={triggerFileInput}
+              disabled={isUploading || isDeleting}
+              className="h-8 w-8 p-0"
+              title="Edit Consent Form"
+            >
+              {isUploading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Pencil className="h-4 w-4 text-gray-500" />
+              )}
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowDeleteDialog(true)}
+              disabled={isUploading || isDeleting}
+              className="h-8 w-8 p-0"
+              title="Delete Consent Form"
+            >
+              {isDeleting ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Trash2 className="h-4 w-4 text-red-500" />
+              )}
+            </Button>
+          </>
         )}
+        <DeleteConsentFormDialog
+          isOpen={showDeleteDialog}
+          onOpenChange={setShowDeleteDialog}
+          onConfirmDelete={handleConfirmDelete}
+          isDeleting={isDeleting}
+          studentName={`${student.firstName} ${student.lastName}`}
+        />
       </div>
     );
   }
