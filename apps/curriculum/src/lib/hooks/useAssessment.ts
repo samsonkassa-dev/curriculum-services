@@ -4,169 +4,36 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios, { AxiosError } from "axios";
 import { toast } from "sonner";
 import { getCookie } from "@curriculum-services/auth";
-import { Cohort } from "./useCohorts";
+import {
+  assessmentQueryKeys,
+  type CreateAssessmentPayload,
+  type UpdateAssessmentPayload,
+  type CreateAnswerLinkPayload,
+  type ExtendAnswerLinkPayload,
+  type UpdateAssessmentSectionPayload,
+  type ApiErrorResponse,
+  type AssessmentChoice,
+  type AssessmentQuestion,
+  type AssessmentSectionDetail,
+  type AssessmentSummary,
+  type AssessmentDetail,
+  type AssessmentsResponse,
+  type AssessmentDetailResponse,
+  type AssessmentSectionsResponse,
+  type AssessmentSectionResponse,
+} from "./assessment-types";
 
-// TypeScript interfaces for assessment data structures
-interface Choice {
-  choice: string;
-  choiceImage: string;
-  choiceImageFile?: File; // For multipart uploads
-  isCorrect: boolean;
-}
-
-interface AssessmentEntry {
-  question: string;
-  questionImage: string;
-  questionImageFile?: File; // For multipart uploads
-  questionType: "RADIO" | "CHECKBOX";
-  choices: Choice[];
-  weight: number;
-}
-
-interface AssessmentSection {
-  title: string;
-  description: string;
-  assessmentEntries: AssessmentEntry[];
-}
-
-interface CreateAssessmentPayload {
-  name: string;
-  type: "PRE_POST";
-  description: string;
-  duration: number;
-  maxAttempts: number;
-  contentDeveloperEmail: string;
-  sections: AssessmentSection[];
-  timed: boolean;
-}
-
-interface CreateAnswerLinkPayload {
-  cohortIds: string[];
-  traineeIds: string[];
-  linkType: "PRE_ASSESSMENT" | "POST_ASSESSMENT";
-  expiryMinutes: number;
-}
-
-interface UpdateAssessmentPayload {
-  name: string;
-  type: "PRE_POST";
-  description: string;
-  duration: number;
-  maxAttempts: number;
-  contentDeveloperEmail: string;
-  timed: boolean;
-}
-
-interface ExtendAnswerLinkPayload {
-  expiryMinutes: number;
-}
-
-interface ApiErrorResponse {
-  message: string;
-  [key: string]: unknown;
-}
-
-// Legacy Module Assessment types removed
-
-// Note: ModuleAssessmentData is deprecated and intentionally removed to reduce unused types.
-
-// Note: ModuleAssessmentResponse is deprecated and intentionally removed to reduce unused types.
-
-// GET API Response Interfaces
-export interface AssessmentChoice {
-  id: string;
-  choiceText: string;
-  choiceImageUrl: string | null;
-  isCorrect: boolean;
-}
-
-export interface AssessmentQuestion {
-  id: string;
-  questionNumber: number;
-  question: string;
-  questionType: "RADIO" | "CHECKBOX";
-  questionImageUrl: string | null;
-  choices: AssessmentChoice[];
-  weight: number;
-}
-
-export interface AssessmentSectionDetail {
-  id: string;
-  title: string;
-  description: string;
-  sectionNumber: number;
-  questions: AssessmentQuestion[];
-}
-
-interface ContentDeveloperRef {
-  id: string;
-  firstName: string | null;
-  lastName: string | null;
-  email: string;
-  role: { name: string; colorCode?: string };
-  profilePictureUrl: string | null;
-}
-
-export interface AssessmentSummary {
-  id: string;
-  name: string;
-  type: "PRE_POST";
-  description: string;
-  duration: number;
-  maxAttempts: number;
-  approvalStatus: "PENDING" | "APPROVED" | "REJECTED";
-  contentDeveloper: ContentDeveloperRef | null;
-  cohorts: Cohort[];
-  sectionCount: number;
-  timed: boolean;
-}
-
-export interface AssessmentDetail {
-  id: string;
-  name: string;
-  type: "PRE_POST";
-  description: string;
-  duration: number;
-  maxAttempts: number;
-  approvalStatus: "PENDING" | "APPROVED" | "REJECTED";
-  contentDeveloper: ContentDeveloperRef | null;
-  cohorts: string[];
-  sections: AssessmentSectionDetail[];
-  timed: boolean;
-}
-
-// API Response Wrappers
-export interface AssessmentsResponse {
-  assessments: AssessmentSummary[];
-  code: string;
-  message: string;
-}
-
-export interface AssessmentDetailResponse {
-  assessment: AssessmentDetail;
-  code: string;
-  message: string;
-}
-
-export interface AssessmentSectionsResponse {
-  code: string;
-  message: string;
-  sections: AssessmentSectionDetail[];
-}
-
-export interface AssessmentSectionResponse {
-  code: string;
-  section: AssessmentSectionDetail;
-  message: string;
-}
-
-// Query Keys
-const assessmentQueryKeys = {
-  all: ['assessments'] as const,
-  training: (trainingId: string) => ['assessments', 'training', trainingId] as const,
-  detail: (assessmentId: string) => ['assessments', 'detail', assessmentId] as const,
-  sections: (assessmentId: string) => ['assessments', 'sections', assessmentId] as const,
-  section: (sectionId: string) => ['assessments', 'section', sectionId] as const,
+// Re-export commonly used types for backwards compatibility
+export type {
+  AssessmentChoice,
+  AssessmentQuestion,
+  AssessmentSectionDetail,
+  AssessmentSummary,
+  AssessmentDetail,
+  AssessmentsResponse,
+  AssessmentDetailResponse,
+  AssessmentSectionsResponse,
+  AssessmentSectionResponse,
 };
 
 // =============================================================================
@@ -943,6 +810,56 @@ export function useDeleteAssessmentSection() {
       toast.error("Error", {
         description: errorMessage
       });
+    }
+  });
+}
+
+/**
+ * Hook to update an existing assessment section (title, description, sectionOrder)
+ */
+export function useUpdateAssessmentSection() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({
+      sectionId,
+      data
+    }: {
+      sectionId: string;
+      data: {
+        title?: string;
+        description?: string;
+        sectionOrder?: number;
+      };
+    }) => {
+      const token = getCookie("token");
+      
+      const response = await axios.patch(
+        `${process.env.NEXT_PUBLIC_API}/assessment-section/${sectionId}`,
+        data,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+      
+      return response.data;
+    },
+    onSuccess: (data, variables) => {
+      toast.success("Success", {
+        description: data?.message || "Section updated successfully"
+      });
+      // Invalidate broad and specific queries
+      queryClient.invalidateQueries({ queryKey: ['assessments'] });
+      if (variables?.sectionId) {
+        queryClient.invalidateQueries({ queryKey: assessmentQueryKeys.section(variables.sectionId) });
+      }
+    },
+    onError: (error: AxiosError<ApiErrorResponse>) => {
+      const errorMessage = error.response?.data?.message || error.message || "Failed to update section";
+      toast.error("Error", { description: errorMessage });
     }
   });
 }

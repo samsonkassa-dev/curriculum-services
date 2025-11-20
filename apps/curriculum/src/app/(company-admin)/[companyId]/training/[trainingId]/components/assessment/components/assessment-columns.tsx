@@ -80,7 +80,7 @@ export const assessmentColumns: ColumnDef<AssessmentSummary>[] = [
         const cohortNames = assessment.cohorts.slice(0, 2).map(c => c.name).join(', ')
         const extra = assessment.cohorts.length > 2 ? ` +${assessment.cohorts.length - 2} more` : ''
         return (
-          <span className="font-semibold text-[#1D4ED8] hover:text-blue-800">{cohortNames}{extra}</span>
+          <span className="font-medium text-gray-900 text-sm">{cohortNames}{extra}</span>
         )
       }
       

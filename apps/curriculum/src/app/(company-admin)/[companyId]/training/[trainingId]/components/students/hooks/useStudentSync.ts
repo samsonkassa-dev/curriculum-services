@@ -16,15 +16,16 @@ import {
 interface UseStudentSyncProps {
   trainingId: string
   getSelectedStudentIds: () => string[]
+  clearSelection?: () => void
 }
 
-export function useStudentSync({ trainingId, getSelectedStudentIds }: UseStudentSyncProps) {
+export function useStudentSync({ trainingId, getSelectedStudentIds, clearSelection }: UseStudentSyncProps) {
   // Sync hooks for selected students
-  const { syncPreAssessment, isLoading: isSyncingPreAssessment } = useSyncPreAssessment()
-  const { syncPostAssessment, isLoading: isSyncingPostAssessment } = useSyncPostAssessment()
-  const { syncEnrollTrainees, isLoading: isSyncingEnrollTrainees } = useSyncEnrollTrainees()
-  const { syncCreateTrainees, isLoading: isSyncingCreateTrainees } = useSyncCreateTrainees()
-  const { syncCompletion, isLoading: isSyncingCompletion } = useSyncCompletion()
+  const { syncPreAssessmentAsync, isLoading: isSyncingPreAssessment } = useSyncPreAssessment()
+  const { syncPostAssessmentAsync, isLoading: isSyncingPostAssessment } = useSyncPostAssessment()
+  const { syncEnrollTraineesAsync, isLoading: isSyncingEnrollTrainees } = useSyncEnrollTrainees()
+  const { syncCreateTraineesAsync, isLoading: isSyncingCreateTrainees } = useSyncCreateTrainees()
+  const { syncCompletionAsync, isLoading: isSyncingCompletion } = useSyncCompletion()
   
   // Sync hooks for all students in training
   const { syncPreAssessmentTraining, isLoading: isSyncingPreAssessmentTraining } = useSyncPreAssessmentTraining()
@@ -34,50 +35,55 @@ export function useStudentSync({ trainingId, getSelectedStudentIds }: UseStudent
   const { syncCompletionTraining, isLoading: isSyncingCompletionTraining } = useSyncCompletionTraining()
 
   // Sync handlers for selected students
-  const handleSyncPreAssessment = useCallback(() => {
+  const handleSyncPreAssessment = useCallback(async () => {
     const traineeIds = getSelectedStudentIds();
     if (traineeIds.length === 0) {
       toast.error('Please select students to sync');
       return;
     }
-    syncPreAssessment({ traineeIds });
-  }, [getSelectedStudentIds, syncPreAssessment]);
+    await syncPreAssessmentAsync({ traineeIds });
+    clearSelection?.();
+  }, [getSelectedStudentIds, syncPreAssessmentAsync, clearSelection]);
 
-  const handleSyncPostAssessment = useCallback(() => {
+  const handleSyncPostAssessment = useCallback(async () => {
     const traineeIds = getSelectedStudentIds();
     if (traineeIds.length === 0) {
       toast.error('Please select students to sync');
       return;
     }
-    syncPostAssessment({ traineeIds });
-  }, [getSelectedStudentIds, syncPostAssessment]);
+    await syncPostAssessmentAsync({ traineeIds });
+    clearSelection?.();
+  }, [getSelectedStudentIds, syncPostAssessmentAsync, clearSelection]);
 
-  const handleSyncEnrollTrainees = useCallback(() => {
+  const handleSyncEnrollTrainees = useCallback(async () => {
     const traineeIds = getSelectedStudentIds();
     if (traineeIds.length === 0) {
       toast.error('Please select students to sync');
       return;
     }
-    syncEnrollTrainees({ traineeIds });
-  }, [getSelectedStudentIds, syncEnrollTrainees]);
+    await syncEnrollTraineesAsync({ traineeIds });
+    clearSelection?.();
+  }, [getSelectedStudentIds, syncEnrollTraineesAsync, clearSelection]);
 
-  const handleSyncCreateTrainees = useCallback(() => {
+  const handleSyncCreateTrainees = useCallback(async () => {
     const traineeIds = getSelectedStudentIds();
     if (traineeIds.length === 0) {
       toast.error('Please select students to sync');
       return;
     }
-    syncCreateTrainees({ traineeIds });
-  }, [getSelectedStudentIds, syncCreateTrainees]);
+    await syncCreateTraineesAsync({ traineeIds });
+    clearSelection?.();
+  }, [getSelectedStudentIds, syncCreateTraineesAsync, clearSelection]);
 
-  const handleSyncCompletion = useCallback(() => {
+  const handleSyncCompletion = useCallback(async () => {
     const traineeIds = getSelectedStudentIds();
     if (traineeIds.length === 0) {
       toast.error('Please select students to sync');
       return;
     }
-    syncCompletion({ traineeIds });
-  }, [getSelectedStudentIds, syncCompletion]);
+    await syncCompletionAsync({ traineeIds });
+    clearSelection?.();
+  }, [getSelectedStudentIds, syncCompletionAsync, clearSelection]);
 
   // Sync handlers for all students in training
   const handleSyncPreAssessmentTraining = useCallback(() => {

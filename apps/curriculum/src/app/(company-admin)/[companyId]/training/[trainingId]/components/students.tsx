@@ -132,6 +132,7 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
   } = useStudentSync({
     trainingId,
     getSelectedStudentIds,
+    clearSelection: () => setRowSelection({}),
   })
   
   // CSV import data - fetch data when import view OR form modal is shown (not just when CSV is uploaded)
