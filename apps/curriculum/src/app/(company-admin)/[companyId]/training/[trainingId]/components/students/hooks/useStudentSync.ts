@@ -16,10 +16,9 @@ import {
 interface UseStudentSyncProps {
   trainingId: string
   getSelectedStudentIds: () => string[]
-  clearSelection?: () => void
 }
 
-export function useStudentSync({ trainingId, getSelectedStudentIds, clearSelection }: UseStudentSyncProps) {
+export function useStudentSync({ trainingId, getSelectedStudentIds }: UseStudentSyncProps) {
   // Sync hooks for selected students
   const { syncPreAssessmentAsync, isLoading: isSyncingPreAssessment } = useSyncPreAssessment()
   const { syncPostAssessmentAsync, isLoading: isSyncingPostAssessment } = useSyncPostAssessment()
@@ -42,8 +41,7 @@ export function useStudentSync({ trainingId, getSelectedStudentIds, clearSelecti
       return;
     }
     await syncPreAssessmentAsync({ traineeIds });
-    clearSelection?.();
-  }, [getSelectedStudentIds, syncPreAssessmentAsync, clearSelection]);
+  }, [getSelectedStudentIds, syncPreAssessmentAsync]);
 
   const handleSyncPostAssessment = useCallback(async () => {
     const traineeIds = getSelectedStudentIds();
@@ -52,8 +50,7 @@ export function useStudentSync({ trainingId, getSelectedStudentIds, clearSelecti
       return;
     }
     await syncPostAssessmentAsync({ traineeIds });
-    clearSelection?.();
-  }, [getSelectedStudentIds, syncPostAssessmentAsync, clearSelection]);
+  }, [getSelectedStudentIds, syncPostAssessmentAsync]);
 
   const handleSyncEnrollTrainees = useCallback(async () => {
     const traineeIds = getSelectedStudentIds();
@@ -62,8 +59,7 @@ export function useStudentSync({ trainingId, getSelectedStudentIds, clearSelecti
       return;
     }
     await syncEnrollTraineesAsync({ traineeIds });
-    clearSelection?.();
-  }, [getSelectedStudentIds, syncEnrollTraineesAsync, clearSelection]);
+  }, [getSelectedStudentIds, syncEnrollTraineesAsync]);
 
   const handleSyncCreateTrainees = useCallback(async () => {
     const traineeIds = getSelectedStudentIds();
@@ -72,8 +68,7 @@ export function useStudentSync({ trainingId, getSelectedStudentIds, clearSelecti
       return;
     }
     await syncCreateTraineesAsync({ traineeIds });
-    clearSelection?.();
-  }, [getSelectedStudentIds, syncCreateTraineesAsync, clearSelection]);
+  }, [getSelectedStudentIds, syncCreateTraineesAsync]);
 
   const handleSyncCompletion = useCallback(async () => {
     const traineeIds = getSelectedStudentIds();
@@ -82,8 +77,7 @@ export function useStudentSync({ trainingId, getSelectedStudentIds, clearSelecti
       return;
     }
     await syncCompletionAsync({ traineeIds });
-    clearSelection?.();
-  }, [getSelectedStudentIds, syncCompletionAsync, clearSelection]);
+  }, [getSelectedStudentIds, syncCompletionAsync]);
 
   // Sync handlers for all students in training
   const handleSyncPreAssessmentTraining = useCallback(() => {
