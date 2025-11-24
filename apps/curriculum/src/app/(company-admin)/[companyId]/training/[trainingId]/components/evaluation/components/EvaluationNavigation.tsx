@@ -5,30 +5,18 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Trash2, Save as SaveIcon, X as XIcon, Pencil, GripVertical } from "lucide-react"
+import { EvaluationSectionForm } from "@/lib/hooks/evaluation-types"
 
-type AssessmentEntry = {
-  questionType: string
-  weight: number
-  question?: string
-}
-
-type AssessmentSectionForm = {
-  id?: string
-  title: string
-  description: string
-  assessmentEntries: AssessmentEntry[]
-}
-
-interface AssessmentNavigationProps {
-  sections: AssessmentSectionForm[]
+interface EvaluationNavigationProps {
+  sections: EvaluationSectionForm[]
   selectedSection: number
   selectedQuestion: number
-  editMode: 'assessment' | 'question'
-  assessmentName: string
+  editMode: 'evaluation' | 'question'
+  evaluationName: string
   isEditMode?: boolean
   canAddSection?: boolean
-  disableAssessmentSettings?: boolean
-  onSelectAssessmentSettings: () => void
+  disableEvaluationSettings?: boolean
+  onSelectEvaluationSettings: () => void
   onSelectQuestion: (sectionIndex: number, questionIndex: number) => void
   onUpdateSectionTitle: (sectionIndex: number, title: string) => void
   onUpdateSectionDescription: (sectionIndex: number, description: string) => void
@@ -40,16 +28,16 @@ interface AssessmentNavigationProps {
   onReorderSections?: (fromIndex: number, toIndex: number) => void
 }
 
-export function AssessmentNavigation({
+export function EvaluationNavigation({
   sections,
   selectedSection,
   selectedQuestion,
   editMode,
-  assessmentName,
+  evaluationName,
   isEditMode = false,
   canAddSection = true,
-  disableAssessmentSettings = false,
-  onSelectAssessmentSettings,
+  disableEvaluationSettings = false,
+  onSelectEvaluationSettings,
   onSelectQuestion,
   onUpdateSectionTitle,
   onUpdateSectionDescription,
@@ -59,7 +47,7 @@ export function AssessmentNavigation({
   onAddSection,
   onSaveSectionMeta,
   onReorderSections
-}: AssessmentNavigationProps) {
+}: EvaluationNavigationProps) {
 
   const [editingMap, setEditingMap] = useState<Record<number, boolean>>({})
   const [draftTitles, setDraftTitles] = useState<Record<number, string>>({})
@@ -102,12 +90,6 @@ export function AssessmentNavigation({
     const newDesc = draftDescs[index] ?? sections[index]?.description ?? ""
     onSaveSectionMeta?.(index, newTitle, newDesc)
     // Also optimistically update parent via existing callbacks
-    // so UI updates instantly even if onSaveSectionMeta is async
-    // Consumers already debounce immediate PATCH for these callbacks
-    // but saveEdit should trigger immediate save upstream.
-    // We'll still call them to keep local state in sync.
-    // Note: parent will ignore debounce if it uses an immediate path.
-    // (No behavior change for create flow)
     onSelectQuestion(index, 0) // remain in section context; no-op selection for clarity
     setEditingMap(prev => ({ ...prev, [index]: false }))
   }
@@ -188,29 +170,29 @@ export function AssessmentNavigation({
   return (
     <div className="bg-white rounded-lg border shadow-sm sticky top-8">
       <div className="p-4 border-b">
-        <h3 className="font-semibold text-gray-800">Assessment Structure</h3>
+        <h3 className="font-semibold text-gray-800">Evaluation Structure</h3>
       </div>
       
       <div ref={containerRef} className="p-4 space-y-3 max-h-[calc(100vh-200px)] overflow-y-auto">
-        {/* Assessment Settings */}
+        {/* Evaluation Settings */}
         <div
           className={`p-3 rounded-lg transition-all ${
-            disableAssessmentSettings
+            disableEvaluationSettings
               ? 'bg-gray-100 border border-gray-200 cursor-not-allowed opacity-60'
-              : editMode === 'assessment'
+              : editMode === 'evaluation'
                 ? 'bg-blue-50 border border-blue-200 shadow-sm cursor-pointer'
                 : 'bg-gray-50 border border-gray-200 hover:bg-gray-100 cursor-pointer'
           }`}
-          onClick={disableAssessmentSettings ? undefined : onSelectAssessmentSettings}
+          onClick={disableEvaluationSettings ? undefined : onSelectEvaluationSettings}
         >
           <div className="flex items-center gap-2">
             <span className="text-blue-600">⚙️</span>
             <span className="font-medium text-sm">
-              Assessment Settings {disableAssessmentSettings && '(Read-only)'}
+              Evaluation Settings {disableEvaluationSettings && '(Read-only)'}
             </span>
           </div>
           <p className="text-xs text-gray-600 mt-1 truncate">
-            {assessmentName || 'Untitled Assessment'}
+            {evaluationName || 'Untitled Evaluation'}
           </p>
         </div>
 
@@ -363,7 +345,7 @@ export function AssessmentNavigation({
             </div>
             
             <div className="p-2 space-y-1">
-              {section.assessmentEntries.map((entry, questionIndex) => (
+              {section.entries.map((entry, questionIndex) => (
                 <div
                   key={questionIndex}
                   className={`p-2 rounded cursor-pointer transition-all ${
@@ -381,13 +363,20 @@ export function AssessmentNavigation({
                         className="w-4 h-4 text-gray-600"
                         onError={(e) => {
                           // Fallback to generic icon if specific icon doesn't exist
-                          e.currentTarget.src = entry.questionType === 'RADIO' ? '/question-type-radio.svg' : '/question-type-checkbox.svg'
+                          const fallbackIcon = entry.questionType === 'RADIO' ? '🔘' : entry.questionType === 'CHECKBOX' ? '☑️' : '📝'
+                          e.currentTarget.style.display = 'none'
+                          const span = document.createElement('span')
+                          span.textContent = fallbackIcon
+                          span.className = 'w-4 h-4 text-center'
+                          e.currentTarget.parentNode?.insertBefore(span, e.currentTarget)
                         }}
                       />
                       <span className="text-sm font-medium">Q{questionIndex + 1}</span>
-                      <span className="text-[10px] text-gray-500">Weight: {entry.weight}</span>
+                      {entry.isFollowUp && (
+                        <span className="text-[10px] bg-orange-100 text-orange-800 px-1 rounded">Follow-up</span>
+                      )}
                     </div>
-                    {section.assessmentEntries.length > 1 && (
+                    {section.entries.length > 1 && (
                       <Button
                         variant="ghost"
                         size="sm"

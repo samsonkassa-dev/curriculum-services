@@ -590,6 +590,7 @@ export function useDeleteAssessment() {
 
 /**
  * Hook to add a new section to an existing assessment
+ * Now uses JSON format with sections wrapper to match bulk endpoint
  */
 export function useAddAssessmentSection() {
   const queryClient = useQueryClient();
@@ -620,45 +621,34 @@ export function useAddAssessmentSection() {
     }) => {
       const token = getCookie("token");
       
-      // Use multipart form data for potential image uploads
-      const formData = new FormData();
-      
-      // Add section fields
-      formData.append('title', data.title);
-      formData.append('description', data.description);
-      
-      // Add assessment entries
-      data.assessmentEntries.forEach((entry, ei) => {
-        formData.append(`assessmentEntries[${ei}].question`, entry.question);
-        formData.append(`assessmentEntries[${ei}].questionType`, entry.questionType);
-        formData.append(`assessmentEntries[${ei}].weight`, String(entry.weight));
-        
-        // Add choices
-        entry.choices.forEach((choice, ci) => {
-          formData.append(`assessmentEntries[${ei}].choices[${ci}].choice`, choice.choice);
-          formData.append(`assessmentEntries[${ei}].choices[${ci}].isCorrect`, String(choice.isCorrect));
-          
-          if (choice.choiceImageFile instanceof File) {
-            formData.append(`assessmentEntries[${ei}].choices[${ci}].choiceImage`, choice.choiceImageFile);
-          } else if (choice.choiceImage) {
-            formData.append(`assessmentEntries[${ei}].choices[${ci}].choiceImage`, choice.choiceImage);
+      // Convert to JSON format matching bulk endpoint (sections array wrapper)
+      // Note: Files are not supported in this path; use question/choice image URLs instead
+      const payload = {
+        sections: [
+          {
+            title: data.title,
+            description: data.description,
+            assessmentEntries: data.assessmentEntries.map(entry => ({
+              question: entry.question,
+              questionImage: entry.questionImage || "",
+              questionType: entry.questionType,
+              weight: entry.weight,
+              choices: entry.choices.map(choice => ({
+                choice: choice.choice,
+                choiceImage: choice.choiceImage || "",
+                isCorrect: choice.isCorrect,
+              })),
+            })),
           }
-        });
-        
-        // Add question image
-        if (entry.questionImageFile instanceof File) {
-          formData.append(`assessmentEntries[${ei}].questionImage`, entry.questionImageFile);
-        } else if (entry.questionImage) {
-          formData.append(`assessmentEntries[${ei}].questionImage`, entry.questionImage);
-        }
-      });
+        ]
+      };
       
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_API}/assessment-section/assessment/${assessmentId}`,
-        formData,
+        payload,
         {
           headers: { 
-            "Content-Type": "multipart/form-data",
+            "Content-Type": "application/json",
             Authorization: `Bearer ${token}` 
           }
         }
