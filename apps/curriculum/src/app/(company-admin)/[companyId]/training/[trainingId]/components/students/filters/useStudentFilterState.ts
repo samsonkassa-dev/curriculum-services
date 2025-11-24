@@ -50,7 +50,13 @@ export function useStudentFilterState(defaultSelected: StudentFilters = {}) {
   const [isCompletionSyncedWithEdge, setIsCompletionSyncedWithEdge] = useState<boolean | undefined>(defaultSelected.isCompletionSyncedWithEdge)
 
   // Edge relative date filter (single date)
-  const [relativeDate, setRelativeDate] = useState<Date | undefined>(undefined)
+  // Initialize from defaultSelected.relativeDate (string) by converting to Date
+  const [relativeDate, setRelativeDate] = useState<Date | undefined>(() => {
+    if (defaultSelected.relativeDate) {
+      return new Date(defaultSelected.relativeDate)
+    }
+    return undefined
+  })
 
   // Check if any filters are active
   const hasActiveFilters = () => {

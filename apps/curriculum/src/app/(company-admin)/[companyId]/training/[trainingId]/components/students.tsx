@@ -48,7 +48,7 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
   const memoizedFilters = useMemo(() => filters, [JSON.stringify(filters)])
   
   // Students data queries
-  const { data, isLoading } = useStudents(trainingId, page, pageSize, undefined, undefined, debouncedSearch, memoizedFilters)
+  const { data, isLoading, isFetching } = useStudents(trainingId, page, pageSize, undefined, undefined, debouncedSearch, memoizedFilters)
   
   // Only check for empty state when no search/filters - use main query data
   const shouldFetchAllStudents = !debouncedSearch.trim() && Object.keys(memoizedFilters).length === 0
@@ -246,8 +246,9 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
     return hasNoSearchQuery && hasNoFilters && hasNoStudentsAtAll
   }, [debouncedSearch, memoizedFilters, allStudentsData?.totalElements])
   
-  // Show loading only on initial load (when no data exists yet)
-  if (isLoading && !data) {
+  // Show full loading only on initial load (when no cached data exists)
+  // For refetches (filters, search, pagination), React Query keeps previous data and we use isFetching for table loading
+  if (isLoading) {
     return <Loading />
   }
   
@@ -326,7 +327,7 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
                 <StudentDataTable
                   columns={columnsWithActions}
                   data={paginationData.students}
-                  isLoading={isLoading}
+                  isLoading={isFetching}
                   pagination={{
                     totalPages: paginationData.totalPages,
                     currentPage: paginationData.currentPage,
