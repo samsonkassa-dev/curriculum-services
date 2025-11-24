@@ -20,8 +20,8 @@ export default function CreateEvaluation() {
   const handleContinue = () => {
     if (!selectedType) return
     
-    // Navigate to the builder with the selected type
-    router.push(`/${params.companyId}/training/${params.trainingId}/evaluation/builder?type=${selectedType}`)
+    // Navigate to the main evaluation page to create new evaluation
+    router.push(`/${params.companyId}/training/${params.trainingId}/evaluation`)
   }
 
   return (

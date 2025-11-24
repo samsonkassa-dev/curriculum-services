@@ -8,12 +8,9 @@ import { EvaluationSummary } from "@/lib/hooks/evaluation-types"
 import { CreateEvaluationForm } from "./evaluation/components/CreateEvaluationForm"
 import { EvaluationDataTable } from "./evaluation/components/evaluation-data-table"
 import { evaluationColumns, createEvaluationActionsColumn } from "./evaluation/components/evaluation-columns"
-import { Button } from "@/components/ui/button"
-import { Plus, Eye, MoreVertical } from "lucide-react"
-import { Input } from "@/components/ui/input"
-import Image from "next/image"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { format } from "date-fns"
+import { EvaluationHeader } from "./evaluation/components/evaluation-header"
+import { DefaultCreate } from "./defaultCreate"
+// Removed unused imports - using EvaluationHeader component now
 
 interface EvaluationComponentProps {
   trainingId: string
@@ -65,7 +62,7 @@ function evaluationReducer(state: EvaluationState, action: EvaluationAction): Ev
 
 export function EvaluationComponent({ trainingId }: EvaluationComponentProps) {
   const [state, dispatch] = useReducer(evaluationReducer, initialState)
-  const { isProjectManager, isCompanyAdmin } = useUserRole()
+  const { isProjectManager, isTrainingAdmin, isCompanyAdmin, isCurriculumAdmin, isMeExpert } = useUserRole()
   
   // Fetch evaluations
   const { data, isLoading } = useGetEvaluations(trainingId)
@@ -104,6 +101,15 @@ export function EvaluationComponent({ trainingId }: EvaluationComponentProps) {
 
   const totalPages = Math.ceil(filteredEvaluations.length / state.pageSize)
 
+  // Reset to page 1 when search changes
+  useEffect(() => {
+    dispatch({ type: 'SET_CURRENT_PAGE', payload: 1 })
+  }, [state.searchQuery])
+
+  const handlePageSizeChange = useCallback((newPageSize: number) => {
+    dispatch({ type: 'SET_PAGE_SIZE', payload: newPageSize })
+  }, [])
+
   // Handlers
   const handleCreateNew = useCallback(() => {
     dispatch({ type: 'SHOW_CREATE_FORM' })
@@ -135,7 +141,10 @@ export function EvaluationComponent({ trainingId }: EvaluationComponentProps) {
     createEvaluationActionsColumn(handleView, handleEdit, handleDelete)
   ], [handleView, handleEdit, handleDelete])
 
-  const canCreate = isProjectManager || isCompanyAdmin
+  // Permission logic for evaluations (ME Expert handles evaluations)
+  const canCreateEvaluations = useMemo(() => {
+    return isCompanyAdmin || isProjectManager || isCurriculumAdmin || isTrainingAdmin || isMeExpert
+  }, [isCompanyAdmin, isProjectManager, isCurriculumAdmin, isTrainingAdmin, isMeExpert])
 
   if (isLoading) {
     return <Loading />
@@ -150,86 +159,43 @@ export function EvaluationComponent({ trainingId }: EvaluationComponentProps) {
     )
   }
 
-  // Empty State (only if truly empty, not just filtered)
-  if (evaluations.length === 0 && !state.searchQuery) {
+  // No evaluations view
+  if (evaluations.length === 0) {
     return (
-      <div className="px-[7%] py-10">
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-xl font-semibold">Evaluation Forms</h1>
-          {canCreate && (
-            <Button 
-              className="bg-blue-500 hover:bg-blue-600 text-white flex items-center gap-2"
-              onClick={handleCreateNew}
-            >
-              <Plus className="h-4 w-4" />
-              <span>Create Form</span>
-            </Button>
-          )}
-        </div>
-        <div className="text-center py-40 bg-[#fbfbfb] rounded-lg border-[0.1px]">
-          <h3 className="text-lg font-medium mb-2">No Evaluation Forms Created</h3>
-          <p className="text-gray-500 text-sm">
-            Create evaluation forms to assess training effectiveness.
-          </p>
-          {canCreate && (
-            <Button
-              className="mt-4 bg-blue-500 hover:bg-blue-600 text-white"
-              onClick={handleCreateNew}
-            >
-              Create Form
-            </Button>
-          )}
-        </div>
-      </div>
+      <DefaultCreate
+        title="Create Evaluation"
+        trainingId={trainingId}
+        onCreateClick={handleCreateNew}
+      />
     )
   }
 
+  // Show evaluations list (matching assessment structure)
   return (
-    <div className="px-[7%] py-10">
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
-        <h1 className="text-xl font-semibold">Evaluation Forms</h1>
-        
-        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-            <div className="relative w-full sm:w-[280px]">
-                <Image
-                    src="/search.svg"
-                    alt="Search"
-                    width={19}
-                    height={19}
-                    className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black h-5 w-5 z-10"
-                />
-                <Input
-                    placeholder="Search evaluations..."
-                    className="pl-10 h-10 text-sm bg-white border-gray-200 w-full"
-                    value={state.searchQuery}
-                    onChange={(e) => dispatch({ type: 'SET_SEARCH_QUERY', payload: e.target.value })}
-                />
-            </div>
+    <div className="flex lg:px-16 md:px-14 px-4 w-full">
+      <div className="flex-1 py-4 md:pl-12 min-w-0">
+        <EvaluationHeader
+          searchQuery={state.searchQuery}
+          onSearchChange={(value) => dispatch({ type: 'SET_SEARCH_QUERY', payload: value })}
+          onCreateNew={handleCreateNew}
+          canCreateEvaluations={canCreateEvaluations}
+        />
 
-            {canCreate && (
-                <Button 
-                    className="bg-[#0B75FF] hover:bg-[#0B75FF]/90 text-white flex items-center gap-2"
-                    onClick={handleCreateNew}
-                >
-                    <Plus className="h-4 w-4" />
-                    <span>Create Form</span>
-                </Button>
-            )}
-        </div>
+        {/* Evaluations Table */}
+        <EvaluationDataTable 
+          columns={columns} 
+          data={paginatedEvaluations}
+          isLoading={isLoading}
+          pagination={{
+              currentPage: state.currentPage,
+              totalPages,
+              setPage: (page) => dispatch({ type: 'SET_CURRENT_PAGE', payload: page }),
+              pageSize: state.pageSize,
+              setPageSize: handlePageSizeChange,
+              totalElements: filteredEvaluations.length
+          }}
+        />
       </div>
-
-      <EvaluationDataTable 
-        columns={columns} 
-        data={paginatedEvaluations}
-        pagination={{
-            currentPage: state.currentPage,
-            totalPages,
-            setPage: (p) => dispatch({ type: 'SET_CURRENT_PAGE', payload: p }),
-            pageSize: state.pageSize,
-            setPageSize: (s) => dispatch({ type: 'SET_PAGE_SIZE', payload: s }),
-            totalElements: filteredEvaluations.length
-        }}
-      />
     </div>
   )
 }

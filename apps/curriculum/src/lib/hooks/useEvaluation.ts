@@ -77,15 +77,9 @@ export function useCreateEvaluation() {
         formData.append(`sections[${si}].title`, section.title)
         formData.append(`sections[${si}].description`, section.description)
         
-        // Entries (Questions)
+        // Entries (Questions) - use 'entries' for POST, backend converts to monitoringFormEntries
         section.entries.forEach((entry, ei) => {
           formData.append(`sections[${si}].entries[${ei}].clientId`, entry.clientId)
-          
-          // Optional outline group - only add if it exists in the form data
-          const entryWithOutline = entry as EvaluationEntryForm & { outlineGroup?: string }
-          if (entryWithOutline.outlineGroup) {
-            formData.append(`sections[${si}].entries[${ei}].outlineGroup`, entryWithOutline.outlineGroup)
-          }
           
           formData.append(`sections[${si}].entries[${ei}].question`, entry.question)
           formData.append(`sections[${si}].entries[${ei}].questionType`, entry.questionType)
@@ -135,6 +129,50 @@ export function useCreateEvaluation() {
                 formData.append(`sections[${si}].entries[${ei}].choices[${ci}].choiceImage`, choiceForm.choiceImageFile)
               } else if (choice.choiceImage) {
                 formData.append(`sections[${si}].entries[${ei}].choices[${ci}].choiceImage`, choice.choiceImage)
+              }
+              
+              // Handle nested follow-up question if it exists
+              if (choiceForm.hasFollowUp && choiceForm.followUpQuestion) {
+                const followUpQ = choiceForm.followUpQuestion;
+                formData.append(`sections[${si}].entries[${ei}].choices[${ci}].followUpQuestion.clientId`, followUpQ.clientId);
+                formData.append(`sections[${si}].entries[${ei}].choices[${ci}].followUpQuestion.question`, followUpQ.question);
+                formData.append(`sections[${si}].entries[${ei}].choices[${ci}].followUpQuestion.questionType`, followUpQ.questionType);
+                formData.append(`sections[${si}].entries[${ei}].choices[${ci}].followUpQuestion.isFollowUp`, String(followUpQ.isFollowUp));
+                
+                if (followUpQ.questionImageFile instanceof File) {
+                  formData.append(`sections[${si}].entries[${ei}].choices[${ci}].followUpQuestion.questionImage`, followUpQ.questionImageFile);
+                } else if (followUpQ.questionImage) {
+                  formData.append(`sections[${si}].entries[${ei}].choices[${ci}].followUpQuestion.questionImage`, followUpQ.questionImage);
+                }
+
+                // Follow-up question's choices
+                (followUpQ.choices || []).forEach((fChoice, fci) => {
+                  formData.append(`sections[${si}].entries[${ei}].choices[${ci}].followUpQuestion.choices[${fci}].clientId`, fChoice.clientId);
+                  formData.append(`sections[${si}].entries[${ei}].choices[${ci}].followUpQuestion.choices[${fci}].choiceText`, fChoice.choiceText);
+                  if (fChoice.choiceImageFile instanceof File) {
+                    formData.append(`sections[${si}].entries[${ei}].choices[${ci}].followUpQuestion.choices[${fci}].choiceImage`, fChoice.choiceImageFile);
+                  } else if (fChoice.choiceImage) {
+                    formData.append(`sections[${si}].entries[${ei}].choices[${ci}].followUpQuestion.choices[${fci}].choiceImage`, fChoice.choiceImage);
+                  }
+                });
+
+                // Follow-up question's parent/trigger details
+                if (followUpQ.parentQuestionClientId) {
+                  formData.append(`sections[${si}].entries[${ei}].choices[${ci}].followUpQuestion.parentQuestionClientId`, followUpQ.parentQuestionClientId);
+                }
+                if (followUpQ.triggerChoiceClientIds) {
+                  followUpQ.triggerChoiceClientIds.forEach((id, idx) => {
+                    formData.append(`sections[${si}].entries[${ei}].choices[${ci}].followUpQuestion.triggerChoiceClientIds[${idx}]`, id);
+                  });
+                }
+                if (followUpQ.parentQuestionId) {
+                  formData.append(`sections[${si}].entries[${ei}].choices[${ci}].followUpQuestion.parentQuestionId`, followUpQ.parentQuestionId);
+                }
+                if (followUpQ.triggerChoiceIds) {
+                  followUpQ.triggerChoiceIds.forEach((id, idx) => {
+                    formData.append(`sections[${si}].entries[${ei}].choices[${ci}].followUpQuestion.triggerChoiceIds[${idx}]`, id);
+                  });
+                }
               }
             })
           }

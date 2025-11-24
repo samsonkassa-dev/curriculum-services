@@ -161,39 +161,7 @@ function CreateEvaluationFormInner({ trainingId, onCancel }: CreateEvaluationFor
     stopEditingQuestion() // Reset to viewing mode when navigating
   }
 
-  // Get available parent questions for follow-up logic
-  const availableParentQuestions = useMemo(() => {
-    const parentQuestions: Array<{
-      clientId: string
-      question: string
-      choices: (EvaluationChoiceForm & { id?: string })[]
-      id?: string
-    }> = []
-
-    // Collect all questions from all sections up to the current question
-    for (let sI = 0; sI <= selectedSection; sI++) {
-      const section = sections[sI]
-      if (!section) continue
-
-      const questionLimit = sI === selectedSection ? selectedQuestion : section.entries.length
-      for (let qI = 0; qI < questionLimit; qI++) {
-        const question = section.entries[qI]
-        if (question && !question.isFollowUp && (question.questionType === "RADIO" || question.questionType === "CHECKBOX")) {
-          parentQuestions.push({
-            clientId: question.clientId,
-            question: question.question,
-            choices: question.choices.map(choice => ({
-              ...choice,
-              id: choice.id // Include server ID if it exists
-            })),
-            id: question.id // Include server ID if question exists in DB
-          })
-        }
-      }
-    }
-
-    return parentQuestions
-  }, [sections, selectedSection, selectedQuestion])
+  // No longer need parent questions logic since follow-ups are choice-based
 
   // Form validation
   const validateForm = () => {
@@ -276,29 +244,65 @@ function CreateEvaluationFormInner({ trainingId, onCancel }: CreateEvaluationFor
       .filter((section) => section.title.trim() || section.entries.length > 0)
 
     // Convert form data to API payload format
-    const payload: CreateEvaluationPayload = {
-      formType,
-      sections: sanitizedSections.map(section => ({
-        title: section.title,
-        description: section.description,
-        entries: section.entries.map(entry => ({
+    // Need to flatten follow-up questions from choices into separate entries
+    const allEntries: any[] = []
+    
+    sanitizedSections.forEach(section => {
+      section.entries.forEach(entry => {
+        // Add the main question
+        allEntries.push({
           clientId: entry.clientId,
-          outlineGroup: entry.outlineGroup,
           question: entry.question,
           questionImage: entry.questionImage,
+          questionImageFile: entry.questionImageFile, // Include File object for upload
           questionType: entry.questionType,
           choices: entry.choices.map(choice => ({
             clientId: choice.clientId,
             choiceText: choice.choiceText,
-            choiceImage: choice.choiceImage
+            choiceImage: choice.choiceImage,
+            choiceImageFile: choice.choiceImageFile // Include File object for upload
           })),
           isFollowUp: entry.isFollowUp,
           parentQuestionClientId: entry.parentQuestionClientId,
           triggerChoiceClientIds: entry.triggerChoiceClientIds,
           parentQuestionId: entry.parentQuestionId,
           triggerChoiceIds: entry.triggerChoiceIds
-        }))
-      }))
+        })
+        
+        // Add follow-up questions embedded in choices
+        entry.choices.forEach(choice => {
+          if (choice.hasFollowUp && choice.followUpQuestion) {
+            allEntries.push({
+              clientId: choice.followUpQuestion.clientId,
+              question: choice.followUpQuestion.question,
+              questionImage: choice.followUpQuestion.questionImage,
+              questionImageFile: choice.followUpQuestion.questionImageFile, // Include File object for upload
+              questionType: choice.followUpQuestion.questionType,
+              choices: (choice.followUpQuestion.choices || []).map(fChoice => ({
+                clientId: fChoice.clientId,
+                choiceText: fChoice.choiceText,
+                choiceImage: fChoice.choiceImage,
+                choiceImageFile: fChoice.choiceImageFile // Include File object for upload
+              })),
+              isFollowUp: true,
+              parentQuestionClientId: entry.clientId,
+              triggerChoiceClientIds: [choice.clientId],
+              // Only use server IDs if we're editing (but this is creation form, so always client IDs)
+              parentQuestionId: undefined,
+              triggerChoiceIds: undefined
+            })
+          }
+        })
+      })
+    })
+
+    const payload: CreateEvaluationPayload = {
+      formType,
+      sections: [{
+        title: sanitizedSections[0]?.title || "Section 1",
+        description: sanitizedSections[0]?.description || "",
+        entries: allEntries
+      }]
     }
 
     createEvaluation.mutate({ trainingId, data: payload }, {
@@ -425,7 +429,7 @@ function CreateEvaluationFormInner({ trainingId, onCancel }: CreateEvaluationFor
                             key={`${selectedSection}-${selectedQuestion}-${currentQuestion.clientId}`}
                             question={currentQuestion}
                             onUpdateQuestion={(updates) => updateQuestion(selectedSection, selectedQuestion, updates)}
-                            availableParentQuestions={availableParentQuestions}
+                            isCreatingNew={true} // Always creating new for this form
                           />
                         ) : (
                           <>

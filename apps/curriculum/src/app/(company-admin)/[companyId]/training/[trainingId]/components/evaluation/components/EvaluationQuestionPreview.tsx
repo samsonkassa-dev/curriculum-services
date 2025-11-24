@@ -58,7 +58,7 @@ export function EvaluationQuestionPreview({ question }: EvaluationQuestionPrevie
         <div className="mb-4">
           {question.isFollowUp && (
             <div className="mb-2">
-              <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
+              <Badge variant="secondary" className="bg-orange-50 text-orange-700 border-orange-200">
                 ↳ Follow-up question
               </Badge>
             </div>
@@ -113,6 +113,11 @@ export function EvaluationQuestionPreview({ question }: EvaluationQuestionPrevie
                             >
                               <span className="flex-1">
                                 {choice.choiceText || <span className="text-gray-400 italic">Choice {index + 1} text...</span>}
+                                {choice.hasFollowUp && (
+                                  <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-1 rounded">
+                                    + Follow-up
+                                  </span>
+                                )}
                               </span>
                               {(choice.choiceImageFile || choice.choiceImage) && (
                                 <div className="flex-shrink-0">
@@ -152,6 +157,11 @@ export function EvaluationQuestionPreview({ question }: EvaluationQuestionPrevie
                             >
                               <span className="flex-1">
                                 {choice.choiceText || <span className="text-gray-400 italic">Choice {index + 1} text...</span>}
+                                {choice.hasFollowUp && (
+                                  <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-1 rounded">
+                                    + Follow-up
+                                  </span>
+                                )}
                               </span>
                               {(choice.choiceImageFile || choice.choiceImage) && (
                                 <div className="flex-shrink-0">

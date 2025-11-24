@@ -13,11 +13,14 @@ export interface EvaluationChoiceForm {
   choiceImage?: string;
   choiceImageFile?: File;
   id?: string; // For editing existing choices
+  
+  // Follow-up question attached to this choice
+  hasFollowUp?: boolean;
+  followUpQuestion?: EvaluationEntryForm;
 }
 
 export interface EvaluationEntryForm {
   clientId: string;
-  outlineGroup?: string;
   question: string;
   questionImage?: string;
   questionImageFile?: File;

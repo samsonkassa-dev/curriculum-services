@@ -47,7 +47,7 @@ export const evaluationColumns: ColumnDef<EvaluationSummary>[] = [
       }[type] || { label: type, bg: "bg-gray-50", text: "text-gray-700", dot: "bg-gray-500" }
       
       return (
-        <Badge variant="outline" className={`ring-0 border-0 ${config.bg} ${config.text}`}>
+        <Badge variant="secondary" className={`ring-0 border-0 ${config.bg} ${config.text}`}>
           <span className={`mr-2 inline-block h-1.5 w-1.5 rounded-full ${config.dot}`} />
           {config.label}
         </Badge>
@@ -72,7 +72,7 @@ export const evaluationColumns: ColumnDef<EvaluationSummary>[] = [
        // Logic can be expanded later based on actual status field
        const isActive = row.original.status === 'ACTIVE';
        return (
-         <Badge variant={isActive ? "default" : "secondary"} className={isActive ? "bg-green-600" : ""}>
+         <Badge variant={isActive ? "active" : "secondary"} className={isActive ? "bg-green-600" : ""}>
            {isActive ? "Active" : "Draft"}
          </Badge>
        )

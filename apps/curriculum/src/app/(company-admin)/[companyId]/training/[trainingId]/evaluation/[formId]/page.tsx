@@ -22,7 +22,7 @@ export default function ViewEvaluationForm() {
 
   useEffect(() => {
     if (form?.monitoringFormEntries) {
-      const initialAnswers = form.monitoringFormEntries.reduce((acc, entry) => {
+      const initialAnswers = form.monitoringFormEntries.reduce((acc: Record<string, string | undefined>, entry: any) => {
         if (typeof entry.answer === 'boolean') {
           acc[entry.id] = entry.answer === true ? 'yes' : 'no';
         } else {
@@ -62,16 +62,8 @@ export default function ViewEvaluationForm() {
     )
   }
 
-  const groupedQuestions = form.monitoringFormEntries.reduce((acc, entry) => {
-    const group = entry.outlineGroup || 'General'
-    if (!acc[group]) {
-      acc[group] = []
-    }
-    if (entry.id) {
-      acc[group].push(entry)
-    }
-    return acc
-  }, {} as Record<string, Array<typeof form.monitoringFormEntries[number] & { id: string }>>)
+  // Filter entries that have an ID
+  const questions = form.monitoringFormEntries.filter((entry: any) => entry.id)
 
   return (
     <div className="min-h-screen py-[50px] bg-[#ffffff]">
@@ -87,14 +79,10 @@ export default function ViewEvaluationForm() {
 
       <div className="px-[7%] py-10 max-w-[910px] mx-auto">
         <div className="space-y-6">
-          {Object.entries(groupedQuestions).map(([groupName, questions], groupIndex) => (
-            <div 
-              key={groupIndex} 
-              className="bg-[#fbfbfb] rounded-lg p-6 space-y-6"
-            >
-              <h2 className="text-lg font-semibold text-[#31302F]">{groupName}</h2>
-              <div className="space-y-6">
-                {questions.map((entry, questionIndex) => (
+          <div className="bg-[#fbfbfb] rounded-lg p-6 space-y-6">
+            <h2 className="text-lg font-semibold text-[#31302F]">Evaluation Questions</h2>
+            <div className="space-y-6">
+              {questions.map((entry: any, questionIndex: number) => (
                   <div 
                     key={entry.id}
                     className="space-y-4"
@@ -138,7 +126,6 @@ export default function ViewEvaluationForm() {
                 ))}
               </div>
             </div>
-          ))}
         </div>
       </div>
     </div>
