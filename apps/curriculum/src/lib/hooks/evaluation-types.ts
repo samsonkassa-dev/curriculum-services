@@ -78,7 +78,11 @@ export interface EvaluationSection {
 
 export interface CreateEvaluationPayload {
   formType: EvaluationFormType;
-  sections: EvaluationSection[];
+  sections: {
+    title: string;
+    description: string;
+    entries: EvaluationEntry[];
+  }[];
 }
 
 // ============================================================================
@@ -113,23 +117,47 @@ export interface EvaluationSectionDetail {
   questions: EvaluationQuestionDetail[];
 }
 
+// API Response Types for fetched data
+export interface EvaluationChoice {
+  id: string;
+  choiceText: string;
+  choiceImageUrl: string | null;
+  isSelected: boolean;
+}
+
+export interface EvaluationQuestion {
+  id: string;
+  outlineGroup: string | null;
+  question: string;
+  questionImageUrl: string | null;
+  questionType: EvaluationQuestionType;
+  choices: EvaluationChoice[];
+  isFollowUp: boolean;
+  parentQuestionId: string | null;
+  triggerChoiceIds: string[];
+}
+
+export interface EvaluationSection {
+  id: string;
+  title: string;
+  description: string;
+  entryCount: number;
+  questions: EvaluationQuestion[];
+}
+
 export interface EvaluationDetail {
   id: string;
   formType: EvaluationFormType;
-  sections: EvaluationSectionDetail[];
   createdAt: string;
-  name?: string;
-  description?: string;
+  sectionCount: number;
+  sections: EvaluationSection[];
 }
 
 export interface EvaluationSummary {
   id: string;
   formType: EvaluationFormType;
   createdAt: string;
-  name: string;
-  description: string;
-  entryCount: number;
-  status: "ACTIVE" | "INACTIVE";
+  sectionCount: number;
 }
 
 // ============================================================================
@@ -139,14 +167,25 @@ export interface EvaluationSummary {
 export interface EvaluationResponse {
   code: string;
   message: string;
-  monitoringForm?: any[];
-  data?: any;
+  monitoringForm: EvaluationSummary[];
 }
 
 export interface EvaluationDetailResponse {
-  evaluation: EvaluationDetail;
   code: string;
   message: string;
+  monitoringForm: EvaluationDetail;
+}
+
+export interface EvaluationSectionsResponse {
+  code: string;
+  message: string;
+  sections: EvaluationSection[];
+}
+
+export interface EvaluationSectionResponse {
+  code: string;
+  message: string;
+  section: EvaluationSection;
 }
 
 export interface ApiErrorResponse {

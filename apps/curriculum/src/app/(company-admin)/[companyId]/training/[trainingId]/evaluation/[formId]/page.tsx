@@ -21,12 +21,13 @@ export default function ViewEvaluationForm() {
   const [localAnswers, setLocalAnswers] = useState<Record<string, string | undefined>>({})
 
   useEffect(() => {
-    if (form?.monitoringFormEntries) {
-      const initialAnswers = form.monitoringFormEntries.reduce((acc: Record<string, string | undefined>, entry: any) => {
-        if (typeof entry.answer === 'boolean') {
-          acc[entry.id] = entry.answer === true ? 'yes' : 'no';
+    if (form?.sections) {
+      const allQuestions = form.sections.flatMap(section => section.questions || [])
+      const initialAnswers = allQuestions.reduce((acc: Record<string, string | undefined>, question: any) => {
+        if (typeof question.answer === 'boolean') {
+          acc[question.id] = question.answer === true ? 'yes' : 'no';
         } else {
-          acc[entry.id] = undefined;
+          acc[question.id] = undefined;
         }
         return acc
       }, {} as Record<string, string | undefined>)
@@ -62,8 +63,8 @@ export default function ViewEvaluationForm() {
     )
   }
 
-  // Filter entries that have an ID
-  const questions = form.monitoringFormEntries.filter((entry: any) => entry.id)
+  // Get all questions from all sections
+  const questions = form.sections?.flatMap(section => section.questions || []) || []
 
   return (
     <div className="min-h-screen py-[50px] bg-[#ffffff]">

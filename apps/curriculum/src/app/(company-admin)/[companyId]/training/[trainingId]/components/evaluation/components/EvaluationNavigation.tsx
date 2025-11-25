@@ -345,56 +345,65 @@ export function EvaluationNavigation({
             </div>
             
             <div className="p-2 space-y-1">
-              {section.entries.map((entry, questionIndex) => (
-                <div
-                  key={questionIndex}
-                  className={`p-2 rounded cursor-pointer transition-all ${
-                    selectedSection === sectionIndex && selectedQuestion === questionIndex && editMode === 'question'
-                      ? 'bg-blue-50 border border-blue-200 shadow-sm'
-                      : 'hover:bg-gray-50'
-                  }`}
-                  onClick={() => onSelectQuestion(sectionIndex, questionIndex)}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <img 
-                        src={`/question-type-${entry.questionType.toLowerCase()}.svg`}
-                        alt={`${entry.questionType} icon`}
-                        className="w-4 h-4 text-gray-600"
-                        onError={(e) => {
-                          // Fallback to generic icon if specific icon doesn't exist
-                          const fallbackIcon = entry.questionType === 'RADIO' ? '🔘' : entry.questionType === 'CHECKBOX' ? '☑️' : '📝'
-                          e.currentTarget.style.display = 'none'
-                          const span = document.createElement('span')
-                          span.textContent = fallbackIcon
-                          span.className = 'w-4 h-4 text-center'
-                          e.currentTarget.parentNode?.insertBefore(span, e.currentTarget)
-                        }}
-                      />
-                      <span className="text-sm font-medium">Q{questionIndex + 1}</span>
-                      {entry.isFollowUp && (
-                        <span className="text-[10px] bg-orange-100 text-orange-800 px-1 rounded">Follow-up</span>
+              {/* Only show main questions (non-follow-up) in navigation */}
+              {section.entries.filter(entry => !entry.isFollowUp).map((entry, mainQuestionIndex) => {
+                // Get the original index of this main question in the full entries array
+                const originalIndex = section.entries.findIndex(e => e.clientId === entry.clientId)
+                
+                // Check if this main question has follow-ups in its choices
+                const hasFollowUpChoices = entry.choices?.some(choice => choice.hasFollowUp && choice.followUpQuestion)
+                
+                return (
+                  <div
+                    key={entry.clientId || mainQuestionIndex}
+                    className={`p-2 rounded cursor-pointer transition-all ${
+                      selectedSection === sectionIndex && selectedQuestion === originalIndex && editMode === 'question'
+                        ? 'bg-blue-50 border border-blue-200 shadow-sm'
+                        : 'hover:bg-gray-50'
+                    }`}
+                    onClick={() => onSelectQuestion(sectionIndex, originalIndex)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <img 
+                          src={`/question-type-${entry.questionType.toLowerCase()}.svg`}
+                          alt={`${entry.questionType} icon`}
+                          className="w-4 h-4 text-gray-600"
+                          onError={(e) => {
+                            // Fallback to generic icon if specific icon doesn't exist
+                            const fallbackIcon = entry.questionType === 'RADIO' ? '🔘' : entry.questionType === 'CHECKBOX' ? '☑️' : '📝'
+                            e.currentTarget.style.display = 'none'
+                            const span = document.createElement('span')
+                            span.textContent = fallbackIcon
+                            span.className = 'w-4 h-4 text-center'
+                            e.currentTarget.parentNode?.insertBefore(span, e.currentTarget)
+                          }}
+                        />
+                        <span className="text-sm font-medium">Q{mainQuestionIndex + 1}</span>
+                        {hasFollowUpChoices && (
+                          <span className="text-[10px] bg-blue-100 text-blue-800 px-1 rounded">Has Follow-ups</span>
+                        )}
+                      </div>
+                      {section.entries.filter(e => !e.isFollowUp).length > 1 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            onDeleteQuestion(sectionIndex, originalIndex)
+                          }}
+                          className="p-1 h-5 w-5 text-red-500 hover:text-red-700 hover:bg-red-50"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
                       )}
                     </div>
-                    {section.entries.length > 1 && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          onDeleteQuestion(sectionIndex, questionIndex)
-                        }}
-                        className="p-1 h-5 w-5 text-red-500 hover:text-red-700 hover:bg-red-50"
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
-                    )}
+                    <p className="text-xs text-gray-600 mt-1 truncate">
+                      {entry.question || 'Untitled question'}
+                    </p>
                   </div>
-                  <p className="text-xs text-gray-600 mt-1 truncate">
-                    {entry.question || 'Untitled question'}
-                  </p>
-                </div>
-              ))}
+                )
+              })}
               
               <Button
                 variant="ghost"

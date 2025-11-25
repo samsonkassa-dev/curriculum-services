@@ -313,7 +313,7 @@ export function SingleEvaluationQuestionEditor({
                 </div>
 
                 {/* Follow-up Question Toggle */}
-                <div className="border-t pt-3">
+                <div className="border-t border-gray-200 pt-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-2">
                       <Checkbox
@@ -321,9 +321,16 @@ export function SingleEvaluationQuestionEditor({
                         checked={choice.hasFollowUp || false}
                         onCheckedChange={(checked) => toggleChoiceFollowUp(choiceIndex, !!checked)}
                       />
-                      <Label htmlFor={`followup-${choice.clientId}`} className="text-sm font-medium">
+                      <Label htmlFor={`followup-${choice.clientId}`} className="text-sm font-medium text-gray-700">
                         Add follow-up question for this choice
                       </Label>
+                      {choice.hasFollowUp && (
+                        <div className="ml-2">
+                          <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">
+                            Follow-up Active
+                          </span>
+                        </div>
+                      )}
                     </div>
                     
                     {choice.hasFollowUp && choice.followUpQuestion && (
@@ -347,11 +354,15 @@ export function SingleEvaluationQuestionEditor({
 
                   {/* Follow-up Question Editor */}
                   {choice.hasFollowUp && choice.followUpQuestion && expandedFollowUps[choice.clientId] && (
-                    <div className="mt-4 p-4 bg-gray-50 border-l-4 border-blue-400 rounded">
+                    <div className="mt-4 p-4 bg-blue-50 border-l-4 border-blue-400 rounded-r-lg">
                       <div className="space-y-4">
                         <div className="flex items-center gap-2 mb-2">
-                          <div className="w-2 h-2 bg-blue-500 rounded-full" />
-                          <span className="text-sm font-medium text-blue-700">Follow-up Question</span>
+                          <div className="w-4 h-4 text-blue-500">
+                            <svg fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                          <span className="text-sm font-medium text-blue-800">Follow-up Question for "{choice.choiceText || `Choice ${choiceIndex + 1}`}"</span>
                         </div>
 
                         {/* Follow-up Question Text */}
@@ -443,9 +454,9 @@ export function SingleEvaluationQuestionEditor({
                               </Button>
                             </div>
                             
-                            <div className="space-y-3">
+                            <div className="space-y-2">
                               {(choice.followUpQuestion.choices || []).map((followUpChoice, followUpChoiceIndex) => (
-                                <div key={followUpChoice.clientId} className="border rounded-lg p-3 space-y-2">
+                                <div key={followUpChoice.clientId} className="border border-blue-200 bg-white rounded-lg p-3 space-y-2">
                                   {/* Follow-up Choice Text and Image */}
                                   <div className="flex items-center gap-2">
                                     <Input

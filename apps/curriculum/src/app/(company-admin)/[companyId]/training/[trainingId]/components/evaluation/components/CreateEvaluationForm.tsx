@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -16,9 +16,10 @@ import {
   EvaluationSectionForm, 
   EvaluationEntryForm,
   EvaluationChoiceForm,
-  CreateEvaluationPayload 
+  CreateEvaluationPayload,
+  EvaluationSummary
 } from "@/lib/hooks/evaluation-types"
-import { useCreateEvaluation } from "@/lib/hooks/useEvaluation"
+import { useCreateEvaluation, useGetEvaluationDetail, useUpdateEvaluationSection } from "@/lib/hooks/useEvaluation"
 
 // Initial State Helpers
 const emptyEntry = (): EvaluationEntryForm => ({
@@ -38,13 +39,120 @@ const emptySection = (): EvaluationSectionForm => ({
 interface CreateEvaluationFormProps {
   trainingId: string
   onCancel: () => void
+  editingEvaluation?: EvaluationSummary | null
 }
 
-function CreateEvaluationFormInner({ trainingId, onCancel }: CreateEvaluationFormProps) {
+function CreateEvaluationFormInner({ trainingId, onCancel, editingEvaluation }: CreateEvaluationFormProps) {
   // Form State
   const [formType, setFormType] = useState<EvaluationFormType>("PRE")
   const [sections, setSections] = useState<EvaluationSectionForm[]>([emptySection()])
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+
+  // Fetch evaluation details when editing
+  const { data: evaluationDetail, isLoading: isLoadingEvaluation } = useGetEvaluationDetail(
+    editingEvaluation?.id || ""
+  )
+
+  const isEditMode = !!editingEvaluation
+
+  // Edit hooks for section management
+  const updateEvaluationSection = useUpdateEvaluationSection()
+  const sectionSaveTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({})
+
+  // Populate form data when editing - only on initial load/data change
+  useEffect(() => {
+    if (!editingEvaluation || !evaluationDetail) return
+
+    console.log("Loading evaluation data:", evaluationDetail)
+
+    // Set form type
+    setFormType(evaluationDetail.formType)
+
+    // Convert evaluation sections to form format with nested follow-up questions
+    const formSections: EvaluationSectionForm[] = evaluationDetail.sections?.map(section => {
+      const allQuestions = section.questions || []
+      
+      // Separate main questions from follow-ups
+      const mainQuestions = allQuestions.filter(q => !q.isFollowUp)
+      const followUpQuestions = allQuestions.filter(q => q.isFollowUp)
+      
+      // For each main question, nest its follow-up questions under the relevant choices
+      const processedEntries: EvaluationEntryForm[] = mainQuestions.map(question => {
+        const baseEntry: EvaluationEntryForm = {
+          clientId: question.id || crypto.randomUUID(),
+          question: question.question,
+          questionImage: question.questionImageUrl || "",
+          questionImageFile: undefined,
+          questionType: question.questionType,
+          isFollowUp: false, // Main questions are never follow-ups
+          id: question.id,
+          choices: question.choices?.map(choice => {
+            // Find follow-up questions triggered by this choice
+            const relevantFollowUps = followUpQuestions.filter(followUp => 
+              followUp.parentQuestionId === question.id && 
+              followUp.triggerChoiceIds?.includes(choice.id)
+            )
+            
+            const choiceWithFollowUp: EvaluationChoiceForm = {
+              clientId: choice.id || crypto.randomUUID(),
+              choiceText: choice.choiceText,
+              choiceImage: choice.choiceImageUrl || "",
+              choiceImageFile: undefined,
+              id: choice.id,
+              hasFollowUp: relevantFollowUps.length > 0
+            }
+            
+            // If there's a follow-up, add it to the choice (for now, just take the first one)
+            if (relevantFollowUps.length > 0) {
+              const followUp = relevantFollowUps[0] // In current implementation, we support one follow-up per choice
+              choiceWithFollowUp.followUpQuestion = {
+                clientId: followUp.id || crypto.randomUUID(),
+                question: followUp.question,
+                questionImage: followUp.questionImageUrl || "",
+                questionImageFile: undefined,
+                questionType: followUp.questionType,
+                choices: followUp.choices?.map(fChoice => ({
+                  clientId: fChoice.id || crypto.randomUUID(),
+                  choiceText: fChoice.choiceText,
+                  choiceImage: fChoice.choiceImageUrl || "",
+                  choiceImageFile: undefined,
+                  id: fChoice.id
+                })) || [],
+                isFollowUp: true,
+                parentQuestionId: followUp.parentQuestionId || undefined,
+                triggerChoiceIds: followUp.triggerChoiceIds || [],
+                parentQuestionClientId: question.id, // Set for client-side reference
+                triggerChoiceClientIds: [choice.id], // Set for client-side reference
+                id: followUp.id
+              }
+            }
+            
+            return choiceWithFollowUp
+          }) || []
+        }
+        
+        return baseEntry
+      })
+      
+      return {
+        id: section.id,
+        title: section.title,
+        description: section.description,
+        entries: processedEntries
+      }
+    }) || []
+
+    setSections(formSections.length > 0 ? formSections : [emptySection()])
+
+    // Reset selection to first section/question
+    setSelectedSection(0)
+    setSelectedQuestion(0)
+    
+    // Start in evaluation mode to show form settings
+    setEditorMode('evaluation')
+    
+  }, [editingEvaluation, evaluationDetail])
 
   // Use the context for navigation and editor state
   const {
@@ -64,6 +172,57 @@ function CreateEvaluationFormInner({ trainingId, onCancel }: CreateEvaluationFor
 
   const createEvaluation = useCreateEvaluation()
 
+  // Section update functions for edit mode
+  const updateSectionTitle = (sectionIndex: number, title: string) => {
+    // capture current for PATCH before state change
+    const current = sections[sectionIndex]
+    const sectionId = current?.id
+    const description = current?.description || ""
+    
+    setSections(prev => prev.map((section, i) => 
+      i === sectionIndex ? { ...section, title } : section
+    ))
+    
+    // Debounced PATCH only if this is an existing section
+    if (editingEvaluation && sectionId) {
+      const key = sectionId
+      if (sectionSaveTimers.current[key]) {
+        clearTimeout(sectionSaveTimers.current[key])
+      }
+      sectionSaveTimers.current[key] = setTimeout(() => {
+        updateEvaluationSection.mutate({
+          sectionId,
+          data: { title, description, sectionOrder: sectionIndex + 1 }
+        })
+      }, 600)
+    }
+  }
+
+  const updateSectionDescription = (sectionIndex: number, description: string) => {
+    // capture current for PATCH before state change
+    const current = sections[sectionIndex]
+    const sectionId = current?.id
+    const title = current?.title || `Section ${sectionIndex + 1}`
+    
+    setSections(prev => prev.map((section, i) => 
+      i === sectionIndex ? { ...section, description } : section
+    ))
+    
+    // Debounced PATCH only if this is an existing section
+    if (editingEvaluation && sectionId) {
+      const key = sectionId
+      if (sectionSaveTimers.current[key]) {
+        clearTimeout(sectionSaveTimers.current[key])
+      }
+      sectionSaveTimers.current[key] = setTimeout(() => {
+        updateEvaluationSection.mutate({
+          sectionId,
+          data: { title, description, sectionOrder: sectionIndex + 1 }
+        })
+      }, 600)
+    }
+  }
+
   // Section management functions
   const addSection = () => {
     const newSectionIndex = sections.length
@@ -82,18 +241,6 @@ function CreateEvaluationFormInner({ trainingId, onCancel }: CreateEvaluationFor
     if (sections.length <= 1) {
       setEditorMode('evaluation')
     }
-  }
-
-  const updateSectionTitle = (sectionIndex: number, title: string) => {
-    setSections(prev => prev.map((section, i) => 
-      i === sectionIndex ? { ...section, title } : section
-    ))
-  }
-
-  const updateSectionDescription = (sectionIndex: number, description: string) => {
-    setSections(prev => prev.map((section, i) => 
-      i === sectionIndex ? { ...section, description } : section
-    ))
   }
 
   // Question management functions
@@ -308,7 +455,7 @@ function CreateEvaluationFormInner({ trainingId, onCancel }: CreateEvaluationFor
     createEvaluation.mutate({ trainingId, data: payload }, {
       onSuccess: () => {
         setIsSubmitting(false)
-        toast.success("Evaluation form created successfully")
+        toast.success(isEditMode ? "Evaluation form updated successfully" : "Evaluation form created successfully")
         onCancel()
       },
       onError: () => {
@@ -318,7 +465,21 @@ function CreateEvaluationFormInner({ trainingId, onCancel }: CreateEvaluationFor
   }
 
   const currentQuestion = sections[selectedSection]?.entries[selectedQuestion]
-  const evaluationName = `${formType} Training Evaluation`
+  const evaluationName = isEditMode 
+    ? `${formType} Training Evaluation (${editingEvaluation?.formType === formType ? 'Editing' : 'Changed to ' + formType})`
+    : `${formType} Training Evaluation`
+
+  // Show loading state when in edit mode and data is still loading
+  if (isEditMode && isLoadingEvaluation) {
+    return (
+      <div className="min-h-screen bg-gray-50 w-full flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading evaluation data...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 w-full">
@@ -328,7 +489,7 @@ function CreateEvaluationFormInner({ trainingId, onCancel }: CreateEvaluationFor
           <div className="flex justify-between items-center">
             <div>
               <h2 className="text-2xl font-bold text-gray-900">
-                Create Evaluation Form
+                {isEditMode ? "Edit Evaluation Form" : "Create Evaluation Form"}
               </h2>
               <p className="text-gray-600 mt-1">
                 {editorMode === 'evaluation' 
@@ -347,7 +508,9 @@ function CreateEvaluationFormInner({ trainingId, onCancel }: CreateEvaluationFor
                 className="bg-blue-600 text-white hover:bg-blue-700 px-6"
                 disabled={isSubmitting || createEvaluation.isPending}
               >
-                {isSubmitting || createEvaluation.isPending ? "Creating..." : "Create Evaluation"}
+                {isSubmitting || createEvaluation.isPending 
+                  ? (isEditMode ? "Updating..." : "Creating...") 
+                  : (isEditMode ? "Update Evaluation" : "Create Evaluation")}
               </Button>
             </div>
           </div>
@@ -366,7 +529,7 @@ function CreateEvaluationFormInner({ trainingId, onCancel }: CreateEvaluationFor
                 selectedQuestion={selectedQuestion}
                 editMode={editorMode}
                 evaluationName={evaluationName}
-                isEditMode={false}
+                isEditMode={isEditMode}
                 canAddSection={true}
                 disableEvaluationSettings={false}
                 onSelectEvaluationSettings={selectEvaluationSettings}

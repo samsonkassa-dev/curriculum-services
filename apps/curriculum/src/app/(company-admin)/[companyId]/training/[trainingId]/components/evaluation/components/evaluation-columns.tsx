@@ -24,7 +24,7 @@ export const evaluationColumns: ColumnDef<EvaluationSummary>[] = [
       return (
         <div className="flex flex-col">
             <span className="font-medium text-gray-900">
-                {form.name || `${typeLabel} Evaluation`}
+                {`${typeLabel} Evaluation`}
             </span>
             <span className="text-xs text-gray-500">
                 Created on {format(new Date(form.createdAt), 'MMM dd, yyyy')}
@@ -55,27 +55,25 @@ export const evaluationColumns: ColumnDef<EvaluationSummary>[] = [
     }
   },
   {
-    id: "questions",
-    header: "Questions",
+    id: "sections",
+    header: "Sections",
     cell: ({ row }) => {
       return (
         <span className="text-gray-600">
-          {row.original.entryCount || 0} Questions
+          {row.original.sectionCount || 0} {row.original.sectionCount === 1 ? 'Section' : 'Sections'}
         </span>
       )
     }
   },
   {
-    id: "status",
-    header: "Status",
+    id: "created",
+    header: "Created",
     cell: ({ row }) => {
-       // Logic can be expanded later based on actual status field
-       const isActive = row.original.status === 'ACTIVE';
-       return (
-         <Badge variant={isActive ? "active" : "secondary"} className={isActive ? "bg-green-600" : ""}>
-           {isActive ? "Active" : "Draft"}
-         </Badge>
-       )
+      return (
+        <span className="text-gray-600">
+          {format(new Date(row.original.createdAt), 'MMM dd, yyyy')}
+        </span>
+      )
     }
   }
 ]

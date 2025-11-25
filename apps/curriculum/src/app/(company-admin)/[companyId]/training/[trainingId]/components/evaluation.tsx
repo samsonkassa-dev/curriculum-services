@@ -9,6 +9,7 @@ import { CreateEvaluationForm } from "./evaluation/components/CreateEvaluationFo
 import { EvaluationDataTable } from "./evaluation/components/evaluation-data-table"
 import { evaluationColumns, createEvaluationActionsColumn } from "./evaluation/components/evaluation-columns"
 import { EvaluationHeader } from "./evaluation/components/evaluation-header"
+import { EvaluationViewModal } from "./evaluation/components/EvaluationViewModal"
 import { DefaultCreate } from "./defaultCreate"
 // Removed unused imports - using EvaluationHeader component now
 
@@ -23,6 +24,7 @@ type EvaluationState = {
   currentPage: number
   pageSize: number
   editingForm: EvaluationSummary | null
+  viewModal: { open: boolean; evaluation: EvaluationSummary | null }
 }
 
 type EvaluationAction =
@@ -32,6 +34,8 @@ type EvaluationAction =
   | { type: 'SET_CURRENT_PAGE'; payload: number }
   | { type: 'SET_PAGE_SIZE'; payload: number }
   | { type: 'START_EDIT'; payload: EvaluationSummary }
+  | { type: 'OPEN_VIEW_MODAL'; payload: EvaluationSummary }
+  | { type: 'CLOSE_VIEW_MODAL' }
 
 const initialState: EvaluationState = {
   showCreateForm: false,
@@ -39,6 +43,7 @@ const initialState: EvaluationState = {
   currentPage: 1,
   pageSize: 10,
   editingForm: null,
+  viewModal: { open: false, evaluation: null },
 }
 
 function evaluationReducer(state: EvaluationState, action: EvaluationAction): EvaluationState {
@@ -55,6 +60,10 @@ function evaluationReducer(state: EvaluationState, action: EvaluationAction): Ev
       return { ...state, pageSize: action.payload, currentPage: 1 }
     case 'START_EDIT':
       return { ...state, editingForm: action.payload, showCreateForm: true }
+    case 'OPEN_VIEW_MODAL':
+      return { ...state, viewModal: { open: true, evaluation: action.payload } }
+    case 'CLOSE_VIEW_MODAL':
+      return { ...state, viewModal: { open: false, evaluation: null } }
     default:
       return state
   }
@@ -67,19 +76,10 @@ export function EvaluationComponent({ trainingId }: EvaluationComponentProps) {
   // Fetch evaluations
   const { data, isLoading } = useGetEvaluations(trainingId)
   
-  // Transform API data to Summary type if needed
-  // The API returns `monitoringForm` array. We map it to EvaluationSummary.
+  // Transform API data to Summary type - API returns correct structure now
   const evaluations: EvaluationSummary[] = useMemo(() => {
     if (!data?.monitoringForm) return []
-    return data.monitoringForm.map((form: any) => ({
-      id: form.id,
-      formType: form.formType,
-      createdAt: form.createdAt,
-      name: form.name || `${form.formType === 'PRE' ? 'Pre' : form.formType === 'MID' ? 'Mid' : 'Post'} Training Evaluation`,
-      description: form.description || "",
-      entryCount: form.monitoringFormEntries?.length || 0,
-      status: "ACTIVE" // Defaulting for now
-    }))
+    return data.monitoringForm
   }, [data])
 
   // Filtering
@@ -87,8 +87,10 @@ export function EvaluationComponent({ trainingId }: EvaluationComponentProps) {
     if (!state.searchQuery.trim()) return evaluations
     const query = state.searchQuery.toLowerCase()
     return evaluations.filter(e => 
-      e.name.toLowerCase().includes(query) || 
-      e.formType.toLowerCase().includes(query)
+      e.formType.toLowerCase().includes(query) ||
+      (e.formType === 'PRE' && 'pre-training'.includes(query)) ||
+      (e.formType === 'MID' && 'mid-training'.includes(query)) ||
+      (e.formType === 'POST' && 'post-training'.includes(query))
     )
   }, [evaluations, state.searchQuery])
 
@@ -120,14 +122,11 @@ export function EvaluationComponent({ trainingId }: EvaluationComponentProps) {
   }, [])
 
   const handleView = useCallback((form: EvaluationSummary) => {
-    // TODO: Implement view modal
-    console.log("View", form)
+    dispatch({ type: 'OPEN_VIEW_MODAL', payload: form })
   }, [])
 
   const handleEdit = useCallback((form: EvaluationSummary) => {
-    // TODO: Implement edit logic
-    // dispatch({ type: 'START_EDIT', payload: form })
-    console.log("Edit not implemented yet", form)
+    dispatch({ type: 'START_EDIT', payload: form })
   }, [])
 
   const handleDelete = useCallback((form: EvaluationSummary) => {
@@ -155,6 +154,7 @@ export function EvaluationComponent({ trainingId }: EvaluationComponentProps) {
       <CreateEvaluationForm 
         trainingId={trainingId}
         onCancel={handleBackToList}
+        editingEvaluation={state.editingForm}
       />
     )
   }
@@ -194,6 +194,13 @@ export function EvaluationComponent({ trainingId }: EvaluationComponentProps) {
               setPageSize: handlePageSizeChange,
               totalElements: filteredEvaluations.length
           }}
+        />
+
+        {/* Evaluation View Modal */}
+        <EvaluationViewModal
+          evaluation={state.viewModal.evaluation}
+          isOpen={state.viewModal.open}
+          onClose={() => dispatch({ type: 'CLOSE_VIEW_MODAL' })}
         />
       </div>
     </div>

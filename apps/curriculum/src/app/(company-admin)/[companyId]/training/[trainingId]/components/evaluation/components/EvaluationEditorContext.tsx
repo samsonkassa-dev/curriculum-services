@@ -3,14 +3,14 @@
 import React, { createContext, useContext, useState, useCallback } from 'react'
 
 export type EvaluationEditorMode = 'evaluation' | 'question'
-export type EvaluationQuestionState = 'viewing' | 'editing' | 'creating'
+export type QuestionState = 'viewing' | 'editing' | 'creating'
 
 interface EvaluationEditorState {
   // Navigation
   selectedSection: number
   selectedQuestion: number
   editorMode: EvaluationEditorMode
-  questionState: EvaluationQuestionState
+  questionState: QuestionState
   
   // Actions
   setSelectedSection: (index: number) => void
@@ -33,7 +33,7 @@ export function EvaluationEditorProvider({ children }: { children: React.ReactNo
   const [selectedSection, setSelectedSection] = useState(0)
   const [selectedQuestion, setSelectedQuestion] = useState(0)
   const [editorMode, setEditorMode] = useState<EvaluationEditorMode>('evaluation')
-  const [questionState, setQuestionState] = useState<EvaluationQuestionState>('viewing')
+  const [questionState, setQuestionState] = useState<QuestionState>('viewing')
 
   const startEditingQuestion = useCallback(() => {
     setQuestionState('editing')
@@ -64,13 +64,13 @@ export function EvaluationEditorProvider({ children }: { children: React.ReactNo
   }, [])
 
   const value: EvaluationEditorState = {
-    selectedSection,
-    selectedQuestion,
-    editorMode,
+        selectedSection,
+        selectedQuestion,
+        editorMode,
     questionState,
-    setSelectedSection,
-    setSelectedQuestion,
-    setEditorMode,
+        setSelectedSection,
+        setSelectedQuestion,
+        setEditorMode,
     startEditingQuestion,
     startCreatingQuestion,
     stopEditingQuestion,

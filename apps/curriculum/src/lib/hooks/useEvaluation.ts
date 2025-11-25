@@ -4,9 +4,14 @@ import { getCookie } from "@curriculum-services/auth"
 import { 
   CreateEvaluationPayload, 
   EvaluationResponse, 
+  EvaluationDetailResponse,
+  EvaluationSectionsResponse,
+  EvaluationSectionResponse,
   ApiErrorResponse,
   EvaluationEntryForm,
-  EvaluationChoiceForm
+  EvaluationChoiceForm,
+  EvaluationDetail,
+  EvaluationSection
 } from "./evaluation-types"
 import { toast } from "sonner"
 
@@ -38,15 +43,49 @@ export function useGetEvaluationDetail(formId: string) {
     queryKey: ['evaluation-detail', formId],
     queryFn: async () => {
       const token = getCookie('token')
-      // Note: Response type might need adjustment based on actual API response for detail
-      const response = await axios.get(
+      const response = await axios.get<EvaluationDetailResponse>(
         `${process.env.NEXT_PUBLIC_API}/monitoring-form/${formId}`,
         {
           headers: { Authorization: `Bearer ${token}` }
         }
       )
       return response.data.monitoringForm
-    }
+    },
+    enabled: !!formId
+  })
+}
+
+export function useGetEvaluationSections(formId: string) {
+  return useQuery({
+    queryKey: ['evaluation-sections', formId],
+    queryFn: async () => {
+      const token = getCookie('token')
+      const response = await axios.get<EvaluationSectionsResponse>(
+        `${process.env.NEXT_PUBLIC_API}/monitoring-form-section/monitoring-form/${formId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      )
+      return response.data.sections
+    },
+    enabled: !!formId
+  })
+}
+
+export function useGetEvaluationSection(sectionId: string) {
+  return useQuery({
+    queryKey: ['evaluation-section', sectionId],
+    queryFn: async () => {
+      const token = getCookie('token')
+      const response = await axios.get<EvaluationSectionResponse>(
+        `${process.env.NEXT_PUBLIC_API}/monitoring-form-section/${sectionId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      )
+      return response.data.section
+    },
+    enabled: !!sectionId
   })
 }
 
@@ -213,5 +252,131 @@ export function useCreateEvaluation() {
         description: errorMessage
       })
     }
+  })
+}
+
+// =============================================================================
+// SECTION MANAGEMENT HOOKS
+// =============================================================================
+
+export function useUpdateEvaluationSection() {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: async ({
+      sectionId,
+      data
+    }: {
+      sectionId: string;
+      data: {
+        title?: string;
+        description?: string;
+        sectionOrder?: number;
+      };
+    }) => {
+      const token = getCookie('token')
+      
+      const response = await axios.patch(
+        `${process.env.NEXT_PUBLIC_API}/monitoring-form-section/${sectionId}`,
+        data,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          }
+        }
+      )
+      
+      return response.data
+    },
+    onSuccess: (data, variables) => {
+      toast.success("Success", {
+        description: data?.message || "Section updated successfully"
+      })
+      
+      // Invalidate relevant queries
+      queryClient.invalidateQueries({ queryKey: ['evaluation-sections'] })
+      queryClient.invalidateQueries({ queryKey: ['evaluation-detail'] })
+      if (variables?.sectionId) {
+        queryClient.invalidateQueries({ 
+          queryKey: ['evaluation-section', variables.sectionId] 
+        })
+      }
+    },
+    onError: (error: AxiosError<ApiErrorResponse>) => {
+      const errorMessage = error.response?.data?.message || error.message || "Failed to update section"
+      toast.error("Error", { description: errorMessage })
+    }
+  })
+}
+
+export function useAddEvaluationSections() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({
+      formId,
+      sections,
+    }: {
+      formId: string;
+      sections: {
+        title: string;
+        description: string;
+        entries: {
+          clientId: string;
+          question: string;
+          questionImage?: string;
+          questionType: "TEXT" | "RADIO" | "CHECKBOX";
+          choices: {
+            clientId: string;
+            choiceText: string;
+            choiceImage?: string;
+          }[];
+          isFollowUp: boolean;
+          parentQuestionClientId?: string;
+          triggerChoiceClientIds?: string[];
+          parentQuestionId?: string;
+          triggerChoiceIds?: string[];
+        }[];
+      }[];
+    }) => {
+      const token = getCookie('token')
+
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_API}/monitoring-form-section/monitoring-form/${formId}`,
+        { sections },
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      )
+
+      return response.data
+    },
+    onSuccess: (data, variables) => {
+      toast.success("Success", {
+        description: data?.message || "Sections added successfully",
+      })
+
+      // Invalidate relevant queries
+      queryClient.invalidateQueries({ queryKey: ['evaluation'] })
+      queryClient.invalidateQueries({ queryKey: ['evaluation-sections'] })
+      if (variables?.formId) {
+        queryClient.invalidateQueries({
+          queryKey: ['evaluation-detail', variables.formId],
+        })
+      }
+    },
+    onError: (error: AxiosError<ApiErrorResponse>) => {
+      let errorMessage = "Failed to add sections. Please try again."
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message
+      } else if (error.message) {
+        errorMessage = error.message
+      }
+      toast.error("Error", { description: errorMessage })
+    },
   })
 }
