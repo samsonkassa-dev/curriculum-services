@@ -150,6 +150,7 @@ export function EvaluationComponent({ trainingId }: EvaluationComponentProps) {
       handleEdit,
       handleDelete,
       {
+        showView: !isMeExpert,
         showEdit: !isMeExpert,
         showDelete: !isMeExpert && (isCompanyAdmin || isProjectManager || isCurriculumAdmin || isTrainingAdmin),
         showAnswer: isMeExpert,

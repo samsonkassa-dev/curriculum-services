@@ -83,6 +83,7 @@ export function createEvaluationActionsColumn(
   onEdit: (form: EvaluationSummary) => void,
   onDelete: (form: EvaluationSummary) => void,
   options?: {
+    showView?: boolean
     showEdit?: boolean
     showDelete?: boolean
     showAnswer?: boolean
@@ -94,6 +95,7 @@ export function createEvaluationActionsColumn(
     header: "Actions",
     cell: ({ row }) => {
       const form = row.original
+      const showView = options?.showView ?? true
       const showEdit = options?.showEdit ?? true
       const showDelete = options?.showDelete ?? true
       const showAnswer = options?.showAnswer ?? false
@@ -110,12 +112,12 @@ export function createEvaluationActionsColumn(
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem 
-              onClick={() => onView(form)}
-            >
-              <Eye className="mr-2 h-4 w-4" />
-              View
-            </DropdownMenuItem>
+            {showView && (
+              <DropdownMenuItem onClick={() => onView(form)}>
+                <Eye className="mr-2 h-4 w-4" />
+                View
+              </DropdownMenuItem>
+            )}
             
             {showEdit && (
               <DropdownMenuItem onClick={() => onEdit(form)}>

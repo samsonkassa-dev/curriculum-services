@@ -1,6 +1,6 @@
  "use client"
  
- import { useMemo, useState } from "react"
+import { useMemo, useState, useEffect } from "react"
  import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
  import { Button } from "@/components/ui/button"
  import { Badge } from "@/components/ui/badge"
@@ -12,6 +12,8 @@
  import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
  import { Label } from "@/components/ui/label"
  import { Textarea } from "@/components/ui/textarea"
+import axios from "axios"
+import { getCookie } from "@curriculum-services/auth"
  
  interface EvaluationAnswerModalProps {
    evaluation: EvaluationSummary | null
@@ -20,16 +22,15 @@
  }
  
  export function EvaluationAnswerModal({ evaluation, isOpen, onClose }: EvaluationAnswerModalProps) {
-   const { data: evaluationDetail, isLoading } = useGetEvaluationDetail(evaluation?.id || "")
+  const { data: evaluationDetail, isLoading } = useGetEvaluationDetail(evaluation?.id || "")
    const [currentIndex, setCurrentIndex] = useState(0)
  
    // Local answer state per entry id
    const [selectedChoicesByEntryId, setSelectedChoicesByEntryId] = useState<Record<string, Set<string>>>({})
    const [textAnswersByEntryId, setTextAnswersByEntryId] = useState<Record<string, string>>({})
+  const [answeredByEntryId, setAnsweredByEntryId] = useState<Record<string, string[]>>({})
  
    const answerMutation = useAnswerEvaluationEntry()
- 
-   if (!evaluation) return null
  
    // Flatten questions with follow-ups grouped under triggering choices
    const processedQuestions = useMemo(() => {
@@ -50,15 +51,63 @@
      return list
    }, [evaluationDetail])
  
-   const total = processedQuestions.length
-   const current = processedQuestions[currentIndex]
+  const total = processedQuestions.length
+  const current = processedQuestions[currentIndex]
  
-   const isAnsweredEntry = (entry: any) => {
-     if (entry.questionType === "TEXT") {
-       return false // server flag comes via isSelected on choices only; text not indicated; allow once via local guard
-     }
-     return (entry.choices || []).some((c: any) => c.isSelected)
-   }
+  const isAnsweredEntry = (entry: any) => {
+    if (!entry?.id) return false
+    const selected = answeredByEntryId[entry.id]
+    return Array.isArray(selected) && selected.length > 0
+  }
+
+  // Fetch answered state for current entry + its follow-ups when slide changes
+  useEffect(() => {
+    const fetchAnsweredForCurrent = async () => {
+      if (!current) return
+      const token = getCookie('token')
+      if (!token) return
+
+      const ids: string[] = [current.id]
+      // collect potential follow-up ids (we don't know which are triggered yet, fetch all that exist)
+      ;(current.choices || []).forEach((c: any) => {
+        (c.followUps || []).forEach((f: any) => {
+          if (f?.id) ids.push(f.id)
+        })
+      })
+
+      try {
+        const results = await Promise.all(ids.map(async (id) => {
+          const resp = await axios.get(
+            `${process.env.NEXT_PUBLIC_API}/monitoring-form-entry/${id}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+          )
+          const entry = resp?.data?.entry
+          const selectedIds = (entry?.choices || []).filter((ch: any) => ch?.isSelected).map((ch: any) => ch.id)
+          return { id, selectedIds }
+        }))
+
+        // Update answered map and initialize local selected choices accordingly
+        setAnsweredByEntryId(prev => {
+          const next = { ...prev }
+          results.forEach(({ id, selectedIds }) => {
+            next[id] = selectedIds
+          })
+          return next
+        })
+        setSelectedChoicesByEntryId(prev => {
+          const next = { ...prev }
+          results.forEach(({ id, selectedIds }) => {
+            if (selectedIds.length > 0) next[id] = new Set(selectedIds)
+          })
+          return next
+        })
+      } catch {
+        // swallow for now
+      }
+    }
+    fetchAnsweredForCurrent()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentIndex, evaluationDetail])
  
    const toggleCheckbox = (entryId: string, choiceId: string) => {
      setSelectedChoicesByEntryId(prev => {
@@ -89,6 +138,10 @@
            textAnswer: current.questionType === "TEXT" ? mainText : undefined
          }
        }))
+      // reflect answered state locally
+      if (current.questionType !== "TEXT" && mainSelected.length > 0) {
+        setAnsweredByEntryId(prev => ({ ...prev, [current.id]: mainSelected }))
+      }
      }
  
      // Submit follow-ups for the selected choice (RADIO/CHECKBOX)
@@ -108,6 +161,9 @@
                  textAnswer: f.questionType === "TEXT" ? fText : undefined
                }
              }))
+            if (f.questionType !== "TEXT" && fSelected.length > 0) {
+              setAnsweredByEntryId(prev => ({ ...prev, [f.id]: fSelected }))
+            }
            }
          }
        }
