@@ -31,15 +31,15 @@ export function ReadOnlyEvaluationQuestionView({ question }: ReadOnlyEvaluationQ
       {/* Question Header */}
       <div className="flex items-start justify-between">
         <div className="flex-1">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">
+          <h3 className="text-lg font-semibold text-gray-900 mb-2 break-words overflow-hidden line-clamp-3 md:line-clamp-5">
             {question.question || "Untitled Question"}
           </h3>
           <div className="flex gap-2">
-            <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+            <Badge variant="secondary" className="bg-blue-100 text-blue-800 text-[10px] md:text-xs whitespace-nowrap">
               {getQuestionTypeIcon()} {getQuestionTypeName()}
             </Badge>
             {question.isFollowUp && (
-              <Badge variant="secondary" className="bg-orange-100 text-orange-800">
+              <Badge variant="secondary" className="bg-orange-100 text-orange-800 text-[10px] md:text-xs whitespace-nowrap">
                 📎 Follow-up
               </Badge>
             )}
@@ -92,7 +92,7 @@ export function ReadOnlyEvaluationQuestionView({ question }: ReadOnlyEvaluationQ
                   {index + 1}
                 </div>
                 <div className="flex-1">
-                  <div className="font-medium text-gray-900">
+                  <div className="font-medium text-gray-900 overflow-hidden text-ellipsis truncate" title={choice.choiceText}>
                     {choice.choiceText || <span className="text-gray-400 italic">Empty choice</span>}
                   </div>
                   {(choice.choiceImageFile || choice.choiceImage) && (
@@ -101,7 +101,7 @@ export function ReadOnlyEvaluationQuestionView({ question }: ReadOnlyEvaluationQ
                       <img 
                         src={choice.choiceImageFile ? URL.createObjectURL(choice.choiceImageFile) : choice.choiceImage} 
                         alt={`Choice ${index + 1}`} 
-                        className="h-16 w-16 object-cover rounded border" 
+                        className="h-14 w-14 md:h-16 md:w-16 object-cover rounded border" 
                       />
                     </div>
                   )}

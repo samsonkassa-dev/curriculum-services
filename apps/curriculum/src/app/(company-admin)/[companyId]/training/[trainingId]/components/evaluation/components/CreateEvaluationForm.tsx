@@ -19,7 +19,8 @@ import {
   CreateEvaluationPayload,
   EvaluationSummary
 } from "@/lib/hooks/evaluation-types"
-import { useCreateEvaluation, useGetEvaluationDetail, useUpdateEvaluationSection } from "@/lib/hooks/useEvaluation"
+import { useCreateEvaluation, useGetEvaluationDetail, useUpdateEvaluationSection, useAddEvaluationSections, useAddQuestionEntry } from "@/lib/hooks/useEvaluation"
+import { SectionMetaModal } from "./SectionMetaModal"
 
 // Initial State Helpers
 const emptyEntry = (): EvaluationEntryForm => ({
@@ -48,6 +49,8 @@ function CreateEvaluationFormInner({ trainingId, onCancel, editingEvaluation }: 
   const [sections, setSections] = useState<EvaluationSectionForm[]>([emptySection()])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [sectionMetaModalOpen, setSectionMetaModalOpen] = useState(false)
+  const [sectionMetaIndex, setSectionMetaIndex] = useState<number | null>(null)
 
   // Fetch evaluation details when editing
   const { data: evaluationDetail, isLoading: isLoadingEvaluation } = useGetEvaluationDetail(
@@ -171,6 +174,8 @@ function CreateEvaluationFormInner({ trainingId, onCancel, editingEvaluation }: 
   } = useEvaluationEditor()
 
   const createEvaluation = useCreateEvaluation()
+  const addSectionsMutation = useAddEvaluationSections()
+  const addQuestionEntryMutation = useAddQuestionEntry()
 
   // Section update functions for edit mode
   const updateSectionTitle = (sectionIndex: number, title: string) => {
@@ -374,7 +379,7 @@ function CreateEvaluationFormInner({ trainingId, onCancel, editingEvaluation }: 
     return true
   }
 
-  // Form submission
+  // Form submission (Create only; Edit is handled per-question)
   const handleSubmit = () => {
     if (!validateForm()) {
       return
@@ -390,78 +395,84 @@ function CreateEvaluationFormInner({ trainingId, onCancel, editingEvaluation }: 
       }))
       .filter((section) => section.title.trim() || section.entries.length > 0)
 
-    // Convert form data to API payload format
-    // Need to flatten follow-up questions from choices into separate entries
-    const allEntries: any[] = []
-    
-    sanitizedSections.forEach(section => {
-      section.entries.forEach(entry => {
-        // Add the main question
-        allEntries.push({
-          clientId: entry.clientId,
-          question: entry.question,
-          questionImage: entry.questionImage,
-          questionImageFile: entry.questionImageFile, // Include File object for upload
-          questionType: entry.questionType,
-          choices: entry.choices.map(choice => ({
-            clientId: choice.clientId,
-            choiceText: choice.choiceText,
-            choiceImage: choice.choiceImage,
-            choiceImageFile: choice.choiceImageFile // Include File object for upload
-          })),
-          isFollowUp: entry.isFollowUp,
-          parentQuestionClientId: entry.parentQuestionClientId,
-          triggerChoiceClientIds: entry.triggerChoiceClientIds,
-          parentQuestionId: entry.parentQuestionId,
-          triggerChoiceIds: entry.triggerChoiceIds
-        })
-        
-        // Add follow-up questions embedded in choices
-        entry.choices.forEach(choice => {
-          if (choice.hasFollowUp && choice.followUpQuestion) {
-            allEntries.push({
-              clientId: choice.followUpQuestion.clientId,
-              question: choice.followUpQuestion.question,
-              questionImage: choice.followUpQuestion.questionImage,
-              questionImageFile: choice.followUpQuestion.questionImageFile, // Include File object for upload
-              questionType: choice.followUpQuestion.questionType,
-              choices: (choice.followUpQuestion.choices || []).map(fChoice => ({
-                clientId: fChoice.clientId,
-                choiceText: fChoice.choiceText,
-                choiceImage: fChoice.choiceImage,
-                choiceImageFile: fChoice.choiceImageFile // Include File object for upload
-              })),
-              isFollowUp: true,
-              parentQuestionClientId: entry.clientId,
-              triggerChoiceClientIds: [choice.clientId],
-              // Only use server IDs if we're editing (but this is creation form, so always client IDs)
-              parentQuestionId: undefined,
-              triggerChoiceIds: undefined
-            })
-          }
+    // Build payload differently for create vs edit
+    if (!isEditMode) {
+      // CREATE (multipart)
+      // Flatten follow-ups across all sections into a single entries array for the backend's POST structure
+      const allEntries: any[] = []
+      
+      sanitizedSections.forEach(section => {
+        section.entries.forEach(entry => {
+          // Main question
+          allEntries.push({
+            clientId: entry.clientId,
+            question: entry.question,
+            questionImage: entry.questionImage,
+            questionImageFile: entry.questionImageFile,
+            questionType: entry.questionType,
+            choices: entry.choices.map(choice => ({
+              clientId: choice.clientId,
+              choiceText: choice.choiceText,
+              choiceImage: choice.choiceImage,
+              choiceImageFile: choice.choiceImageFile
+            })),
+            isFollowUp: entry.isFollowUp,
+            parentQuestionClientId: entry.parentQuestionClientId,
+            triggerChoiceClientIds: entry.triggerChoiceClientIds,
+            parentQuestionId: entry.parentQuestionId,
+            triggerChoiceIds: entry.triggerChoiceIds
+          })
+          
+          // Follow-up questions
+          entry.choices.forEach(choice => {
+            if (choice.hasFollowUp && choice.followUpQuestion) {
+              allEntries.push({
+                clientId: choice.followUpQuestion.clientId,
+                question: choice.followUpQuestion.question,
+                questionImage: choice.followUpQuestion.questionImage,
+                questionImageFile: choice.followUpQuestion.questionImageFile,
+                questionType: choice.followUpQuestion.questionType,
+                choices: (choice.followUpQuestion.choices || []).map(fChoice => ({
+                  clientId: fChoice.clientId,
+                  choiceText: fChoice.choiceText,
+                  choiceImage: fChoice.choiceImage,
+                  choiceImageFile: fChoice.choiceImageFile
+                })),
+                isFollowUp: true,
+                parentQuestionClientId: entry.clientId,
+                triggerChoiceClientIds: [choice.clientId],
+                parentQuestionId: undefined,
+                triggerChoiceIds: undefined
+              })
+            }
+          })
         })
       })
-    })
 
-    const payload: CreateEvaluationPayload = {
-      formType,
-      sections: [{
-        title: sanitizedSections[0]?.title || "Section 1",
-        description: sanitizedSections[0]?.description || "",
-        entries: allEntries
-      }]
-    }
-
-    createEvaluation.mutate({ trainingId, data: payload }, {
-      onSuccess: () => {
-        setIsSubmitting(false)
-        toast.success(isEditMode ? "Evaluation form updated successfully" : "Evaluation form created successfully")
-        onCancel()
-      },
-      onError: () => {
-        setIsSubmitting(false)
+      const payload: CreateEvaluationPayload = {
+        formType,
+        sections: [{
+          title: sanitizedSections[0]?.title || "Section 1",
+          description: sanitizedSections[0]?.description || "",
+          entries: allEntries
+        }]
       }
-    })
+
+      createEvaluation.mutate({ trainingId, data: payload }, {
+        onSuccess: () => {
+          setIsSubmitting(false)
+          toast.success("Evaluation form created successfully")
+          onCancel()
+        },
+        onError: () => {
+          setIsSubmitting(false)
+        }
+      })
+    } else {
+      // EDIT: No global submit; updates are per-question via Update buttons.
+      setIsSubmitting(false)
+      toast.info("Use the Update button under each question to save changes.")
+    }
   }
 
   const currentQuestion = sections[selectedSection]?.entries[selectedQuestion]
@@ -503,15 +514,15 @@ function CreateEvaluationFormInner({ trainingId, onCancel, editingEvaluation }: 
                 Cancel
               </Button>
               
-              <Button
-                onClick={handleSubmit}
-                className="bg-blue-600 text-white hover:bg-blue-700 px-6"
-                disabled={isSubmitting || createEvaluation.isPending}
-              >
-                {isSubmitting || createEvaluation.isPending 
-                  ? (isEditMode ? "Updating..." : "Creating...") 
-                  : (isEditMode ? "Update Evaluation" : "Create Evaluation")}
-              </Button>
+              {!isEditMode && (
+                <Button
+                  onClick={handleSubmit}
+                  className="bg-blue-600 text-white hover:bg-blue-700 px-6"
+                  disabled={isSubmitting || createEvaluation.isPending}
+                >
+                  {isSubmitting || createEvaluation.isPending ? "Creating..." : "Create Evaluation"}
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -558,6 +569,70 @@ function CreateEvaluationFormInner({ trainingId, onCancel, editingEvaluation }: 
                     return next
                   })
                 }}
+                onOpenSectionEditModal={(idx) => {
+                  setSectionMetaIndex(idx)
+                  setSectionMetaModalOpen(true)
+                }}
+                onPersistNewSection={(idx) => {
+                  const section = sections[idx]
+                  if (!section) return
+                  
+                  // Build entries for the entire section (new section)
+                  const entries: any[] = []
+                  section.entries.forEach((entry) => {
+                    // Main question
+                    entries.push({
+                      clientId: entry.clientId,
+                      outlineGroup: undefined,
+                      question: entry.question,
+                      questionImage: entry.questionImage,
+                      questionType: entry.questionType,
+                      choices: entry.choices.map((choice) => ({
+                        clientId: choice.clientId,
+                        choiceText: choice.choiceText,
+                        choiceImage: choice.choiceImage
+                      })),
+                      isFollowUp: false,
+                      parentQuestionClientId: undefined,
+                      triggerChoiceClientIds: undefined,
+                      parentQuestionId: undefined,
+                      triggerChoiceIds: undefined
+                    })
+                    
+                    // Follow-ups
+                    entry.choices.forEach((choice) => {
+                      if (choice.hasFollowUp && choice.followUpQuestion) {
+                        const follow = choice.followUpQuestion
+                        entries.push({
+                          clientId: follow.clientId,
+                          outlineGroup: undefined,
+                          question: follow.question,
+                          questionImage: follow.questionImage,
+                          questionType: follow.questionType,
+                          choices: (follow.choices || []).map((fChoice) => ({
+                            clientId: fChoice.clientId,
+                            choiceText: fChoice.choiceText,
+                            choiceImage: fChoice.choiceImage
+                          })),
+                          isFollowUp: true,
+                          parentQuestionClientId: entry.clientId,
+                          triggerChoiceClientIds: [choice.clientId],
+                          parentQuestionId: undefined,
+                          triggerChoiceIds: undefined
+                        })
+                      }
+                    })
+                  })
+                  
+                  addSectionsMutation.mutate({
+                    formId: editingEvaluation?.id || "",
+                    sections: [{
+                      title: section.title,
+                      description: section.description,
+                      entries
+                    }]
+                  })
+                }}
               />
             </div>
 
@@ -592,7 +667,102 @@ function CreateEvaluationFormInner({ trainingId, onCancel, editingEvaluation }: 
                             key={`${selectedSection}-${selectedQuestion}-${currentQuestion.clientId}`}
                             question={currentQuestion}
                             onUpdateQuestion={(updates) => updateQuestion(selectedSection, selectedQuestion, updates)}
-                            isCreatingNew={true} // Always creating new for this form
+                            isCreatingNew={!isEditMode}
+                            isEditMode={isEditMode}
+                            sectionId={sections[selectedSection]?.id}
+                            onAddQuestion={isEditMode && !currentQuestion.id ? async () => {
+                              // Persist only this new question (and its follow-ups)
+                              const section = sections[selectedSection]
+                              if (!section) return
+                              const entry = section.entries[selectedQuestion]
+                              if (!entry) return
+
+                              // If editing within an existing section: POST entry to section
+                              if (section.id) {
+                                // Main question
+                                await addQuestionEntryMutation.mutateAsync({
+                                  sectionId: section.id,
+                                  entry: {
+                                    clientId: entry.clientId,
+                                    question: entry.question,
+                                    questionImage: entry.questionImage,
+                                    questionType: entry.questionType,
+                                    choices: entry.choices.map((choice) => ({
+                                      clientId: choice.clientId,
+                                      choiceText: choice.choiceText,
+                                      choiceImage: choice.choiceImage
+                                    })),
+                                    isFollowUp: false
+                                  }
+                                })
+
+                                // Follow-ups (if any)
+                                for (const choice of entry.choices) {
+                                  if (choice.hasFollowUp && choice.followUpQuestion) {
+                                    const follow = choice.followUpQuestion
+                                    await addQuestionEntryMutation.mutateAsync({
+                                      sectionId: section.id,
+                                      entry: {
+                                        clientId: follow.clientId,
+                                        question: follow.question,
+                                        questionImage: follow.questionImage,
+                                        questionType: follow.questionType,
+                                        choices: (follow.choices || []).map((fChoice) => ({
+                                          clientId: fChoice.clientId,
+                                          choiceText: fChoice.choiceText,
+                                          choiceImage: fChoice.choiceImage
+                                        })),
+                                        isFollowUp: true,
+                                        parentQuestionClientId: entry.clientId,
+                                        triggerChoiceClientIds: [choice.clientId]
+                                      }
+                                    })
+                                  }
+                                }
+                              } else {
+                                // If section not yet persisted, fallback to add whole section approach
+                                const entries: any[] = []
+                                entries.push({
+                                  clientId: entry.clientId,
+                                  question: entry.question,
+                                  questionImage: entry.questionImage,
+                                  questionType: entry.questionType,
+                                  choices: entry.choices.map((choice) => ({
+                                    clientId: choice.clientId,
+                                    choiceText: choice.choiceText,
+                                    choiceImage: choice.choiceImage
+                                  })),
+                                  isFollowUp: false
+                                })
+                                entry.choices.forEach((choice) => {
+                                  if (choice.hasFollowUp && choice.followUpQuestion) {
+                                    const follow = choice.followUpQuestion
+                                    entries.push({
+                                      clientId: follow.clientId,
+                                      question: follow.question,
+                                      questionImage: follow.questionImage,
+                                      questionType: follow.questionType,
+                                      choices: (follow.choices || []).map((fChoice) => ({
+                                        clientId: fChoice.clientId,
+                                        choiceText: fChoice.choiceText,
+                                        choiceImage: fChoice.choiceImage
+                                      })),
+                                      isFollowUp: true,
+                                      parentQuestionClientId: entry.clientId,
+                                      triggerChoiceClientIds: [choice.clientId]
+                                    })
+                                  }
+                                })
+                                addSectionsMutation.mutate({
+                                  formId: editingEvaluation?.id || "",
+                                  sections: [{
+                                    title: section.title,
+                                    description: section.description,
+                                    entries
+                                  }]
+                                })
+                              }
+                            } : undefined}
                           />
                         ) : (
                           <>
@@ -632,6 +802,53 @@ function CreateEvaluationFormInner({ trainingId, onCancel, editingEvaluation }: 
           </div>
         </div>
       </div>
+      
+      {/* Section Meta Modal (title, description, order) */}
+      {sectionMetaIndex !== null && (
+        <SectionMetaModal
+          isOpen={sectionMetaModalOpen}
+          onClose={() => setSectionMetaModalOpen(false)}
+          sectionIndex={sectionMetaIndex}
+          totalSections={sections.length}
+          initialTitle={sections[sectionMetaIndex]?.title || `Section ${sectionMetaIndex + 1}`}
+          initialDescription={sections[sectionMetaIndex]?.description || ""}
+          initialOrder={sectionMetaIndex + 1}
+          onSave={(next) => {
+            const { title, description, order } = next
+            const currentIndex = sectionMetaIndex
+            if (currentIndex == null) return
+
+            // Update local meta
+            setSections(prev => prev.map((s, i) => i === currentIndex ? { ...s, title, description } : s))
+
+            // Update order locally if changed
+            if (order !== currentIndex + 1) {
+              setSections(prev => {
+                const nextArr = [...prev]
+                const [moved] = nextArr.splice(currentIndex, 1)
+                nextArr.splice(Math.max(0, Math.min(order - 1, nextArr.length)), 0, moved)
+                return nextArr
+              })
+              setSelectedSection(Math.max(0, Math.min(order - 1, sections.length - 1)))
+            }
+
+            // Persist meta/order to server if this section exists
+            const sectionId = sections[currentIndex]?.id
+            if (isEditMode && sectionId) {
+              updateEvaluationSection.mutate({
+                sectionId,
+                data: {
+                  title,
+                  description,
+                  sectionOrder: order
+                }
+              })
+            }
+
+            setSectionMetaModalOpen(false)
+          }}
+        />
+      )}
     </div>
   )
 }

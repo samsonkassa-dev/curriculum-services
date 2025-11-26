@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Trash2, Save as SaveIcon, X as XIcon, Pencil, GripVertical } from "lucide-react"
 import { EvaluationSectionForm } from "@/lib/hooks/evaluation-types"
+import { useDeleteQuestion, useDeleteSection } from "@/lib/hooks/useEvaluation"
+import { DeleteConfirmDialog } from "./DeleteConfirmDialog"
 
 interface EvaluationNavigationProps {
   sections: EvaluationSectionForm[]
@@ -26,6 +28,8 @@ interface EvaluationNavigationProps {
   onAddSection?: () => void
   onSaveSectionMeta?: (sectionIndex: number, title: string, description: string) => void
   onReorderSections?: (fromIndex: number, toIndex: number) => void
+  onOpenSectionEditModal?: (sectionIndex: number) => void
+  onPersistNewSection?: (sectionIndex: number) => void
 }
 
 export function EvaluationNavigation({
@@ -46,16 +50,24 @@ export function EvaluationNavigation({
   onAddQuestion,
   onAddSection,
   onSaveSectionMeta,
-  onReorderSections
+  onReorderSections,
+  onOpenSectionEditModal,
+  onPersistNewSection
 }: EvaluationNavigationProps) {
 
   const [editingMap, setEditingMap] = useState<Record<number, boolean>>({})
   const [draftTitles, setDraftTitles] = useState<Record<number, string>>({})
   const [draftDescs, setDraftDescs] = useState<Record<number, string>>({})
+  const [deleteSectionIndex, setDeleteSectionIndex] = useState<number | null>(null)
+  const [deleteQuestionTarget, setDeleteQuestionTarget] = useState<{ sectionIndex: number; entryIndex: number } | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
   const [dragFromIndex, setDragFromIndex] = useState<number | null>(null)
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const scrollIntervalRef = useRef<NodeJS.Timeout | null>(null)
+
+  const deleteSectionMutation = useDeleteSection()
+  const deleteQuestionMutation = useDeleteQuestion()
 
   useEffect(() => {
     const newDraftTitles: Record<number, string> = {}
@@ -296,45 +308,36 @@ export function EvaluationNavigation({
                   {/* Only show Edit/Save/Cancel for existing sections with an id */}
                   {section.id && (
                     <>
-                      {editingMap[sectionIndex] ? (
-                        <>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => saveEdit(sectionIndex)}
-                            className="h-7 w-7 p-0"
-                            title="Save"
-                          >
-                            <SaveIcon className="h-3.5 w-3.5" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => cancelEdit(sectionIndex)}
-                            className="h-7 w-7 p-0"
-                            title="Cancel"
-                          >
-                            <XIcon className="h-3.5 w-3.5" />
-                          </Button>
-                        </>
-                      ) : (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => startEdit(sectionIndex)}
-                          className="h-7 w-7 p-0"
-                          title="Edit"
-                        >
-                          <Pencil className="h-3.5 w-3.5" />
-                        </Button>
-                      )}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          if (onOpenSectionEditModal) {
+                            onOpenSectionEditModal(sectionIndex)
+                          } else {
+                            // Fallback to inline editing if modal handler not provided
+                            startEdit(sectionIndex)
+                          }
+                        }}
+                        className="h-7 w-7 p-0"
+                        title="Edit"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
                     </>
                   )}
                   {sections.length > 1 && (
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => onDeleteSection(sectionIndex)}
+                      onClick={() => {
+                        const section = sections[sectionIndex]
+                        if (section?.id) {
+                          setDeleteSectionIndex(sectionIndex)
+                        } else {
+                          onDeleteSection(sectionIndex)
+                        }
+                      }}
                       className="p-1 h-6 w-6 text-red-500 hover:text-red-700 hover:bg-red-50"
                     >
                       <Trash2 className="h-3 w-3" />
@@ -390,7 +393,12 @@ export function EvaluationNavigation({
                           size="sm"
                           onClick={(e) => {
                             e.stopPropagation()
-                            onDeleteQuestion(sectionIndex, originalIndex)
+                            const entry = section.entries[originalIndex]
+                            if (entry?.id) {
+                              setDeleteQuestionTarget({ sectionIndex, entryIndex: originalIndex })
+                            } else {
+                              onDeleteQuestion(sectionIndex, originalIndex)
+                            }
                           }}
                           className="p-1 h-5 w-5 text-red-500 hover:text-red-700 hover:bg-red-50"
                         >
@@ -401,6 +409,14 @@ export function EvaluationNavigation({
                     <p className="text-xs text-gray-600 mt-1 truncate">
                       {entry.question || 'Untitled question'}
                     </p>
+                    {/* Add Question badge for client-only new questions */}
+                    {isEditMode && !entry.id && (
+                      <div className="mt-2">
+                        <span className="inline-block text-[10px] px-2 py-0.5 rounded bg-green-50 text-green-700 border border-green-200">
+                          New question - use Add Question in editor
+                        </span>
+                      </div>
+                    )}
                   </div>
                 )
               })}
@@ -413,6 +429,18 @@ export function EvaluationNavigation({
               >
                 + Add Question
               </Button>
+              
+              {/* Add Section button for client-only new sections */}
+              {isEditMode && !section.id && onPersistNewSection && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => onPersistNewSection(sectionIndex)}
+                  className="w-full mt-3 text-green-700 border-green-300 hover:bg-green-50"
+                >
+                  Add Section
+                </Button>
+              )}
             </div>
               </div>
               
@@ -435,6 +463,70 @@ export function EvaluationNavigation({
           </Button>
         )}
       </div>
+      
+      {/* Delete Section Dialog */}
+      <DeleteConfirmDialog
+        isOpen={deleteSectionIndex !== null}
+        onClose={() => setDeleteSectionIndex(null)}
+        onConfirm={async () => {
+          const idx = deleteSectionIndex
+          if (idx === null) return
+          const section = sections[idx]
+          try {
+            setIsDeleting(true)
+            if (section?.id) {
+              await deleteSectionMutation.mutateAsync(section.id)
+            }
+            onDeleteSection(idx)
+          } finally {
+            setIsDeleting(false)
+            setDeleteSectionIndex(null)
+          }
+        }}
+        title="Delete Section"
+        description="Are you sure you want to delete this section? All questions in this section will also be deleted. This action cannot be undone."
+        confirmText="Delete Section"
+        isDeleting={isDeleting}
+      />
+
+      {/* Delete Question Dialog */}
+      <DeleteConfirmDialog
+        isOpen={deleteQuestionTarget !== null}
+        onClose={() => setDeleteQuestionTarget(null)}
+        onConfirm={async () => {
+          const target = deleteQuestionTarget
+          if (!target) return
+          const { sectionIndex, entryIndex } = target
+          const entry = sections[sectionIndex]?.entries[entryIndex]
+          try {
+            setIsDeleting(true)
+            if (entry?.id) {
+              await deleteQuestionMutation.mutateAsync(entry.id)
+            }
+            onDeleteQuestion(sectionIndex, entryIndex)
+          } finally {
+            setIsDeleting(false)
+            setDeleteQuestionTarget(null)
+          }
+        }}
+        title="Delete Question"
+        description="Are you sure you want to delete this question? This action cannot be undone."
+        confirmText="Delete Question"
+        isDeleting={isDeleting}
+      />
     </div>
   )
 }
+
+// Delete dialogs
+export function EvaluationNavigationDeleteDialogs({
+  open,
+}: {
+  open?: boolean
+}) {
+  return null
+}
+
+// Inline delete dialogs in component scope
+// We append them at the bottom of the component return
+

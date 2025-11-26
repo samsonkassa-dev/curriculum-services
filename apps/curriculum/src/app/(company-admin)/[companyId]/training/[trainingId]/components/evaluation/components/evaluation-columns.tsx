@@ -69,11 +69,11 @@ export const evaluationColumns: ColumnDef<EvaluationSummary>[] = [
     id: "created",
     header: "Created",
     cell: ({ row }) => {
-      return (
+       return (
         <span className="text-gray-600">
           {format(new Date(row.original.createdAt), 'MMM dd, yyyy')}
         </span>
-      )
+       )
     }
   }
 ]

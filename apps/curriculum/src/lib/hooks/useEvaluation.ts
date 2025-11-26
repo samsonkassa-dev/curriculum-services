@@ -10,8 +10,8 @@ import {
   ApiErrorResponse,
   EvaluationEntryForm,
   EvaluationChoiceForm,
-  EvaluationDetail,
-  EvaluationSection
+  SectionEntriesResponseDTO,
+  EntryDetailResponseDTO,
 } from "./evaluation-types"
 import { toast } from "sonner"
 
@@ -86,6 +86,40 @@ export function useGetEvaluationSection(sectionId: string) {
       return response.data.section
     },
     enabled: !!sectionId
+  })
+}
+
+export function useGetSectionEntries(sectionId: string) {
+  return useQuery({
+    queryKey: ['evaluation-section-entries', sectionId],
+    queryFn: async () => {
+      const token = getCookie('token')
+      const response = await axios.get<SectionEntriesResponseDTO>(
+        `${process.env.NEXT_PUBLIC_API}/monitoring-form-entry/monitoring-form-section/${sectionId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      )
+      return response.data.entries
+    },
+    enabled: !!sectionId
+  })
+}
+
+export function useGetEntryDetail(entryId: string) {
+  return useQuery({
+    queryKey: ['evaluation-entry', entryId],
+    queryFn: async () => {
+      const token = getCookie('token')
+      const response = await axios.get<EntryDetailResponseDTO>(
+        `${process.env.NEXT_PUBLIC_API}/monitoring-form-entry/${entryId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` }
+        }
+      )
+      return response.data.entry
+    },
+    enabled: !!entryId
   })
 }
 
@@ -378,5 +412,270 @@ export function useAddEvaluationSections() {
       }
       toast.error("Error", { description: errorMessage })
     },
+  })
+}
+
+export function useAddQuestionEntry() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({
+      sectionId,
+      entry,
+    }: {
+      sectionId: string;
+      entry: {
+        clientId: string;
+        question: string;
+        questionImage?: string;
+        questionType: "TEXT" | "RADIO" | "CHECKBOX";
+        choices: {
+          clientId: string;
+          choiceText: string;
+          choiceImage?: string;
+        }[];
+        isFollowUp: boolean;
+        parentQuestionClientId?: string;
+        triggerChoiceClientIds?: string[];
+        parentQuestionId?: string;
+        triggerChoiceIds?: string[];
+      };
+    }) => {
+      const token = getCookie('token')
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_API}/monitoring-form-entry/monitoring-form-section/${sectionId}`,
+        entry,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      )
+      return response.data
+    },
+    onSuccess: () => {
+      toast.success("Success", { description: "Question added" })
+      queryClient.invalidateQueries({ queryKey: ['evaluation-detail'] })
+      queryClient.invalidateQueries({ queryKey: ['evaluation-sections'] })
+    },
+    onError: (error: AxiosError<ApiErrorResponse>) => {
+      toast.error("Error", { description: error.response?.data?.message || error.message || "Failed to add question" })
+    }
+  })
+}
+
+// =============================================================================
+// PATCH SECTIONS (Edit existing questions/choices/follow-ups)
+// =============================================================================
+
+// No section-level PATCH (updates are per-entry)
+
+// =============================================================================
+// CHOICE & ENTRY MANAGEMENT HOOKS (edit/add/delete)
+// =============================================================================
+
+export function useUpdateQuestionEntry() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({
+      entryId,
+      data,
+    }: {
+      entryId: string;
+      data: {
+        question: string;
+        questionImage?: string;
+        questionType: "TEXT" | "RADIO" | "CHECKBOX";
+        choices: {
+          clientId: string;
+          choiceText: string;
+          choiceImage?: string;
+        }[];
+        isFollowUp: boolean;
+        parentQuestionId?: string;
+        triggerChoiceIds?: string[];
+      };
+    }) => {
+      const token = getCookie('token')
+      const response = await axios.patch(
+        `${process.env.NEXT_PUBLIC_API}/monitoring-form-entry/${entryId}`,
+        data,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          }
+        }
+      )
+      return response.data
+    },
+    onSuccess: () => {
+      toast.success("Success", { description: "Question updated" })
+      queryClient.invalidateQueries({ queryKey: ['evaluation-detail'] })
+      queryClient.invalidateQueries({ queryKey: ['evaluation-sections'] })
+    },
+    onError: (error: AxiosError<ApiErrorResponse>) => {
+      toast.error("Error", { description: error.response?.data?.message || error.message || "Failed to update question" })
+    }
+  })
+}
+
+export function useEditChoice() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({
+      choiceId,
+      data,
+    }: {
+      choiceId: string;
+      data: {
+        clientId: string;
+        choiceText: string;
+        choiceImage?: string;
+      }
+    }) => {
+      const token = getCookie('token')
+      const response = await axios.patch(
+        `${process.env.NEXT_PUBLIC_API}/monitoring-form-entry/edit-choice/${choiceId}`,
+        data,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          }
+        }
+      )
+      return response.data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['evaluation-detail'] })
+      queryClient.invalidateQueries({ queryKey: ['evaluation-sections'] })
+    },
+    onError: (error: AxiosError<ApiErrorResponse>) => {
+      toast.error("Error", { description: error.response?.data?.message || error.message || "Failed to edit choice" })
+    }
+  })
+}
+
+export function useAddChoice() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({
+      entryId,
+      data,
+    }: {
+      entryId: string; // monitoring form entry id (question id)
+      data: {
+        clientId: string;
+        choiceText: string;
+        choiceImage?: string;
+      }
+    }) => {
+      const token = getCookie('token')
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_API}/monitoring-form-entry/${entryId}/add-choice`,
+        data,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          }
+        }
+      )
+      return response.data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['evaluation-detail'] })
+      queryClient.invalidateQueries({ queryKey: ['evaluation-sections'] })
+    },
+    onError: (error: AxiosError<ApiErrorResponse>) => {
+      toast.error("Error", { description: error.response?.data?.message || error.message || "Failed to add choice" })
+    }
+  })
+}
+
+export function useDeleteChoice() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (choiceId: string) => {
+      const token = getCookie('token')
+      const response = await axios.delete(
+        `${process.env.NEXT_PUBLIC_API}/monitoring-form-entry/delete-choice/${choiceId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      )
+      return response.data
+    },
+    onSuccess: () => {
+      toast.success("Success", { description: "Choice deleted" })
+      queryClient.invalidateQueries({ queryKey: ['evaluation-detail'] })
+      queryClient.invalidateQueries({ queryKey: ['evaluation-sections'] })
+    },
+    onError: (error: AxiosError<ApiErrorResponse>) => {
+      toast.error("Error", { description: error.response?.data?.message || error.message || "Failed to delete choice" })
+    }
+  })
+}
+
+export function useDeleteQuestion() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (entryId: string) => {
+      const token = getCookie('token')
+      const response = await axios.delete(
+        `${process.env.NEXT_PUBLIC_API}/monitoring-form-entry/${entryId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      )
+      return response.data
+    },
+    onSuccess: () => {
+      toast.success("Success", { description: "Question deleted" })
+      queryClient.invalidateQueries({ queryKey: ['evaluation-detail'] })
+      queryClient.invalidateQueries({ queryKey: ['evaluation-sections'] })
+    },
+    onError: (error: AxiosError<ApiErrorResponse>) => {
+      toast.error("Error", { description: error.response?.data?.message || error.message || "Failed to delete question" })
+    }
+  })
+}
+
+export function useDeleteSection() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (sectionId: string) => {
+      const token = getCookie('token')
+      const response = await axios.delete(
+        `${process.env.NEXT_PUBLIC_API}/monitoring-form-section/${sectionId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      )
+      return response.data
+    },
+    onSuccess: () => {
+      toast.success("Success", { description: "Section deleted" })
+      queryClient.invalidateQueries({ queryKey: ['evaluation-detail'] })
+      queryClient.invalidateQueries({ queryKey: ['evaluation-sections'] })
+      queryClient.invalidateQueries({ queryKey: ['evaluation'] })
+    },
+    onError: (error: AxiosError<ApiErrorResponse>) => {
+      toast.error("Error", { description: error.response?.data?.message || error.message || "Failed to delete section" })
+    }
   })
 }

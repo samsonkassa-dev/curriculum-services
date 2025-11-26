@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 export type EvaluationFormType = "PRE" | "MID" | "POST";
 export type EvaluationQuestionType = "TEXT" | "RADIO" | "CHECKBOX";
 
@@ -193,6 +191,41 @@ export interface ApiErrorResponse {
   [key: string]: unknown;
 }
 
+// ----------------------------------------------------------------------------
+// Entries (monitoring-form-entry) DTOs
+// ----------------------------------------------------------------------------
+
+export interface MonitoringFormEntryChoiceDTO {
+  id: string;
+  choiceText: string;
+  choiceImageUrl: string | null;
+  isSelected: boolean;
+}
+
+export interface MonitoringFormEntryDTO {
+  id: string;
+  outlineGroup: string | null;
+  question: string;
+  questionImageUrl: string | null;
+  questionType: EvaluationQuestionType;
+  choices: MonitoringFormEntryChoiceDTO[];
+  isFollowUp: boolean;
+  parentQuestionId: string | null;
+  triggerChoiceIds: string[];
+}
+
+export interface SectionEntriesResponseDTO {
+  code: string;
+  message: string;
+  entries: MonitoringFormEntryDTO[];
+}
+
+export interface EntryDetailResponseDTO {
+  code: string;
+  message: string;
+  entry: MonitoringFormEntryDTO;
+}
+
 // ============================================================================
 // Query Keys
 // ============================================================================
@@ -201,5 +234,7 @@ export const evaluationQueryKeys = {
   all: ['evaluations'] as const,
   training: (trainingId: string) => ['evaluation', trainingId] as const,
   detail: (evaluationId: string) => ['evaluation-detail', evaluationId] as const,
+  sectionEntries: (sectionId: string) => ['evaluation-section-entries', sectionId] as const,
+  entryDetail: (entryId: string) => ['evaluation-entry', entryId] as const,
 };
 

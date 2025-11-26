@@ -9,19 +9,37 @@ import { Label } from "@/components/ui/label"
 import { Plus, Trash2, ChevronDown, ChevronRight } from "lucide-react"
 import { useState } from "react"
 import { EvaluationEntryForm, EvaluationChoiceForm, EvaluationQuestionType } from "@/lib/hooks/evaluation-types"
+import { useAddQuestionEntry, useDeleteChoice, useUpdateQuestionEntry } from "@/lib/hooks/useEvaluation"
+import { DeleteConfirmDialog } from "./DeleteConfirmDialog"
+
+// eslint-disable-next-line no-unused-vars, @typescript-eslint/no-unused-vars
+type UpdateQuestionFn = (updates: Partial<EvaluationEntryForm>) => void
 
 interface SingleEvaluationQuestionEditorProps {
   question: EvaluationEntryForm
-  onUpdateQuestion: (updates: Partial<EvaluationEntryForm>) => void
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  onUpdateQuestion: UpdateQuestionFn
   isCreatingNew?: boolean // To determine POST vs PATCH logic
+  isEditMode?: boolean
+  sectionId?: string
+  onAddQuestion?: () => void
 }
 
 export function SingleEvaluationQuestionEditor({
   question,
   onUpdateQuestion,
-  isCreatingNew = true
+  isCreatingNew = true,
+  isEditMode = false,
+  sectionId,
+  onAddQuestion
 }: SingleEvaluationQuestionEditorProps) {
   const [expandedFollowUps, setExpandedFollowUps] = useState<Record<string, boolean>>({})
+  const [deleteChoiceIdx, setDeleteChoiceIdx] = useState<number | null>(null)
+  const [isDeletingChoice, setIsDeletingChoice] = useState(false)
+
+  const deleteChoiceMutation = useDeleteChoice()
+  const updateQuestionEntry = useUpdateQuestionEntry()
+  const addQuestionEntry = useAddQuestionEntry()
   
   const addChoice = () => {
     const newChoice: EvaluationChoiceForm = {
@@ -36,15 +54,20 @@ export function SingleEvaluationQuestionEditor({
   }
 
   const removeChoice = (choiceIndex: number) => {
-    onUpdateQuestion({
-      choices: question.choices.filter((_, i) => i !== choiceIndex)
-    })
+    const choice = question.choices[choiceIndex]
+    if (isEditMode && choice?.id) {
+      setDeleteChoiceIdx(choiceIndex)
+    } else {
+      onUpdateQuestion({
+        choices: question.choices.filter((_, i) => i !== choiceIndex)
+      })
+    }
   }
 
-  const updateChoice = (choiceIndex: number, updates: Partial<EvaluationChoiceForm>) => {
+  const updateChoice = (choiceIndex: number, choiceUpdates: Partial<EvaluationChoiceForm>) => {
     onUpdateQuestion({
       choices: question.choices.map((choice, i) => 
-        i === choiceIndex ? { ...choice, ...updates } : choice
+        i === choiceIndex ? { ...choice, ...choiceUpdates } : choice
       )
     })
   }
@@ -136,6 +159,24 @@ export function SingleEvaluationQuestionEditor({
   }
 
   const shouldShowChoices = question.questionType === "RADIO" || question.questionType === "CHECKBOX"
+
+  const buildEntryPatchPayload = (entry: EvaluationEntryForm, opts?: { parentQuestionId?: string; triggerChoiceIds?: string[] }) => {
+    return {
+      question: entry.question,
+      questionImage: entry.questionImage || undefined,
+      questionType: entry.questionType,
+      choices: (entry.choices || []).map((c) => ({
+        clientId: c.clientId,
+        choiceText: c.choiceText,
+        choiceImage: c.choiceImage || undefined
+      })),
+      isFollowUp: !!entry.isFollowUp,
+      parentQuestionId: opts?.parentQuestionId,
+      triggerChoiceIds: opts?.triggerChoiceIds
+    }
+  }
+
+  const canUpdateMain = isEditMode && !!question.id
 
   return (
     <div className="space-y-6">
@@ -362,7 +403,7 @@ export function SingleEvaluationQuestionEditor({
                               <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
                             </svg>
                           </div>
-                          <span className="text-sm font-medium text-blue-800">Follow-up Question for "{choice.choiceText || `Choice ${choiceIndex + 1}`}"</span>
+                          <span className="text-sm font-medium text-blue-800">Follow-up Question for &quot;{choice.choiceText || `Choice ${choiceIndex + 1}`}&quot;</span>
                         </div>
 
                         {/* Follow-up Question Text */}
@@ -519,6 +560,58 @@ export function SingleEvaluationQuestionEditor({
                             </div>
                           </div>
                         )}
+                        
+                        <div className="pt-2 flex gap-2 justify-end">
+                          {/* Add Follow-up Button (new follow-up, server add) */}
+                          {/* Only allow adding a follow-up separately when the parent question already exists on the server */}
+                          {isEditMode && sectionId && question.id && !choice.followUpQuestion?.id && (
+                            <Button
+                              size="sm"
+                              className="bg-green-600 text-white hover:bg-green-700"
+                              onClick={async () => {
+                                const follow = choice.followUpQuestion!
+                                await addQuestionEntry.mutateAsync({
+                                  sectionId,
+                                  entry: {
+                                    clientId: follow.clientId,
+                                    question: follow.question,
+                                    questionImage: follow.questionImage,
+                                    questionType: follow.questionType,
+                                    choices: (follow.choices || []).map((fChoice) => ({
+                                      clientId: fChoice.clientId,
+                                      choiceText: fChoice.choiceText,
+                                      choiceImage: fChoice.choiceImage
+                                    })),
+                                    isFollowUp: true,
+                                    parentQuestionClientId: question.clientId,
+                                    triggerChoiceClientIds: [choice.clientId]
+                                  }
+                                })
+                              }}
+                            >
+                              Add Follow-up
+                            </Button>
+                          )}
+                          {/* Update Follow-up Button (server-backed only) */}
+                          {isEditMode && choice.followUpQuestion?.id && (
+                            <Button
+                              size="sm"
+                              className="bg-blue-600 text-white hover:bg-blue-700"
+                              onClick={() => {
+                                const follow = choice.followUpQuestion!
+                                updateQuestionEntry.mutate({
+                                  entryId: follow.id as string,
+                                  data: buildEntryPatchPayload(follow, {
+                                    parentQuestionId: question.id,
+                                    triggerChoiceIds: choice.id ? [choice.id] : undefined
+                                  })
+                                })
+                              }}
+                            >
+                              Update Follow-up
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   )}
@@ -537,6 +630,62 @@ export function SingleEvaluationQuestionEditor({
           </div>
         </div>
       )}
+
+      {/* Update Main Question Button (server-backed only) */}
+      {canUpdateMain && (
+        <div className="flex justify-end">
+          <Button
+            className="bg-blue-600 text-white hover:bg-blue-700"
+            onClick={() => {
+              updateQuestionEntry.mutate({
+                entryId: question.id as string,
+                data: buildEntryPatchPayload(question)
+              })
+            }}
+          >
+            Update Question
+          </Button>
+        </div>
+      )}
+      
+      {/* Add New Question Button (client-only new, in edit mode) */}
+      {isEditMode && !question.id && onAddQuestion && (
+        <div className="flex justify-end">
+          <Button
+            className="bg-green-600 text-white hover:bg-green-700"
+            onClick={onAddQuestion}
+          >
+            Add Question
+          </Button>
+        </div>
+      )}
+      
+      {/* Delete choice confirm */}
+      <DeleteConfirmDialog
+        isOpen={deleteChoiceIdx !== null}
+        onClose={() => setDeleteChoiceIdx(null)}
+        onConfirm={async () => {
+          const idx = deleteChoiceIdx
+          if (idx === null) return
+          const choice = question.choices[idx]
+          try {
+            setIsDeletingChoice(true)
+            if (isEditMode && choice?.id) {
+              await deleteChoiceMutation.mutateAsync(choice.id)
+            }
+            onUpdateQuestion({
+              choices: question.choices.filter((_, i) => i !== idx)
+            })
+          } finally {
+            setIsDeletingChoice(false)
+            setDeleteChoiceIdx(null)
+          }
+        }}
+        title="Delete Choice"
+        description="Are you sure you want to delete this choice? This action cannot be undone."
+        confirmText="Delete Choice"
+        isDeleting={isDeletingChoice}
+      />
     </div>
   )
 }

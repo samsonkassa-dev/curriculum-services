@@ -33,16 +33,16 @@ export function EvaluationQuestionPreview({ question }: EvaluationQuestionPrevie
   }
 
   return (
-    <Card className="p-6 bg-white sticky top-8">
+    <Card className="p-4 md:p-6 bg-white sticky top-8">
       <div className="mb-4">
         <div className="flex items-center justify-between mb-2">
           <h3 className="font-semibold text-gray-800">Preview</h3>
           <div className="flex gap-2">
-            <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+            <Badge variant="secondary" className="bg-blue-100 text-blue-800 text-[10px] md:text-xs whitespace-nowrap">
               {getQuestionTypeIcon()} {getQuestionTypeName()}
             </Badge>
             {question.isFollowUp && (
-              <Badge variant="secondary" className="bg-orange-100 text-orange-800">
+              <Badge variant="secondary" className="bg-orange-100 text-orange-800 text-[10px] md:text-xs whitespace-nowrap">
                 📎 Follow-up
               </Badge>
             )}
@@ -53,7 +53,7 @@ export function EvaluationQuestionPreview({ question }: EvaluationQuestionPrevie
         </p>
       </div>
 
-      <div className="border rounded-lg p-4 bg-gray-50">
+      <div className="border rounded-lg p-3 md:p-4 bg-gray-50">
         {/* Question Header */}
         <div className="mb-4">
           {question.isFollowUp && (
@@ -67,7 +67,7 @@ export function EvaluationQuestionPreview({ question }: EvaluationQuestionPrevie
           <div className="space-y-3">
             {/* Question Text */}
             <div>
-              <h4 className="font-medium text-gray-900 mb-2">
+              <h4 className="font-medium text-gray-900 mb-2 break-words overflow-hidden line-clamp-3 md:line-clamp-5">
                 {question.question || <span className="text-gray-400 italic">Question text will appear here...</span>}
               </h4>
               
@@ -78,7 +78,7 @@ export function EvaluationQuestionPreview({ question }: EvaluationQuestionPrevie
                   <img 
                     src={question.questionImageFile ? URL.createObjectURL(question.questionImageFile) : question.questionImage} 
                     alt="Question" 
-                    className="max-w-full h-auto rounded border max-h-48" 
+                    className="max-w-full h-auto rounded border max-h-40 md:max-h-48" 
                   />
                 </div>
               )}
@@ -101,20 +101,20 @@ export function EvaluationQuestionPreview({ question }: EvaluationQuestionPrevie
               {question.questionType === "RADIO" && (
                 <div>
                   <Label className="text-sm text-gray-600 mb-3 block">Select one option:</Label>
-                  <RadioGroup className="space-y-3" disabled>
+                  <RadioGroup className="space-y-2.5 md:space-y-3" disabled>
                     {question.choices.length > 0 ? (
                       question.choices.map((choice, index) => (
-                        <div key={choice.clientId} className="flex items-center space-x-3">
+                        <div key={choice.clientId} className="flex items-center space-x-3 min-w-0">
                           <RadioGroupItem value={choice.clientId} id={choice.clientId} />
-                          <div className="flex-1">
+                          <div className="flex-1 min-w-0">
                             <Label 
                               htmlFor={choice.clientId} 
-                              className="text-sm font-normal cursor-pointer flex items-center gap-3"
+                              className="text-sm font-normal cursor-pointer flex items-center gap-2 md:gap-3 min-w-0"
                             >
-                              <span className="flex-1">
+                              <span className="flex-1 overflow-hidden text-ellipsis truncate min-w-0" title={choice.choiceText}>
                                 {choice.choiceText || <span className="text-gray-400 italic">Choice {index + 1} text...</span>}
                                 {choice.hasFollowUp && (
-                                  <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-1 rounded">
+                                  <span className="ml-2 text-[10px] md:text-xs bg-blue-100 text-blue-800 px-1 rounded whitespace-nowrap">
                                     + Follow-up
                                   </span>
                                 )}
@@ -125,7 +125,7 @@ export function EvaluationQuestionPreview({ question }: EvaluationQuestionPrevie
                                   <img 
                                     src={choice.choiceImageFile ? URL.createObjectURL(choice.choiceImageFile) : choice.choiceImage} 
                                     alt={`Choice ${index + 1}`} 
-                                    className="h-8 w-8 object-cover rounded border" 
+                                    className="h-7 w-7 md:h-8 md:w-8 object-cover rounded border" 
                                   />
                                 </div>
                               )}
@@ -145,20 +145,20 @@ export function EvaluationQuestionPreview({ question }: EvaluationQuestionPrevie
               {question.questionType === "CHECKBOX" && (
                 <div>
                   <Label className="text-sm text-gray-600 mb-3 block">Select all that apply:</Label>
-                  <div className="space-y-3">
+                  <div className="space-y-2.5 md:space-y-3">
                     {question.choices.length > 0 ? (
                       question.choices.map((choice, index) => (
-                        <div key={choice.clientId} className="flex items-center space-x-3">
+                        <div key={choice.clientId} className="flex items-center space-x-3 min-w-0">
                           <Checkbox id={`preview-${choice.clientId}`} disabled />
-                          <div className="flex-1">
+                          <div className="flex-1 min-w-0">
                             <Label 
                               htmlFor={`preview-${choice.clientId}`} 
-                              className="text-sm font-normal cursor-pointer flex items-center gap-3"
+                              className="text-sm font-normal cursor-pointer flex items-center gap-2 md:gap-3 min-w-0"
                             >
-                              <span className="flex-1">
+                              <span className="flex-1 overflow-hidden text-ellipsis truncate min-w-0" title={choice.choiceText}>
                                 {choice.choiceText || <span className="text-gray-400 italic">Choice {index + 1} text...</span>}
                                 {choice.hasFollowUp && (
-                                  <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-1 rounded">
+                                  <span className="ml-2 text-[10px] md:text-xs bg-blue-100 text-blue-800 px-1 rounded whitespace-nowrap">
                                     + Follow-up
                                   </span>
                                 )}
@@ -169,7 +169,7 @@ export function EvaluationQuestionPreview({ question }: EvaluationQuestionPrevie
                                   <img 
                                     src={choice.choiceImageFile ? URL.createObjectURL(choice.choiceImageFile) : choice.choiceImage} 
                                     alt={`Choice ${index + 1}`} 
-                                    className="h-8 w-8 object-cover rounded border" 
+                                    className="h-7 w-7 md:h-8 md:w-8 object-cover rounded border" 
                                   />
                                 </div>
                               )}

@@ -182,19 +182,19 @@ export function EvaluationComponent({ trainingId }: EvaluationComponentProps) {
         />
 
         {/* Evaluations Table */}
-        <EvaluationDataTable 
-          columns={columns} 
-          data={paginatedEvaluations}
+      <EvaluationDataTable 
+        columns={columns} 
+        data={paginatedEvaluations}
           isLoading={isLoading}
-          pagination={{
-              currentPage: state.currentPage,
-              totalPages,
+        pagination={{
+            currentPage: state.currentPage,
+            totalPages,
               setPage: (page) => dispatch({ type: 'SET_CURRENT_PAGE', payload: page }),
-              pageSize: state.pageSize,
+            pageSize: state.pageSize,
               setPageSize: handlePageSizeChange,
-              totalElements: filteredEvaluations.length
-          }}
-        />
+            totalElements: filteredEvaluations.length
+        }}
+      />
 
         {/* Evaluation View Modal */}
         <EvaluationViewModal

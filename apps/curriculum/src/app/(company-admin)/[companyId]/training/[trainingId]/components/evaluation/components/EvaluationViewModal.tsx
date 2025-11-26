@@ -105,12 +105,12 @@ export function EvaluationViewModal({ evaluation, isOpen, onClose }: EvaluationV
         ) : (
           <div className="flex-1 overflow-y-auto">
             {/* Section Header */}
-            <div className="mb-6 p-5 bg-slate-50 border border-slate-200 rounded-lg">
-              <h2 className="text-lg font-semibold text-slate-800 mb-2 break-words whitespace-pre-wrap">
-                {currentQuestion.sectionTitle}
+            <div className="mb-6 p-4 md:p-5 bg-slate-50 border border-slate-200 rounded-lg">
+              <h2 className="text-lg font-semibold text-slate-800 mb-2 break-words overflow-hidden text-ellipsis line-clamp-2 md:line-clamp-3">
+                {currentQuestion.sectionTitle as string}
               </h2>
               {currentQuestion.sectionDescription && (
-                <p className="text-sm text-slate-600 break-words whitespace-pre-wrap leading-relaxed">
+                <p className="text-sm text-slate-600 break-words leading-relaxed overflow-hidden line-clamp-3 md:line-clamp-5">
                   {currentQuestion.sectionDescription}
                 </p>
               )}
@@ -118,18 +118,18 @@ export function EvaluationViewModal({ evaluation, isOpen, onClose }: EvaluationV
 
             {/* Question */}
             <div className="mb-6">
-              <div className="flex items-start justify-between mb-6">
-                <div className="flex-1 pr-4">
+              <div className="flex items-start justify-between mb-4 md:mb-6">
+                <div className="flex-1 pr-2 md:pr-4 min-w-0">
                   <div className="flex items-center gap-3 mb-2">
                     <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
                       <span className="text-sm font-semibold text-blue-700">Q{currentQuestionIndex + 1}</span>
                     </div>
-                    <h3 className="text-lg font-medium text-slate-800 break-words whitespace-pre-wrap leading-relaxed">
+                    <h3 className="text-lg font-medium text-slate-800 break-words leading-relaxed overflow-hidden line-clamp-3 md:line-clamp-5">
                       {currentQuestion.question}
                     </h3>
                   </div>
                 </div>
-                <Badge variant="secondary" className="bg-slate-100 text-slate-700 border-slate-300 flex-shrink-0">
+                <Badge variant="secondary" className="bg-slate-100 text-slate-700 border-slate-300 flex-shrink-0 text-[10px] md:text-xs whitespace-nowrap">
                   {currentQuestion.questionType === 'RADIO' ? 'Single Choice' : 
                    currentQuestion.questionType === 'CHECKBOX' ? 'Multiple Choice' : 
                    'Text Response'}
@@ -138,23 +138,23 @@ export function EvaluationViewModal({ evaluation, isOpen, onClose }: EvaluationV
 
               {/* Question Image */}
               {currentQuestion.questionImageUrl && (
-                <div className="mb-6 pl-11">
+                <div className="mb-4 md:mb-6 pl-11">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img 
                     src={currentQuestion.questionImageUrl}
                     alt="Question image"
-                    className="w-56 h-36 object-cover rounded-lg border border-slate-200 shadow-sm"
+                    className="w-48 h-32 md:w-56 md:h-36 object-cover rounded-lg border border-slate-200 shadow-sm"
                   />
                 </div>
               )}
 
               {/* Choices */}
               {currentQuestion.choices && currentQuestion.choices.length > 0 && (
-                <div className="pl-11 space-y-5">
-                  {currentQuestion.choices.map((choice, index) => (
+                <div className="pl-11 space-y-4 md:space-y-5">
+                  {currentQuestion.choices.map((choice: any, index: number) => (
                     <div key={choice.id} className="space-y-0">
                       {/* Main Choice */}
-                      <div className="flex items-start gap-4 p-3 rounded-lg border border-gray-200 bg-white">
+                      <div className="flex items-start gap-3 md:gap-4 p-3 rounded-lg border border-gray-200 bg-white">
                         {/* Radio/Checkbox indicator */}
                         {currentQuestion.questionType === "RADIO" ? (
                           <div className="w-5 h-5 rounded-full border-2 border-blue-400 bg-white flex items-center justify-center mt-0.5 flex-shrink-0">
@@ -175,19 +175,19 @@ export function EvaluationViewModal({ evaluation, isOpen, onClose }: EvaluationV
                             <img 
                               src={choice.choiceImageUrl}
                               alt={`Choice ${index + 1} image`}
-                              className="w-16 h-12 object-cover rounded border border-gray-200"
+                              className="w-14 h-10 md:w-16 md:h-12 object-cover rounded border border-gray-200"
                             />
                           </div>
                         )}
 
                         {/* Choice Text */}
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm break-words whitespace-pre-wrap text-gray-800 leading-relaxed">
+                          <p className="text-sm break-words text-gray-800 leading-relaxed overflow-hidden text-ellipsis truncate" title={choice.choiceText}>
                             {choice.choiceText || `Choice ${index + 1}`}
                           </p>
                           {(choice as any).followUpQuestions && (choice as any).followUpQuestions.length > 0 && (
-                            <div className="flex items-center gap-2 mt-2">
-                              <Badge variant="secondary" className="bg-amber-50 text-amber-700 border-amber-200 text-xs">
+                            <div className="flex items-center gap-2 mt-1.5">
+                              <Badge variant="secondary" className="bg-amber-50 text-amber-700 border-amber-200 text-[10px] md:text-xs">
                                 <span className="mr-1">↳</span>
                                 {(choice as any).followUpQuestions.length} Follow-up Question{(choice as any).followUpQuestions.length > 1 ? 's' : ''}
                               </Badge>
@@ -198,14 +198,14 @@ export function EvaluationViewModal({ evaluation, isOpen, onClose }: EvaluationV
 
                       {/* Follow-up Questions for this choice */}
                       {(choice as any).followUpQuestions && (choice as any).followUpQuestions.length > 0 && (
-                        <div className="ml-6 mt-3">
+                        <div className="ml-4 md:ml-6 mt-3">
                           {(choice as any).followUpQuestions.map((followUp: any, followUpIndex: number) => (
                             <div key={followUp.id} className="relative">
                               {/* Connection Line */}
                               <div className="absolute -left-3 top-2 w-3 h-0.5 bg-gray-300"></div>
                               <div className="absolute -left-3 top-2 w-1.5 h-1.5 bg-amber-400 rounded-full"></div>
                               
-                              <div className="border-l-2 border-amber-200 pl-4 py-2">
+                              <div className="border-l-2 border-amber-200 pl-3 md:pl-4 py-2">
                                 <div className="space-y-3">
                                   {/* Follow-up Question Header */}
                                   <div className="flex items-start justify-between">
@@ -214,7 +214,7 @@ export function EvaluationViewModal({ evaluation, isOpen, onClose }: EvaluationV
                                         ↳ Follow-up
                                       </span>
                                     </div>
-                                    <Badge variant="secondary" className="text-xs bg-gray-100 text-gray-600">
+                                    <Badge variant="secondary" className="text-[10px] md:text-xs bg-gray-100 text-gray-600 whitespace-nowrap">
                                       {followUp.questionType === 'RADIO' ? 'Single Choice' : 
                                        followUp.questionType === 'CHECKBOX' ? 'Multiple Choice' : 
                                        'Text Response'}
@@ -223,7 +223,7 @@ export function EvaluationViewModal({ evaluation, isOpen, onClose }: EvaluationV
 
                                   {/* Follow-up Question Text */}
                                   <div>
-                                    <p className="text-sm font-medium text-gray-800 leading-relaxed break-words whitespace-pre-wrap">
+                                    <p className="text-sm font-medium text-gray-800 leading-relaxed break-words overflow-hidden line-clamp-2 md:line-clamp-3">
                                       {followUp.question}
                                     </p>
 
@@ -234,7 +234,7 @@ export function EvaluationViewModal({ evaluation, isOpen, onClose }: EvaluationV
                                         <img 
                                           src={followUp.questionImageUrl}
                                           alt="Follow-up question image"
-                                          className="w-32 h-20 object-cover rounded border border-gray-200"
+                                          className="w-28 h-18 md:w-32 md:h-20 object-cover rounded border border-gray-200"
                                         />
                                       </div>
                                     )}
@@ -243,7 +243,7 @@ export function EvaluationViewModal({ evaluation, isOpen, onClose }: EvaluationV
                                     {followUp.choices && followUp.choices.length > 0 && (
                                       <div className="mt-3 space-y-2">
                                         {followUp.choices.map((followUpChoice: any, followUpChoiceIndex: number) => (
-                                          <div key={followUpChoice.id} className="flex items-start gap-3 p-2 bg-white border border-gray-200 rounded">
+                                          <div key={followUpChoice.id} className="flex items-start gap-2 md:gap-3 p-2 bg-white border border-gray-200 rounded">
                                             {/* Follow-up choice indicator */}
                                             {followUp.questionType === "RADIO" ? (
                                               <div className="w-4 h-4 rounded-full border-2 border-gray-300 bg-white flex items-center justify-center mt-0.5 flex-shrink-0">
@@ -264,13 +264,13 @@ export function EvaluationViewModal({ evaluation, isOpen, onClose }: EvaluationV
                                                 <img 
                                                   src={followUpChoice.choiceImageUrl}
                                                   alt={`Follow-up choice ${followUpChoiceIndex + 1} image`}
-                                                  className="w-10 h-8 object-cover rounded border border-gray-200"
+                                                  className="w-9 h-7 md:w-10 md:h-8 object-cover rounded border border-gray-200"
                                                 />
                                               </div>
                                             )}
 
                                             {/* Follow-up choice text */}
-                                            <p className="text-sm text-gray-700 break-words whitespace-pre-wrap flex-1">
+                                            <p className="text-sm text-gray-700 break-words flex-1 overflow-hidden text-ellipsis truncate" title={followUpChoice.choiceText}>
                                               {followUpChoice.choiceText || `Choice ${followUpChoiceIndex + 1}`}
                                             </p>
                                           </div>
@@ -292,7 +292,7 @@ export function EvaluationViewModal({ evaluation, isOpen, onClose }: EvaluationV
 
             {/* Navigation */}
             {totalQuestions > 1 && (
-              <div className="flex items-center justify-between pt-6 border-t">
+              <div className="flex items-center justify-between pt-4 md:pt-6 border-t">
                 <Button
                   variant="outline"
                   onClick={handlePrevious}
