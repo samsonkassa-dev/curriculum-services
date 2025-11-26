@@ -679,3 +679,74 @@ export function useDeleteSection() {
     }
   })
 }
+
+// =============================================================================
+// ANSWER & FORM DELETE HOOKS
+// =============================================================================
+
+export function useAnswerEvaluationEntry() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({
+      entryId,
+      data,
+    }: {
+      entryId: string;
+      data: {
+        selectedChoiceIds?: string[];
+        textAnswer?: string;
+      }
+    }) => {
+      const token = getCookie('token')
+      const response = await axios.patch(
+        `${process.env.NEXT_PUBLIC_API}/monitoring-form-entry/${entryId}/answer`,
+        data,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`
+          }
+        }
+      )
+      return response.data
+    },
+    onSuccess: () => {
+      toast.success("Success", { description: "Answer submitted" })
+      queryClient.invalidateQueries({ queryKey: ['evaluation-detail'] })
+      queryClient.invalidateQueries({ queryKey: ['evaluation-section-entries'] })
+      queryClient.invalidateQueries({ queryKey: ['evaluation-entry'] })
+    },
+    onError: (error: AxiosError<ApiErrorResponse>) => {
+      toast.error("Error", { description: error.response?.data?.message || error.message || "Failed to submit answer" })
+    }
+  })
+}
+
+export function useDeleteEvaluationForm() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (formId: string) => {
+      const token = getCookie('token')
+      const response = await axios.delete(
+        `${process.env.NEXT_PUBLIC_API}/monitoring-form/${formId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      )
+      return response.data
+    },
+    onSuccess: (_data, formId) => {
+      toast.success("Deleted", { description: "Evaluation form deleted" })
+      queryClient.invalidateQueries({ queryKey: ['evaluation'] })
+      queryClient.invalidateQueries({ queryKey: ['evaluation-detail', formId] })
+      queryClient.invalidateQueries({ queryKey: ['evaluation-sections', formId] })
+    },
+    onError: (error: AxiosError<ApiErrorResponse>) => {
+      toast.error("Error", { description: error.response?.data?.message || error.message || "Failed to delete evaluation form" })
+    }
+  })
+}

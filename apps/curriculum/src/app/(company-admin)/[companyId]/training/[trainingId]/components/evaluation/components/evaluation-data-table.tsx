@@ -17,7 +17,7 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
-import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react"
+import { ChevronLeft, ChevronRight } from "lucide-react"
 import { EvaluationSummary } from "@/lib/hooks/evaluation-types"
 
 interface PaginationProps {
@@ -90,7 +90,7 @@ export function EvaluationDataTable({
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24">
                   <div className="flex items-center justify-center gap-2">
-                    <ChevronLeftIcon className="h-4 w-4 animate-spin" />
+                    <ChevronLeft className="h-4 w-4 animate-spin" />
                     <span>Loading...</span>
                   </div>
                 </TableCell>
@@ -119,44 +119,81 @@ export function EvaluationDataTable({
         </Table>
       </div>
       
-      {/* Pagination - Simplified for now, can be expanded later */}
+      {/* Pagination - match cohorts/assessments style */}
       {pagination && (
         <div className="flex items-center justify-between py-4">
+          <div className="flex items-center justify-between w-full">
+            {/* Left - Page Size Selector */}
             <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-500">Rows per page</span>
+              <span className="md:text-sm text-xs text-gray-500">Showing</span>
               <select
                 value={pagination.pageSize}
-                onChange={(e) => pagination.setPageSize(Number(e.target.value))}
-                className="border rounded-md text-sm px-2 py-1 bg-white"
+                onChange={(e) => {
+                  const newSize = Number(e.target.value)
+                  pagination.setPageSize(newSize)
+                  pagination.setPage(1)
+                }}
+                className="border rounded-md md:text-sm text-xs md:px-2 px-2 py-1 bg-white"
+                title="Page Size"
               >
                 <option value={10}>10</option>
                 <option value={20}>20</option>
+                <option value={30}>30</option>
                 <option value={50}>50</option>
               </select>
             </div>
 
-            <div className="text-sm text-gray-500">
+            {/* Center - Showing Text */}
+            <div className="text-xs md:text-sm pl-2 text-gray-500">
               {showingText}
             </div>
 
+            {/* Right - Pagination Controls */}
             <div className="flex gap-1">
               <Button
-                variant="outline"
+                variant="pagination"
                 size="sm"
-                onClick={() => pagination.setPage(pagination.currentPage - 1)}
+                onClick={() => pagination.setPage(Math.max(1, pagination.currentPage - 1))}
                 disabled={pagination.currentPage <= 1}
               >
-                <ChevronLeftIcon className="w-4 h-4" />
+                <ChevronLeft className="w-4 h-4" />
               </Button>
+              {
+                Array.from({ length: Math.min(5, pagination.totalPages) }, (_, i) => {
+                  let pageNumber: number
+                  if (pagination.totalPages <= 5) {
+                    pageNumber = i + 1
+                  } else {
+                    const middle = 2
+                    const start = Math.max(1, pagination.currentPage - middle)
+                    const end = Math.min(pagination.totalPages, start + 4)
+                    const adjustedStart = end === pagination.totalPages ? Math.max(1, end - 4) : start
+                    pageNumber = adjustedStart + i
+                  }
+                  if (pageNumber > pagination.totalPages) return null
+                  return (
+                    <Button
+                      key={pageNumber}
+                      variant="outline"
+                      className={pagination.currentPage === pageNumber ? "border-brand text-brand" : ""}
+                      size="sm"
+                      onClick={() => pagination.setPage(pageNumber)}
+                    >
+                      {pageNumber}
+                    </Button>
+                  )
+                }).filter(Boolean) as unknown as JSX.Element
+              }
               <Button
-                variant="outline"
+                variant="pagination"
                 size="sm"
-                onClick={() => pagination.setPage(pagination.currentPage + 1)}
+                onClick={() => pagination.setPage(Math.min(pagination.totalPages, pagination.currentPage + 1))}
                 disabled={pagination.currentPage >= pagination.totalPages}
               >
-                <ChevronRightIcon className="w-4 h-4" />
+                <ChevronRight className="w-4 h-4" />
               </Button>
             </div>
+          </div>
         </div>
       )}
     </div>

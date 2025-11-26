@@ -82,12 +82,21 @@ export function createEvaluationActionsColumn(
   onView: (form: EvaluationSummary) => void,
   onEdit: (form: EvaluationSummary) => void,
   onDelete: (form: EvaluationSummary) => void,
+  options?: {
+    showEdit?: boolean
+    showDelete?: boolean
+    showAnswer?: boolean
+    onAnswer?: (form: EvaluationSummary) => void
+  }
 ): ColumnDef<EvaluationSummary> {
   return {
     id: "actions",
     header: "Actions",
     cell: ({ row }) => {
       const form = row.original
+      const showEdit = options?.showEdit ?? true
+      const showDelete = options?.showDelete ?? true
+      const showAnswer = options?.showAnswer ?? false
 
       return (
         <DropdownMenu modal={false}>
@@ -108,20 +117,29 @@ export function createEvaluationActionsColumn(
               View
             </DropdownMenuItem>
             
-            <DropdownMenuItem 
-                onClick={() => onEdit(form)}
-            >
+            {showEdit && (
+              <DropdownMenuItem onClick={() => onEdit(form)}>
                 <Edit className="mr-2 h-4 w-4" />
                 Edit
-            </DropdownMenuItem>
+              </DropdownMenuItem>
+            )}
+
+            {showAnswer && options?.onAnswer && (
+              <DropdownMenuItem onClick={() => options.onAnswer!(form)}>
+                <Eye className="mr-2 h-4 w-4" />
+                Answer
+              </DropdownMenuItem>
+            )}
             
-            <DropdownMenuItem 
+            {showDelete && (
+              <DropdownMenuItem 
                 onClick={() => onDelete(form)}
                 className="text-red-600 focus:text-red-600"
-            >
+              >
                 <Trash2 className="mr-2 h-4 w-4" />
                 Delete
-            </DropdownMenuItem>
+              </DropdownMenuItem>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       )

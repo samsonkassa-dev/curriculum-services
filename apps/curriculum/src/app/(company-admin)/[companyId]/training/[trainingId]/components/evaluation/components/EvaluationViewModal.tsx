@@ -103,7 +103,7 @@ export function EvaluationViewModal({ evaluation, isOpen, onClose }: EvaluationV
             <p className="text-gray-500">No questions found in this evaluation form.</p>
           </div>
         ) : (
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto overflow-x-hidden pr-2 md:pr-4">
             {/* Section Header */}
             <div className="mb-6 p-4 md:p-5 bg-slate-50 border border-slate-200 rounded-lg">
               <h2 className="text-lg font-semibold text-slate-800 mb-2 break-words overflow-hidden text-ellipsis line-clamp-2 md:line-clamp-3">
@@ -118,7 +118,7 @@ export function EvaluationViewModal({ evaluation, isOpen, onClose }: EvaluationV
 
             {/* Question */}
             <div className="mb-6">
-              <div className="flex items-start justify-between mb-4 md:mb-6">
+              <div className="flex flex-col md:flex-row md:items-start md:justify-between mb-4 md:mb-6">
                 <div className="flex-1 pr-2 md:pr-4 min-w-0">
                   <div className="flex items-center gap-3 mb-2">
                     <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
@@ -129,11 +129,13 @@ export function EvaluationViewModal({ evaluation, isOpen, onClose }: EvaluationV
                     </h3>
                   </div>
                 </div>
-                <Badge variant="secondary" className="bg-slate-100 text-slate-700 border-slate-300 flex-shrink-0 text-[10px] md:text-xs whitespace-nowrap">
-                  {currentQuestion.questionType === 'RADIO' ? 'Single Choice' : 
-                   currentQuestion.questionType === 'CHECKBOX' ? 'Multiple Choice' : 
-                   'Text Response'}
-                </Badge>
+                <div className="mt-2 md:mt-0 self-start md:self-auto">
+                  <Badge variant="secondary" className="bg-slate-100 text-slate-700 border-slate-300 flex-shrink-0 text-[10px] md:text-xs whitespace-nowrap">
+                    {currentQuestion.questionType === 'RADIO' ? 'Single Choice' : 
+                     currentQuestion.questionType === 'CHECKBOX' ? 'Multiple Choice' : 
+                     'Text Response'}
+                  </Badge>
+                </div>
               </div>
 
               {/* Question Image */}
@@ -154,7 +156,7 @@ export function EvaluationViewModal({ evaluation, isOpen, onClose }: EvaluationV
                   {currentQuestion.choices.map((choice: any, index: number) => (
                     <div key={choice.id} className="space-y-0">
                       {/* Main Choice */}
-                      <div className="flex items-start gap-3 md:gap-4 p-3 rounded-lg border border-gray-200 bg-white">
+                      <div className="flex items-start gap-3 md:gap-4 p-3 rounded-lg border border-gray-200 bg-white max-w-full min-w-0">
                         {/* Radio/Checkbox indicator */}
                         {currentQuestion.questionType === "RADIO" ? (
                           <div className="w-5 h-5 rounded-full border-2 border-blue-400 bg-white flex items-center justify-center mt-0.5 flex-shrink-0">
@@ -208,17 +210,19 @@ export function EvaluationViewModal({ evaluation, isOpen, onClose }: EvaluationV
                               <div className="border-l-2 border-amber-200 pl-3 md:pl-4 py-2">
                                 <div className="space-y-3">
                                   {/* Follow-up Question Header */}
-                                  <div className="flex items-start justify-between">
-                                    <div className="flex items-center gap-2">
+                                  <div className="flex flex-col md:flex-row md:items-start md:justify-between">
+                                    <div className="flex items-center gap-2 min-w-0">
                                       <span className="text-xs font-medium text-amber-700 bg-amber-50 px-2 py-1 rounded">
                                         ↳ Follow-up
                                       </span>
                                     </div>
-                                    <Badge variant="secondary" className="text-[10px] md:text-xs bg-gray-100 text-gray-600 whitespace-nowrap">
-                                      {followUp.questionType === 'RADIO' ? 'Single Choice' : 
-                                       followUp.questionType === 'CHECKBOX' ? 'Multiple Choice' : 
-                                       'Text Response'}
-                                    </Badge>
+                                    <div className="mt-2 md:mt-0 self-start md:self-auto">
+                                      <Badge variant="secondary" className="text-[10px] md:text-xs bg-gray-100 text-gray-600 whitespace-nowrap">
+                                        {followUp.questionType === 'RADIO' ? 'Single Choice' : 
+                                         followUp.questionType === 'CHECKBOX' ? 'Multiple Choice' : 
+                                         'Text Response'}
+                                      </Badge>
+                                    </div>
                                   </div>
 
                                   {/* Follow-up Question Text */}
@@ -270,7 +274,7 @@ export function EvaluationViewModal({ evaluation, isOpen, onClose }: EvaluationV
                                             )}
 
                                             {/* Follow-up choice text */}
-                                            <p className="text-sm text-gray-700 break-words flex-1 overflow-hidden text-ellipsis truncate" title={followUpChoice.choiceText}>
+                                            <p className="text-sm text-gray-700 break-words flex-1 overflow-hidden text-ellipsis truncate min-w-0" title={followUpChoice.choiceText}>
                                               {followUpChoice.choiceText || `Choice ${followUpChoiceIndex + 1}`}
                                             </p>
                                           </div>
