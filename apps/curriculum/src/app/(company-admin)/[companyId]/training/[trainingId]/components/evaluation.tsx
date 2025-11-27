@@ -153,7 +153,8 @@ export function EvaluationComponent({ trainingId }: EvaluationComponentProps) {
         showView: !isMeExpert,
         showEdit: !isMeExpert,
         showDelete: !isMeExpert && (isCompanyAdmin || isProjectManager || isCurriculumAdmin || isTrainingAdmin),
-        showAnswer: isMeExpert,
+        // Only show "Answer" strictly for ME Expert and no other elevated role
+        showAnswer: isMeExpert && !(isCompanyAdmin || isProjectManager || isCurriculumAdmin || isTrainingAdmin),
         onAnswer: handleAnswer
       }
     )
