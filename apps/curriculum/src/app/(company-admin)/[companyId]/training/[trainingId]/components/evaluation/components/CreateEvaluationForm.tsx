@@ -16,6 +16,7 @@ import {
   EvaluationSectionForm, 
   EvaluationEntryForm,
   EvaluationChoiceForm,
+  EvaluationEntryPayload,
   CreateEvaluationPayload,
   EvaluationSummary
 } from "@/lib/hooks/evaluation-types"
@@ -398,13 +399,12 @@ function CreateEvaluationFormInner({ trainingId, onCancel, editingEvaluation }: 
     // Build payload differently for create vs edit
     if (!isEditMode) {
       // CREATE (multipart)
-      // Flatten follow-ups across all sections into a single entries array for the backend's POST structure
-      const allEntries: any[] = []
-      
-      sanitizedSections.forEach(section => {
+      // Preserve sections: flatten follow-ups within each section separately
+      const sectionsPayload = sanitizedSections.map((section) => {
+        const sectionEntries: EvaluationEntryPayload[] = []
         section.entries.forEach(entry => {
-          // Main question
-          allEntries.push({
+          // Main question (include file fields at runtime; cast to payload type)
+          const mainEntry = {
             clientId: entry.clientId,
             question: entry.question,
             questionImage: entry.questionImage,
@@ -414,19 +414,19 @@ function CreateEvaluationFormInner({ trainingId, onCancel, editingEvaluation }: 
               clientId: choice.clientId,
               choiceText: choice.choiceText,
               choiceImage: choice.choiceImage,
-              choiceImageFile: choice.choiceImageFile
+              choiceImageFile: (choice as any).choiceImageFile
             })),
             isFollowUp: entry.isFollowUp,
             parentQuestionClientId: entry.parentQuestionClientId,
             triggerChoiceClientIds: entry.triggerChoiceClientIds,
             parentQuestionId: entry.parentQuestionId,
             triggerChoiceIds: entry.triggerChoiceIds
-          })
-          
-          // Follow-up questions
+          } as unknown as EvaluationEntryPayload
+          sectionEntries.push(mainEntry)
+          // Follow-up questions inside choices
           entry.choices.forEach(choice => {
             if (choice.hasFollowUp && choice.followUpQuestion) {
-              allEntries.push({
+              const followEntry = {
                 clientId: choice.followUpQuestion.clientId,
                 question: choice.followUpQuestion.question,
                 questionImage: choice.followUpQuestion.questionImage,
@@ -436,26 +436,28 @@ function CreateEvaluationFormInner({ trainingId, onCancel, editingEvaluation }: 
                   clientId: fChoice.clientId,
                   choiceText: fChoice.choiceText,
                   choiceImage: fChoice.choiceImage,
-                  choiceImageFile: fChoice.choiceImageFile
+                  choiceImageFile: (fChoice as any).choiceImageFile
                 })),
                 isFollowUp: true,
                 parentQuestionClientId: entry.clientId,
                 triggerChoiceClientIds: [choice.clientId],
                 parentQuestionId: undefined,
                 triggerChoiceIds: undefined
-              })
+              } as unknown as EvaluationEntryPayload
+              sectionEntries.push(followEntry)
             }
           })
         })
+        return {
+          title: section.title,
+          description: section.description,
+          entries: sectionEntries
+        }
       })
 
       const payload: CreateEvaluationPayload = {
         formType,
-        sections: [{
-          title: sanitizedSections[0]?.title || "Section 1",
-          description: sanitizedSections[0]?.description || "",
-          entries: allEntries
-        }]
+        sections: sectionsPayload
       }
 
       createEvaluation.mutate({ trainingId, data: payload }, {
@@ -578,12 +580,11 @@ function CreateEvaluationFormInner({ trainingId, onCancel, editingEvaluation }: 
                   if (!section) return
                   
                   // Build entries for the entire section (new section)
-                  const entries: any[] = []
+                  const entries: EvaluationEntryPayload[] = []
                   section.entries.forEach((entry) => {
                     // Main question
                     entries.push({
                       clientId: entry.clientId,
-                      outlineGroup: undefined,
                       question: entry.question,
                       questionImage: entry.questionImage,
                       questionType: entry.questionType,
@@ -605,7 +606,6 @@ function CreateEvaluationFormInner({ trainingId, onCancel, editingEvaluation }: 
                         const follow = choice.followUpQuestion
                         entries.push({
                           clientId: follow.clientId,
-                          outlineGroup: undefined,
                           question: follow.question,
                           questionImage: follow.questionImage,
                           questionType: follow.questionType,

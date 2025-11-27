@@ -44,43 +44,40 @@ export interface EvaluationSectionForm {
 }
 
 // ============================================================================
-// Evaluation API Payloads (for mutations)
+// Evaluation API Payloads (for mutations) - distinct types to avoid merging
 // ============================================================================
 
-export interface EvaluationChoice {
+export interface EvaluationChoicePayload {
   clientId: string;
   choiceText: string;
   choiceImage?: string;
+  // Note: Files are handled when building FormData; not part of JSON payload
 }
 
-export interface EvaluationEntry {
+export interface EvaluationEntryPayload {
   clientId: string;
   question: string;
   questionImage?: string;
   questionType: EvaluationQuestionType;
-  choices: EvaluationChoice[];
+  choices: EvaluationChoicePayload[];
   
   // Follow-up logic
   isFollowUp: boolean;
   parentQuestionClientId?: string;
   triggerChoiceClientIds?: string[];
-  parentQuestionId?: string; // Server ID
-  triggerChoiceIds?: string[]; // Server ID
+  parentQuestionId?: string; // Server ID (not used on create)
+  triggerChoiceIds?: string[]; // Server ID (not used on create)
 }
 
-export interface EvaluationSection {
+export interface EvaluationSectionPayload {
   title: string;
   description: string;
-  entries: EvaluationEntry[];
+  entries: EvaluationEntryPayload[];
 }
 
 export interface CreateEvaluationPayload {
   formType: EvaluationFormType;
-  sections: {
-    title: string;
-    description: string;
-    entries: EvaluationEntry[];
-  }[];
+  sections: EvaluationSectionPayload[];
 }
 
 // ============================================================================
