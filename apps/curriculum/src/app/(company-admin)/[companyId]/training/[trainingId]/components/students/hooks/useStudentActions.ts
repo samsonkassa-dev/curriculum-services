@@ -3,7 +3,7 @@ import { useRouter } from "next/navigation"
 import { RowSelectionState } from "@tanstack/react-table"
 import { Student, CreateStudentData, StudentFilters } from "@/lib/hooks/useStudents"
 import { useAddStudent, useUpdateStudent, useDeleteStudent, useBulkDeleteStudents } from "@/lib/hooks/useStudents"
-import { useSubmitCertificate } from "@/lib/hooks/useCertificate"
+import { useSubmitCertificate, useSendCertificateSms } from "@/lib/hooks/useCertificate"
 import { toast } from "sonner"
 import { StudentFormValues } from "../../../students/add/components/formSchemas"
 
@@ -33,6 +33,7 @@ export function useStudentActions({
   const deleteStudentMutation = useDeleteStudent()
   const bulkDeleteMutation = useBulkDeleteStudents()
   const { mutateAsync: generateCertificatesAsync, isPending: isGeneratingCertificates } = useSubmitCertificate()
+  const { mutateAsync: sendCertificateSmsAsync, isPending: isSendingCertificateSms } = useSendCertificateSms()
 
   const selectedStudentsCount = Object.keys(rowSelection).length
 
@@ -206,6 +207,22 @@ export function useStudentActions({
     }
   }, [getSelectedStudentIds, generateCertificatesAsync, setRowSelection, router]);
 
+  // Send certificate SMS for selected trainees
+  const handleSendCertificateSms = useCallback(async () => {
+    const traineeIds = getSelectedStudentIds();
+    if (traineeIds.length === 0) {
+      toast.error('No valid students selected');
+      return;
+    }
+    try {
+      await sendCertificateSmsAsync({ traineeIds });
+      setRowSelection({});
+    } catch (error) {
+      // Error handled in mutation
+      console.error('Send certificate SMS failed:', error);
+    }
+  }, [getSelectedStudentIds, sendCertificateSmsAsync, setRowSelection]);
+
   return {
     // State
     deleteDialogOpen,
@@ -226,11 +243,13 @@ export function useStudentActions({
     confirmBulkDelete,
     handleGenerateCertificates,
     handleConfirmCertificateGeneration,
+    handleSendCertificateSms,
     getSelectedStudentIds,
     
     // Loading states
     isSubmitting: isAddingStudent || updateStudentMutation.isPending,
     isGeneratingCertificates,
+    isSendingCertificateSms,
     isDeleting: deleteStudentMutation.isPending,
     isBulkDeleting: bulkDeleteMutation.isPending,
   }

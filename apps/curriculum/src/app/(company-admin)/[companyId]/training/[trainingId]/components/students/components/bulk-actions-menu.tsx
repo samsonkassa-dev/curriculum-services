@@ -10,7 +10,8 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
-import { MoreVertical, Award, Trash2, FileCheck, GraduationCap, UserPlus } from "lucide-react"
+import { MoreVertical, Award, Trash2, FileCheck, GraduationCap, UserPlus, Send } from "lucide-react"
+import { toast } from "sonner"
 
 interface BulkActionsMenuProps {
   selectedCount: number
@@ -18,6 +19,7 @@ interface BulkActionsMenuProps {
   hasEditPermission: boolean
   isCompanyAdmin: boolean
   isProjectManager: boolean
+  isCertifiedFilterOn: boolean
   onGenerateCertificates: () => void
   onSyncPreAssessment: () => void
   onSyncPostAssessment: () => void
@@ -32,6 +34,8 @@ interface BulkActionsMenuProps {
   isSyncingCreateTrainees: boolean
   isSyncingCompletion: boolean
   isBulkDeleting: boolean
+  onSendCertificateSms: () => void
+  isSendingCertificateSms: boolean
 }
 
 export function BulkActionsMenu({
@@ -40,6 +44,7 @@ export function BulkActionsMenu({
   hasEditPermission,
   isCompanyAdmin,
   isProjectManager,
+  isCertifiedFilterOn,
   onGenerateCertificates,
   onSyncPreAssessment,
   onSyncPostAssessment,
@@ -54,6 +59,8 @@ export function BulkActionsMenu({
   isSyncingCreateTrainees,
   isSyncingCompletion,
   isBulkDeleting,
+  onSendCertificateSms,
+  isSendingCertificateSms,
 }: BulkActionsMenuProps) {
   const [open, setOpen] = React.useState(false)
   if (selectedCount === 0 || !hasEditPermission) {
@@ -92,6 +99,34 @@ export function BulkActionsMenu({
               <>
                 <Award className="h-4 w-4 text-green-600" />
                 <span>Generate Certificate{selectedCount > 1 ? 's' : ''}</span>
+              </>
+            )}
+          </DropdownMenuItem>
+        )}
+        
+        {/* Send Certificate SMS */}
+        {(isCompanyAdmin || isProjectManager) && (
+          <DropdownMenuItem
+            onSelect={() => {
+              setOpen(false)
+              if (!isCertifiedFilterOn) {
+                toast.error("Turn on the 'Is Certified?' filter to send certificate SMS")
+                return
+              }
+              onSendCertificateSms()
+            }}
+            disabled={isSendingCertificateSms}
+            className="flex items-center gap-2 cursor-pointer"
+          >
+            {isSendingCertificateSms ? (
+              <>
+                <div className="w-4 h-4 border-2 border-green-400 border-t-transparent rounded-full animate-spin" />
+                <span>Sending SMS...</span>
+              </>
+            ) : (
+              <>
+                <Send className="h-4 w-4 text-green-600" />
+                <span>Send Certificate SMS</span>
               </>
             )}
           </DropdownMenuItem>

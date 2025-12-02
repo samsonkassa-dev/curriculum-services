@@ -95,6 +95,9 @@ interface StudentsHeaderProps {
   onBulkDelete: () => void
   isGeneratingCertificates: boolean
   isBulkDeleting: boolean
+  // Certificate SMS
+  onSendCertificateSms: () => void
+  isSendingCertificateSms: boolean
 }
 
 export function StudentsHeader({
@@ -139,6 +142,8 @@ export function StudentsHeader({
   onBulkDelete,
   isGeneratingCertificates,
   isBulkDeleting,
+  onSendCertificateSms,
+  isSendingCertificateSms,
 }: StudentsHeaderProps) {
   return (
     <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
@@ -187,6 +192,7 @@ export function StudentsHeader({
               hasEditPermission={hasEditPermission}
               isCompanyAdmin={isCompanyAdmin}
               isProjectManager={isProjectManager}
+              isCertifiedFilterOn={filters?.isCertified === true}
               onGenerateCertificates={onGenerateCertificates}
               onSyncPreAssessment={onSyncPreAssessment}
               onSyncPostAssessment={onSyncPostAssessment}
@@ -201,6 +207,8 @@ export function StudentsHeader({
               isSyncingCreateTrainees={isSyncingCreateTrainees}
               isSyncingCompletion={isSyncingCompletion}
               isBulkDeleting={isBulkDeleting}
+              onSendCertificateSms={onSendCertificateSms}
+              isSendingCertificateSms={isSendingCertificateSms}
             />
             
             <StudentsActionsMenu

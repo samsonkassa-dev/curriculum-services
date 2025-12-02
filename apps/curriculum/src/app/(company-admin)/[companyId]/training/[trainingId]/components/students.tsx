@@ -95,9 +95,11 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
     confirmBulkDelete,
     handleGenerateCertificates,
     handleConfirmCertificateGeneration,
+    handleSendCertificateSms,
     getSelectedStudentIds,
     isSubmitting,
     isGeneratingCertificates,
+    isSendingCertificateSms,
     isDeleting,
     isBulkDeleting,
   } = useStudentActions({
@@ -319,8 +321,10 @@ export function StudentsComponent({ trainingId }: StudentsComponentProps) {
                   isCompanyAdmin={isCompanyAdmin}
                   isProjectManager={isProjectManager}
                   onGenerateCertificates={handleGenerateCertificates}
+                  onSendCertificateSms={handleSendCertificateSms}
                   onBulkDelete={handleBulkDelete}
                   isGeneratingCertificates={isGeneratingCertificates}
+                  isSendingCertificateSms={isSendingCertificateSms}
                   isBulkDeleting={isBulkDeleting}
                 />
                 
