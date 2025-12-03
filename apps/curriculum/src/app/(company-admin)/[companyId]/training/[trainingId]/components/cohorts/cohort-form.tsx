@@ -24,7 +24,7 @@ import { toast } from "sonner"
 const cohortSchema = z.object({
   name: z.string().min(1, "Cohort name is required"),
   description: z.string().min(1, "Description is required"),
-  tags: z.array(z.string()).default([]),
+  tags: z.array(z.string()).optional().default([]),
 })
 
 type CohortFormValues = z.infer<typeof cohortSchema>
