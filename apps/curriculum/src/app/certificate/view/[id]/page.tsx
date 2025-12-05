@@ -191,55 +191,89 @@ export default function CertificateViewPage() {
 
           <div className="p-4 md:p-8">
             {/* PDF Preview - Using react-pdf for reliable cross-browser rendering */}
-            <div className="w-full bg-gray-100 rounded-lg overflow-hidden shadow-inner">
+            <div className="w-full bg-white rounded-lg overflow-hidden shadow-lg border border-gray-200">
               <Document
                 file={certificate.fileUrl}
                 onLoadSuccess={onDocumentLoadSuccess}
                 onLoadError={onDocumentLoadError}
                 loading={
-                  <div className="flex items-center justify-center h-96 bg-gray-50">
+                  <div className="flex items-center justify-center py-32 px-4 bg-gradient-to-br from-blue-50 via-white to-indigo-50">
                     <div className="text-center">
-                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0B75FF] mx-auto mb-4"></div>
-                      <p className="text-gray-600">Loading certificate...</p>
+                      <div className="relative w-24 h-24 mx-auto mb-6">
+                        {/* Outer spinning ring */}
+                        <div className="absolute inset-0 rounded-full border-4 border-gray-200"></div>
+                        <div className="absolute inset-0 rounded-full border-4 border-[#0B75FF] border-t-transparent animate-spin"></div>
+                        {/* Inner icon */}
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <FileText className="w-10 h-10 text-[#0B75FF]" />
+                        </div>
+                      </div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                        Loading Certificate
+                      </h3>
+                      <p className="text-sm text-gray-600">
+                        Please wait while we prepare your certificate...
+                      </p>
+                      <div className="mt-4 flex justify-center gap-1">
+                        <div className="w-2 h-2 bg-[#0B75FF] rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                        <div className="w-2 h-2 bg-[#0B75FF] rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                        <div className="w-2 h-2 bg-[#0B75FF] rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                      </div>
                     </div>
                   </div>
                 }
                 error={
-                  <div className="flex flex-col items-center justify-center h-96 p-6 text-center bg-gradient-to-br from-blue-50 to-indigo-50">
+                  <div className="flex flex-col items-center justify-center py-32 px-6 text-center bg-gradient-to-br from-red-50 via-white to-orange-50">
                     <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mb-4">
                       <XCircle className="w-12 h-12 text-red-600" />
                     </div>
-                    <p className="text-lg font-semibold text-gray-900 mb-2">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
                       Unable to Load Certificate
-                    </p>
-                    <p className="text-sm text-gray-600 mb-4">
+                    </h3>
+                    <p className="text-sm text-gray-600 mb-6">
                       There was an error loading the PDF. Please try downloading it instead.
                     </p>
+                    <Button
+                      onClick={() => {
+                        const link = document.createElement('a')
+                        link.href = certificate.fileUrl
+                        link.download = `certificate-${certificate.id}.pdf`
+                        document.body.appendChild(link)
+                        link.click()
+                        document.body.removeChild(link)
+                      }}
+                      className="bg-[#0B75FF] hover:bg-[#0B75FF]/90 text-white"
+                    >
+                      <Download className="w-4 h-4 mr-2" />
+                      Download Certificate
+                    </Button>
                   </div>
                 }
-                className="flex justify-center"
+                className="flex justify-center items-center bg-gray-50"
               >
-                <div className="relative">
+                <div className="relative py-6">
                   <Page
                     pageNumber={pageNumber}
                     renderTextLayer={true}
                     renderAnnotationLayer={true}
-                    className="max-w-full"
-                    width={typeof window !== 'undefined' ? Math.min(window.innerWidth - 64, 800) : 800}
+                    className="shadow-2xl"
+                    width={typeof window !== 'undefined' ? Math.min(window.innerWidth - 96, 800) : 800}
+                    scale={1.0}
                   />
                   
                   {/* Page navigation for multi-page certificates */}
                   {numPages > 1 && (
-                    <div className="flex items-center justify-center gap-4 mt-4 bg-white py-3 px-4 rounded-lg shadow">
+                    <div className="flex items-center justify-center gap-4 mt-6 bg-white py-3 px-6 rounded-full shadow-lg border border-gray-200">
                       <Button
                         onClick={() => setPageNumber(prev => Math.max(1, prev - 1))}
                         disabled={pageNumber <= 1}
                         variant="outline"
                         size="sm"
+                        className="rounded-full"
                       >
                         <ChevronLeft className="w-4 h-4" />
                       </Button>
-                      <span className="text-sm text-gray-700">
+                      <span className="text-sm font-medium text-gray-700 px-2">
                         Page {pageNumber} of {numPages}
                       </span>
                       <Button
@@ -247,6 +281,7 @@ export default function CertificateViewPage() {
                         disabled={pageNumber >= numPages}
                         variant="outline"
                         size="sm"
+                        className="rounded-full"
                       >
                         <ChevronRight className="w-4 h-4" />
                       </Button>
@@ -255,6 +290,7 @@ export default function CertificateViewPage() {
                 </div>
               </Document>
             </div>
+            
             
             {/* Download button */}
             <div className="mt-6 flex justify-center">
