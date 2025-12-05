@@ -3,31 +3,15 @@
 import { useParams } from "next/navigation"
 import { useGetCertificateById } from "@/lib/hooks/useCertificate"
 import { Loading } from "@/components/ui/loading"
-import { CheckCircle2, XCircle, Download, Calendar, User, Phone, BookOpen } from "lucide-react"
+import { CheckCircle2, XCircle, Download, Calendar, User, Phone, BookOpen, FileText } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { format } from "date-fns"
-import { useState, useEffect } from "react"
 
 export default function CertificateViewPage() {
   const params = useParams()
   const certificateId = params?.id as string
-  const [isMobile, setIsMobile] = useState(false)
 
   const { data, isLoading, error } = useGetCertificateById(certificateId)
-
-  // Detect mobile device
-  useEffect(() => {
-    const checkMobile = () => {
-      const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera
-      const isMobileDevice = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent.toLowerCase())
-      const isSmallScreen = window.innerWidth < 768
-      setIsMobile(isMobileDevice || isSmallScreen)
-    }
-
-    checkMobile()
-    window.addEventListener('resize', checkMobile)
-    return () => window.removeEventListener('resize', checkMobile)
-  }, [])
 
   // Loading state
   if (isLoading) {
@@ -184,74 +168,77 @@ export default function CertificateViewPage() {
             </h2>
           </div>
 
-          <div className="p-8">
-            {isMobile ? (
-              // Mobile: Show preview card with button (mobile browsers handle PDFs better when opened directly)
-              <div className="space-y-4">
-                <div className="aspect-[1.414/1] w-full bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg border-2 border-dashed border-[#0B75FF]/30 flex flex-col items-center justify-center p-6 shadow-inner">
-                  <div className="text-center space-y-4">
-                    <div className="w-20 h-20 bg-[#0B75FF]/10 rounded-full flex items-center justify-center mx-auto">
-                      <CheckCircle2 className="w-12 h-12 text-[#0B75FF]" />
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                        Certificate Ready to View
-                      </h3>
-                      <p className="text-sm text-gray-600">
-                        Tap the button below to view your certificate in full screen
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex flex-col gap-3">
+          <div className="p-4 md:p-8">
+            {/* PDF Preview - Using object tag with fallback for better mobile support */}
+            <div className="aspect-[1.414/1] w-full bg-gray-100 rounded-lg overflow-hidden shadow-inner relative">
+              {/* Desktop: object tag works better than iframe */}
+              <object
+                data={certificate.fileUrl}
+                type="application/pdf"
+                className="w-full h-full hidden md:block"
+              >
+                <div className="flex flex-col items-center justify-center h-full p-6 text-center">
+                  <FileText className="w-16 h-16 text-gray-400 mb-4" />
+                  <p className="text-gray-600 mb-4">
+                    Unable to display PDF preview in browser.
+                  </p>
                   <Button
                     onClick={() => window.open(certificate.fileUrl, '_blank')}
-                    size="lg"
-                    className="w-full bg-[#0B75FF] hover:bg-[#0B75FF]/90 text-white"
-                  >
-                    <Download className="w-5 h-5 mr-2" />
-                    View Certificate
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      const link = document.createElement('a')
-                      link.href = certificate.fileUrl
-                      link.download = `certificate-${certificate.id}.pdf`
-                      document.body.appendChild(link)
-                      link.click()
-                      document.body.removeChild(link)
-                    }}
-                    size="lg"
-                    variant="outline"
-                    className="w-full border-[#0B75FF] text-[#0B75FF] hover:bg-[#0B75FF]/10"
-                  >
-                    <Download className="w-5 h-5 mr-2" />
-                    Download Certificate
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              // Desktop: Use direct iframe for inline preview
-              <>
-                <div className="aspect-[1.414/1] w-full bg-gray-100 rounded-lg overflow-hidden shadow-inner">
-                  <iframe
-                    src={certificate.fileUrl}
-                    className="w-full h-full"
-                    title="Certificate Preview"
-                  />
-                </div>
-                <div className="mt-6 flex justify-center">
-                  <Button
-                    onClick={() => window.open(certificate.fileUrl, '_blank')}
-                    size="lg"
                     className="bg-[#0B75FF] hover:bg-[#0B75FF]/90 text-white"
                   >
-                    <Download className="w-5 h-5 mr-2" />
-                    Download Full Certificate
+                    View Certificate
                   </Button>
                 </div>
-              </>
-            )}
+              </object>
+
+              {/* Mobile: Show preview card with download button (iframes don't work well on mobile) */}
+              <div className="md:hidden flex flex-col items-center justify-center h-full p-6 text-center bg-gradient-to-br from-blue-50 to-indigo-50">
+                <div className="w-20 h-20 bg-[#0B75FF]/10 rounded-full flex items-center justify-center mb-4">
+                  <FileText className="w-12 h-12 text-[#0B75FF]" />
+                </div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  Certificate Ready
+                </h3>
+                <p className="text-sm text-gray-600 mb-6">
+                  Download to view your certificate
+                </p>
+                <Button
+                  onClick={() => {
+                    // Download the file
+                    const link = document.createElement('a')
+                    link.href = certificate.fileUrl
+                    link.download = `certificate-${certificate.id}.pdf`
+                    document.body.appendChild(link)
+                    link.click()
+                    document.body.removeChild(link)
+                  }}
+                  size="lg"
+                  className="bg-[#0B75FF] hover:bg-[#0B75FF]/90 text-white w-full"
+                >
+                  <Download className="w-5 h-5 mr-2" />
+                  Download Certificate
+                </Button>
+              </div>
+            </div>
+            
+            {/* Download button - only show on desktop since mobile has it in the preview card */}
+            <div className="mt-6 hidden md:flex justify-center">
+              <Button
+                onClick={() => {
+                  const link = document.createElement('a')
+                  link.href = certificate.fileUrl
+                  link.download = `certificate-${certificate.id}.pdf`
+                  document.body.appendChild(link)
+                  link.click()
+                  document.body.removeChild(link)
+                }}
+                size="lg"
+                className="bg-[#0B75FF] hover:bg-[#0B75FF]/90 text-white"
+              >
+                <Download className="w-5 h-5 mr-2" />
+                Download Certificate
+              </Button>
+            </div>
           </div>
         </div>
       </div>
