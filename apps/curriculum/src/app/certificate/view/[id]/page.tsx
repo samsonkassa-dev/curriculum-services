@@ -1,17 +1,38 @@
 "use client"
 
 import { useParams } from "next/navigation"
+import { useState } from "react"
 import { useGetCertificateById } from "@/lib/hooks/useCertificate"
 import { Loading } from "@/components/ui/loading"
-import { CheckCircle2, XCircle, Download, Calendar, User, Phone, BookOpen, FileText } from "lucide-react"
+import { CheckCircle2, XCircle, Download, Calendar, User, Phone, BookOpen, FileText, ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { format } from "date-fns"
+import { Document, Page, pdfjs } from 'react-pdf'
+import 'react-pdf/dist/Page/AnnotationLayer.css'
+import 'react-pdf/dist/Page/TextLayer.css'
+
+// Configure PDF.js worker - using explicit HTTPS for reliability
+pdfjs.GlobalWorkerOptions.workerSrc = `https://unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`
 
 export default function CertificateViewPage() {
   const params = useParams()
   const certificateId = params?.id as string
+  const [numPages, setNumPages] = useState<number>(0)
+  const [pageNumber, setPageNumber] = useState(1)
+  const [pdfError, setPdfError] = useState(false)
 
   const { data, isLoading, error } = useGetCertificateById(certificateId)
+
+  function onDocumentLoadSuccess({ numPages }: { numPages: number }) {
+    setNumPages(numPages)
+    setPageNumber(1) // Reset to first page when new document loads
+    setPdfError(false)
+  }
+
+  function onDocumentLoadError() {
+    setPdfError(true)
+    setPageNumber(1) // Reset page number on error as well
+  }
 
   // Loading state
   if (isLoading) {
@@ -169,32 +190,73 @@ export default function CertificateViewPage() {
           </div>
 
           <div className="p-4 md:p-8">
-            {/* PDF Preview - Using object tag for both mobile and desktop */}
-            <div className="aspect-[1.414/1] w-full rounded-lg overflow-hidden shadow-inner relative bg-gray-100">
-              <object
-                data={certificate.fileUrl}
-                type="application/pdf"
-                className="w-full h-full"
-                aria-label="Certificate PDF Preview"
-              >
-                {/* Fallback for browsers that can't display PDF - keep it simple */}
-                <div className="flex flex-col items-center justify-center h-full p-6 text-center bg-gradient-to-br from-blue-50 to-indigo-50">
-                  <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-                    <svg className="w-12 h-12 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-                    </svg>
+            {/* PDF Preview - Using react-pdf for reliable cross-browser rendering */}
+            <div className="w-full bg-gray-100 rounded-lg overflow-hidden shadow-inner">
+              <Document
+                file={certificate.fileUrl}
+                onLoadSuccess={onDocumentLoadSuccess}
+                onLoadError={onDocumentLoadError}
+                loading={
+                  <div className="flex items-center justify-center h-96 bg-gray-50">
+                    <div className="text-center">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#0B75FF] mx-auto mb-4"></div>
+                      <p className="text-gray-600">Loading certificate...</p>
+                    </div>
                   </div>
-                  <p className="text-lg font-semibold text-gray-900 mb-2">
-                    PDF Preview Unavailable
-                  </p>
-                  <p className="text-sm text-gray-600">
-                    Your browser cannot display this PDF inline.
-                  </p>
+                }
+                error={
+                  <div className="flex flex-col items-center justify-center h-96 p-6 text-center bg-gradient-to-br from-blue-50 to-indigo-50">
+                    <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mb-4">
+                      <XCircle className="w-12 h-12 text-red-600" />
+                    </div>
+                    <p className="text-lg font-semibold text-gray-900 mb-2">
+                      Unable to Load Certificate
+                    </p>
+                    <p className="text-sm text-gray-600 mb-4">
+                      There was an error loading the PDF. Please try downloading it instead.
+                    </p>
+                  </div>
+                }
+                className="flex justify-center"
+              >
+                <div className="relative">
+                  <Page
+                    pageNumber={pageNumber}
+                    renderTextLayer={true}
+                    renderAnnotationLayer={true}
+                    className="max-w-full"
+                    width={typeof window !== 'undefined' ? Math.min(window.innerWidth - 64, 800) : 800}
+                  />
+                  
+                  {/* Page navigation for multi-page certificates */}
+                  {numPages > 1 && (
+                    <div className="flex items-center justify-center gap-4 mt-4 bg-white py-3 px-4 rounded-lg shadow">
+                      <Button
+                        onClick={() => setPageNumber(prev => Math.max(1, prev - 1))}
+                        disabled={pageNumber <= 1}
+                        variant="outline"
+                        size="sm"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </Button>
+                      <span className="text-sm text-gray-700">
+                        Page {pageNumber} of {numPages}
+                      </span>
+                      <Button
+                        onClick={() => setPageNumber(prev => Math.min(numPages, prev + 1))}
+                        disabled={pageNumber >= numPages}
+                        variant="outline"
+                        size="sm"
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  )}
                 </div>
-              </object>
+              </Document>
             </div>
             
-            {/* Download button - single source of truth */}
+            {/* Download button */}
             <div className="mt-6 flex justify-center">
               <Button
                 onClick={() => {
