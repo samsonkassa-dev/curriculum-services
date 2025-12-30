@@ -64,10 +64,10 @@ export function Login({ onSuccess }: LoginProps) {
           <div className="w-full max-w-[368px] space-y-6">
             <div className="space-y-2 text-center">
               <img
-                src="/placeholder-logo.svg"
+                src="/gheero.png"
                 alt="Logo"
-                width={40}
-                height={40}
+                width={50}
+                height={50}
                 className="mx-auto"
               />
               <h1 className="text-2xl font-semibold tracking-tight">
